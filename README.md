@@ -24,14 +24,14 @@ Format looks like this:
 ```
 
 ## Updating
-At some point `lal` will version check itself and let you know of a new version, and the command to update it. It can also give indications of docker container updates.
+At some point `lal` will version check itself and let you know of a new version, and the command to update it. It can also give indications of docker container updates. This tool needs to use `npm shrinkwrap`.
 
 ## Caching
 The latest `lal build` OUTPUT is available in `~/.lal/NAME/local`.
 Fetched versions from `lal install` is available in `~/.lal/NAME/VERSION`.
 
 ## Installation
-Comes bundled with the container. You mount `~/.lal`?
+Something quick and easy. Then run `lal configure` to interactively select docker environment and default arguments to pass through to build scripts and resources.
 
 ### Command Specification
 #### lal install
