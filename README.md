@@ -54,6 +54,10 @@ Enters an interactive shell inside the container mounting the current directory.
 
 Assumes you have run `lal install` or equivalent so that `INPUT` is ready for this.
 
+#### lal verify
+Verifies that the dependency tree is flat.
+Verifies that `manifest.json` is valid json. Pre-commit hook?
+
 #### lal deploy
 Should be implemented so that any `deploy` scripts in the manifest file gets run.
 
