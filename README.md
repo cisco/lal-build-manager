@@ -16,9 +16,12 @@ Format looks like this:
 ```json
 {
   "name": "libwebsockets",
-  "build": "./BUILD libwebsockets ncp.amd64",
+  "scripts": {
+    "build": "./BUILD libwebsockets ncp.amd64",
+    "test": "./BUILD libwebsockets-unit-tests ncp.amd64"
+  },
   "dependencies": {
-    "ciscossl": "SEMVER||NUMBER"
+    "ciscossl": 42
   }
 }
 ```
@@ -31,11 +34,13 @@ The latest `lal build` OUTPUT is available in `~/.lal/NAME/local`.
 Fetched versions from `lal install` is available in `~/.lal/NAME/VERSION`.
 
 ## Installation
-Something quick and easy. Then run `lal configure` to interactively select docker environment and default arguments to pass through to build scripts and resources.
+Something quick and easy. Then run `lal configure` to interactively select docker environment and default arguments to pass through to build scripts and resources. `lal configure` will create `~/.lal/lalrc`.
 
 ### Command Specification
 #### lal install
 lal maintains a map or a multimap `name -> (version -> prebuilt.tar.gz)` through some means. Either some web service provides the latter part of the map, through artefactory or whatnot.
+
+If a third argument is given, install latest available prebuilt into `INPUT` and store the version in the current manifest file.
 
 #### lal build
 Enters docker container and run the manifest's `build` script in working directory.
@@ -48,3 +53,20 @@ If a component name is given as the third argument, then look for `~/.lal/$3/loc
 Enters an interactive shell inside the container mounting the current directory. For experimental builds with stuff like `bcm` and `opts`.
 
 Assumes you have run `lal install` or equivalent so that `INPUT` is ready for this.
+
+#### lal deploy
+Should be implemented so that any `deploy` scripts in the manifest file gets run.
+
+#### lal test
+Similarly if there's a `test` script in the manifest.
+
+### Universal Options
+
+- `--log-level=LOG_LEVEL`
+- `--help` or `-h`
+
+
+### Historical Documentation
+Terms used herin reference [so you want to write a package manager](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#.rlvjqxc4r) (long read).
+
+Original [buildroot notes](https://hg.lal.cisco.com/root/files/tip/NOTES).
