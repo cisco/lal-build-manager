@@ -70,3 +70,17 @@ Similarly if there's a `test` script in the manifest.
 Terms used herin reference [so you want to write a package manager](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#.rlvjqxc4r) (long read).
 
 Original [buildroot notes](https://hg.lal.cisco.com/root/files/tip/NOTES).
+
+
+### Expected workflow
+
+```sh
+lal update monolith
+cd monolith
+lal install
+# for canonical build
+lal build
+# for experimental
+lal shell
+l> ./bcm shared_tests -t
+```
