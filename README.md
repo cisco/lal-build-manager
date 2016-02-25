@@ -34,7 +34,7 @@ The latest `lal build` OUTPUT is available in `~/.lal/cache/NAME/local`.
 Fetched versions from `lal install` is available in `~/.lal/cache/NAME/VERSION`.
 
 ## Installation
-Something quick and easy. Then run `lal configure` to interactively select docker environment and default arguments to pass through to build scripts and resources. `lal configure` will create `~/.lal/lalrc`.
+Something quick and easy. Then run `lal configure` to interactively select docker environment and default arguments to pass through to build scripts and resources. `lal configure` will create `~/.lal/lalrc`. Could also install global pre-commit hooks (e.g. to verify validity of `manifest.json`).
 
 ### Command Specification
 #### lal install
@@ -56,7 +56,7 @@ Assumes you have run `lal install` or equivalent so that `INPUT` is ready for th
 
 #### lal verify
 Verifies that the dependency tree is flat.
-Verifies that `manifest.json` is valid json. Pre-commit hook?
+Verifies that `manifest.json` is valid json.
 
 #### lal deploy
 Should be implemented so that any `deploy` scripts in the manifest file gets run.
