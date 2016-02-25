@@ -30,8 +30,8 @@ Format looks like this:
 At some point `lal` will version check itself and let you know of a new version, and the command to update it. It can also give indications of docker container updates. This tool needs to use `npm shrinkwrap`.
 
 ## Caching
-The latest `lal build` OUTPUT is available in `~/.lal/NAME/local`.
-Fetched versions from `lal install` is available in `~/.lal/NAME/VERSION`.
+The latest `lal build` OUTPUT is available in `~/.lal/cache/NAME/local`.
+Fetched versions from `lal install` is available in `~/.lal/cache/NAME/VERSION`.
 
 ## Installation
 Something quick and easy. Then run `lal configure` to interactively select docker environment and default arguments to pass through to build scripts and resources. `lal configure` will create `~/.lal/lalrc`.
@@ -46,8 +46,8 @@ If a third argument is given, install latest available prebuilt into `INPUT` and
 Enters docker container and run the manifest's `build` script in working directory.
 
 #### lal link
-Verifies that OUTPUT folder exists, then symlinks it to `~/.lal/NAME/local`
-If a component name is given as the third argument, then look for `~/.lal/$3/local` and symlink that to `INPUT/NAME`.
+Verifies that OUTPUT folder exists, then symlinks it to `~/.lal/cache/NAME/local`
+If a component name is given as the third argument, then look for `~/.lal/cache/$3/local` and symlink that to `INPUT/NAME`.
 
 #### lal shell
 Enters an interactive shell inside the container mounting the current directory. For experimental builds with stuff like `bcm` and `opts`.
@@ -66,13 +66,8 @@ Similarly if there's a `test` script in the manifest.
 - `--help` or `-h`
 
 
-### Historical Documentation
-Terms used herin reference [so you want to write a package manager](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#.rlvjqxc4r) (long read).
-
-Original [buildroot notes](https://hg.lal.cisco.com/root/files/tip/NOTES).
-
-
-### Expected workflow
+### Workflow
+Installing and building:
 
 ```sh
 lal update monolith
@@ -84,3 +79,29 @@ lal build
 lal shell
 l> ./bcm shared_tests -t
 ```
+
+Updating dependencies:
+
+```sh
+lal install ciscossl [version]
+lal verify # checks the tree for consistency
+git commit manifest.json -m "new version of ciscossl"
+git push # possibly to a branch
+```
+
+Using local versions of dependencies:
+
+```sh
+lal update ciscossl
+cd ciscossl
+# edit
+lal build
+lal link # locally 'publish' ciscossl
+cd ../monolith
+lal link ciscossl # link last local build of ciscssl into current INPUT
+```
+
+### Historical Documentation
+Terms used herin reference [so you want to write a package manager](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#.rlvjqxc4r) (long read).
+
+Original [buildroot notes](https://hg.lal.cisco.com/root/files/tip/NOTES).
