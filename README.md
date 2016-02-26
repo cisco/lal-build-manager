@@ -64,6 +64,13 @@ Assumes you have run `lal install` or equivalent so that `INPUT` is ready for th
 Verifies that the dependency tree is flat.
 Verifies that `manifest.json` is valid json.
 
+#### lal configure
+Interactively configures:
+
+- target to inject into `install` and `build` (default: ncp.amd64)
+- docker container to use for `build` (default: edonusdevelopers/centos_build)
+- git root folder to use for `update` (default: git@sqbu-github.cisco.com:Edonus/)
+
 #### lal deploy
 Should be implemented so that any `deploy` scripts in the manifest file gets run.
 
