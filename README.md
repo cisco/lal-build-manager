@@ -4,7 +4,6 @@ A simple and opinionated dependency manager for C++.
 ## Design
 `lal` is a simple command line tool that works on folders with a valid `manifest.json`, and accepts the following commands:
 
-- `lal clone name` - clone a repo into a subfolder with the same name
 - `lal install` - install dependencies from `manifest.json` into `INPUT`
 - `lal status` - print current installed dependencies with origin
 - `lal build [name]` - run canonical build in current directory
@@ -134,9 +133,6 @@ Sources:
 
 
 ### Common Command Specification
-#### lal clone name
-Clone a repo from the concatenation of `gitUrl` and `name`.
-
 #### lal status
 Provides list of dependencies currently installed.
 If they are not in the manifest they will be listed as _extraneous_.
@@ -221,7 +217,7 @@ Run `script.test` in manifest in container.
 Installing pinned versions and building:
 
 ```sh
-lal update monolith
+git clone git@sqbu-github.cisco.com:Edonus/monolith
 cd monolith
 lal install --dev
 # for canonical build
@@ -244,7 +240,7 @@ git push
 Using stashed dependencies:
 
 ```sh
-lal update ciscossl
+git clone git@sqbu-github.cisco.com:Edonus/ciscossl
 cd ciscossl
 # edit
 lal build
@@ -284,6 +280,25 @@ For large repositories with constant release cycles:
 Need some logic so that CI can push to the registry correctly in these cases. Large repositories should push constantly, and small should push on new tag.
 
 Potentially. Still feel that all versions should be in git. But don't want every other commit message to be a tag as that might be quite inefficient/dump/info pulluting.
+
+### Creating a new repository
+
+```sh
+mkdir newcomponent
+cd newcomponent
+yes "" | lal init
+git init
+git add manifest.json
+git ci -m "init newcomponent"
+# add git remotes (depends on where we host)
+git push -u origin master
+lal install gtest --save-dev
+lal install libwebsockets --save
+# create source and iterate until `lal build` and `lal test` succeeds
+git commit -a -m "inital working version"
+```
+
+TODO: getting it on CI, and versioning it. `lal version`?
 
 ### Historical Documentation
 Terms used herin reference [so you want to write a package manager](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#.rlvjqxc4r) (long read).
