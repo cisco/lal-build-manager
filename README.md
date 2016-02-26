@@ -43,7 +43,10 @@ Something quick and easy. Then run `lal configure` to interactively select docke
 #### lal install
 lal maintains a map or a multimap `name -> (version -> prebuilt.tar.gz)` through some means. Either some web service provides the latter part of the map, through artefactory or whatnot.
 
-If a third argument is given, install latest available prebuilt into `INPUT` and store the version in the current manifest file.
+If a third positional argument is given, install latest available prebuilt into `INPUT`. If `--save` is given then this also bumps the version in the manifest file.
+
+If positional arguments are given, install all `dependencies`.
+If `--dev` is given, then also install all `devDependencies`.
 
 #### lal build
 Enters docker container and run the manifest's `build` script in working directory.
@@ -79,7 +82,7 @@ Installing and building:
 ```sh
 lal update monolith
 cd monolith
-lal install
+lal install --dev
 # for canonical build
 lal build
 # for experimental
