@@ -22,6 +22,9 @@ Format looks like this:
   },
   "dependencies": {
     "ciscossl": 42
+  },
+  "devDependencies": {
+    "gtest": 42
   }
 }
 ```
