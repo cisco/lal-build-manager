@@ -24,13 +24,24 @@ fn main() {
                                             .help("Installs specific component=version pairs")
                                             .multiple(true))
                                    .arg(Arg::with_name("dev")
+                                            .long("dev")
+                                            .short("d")
                                             .help("Install devDependencies as well")
                                             .conflicts_with("components"))
                                    .arg(Arg::with_name("save")
-                                            .short("s")
+                                            .short("S")
                                             .long("save")
                                             .requires("components")
-                                            .help("Install also updates manifest")))
+                                            .conflicts_with("savedev")
+                                            .help("Install also updates dependencies in the \
+                                                   manifest"))
+                                   .arg(Arg::with_name("savedev")
+                                            .short("D")
+                                            .long("save-dev")
+                                            .requires("components")
+                                            .conflicts_with("save")
+                                            .help("Install also updates devDependencies in the \
+                                                   manifest")))
                    .subcommand(SubCommand::with_name("build")
                                    .about("runs build script")
                                    .arg(Arg::with_name("name").help("build a specific component")))
@@ -64,9 +75,9 @@ fn main() {
     if let Some(a) = args.subcommand_matches("install") {
         if a.is_present("components") {
             let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
-            return install::install(xs, a.is_present("save"));
+            return install::install(xs, a.is_present("save"), a.is_present("savedev"));
         } else {
-            return install::install_all();
+            return install::install_all(a.is_present("dev"));
         }
     }
     if let Some(_) = args.subcommand_matches("build") {
@@ -82,5 +93,6 @@ fn main() {
         let _ = init::init(a.is_present("force"));
         return;
     }
-    println!("print help");
+
+    println!("{}", args.usage());
 }
