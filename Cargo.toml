@@ -1,0 +1,9 @@
+[package]
+name = "lal"
+version = "0.1.0"
+authors = ["Eirik Albrigtsen <ealbrigt@cisco.com>"]
+
+[dependencies]
+clap = "2.1.2"
+curl = "0.2.16"
+rustc-serialize = "0.3.18"
