@@ -8,6 +8,7 @@ pub mod build;
 pub mod install;
 pub mod configure;
 pub mod verify;
+pub mod shell;
 pub mod init;
 
 fn main() {
@@ -69,7 +70,10 @@ fn main() {
         }
     }
     if let Some(_) = args.subcommand_matches("build") {
-        return build::build();
+        return build::build(&config);
+    }
+    if let Some(_) = args.subcommand_matches("shell") {
+        return shell::shell(&config);
     }
     if let Some(_) = args.subcommand_matches("verify") {
         return verify::verify();
