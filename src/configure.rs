@@ -1,5 +1,9 @@
 use std::io;
 use rustc_serialize::json;
+use std::path::Path;
+use std::fs::File;
+use std::env;
+use std::io::prelude::*;
 
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
@@ -27,12 +31,26 @@ fn prompt(name: &str, default: String) -> String {
     return default;
 }
 
-pub fn configure() -> io::Result<Config> {
-    use std::path::Path;
-    use std::fs::File;
-    use std::env;
-    use std::io::prelude::*;
+pub fn current_config() -> io::Result<Config> {
+    let home = env::home_dir().unwrap(); // crash if no $HOME
+    let cfg_path = Path::new(&home).join(".lal/lalrc");
+    if !cfg_path.exists() {
+        panic!("You need to run `lal configure` to create `lalrc` \
+            before using other commands.");
+    }
+    let mut f = try!(File::open(&cfg_path));
+    let mut s = String::new();
+    try!(f.read_to_string(&mut s));
+    let cfg = Config {
+        registry: "http://localhost".to_string(),
+        cache: "~/.lal/cache".to_string(),
+        target: "ncp.amd64".to_string(),
+        container: "edonusdevelopers/centos_build".to_string(),
+    };
+    return Ok(cfg);
+}
 
+pub fn configure() -> io::Result<Config> {
     let mut cfg = Config {
         registry: "http://localhost".to_string(),
         cache: "~/.lal/cache".to_string(),

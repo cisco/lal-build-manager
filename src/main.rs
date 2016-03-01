@@ -12,7 +12,7 @@ pub mod init;
 
 fn main() {
     let args = App::new("lal")
-                   .version("0.0")
+                   .version("1.2.3")
                    .about("lal dependency manager")
                    .arg(Arg::with_name("verbose")
                             .short("v")
@@ -45,14 +45,20 @@ fn main() {
                    .subcommand(SubCommand::with_name("init")
                                    .about("Create a manifest file in the current directory")
                                    .arg(Arg::with_name("force")
-                                        .short("f")
-                                        .help("overwrites manifest if necessary")))
+                                            .short("f")
+                                            .help("overwrites manifest if necessary")))
                    .subcommand(SubCommand::with_name("shell")
                                    .about("Enters the configured container mounting the current \
                                            directory"))
                    .get_matches();
 
-    // NB: can use args.value_of("config").unwrap_or("default.conf");
+    // Configuration of lal first.
+    if let Some(_) = args.subcommand_matches("configure") {
+        let _ = configure::configure();
+        return;
+    }
+    // Assume config exists before allowing other actions
+    let config = configure::current_config().unwrap();
 
     if let Some(a) = args.subcommand_matches("install") {
         if a.is_present("components") {
@@ -64,10 +70,6 @@ fn main() {
     }
     if let Some(_) = args.subcommand_matches("build") {
         return build::build();
-    }
-    if let Some(_) = args.subcommand_matches("configure") {
-        let _ = configure::configure();
-        return;
     }
     if let Some(_) = args.subcommand_matches("verify") {
         return verify::verify();

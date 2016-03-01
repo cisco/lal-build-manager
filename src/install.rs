@@ -1,10 +1,11 @@
+use std::io;
+
 pub fn install(xs: Vec<&str>, save: bool) {
     println!("installing specific deps {:?} {}", xs, save);
 }
 
-fn download_to_path(uri: &str, save: &str) {
+fn download_to_path(uri: &str, save: &str) -> io::Result<bool> {
     use std::fs::File;
-    use std::error::Error;
     use std::path::Path;
     use curl::http;
     use std::io::prelude::*;
@@ -14,28 +15,14 @@ fn download_to_path(uri: &str, save: &str) {
 
     if resp.get_code() == 200 {
         let r = resp.get_body();
-
         let path = Path::new(save);
-        let display = path.display();
-
-        // TODO: reduce error handling here, overkill
-        let mut file = match File::create(&path) {
-            Err(why) => panic!("couldn't create {}: {}", display, Error::description(&why)),
-            Ok(file) => file,
-        };
-
-        match file.write_all(r) {
-            Err(why) => {
-                panic!("couldn't write to {}: {}",
-                       display,
-                       Error::description(&why))
-            }
-            Ok(_) => println!("-> {}", display),
-        }
+        let mut f = try!(File::create(&path));
+        try!(f.write_all(r));
     }
+    Ok(resp.get_code() == 200)
 }
 
 pub fn install_all() {
     println!("plain install");
-    download_to_path("http://i.imgur.com/jAAwK7o.jpg", "barn.jpg")
+    let _ = download_to_path("http://i.imgur.com/jAAwK7o.jpg", "barn.jpg");
 }
