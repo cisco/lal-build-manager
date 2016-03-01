@@ -4,10 +4,11 @@ A dependency manager for C++ following LAL conventions.
 ## Design
 `lal` is a simple command line tool that works on folders with a valid `manifest.json`, and accepts the following commands:
 
-- [`lal install`](#lal-install) - install dependencies from `manifest.json` into `INPUT`
+- [`lal install`](#lal-install-components) - install dependencies from `manifest.json` into `INPUT`
 - [`lal status`](#lal-status) - print current installed dependencies with origin
-- [`lal build [name]`](#lal-build) - run canonical build in current directory
-- [`lal stash name`](#lal-stash) - copies current `OUTPUT` to cache
+- [`lal build [name]`](#lal-build-name) - run canonical build in current directory
+- [`lal shell`](#lal-shell) - enter container environment mounting `$PWD`
+- [`lal stash name`](#lal-stash-name) - copies current `OUTPUT` to cache
 - `lal update-manifest`
 - [`lal verify`](#lal-verify) - verify manifest validity + verify flat lockfile dependency tree
 
@@ -158,7 +159,7 @@ The `lal build` step will generate `OUTPUT/lockfile.json`. For local builds, thi
 
 Jenkins will run `lal verify` to ensure it passes anyway.
 
-#### lal install [name]
+#### lal install [components..]
 Comes in two variants.
 
  - *lal install [--dev]*: fetches versions corresponding to the manifest from the registry and puts them into `INPUT`. The optional `--dev` flag will also cause `devDependencies` to be installed.
@@ -201,11 +202,6 @@ Verifies that:
 - dependencies in `INPUT` match `manifest.json`.
 - the dependency tree is flat.
 - `INPUT` contains only global dependencies.
-
-#### lal version [--bump]
-Prints the current version. The optional `--bump` will increment the version by one in the `manifest.json`.
-
-It is good practice to only do a version bump after build and associated tests pass. As otherwise the version will have no tag associated with it (jenkins will not tag it). Note that jenkins will validate tests pre-merge.
 
 #### lal configure
 Interactively configures:
