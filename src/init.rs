@@ -1,23 +1,35 @@
-use std::collections::HashMap;
 use std::io;
+use std::io::prelude::*;
 use std::process;
+use std::env;
+use std::path::Path;
+use std::fs::File;
+use std::collections::HashMap;
 use rustc_serialize::json;
 
 #[allow(non_snake_case)]
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Manifest {
-    name: String,
-    version: String,
-    dependencies: HashMap<String, String>,
-    devDependencies: HashMap<String, String>,
+    pub name: String,
+    pub version: String,
+    pub dependencies: HashMap<String, String>,
+    pub devDependencies: HashMap<String, String>,
+}
+
+pub fn read_manifest() -> io::Result<Manifest> {
+    let pwd = env::current_dir().unwrap();
+    let manifest_path = Path::new(&pwd).join("manifest.json");
+    if !manifest_path.exists() {
+        panic!("You need to run `lal init` to create `manifest.json` \
+            before you can use `lal` on this repository.");
+    }
+    let mut f = try!(File::open(&manifest_path));
+    let mut manifest_str = String::new();
+    try!(f.read_to_string(&mut manifest_str));
+    return Ok(json::decode(&manifest_str).unwrap());
 }
 
 pub fn init(force: bool) -> io::Result<Manifest> {
-    use std::env;
-    use std::path::Path;
-    use std::fs::File;
-    use std::io::prelude::*;
-
     let pwd = env::current_dir().unwrap();
     let last_comp = pwd.components().last().unwrap(); // std::path::Component
     let dirname = last_comp.as_os_str().to_str().unwrap();

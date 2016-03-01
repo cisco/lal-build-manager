@@ -7,10 +7,10 @@ use std::io::prelude::*;
 
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
-    registry: String,
-    cache: String,
-    target: String,
-    container: String,
+    pub registry: String,
+    pub cache: String,
+    pub target: String,
+    pub container: String,
 }
 
 fn prompt(name: &str, default: String) -> String {
@@ -39,15 +39,9 @@ pub fn current_config() -> io::Result<Config> {
             before using other commands.");
     }
     let mut f = try!(File::open(&cfg_path));
-    let mut s = String::new();
-    try!(f.read_to_string(&mut s));
-    let cfg = Config {
-        registry: "http://localhost".to_string(),
-        cache: "~/.lal/cache".to_string(),
-        target: "ncp.amd64".to_string(),
-        container: "edonusdevelopers/centos_build".to_string(),
-    };
-    return Ok(cfg);
+    let mut cfg_str = String::new();
+    try!(f.read_to_string(&mut cfg_str));
+    return Ok(json::decode(&cfg_str).unwrap());
 }
 
 pub fn configure() -> io::Result<Config> {
