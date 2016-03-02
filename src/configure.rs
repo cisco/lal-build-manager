@@ -68,5 +68,8 @@ pub fn configure() -> io::Result<Config> {
     try!(write!(f, "{}\n", encoded));
 
     println!("Wrote config {}: \n{}", cfg_path.display(), encoded);
+
+    // TODO: check that docker is present and warn if not
+    // TODO: check that docker images contains cfg.container and provide info if not
     return Ok(cfg.clone());
 }

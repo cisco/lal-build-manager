@@ -12,8 +12,8 @@ use rustc_serialize::json;
 pub struct Manifest {
     pub name: String,
     pub version: String,
-    pub dependencies: HashMap<String, String>,
-    pub devDependencies: HashMap<String, String>,
+    pub dependencies: HashMap<String, u32>,
+    pub devDependencies: HashMap<String, u32>,
 }
 
 pub fn read_manifest() -> io::Result<Manifest> {

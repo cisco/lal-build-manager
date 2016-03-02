@@ -7,3 +7,4 @@ authors = ["Eirik Albrigtsen <ealbrigt@cisco.com>"]
 clap = "2.1.2"
 curl = "0.2.16"
 rustc-serialize = "0.3.18"
+regex = "0.1.55"
