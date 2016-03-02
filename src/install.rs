@@ -169,7 +169,17 @@ fn fetch_component(name: &str, version: Option<u32>) -> io::Result<Component> {
 pub fn install(xs: Vec<&str>, save: bool, savedev: bool) {
     println!("Install specific deps: {:?} {} {}", xs, save, savedev);
     for v in &xs {
-        let _ = fetch_component(&v, None);
+        if v.contains("=") {
+            let pair: Vec<&str> = v.split("=").collect();
+            if let Ok(n) = pair[1].parse::<u32>() {
+                let _ = fetch_component(pair[0], Some(n));
+            }
+            else {
+                println!("Ignoring {} due to invalid version number", pair[0]);
+            }
+        } else {
+            let _ = fetch_component(&v, None);
+        }
     }
 }
 
