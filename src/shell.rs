@@ -20,8 +20,7 @@ pub fn docker_run(cfg: &configure::Config, command: Vec<&str>, interactive: bool
         .args(&vec!["-w", "/home/lal/root"])
         .args(&vec!["--net", "host"])
         .args(&vec!["--cap-add", "SYS_NICE"])
-        .arg("--user")
-        .arg("lal")
+        .args(&vec!["--user", "lal"])
         .arg(if interactive {
             "-it"
         } else {

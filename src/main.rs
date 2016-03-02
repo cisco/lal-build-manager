@@ -1,6 +1,8 @@
+#[macro_use]
 extern crate clap;
 extern crate curl;
 extern crate rustc_serialize;
+extern crate regex;
 
 use clap::{Arg, App, SubCommand};
 
@@ -13,7 +15,8 @@ pub mod init;
 
 fn main() {
     let args = App::new("lal")
-                   .version("1.2.3")
+                   .version(crate_version!())
+                   .setting(clap::AppSettings::GlobalVersion)
                    .about("lal dependency manager")
                    .arg(Arg::with_name("verbose")
                             .short("v")
