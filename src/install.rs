@@ -105,21 +105,36 @@ fn get_dependency_url_latest(name: &str) -> io::Result<Component> {
 }
 
 fn get_dependency_url(name: &str, version: u32) -> io::Result<String> {
+    use std::io::{Error, ErrorKind};
 
     let globalroot = "http://builds.lal.cisco.com/globalroot/ARTIFACTS";
     let target = "ncp.amd64"; // TODO: from config::Config
 
-    let mut yaml_url = [globalroot, name, target, "global", "default"].join("/");
-    yaml_url.push_str("/");
-    yaml_url.push_str(&version.to_string());
-    yaml_url.push_str(".yaml");
-    // println!("yaml url is {}", yaml_url);
-    let blob = try!(get_blob(&yaml_url));
-    // println!("got blob url {}", blob);
-    let mut tar_url = [globalroot, ".blobs"].join("/");
-    tar_url.push_str("/");
-    tar_url.push_str(&blob);
-    Ok(tar_url)
+    let mut cloud_yurl = [globalroot, name, target, "global", "cloud"].join("/");
+    cloud_yurl.push_str("/");
+    cloud_yurl.push_str(&version.to_string());
+    cloud_yurl.push_str(".yaml");
+
+    let mut def_yurl = [globalroot, name, target, "global", "default"].join("/");
+    def_yurl.push_str("/");
+    def_yurl.push_str(&version.to_string());
+    def_yurl.push_str(".yaml");
+
+    if let Ok(blob) = get_blob(&cloud_yurl) {
+        println!("Found corresponding blob in cloud");
+        let mut tar_url = [globalroot, ".blobs"].join("/");
+        tar_url.push_str("/");
+        tar_url.push_str(&blob);
+        Ok(tar_url)
+    } else if let Ok(blob) = get_blob(&def_yurl) {
+        println!("Found corresponding blob in default");
+        let mut tar_url = [globalroot, ".blobs"].join("/");
+        tar_url.push_str("/");
+        tar_url.push_str(&blob);
+        Ok(tar_url)
+    } else {
+        Err(Error::new(ErrorKind::Other, "failed to find blob"))
+    }
 }
 
 fn get_tarball_uri(name: &str, version: Option<u32>) -> io::Result<Component> {
