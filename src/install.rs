@@ -181,6 +181,7 @@ pub fn install(xs: Vec<&str>, save: bool, savedev: bool) {
             let _ = fetch_component(&v, None);
         }
     }
+    // TODO: use returns of fetch_component to implement save and savedev.
 }
 
 fn download_to_path(uri: &str, save: &str) -> io::Result<bool> {
@@ -203,6 +204,8 @@ fn download_to_path(uri: &str, save: &str) -> io::Result<bool> {
 
 pub fn install_all(dev: bool) {
     use init;
+    use std::thread;
+    use std::sync::mpsc;
 
     println!("Installing all dependencies{}",
              if dev {
@@ -211,17 +214,27 @@ pub fn install_all(dev: bool) {
                  ""
              });
     let manifest = init::read_manifest().unwrap();
-    // println!("dependencies: {:?}", manifest.dependencies);
-    for (k, v) in &manifest.dependencies {
-        println!("Installing {} {}", k, v);
-        let _ = fetch_component(&k, Some(*v));
-    }
 
+    // create the joined hashmap of dependencies and possibly devdependencies
+    let mut deps = manifest.dependencies.clone();
     if dev {
-        // println!("devDependencies: {:?}", manifest.devDependencies);
         for (k, v) in &manifest.devDependencies {
-            println!("Installing {} {}", k, v);
-            let _ = fetch_component(&k, Some(*v));
+            deps.insert(k.clone(), v.clone());
         }
+    }
+    let len = deps.len();
+
+    let (tx, rx) = mpsc::channel();
+    for (k, v) in deps {
+        println!("Installing {} {}", k, v);
+        let tx = tx.clone();
+        thread::spawn(move || {
+            let _ = fetch_component(&k, Some(v));
+            tx.send(()).unwrap();
+        });
+    }
+    // join
+    for _ in 0..len {
+        rx.recv().unwrap();
     }
 }
