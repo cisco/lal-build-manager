@@ -166,7 +166,8 @@ fn fetch_component(name: &str, version: Option<u32>) -> io::Result<Component> {
         let mut archive = Archive::new(decompressed);
 
         let pwd = env::current_dir().unwrap();
-        let extract_path = Path::new(&pwd).join("INPUT").join(&name);
+        let target = "ncp.amd64"; // TODO: from lalrc
+        let extract_path = Path::new(&pwd).join("INPUT").join(&name).join(&target);
         try!(fs::create_dir_all(&extract_path));
         try!(archive.unpack(&extract_path));
         // TODO: move tarball in PWD to cachedir from lalrc
