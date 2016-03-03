@@ -280,3 +280,33 @@ pub fn install_all(dev: bool) {
         rx.recv().unwrap();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::env;
+    use std::path::{Path, PathBuf};
+    use std::fs;
+    use install::install;
+
+    fn component_dir(name: &str) -> PathBuf {
+        Path::new(&env::current_dir().unwrap()).join("INPUT").join(&name).join("ncp.amd64")
+    }
+
+    #[test]
+    fn blank_state() {
+        let input = Path::new(&env::current_dir().unwrap()).join("INPUT");
+        if input.is_dir() {
+            fs::remove_dir_all(&input);
+        }
+        assert_eq!(input.is_dir(), false);
+    }
+
+    #[test]
+    fn install_basic() {
+        install(vec!["gtest"], false, false);
+        assert_eq!(component_dir("gtest").is_dir(), true);
+        assert_eq!(component_dir("libyaml").is_dir(), false);
+        install(vec!["libyaml"], false, false);
+        assert_eq!(component_dir("libyaml").is_dir(), true);
+    }
+}
