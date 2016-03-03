@@ -3,6 +3,8 @@ extern crate clap;
 extern crate curl;
 extern crate rustc_serialize;
 extern crate regex;
+extern crate tar;
+extern crate flate2;
 
 use clap::{Arg, App, SubCommand};
 

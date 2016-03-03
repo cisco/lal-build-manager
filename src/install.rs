@@ -148,14 +148,29 @@ fn get_tarball_uri(name: &str, version: Option<u32>) -> io::Result<Component> {
 }
 
 fn fetch_component(name: &str, version: Option<u32>) -> io::Result<Component> {
+    use tar::Archive;
+    use flate2::read::GzDecoder;
+    use std::fs;
+    use std::path::Path;
+    use std::env;
+
     let component = try!(get_tarball_uri(name, version));
     // println!("fetching dependency {} at {}", component.version.to_string(), component.tarball);
 
-    let mut tarname = name.to_string();
-    tarname.push_str(".tar.gz");
-    let _ = download_to_path(&component.tarball, &tarname);
+    let tarname = ["./", name, ".tar"].concat();
 
-    //
+    let dl = download_to_path(&component.tarball, &tarname);
+    if dl.is_ok() {
+        let data = try!(fs::File::open(&tarname));
+        let decompressed = try!(GzDecoder::new(data));
+        let mut archive = Archive::new(decompressed);
+
+        let pwd = env::current_dir().unwrap();
+        let extract_path = Path::new(&pwd).join("INPUT").join(&name);
+        try!(fs::create_dir_all(&extract_path));
+        try!(archive.unpack(&extract_path));
+        // TODO: move tarball in PWD to cachedir from lalrc
+    }
 
     Ok(component)
 }
@@ -250,12 +265,15 @@ pub fn install_all(dev: bool) {
     }
     let len = deps.len();
 
+    // install them in parallel
     let (tx, rx) = mpsc::channel();
     for (k, v) in deps {
         println!("Installing {} {}", k, v);
         let tx = tx.clone();
         thread::spawn(move || {
-            let _ = fetch_component(&k, Some(v));
+            let _ = fetch_component(&k, Some(v)).map_err(|e| {
+                println!("Failed to install {} ({})", &v, e);
+            });
             tx.send(()).unwrap();
         });
     }
