@@ -44,7 +44,7 @@ pub fn current_config() -> io::Result<Config> {
     return Ok(json::decode(&cfg_str).unwrap());
 }
 
-pub fn configure() -> io::Result<Config> {
+pub fn configure(term_prompt: bool) -> io::Result<Config> {
     let mut cfg = Config {
         registry: "http://localhost".to_string(),
         cache: "~/.lal/cache".to_string(),
@@ -55,13 +55,17 @@ pub fn configure() -> io::Result<Config> {
     let home = env::home_dir().unwrap(); // crash if no $HOME
     let cfg_path = Path::new(&home).join(".lal/lalrc");
     let laldir = Path::new(&home).join(".lal");
-    try!(fs::create_dir(&laldir));
+    if !laldir.is_dir() {
+        try!(fs::create_dir(&laldir));
+    }
 
-    // Prompt for values:
-    cfg.registry = prompt("registry", cfg.registry);
-    cfg.cache = prompt("cache", cfg.cache);
-    cfg.target = prompt("target", cfg.target);
-    cfg.container = prompt("container", cfg.container);
+    if term_prompt {
+        // Prompt for values:
+        cfg.registry = prompt("registry", cfg.registry);
+        cfg.cache = prompt("cache", cfg.cache);
+        cfg.target = prompt("target", cfg.target);
+        cfg.container = prompt("container", cfg.container);
+    }
 
     // Encode
     let encoded = json::as_pretty_json(&cfg);
@@ -74,4 +78,32 @@ pub fn configure() -> io::Result<Config> {
     // TODO: check that docker is present and warn if not
     // TODO: check that docker images contains cfg.container and provide info if not
     return Ok(cfg.clone());
+}
+
+#[cfg(test)]
+mod tests {
+    use std::env;
+    use std::path::{Path, PathBuf};
+    use std::fs;
+    use configure::configure;
+
+    fn lal_dir() -> PathBuf {
+        let home = env::home_dir().unwrap();
+        Path::new(&home).join(".lal/")
+    }
+    #[test]
+    fn hide_lalrc() {
+        let ldir = lal_dir();
+        if ldir.is_dir() {
+            fs::remove_dir_all(&ldir);
+        }
+        assert_eq!(ldir.is_dir(), false);
+    }
+
+    #[test]
+    fn configure_without_lalrc() {
+        let r = configure(false);
+        assert_eq!(r.is_ok(), true);
+    }
+
 }

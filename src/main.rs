@@ -51,7 +51,7 @@ fn main() {
                                    .about("runs build script")
                                    .arg(Arg::with_name("name").help("build a specific component")))
                    .subcommand(SubCommand::with_name("stash")
-                                   .about("stashes current OUTPUT in cache")
+                                   .about("stashes current build OUTPUT in cache for later reuse")
                                    .arg(Arg::with_name("name")
                                             .required(true)
                                             .help("name used for current build")))
@@ -71,7 +71,9 @@ fn main() {
 
     // Configuration of lal first.
     if let Some(_) = args.subcommand_matches("configure") {
-        let _ = configure::configure();
+        let _ = configure::configure(true).map_err(|e| {
+            println!("Failed to configure {}", e);
+        });
         return;
     }
     // Assume config exists before allowing other actions
@@ -85,6 +87,7 @@ fn main() {
             return install::install_all(a.is_present("dev"));
         }
     }
+
     if let Some(_) = args.subcommand_matches("build") {
         return build::build(&config);
     }
