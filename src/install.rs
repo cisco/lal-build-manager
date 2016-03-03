@@ -78,30 +78,24 @@ fn get_dependency_url_latest(name: &str) -> io::Result<Component> {
     let mut default_url = [globalroot, name, target, "global", "default", "latest"].join("/");
     default_url.push_str(".yaml");
 
-    if let Some(v) = get_latest(&cloud_url) {
-        println!("Found latest version from cloud as {}", v);
-        match get_dependency_url(name, v) {
-            Ok(uri) => {
-                Ok(Component {
-                    tarball: uri,
-                    version: v,
-                    name: name.to_string(),
-                })
+    let cloud_version = get_latest(&cloud_url);
+    let default_version = get_latest(&default_url);
+
+    // Checking cloud yaml first, then default
+    if cloud_version.is_some() || default_version.is_some() {
+        let v = if cloud_version.is_some() {
+            cloud_version.unwrap()
+        } else {
+            default_version.unwrap()
+        };
+        println!("Found latest version as {}", v);
+        get_dependency_url(name, v).map(|uri| {
+            Component {
+                tarball: uri,
+                version: v,
+                name: name.to_string(),
             }
-            Err(e) => Err(e),
-        }
-    } else if let Some(v) = get_latest(&default_url) {
-        println!("Found latest version from default as {}", v);
-        match get_dependency_url(name, v) {
-            Ok(uri) => {
-                Ok(Component {
-                    tarball: uri,
-                    version: v,
-                    name: name.to_string(),
-                })
-            }
-            Err(e) => Err(e),
-        }
+        })
     } else {
         Err(Error::new(ErrorKind::Other, "failed to find component"))
     }
@@ -123,16 +117,15 @@ fn get_dependency_url(name: &str, version: u32) -> io::Result<String> {
     def_yurl.push_str(&version.to_string());
     def_yurl.push_str(".yaml");
 
+    let mut tar_url = [globalroot, ".blobs"].join("/");
+    tar_url.push_str("/");
+
     if let Ok(blob) = get_blob(&cloud_yurl) {
         println!("Found corresponding blob in cloud");
-        let mut tar_url = [globalroot, ".blobs"].join("/");
-        tar_url.push_str("/");
         tar_url.push_str(&blob);
         Ok(tar_url)
     } else if let Ok(blob) = get_blob(&def_yurl) {
         println!("Found corresponding blob in default");
-        let mut tar_url = [globalroot, ".blobs"].join("/");
-        tar_url.push_str("/");
         tar_url.push_str(&blob);
         Ok(tar_url)
     } else {
@@ -142,21 +135,15 @@ fn get_dependency_url(name: &str, version: u32) -> io::Result<String> {
 
 fn get_tarball_uri(name: &str, version: Option<u32>) -> io::Result<Component> {
     if let Some(v) = version {
-        match get_dependency_url(name, v) {
-            Ok(uri) => {
-                Ok(Component {
-                    tarball: uri,
-                    version: v,
-                    name: name.to_string(),
-                })
+        get_dependency_url(name, v).map(|uri| {
+            Component {
+                tarball: uri,
+                version: v,
+                name: name.to_string(),
             }
-            Err(s) => Err(s),
-        }
+        })
     } else {
-        match get_dependency_url_latest(name) {
-            Ok(res) => Ok(res),
-            Err(s) => Err(s),
-        }
+        get_dependency_url_latest(name)
     }
 }
 
@@ -167,6 +154,9 @@ fn fetch_component(name: &str, version: Option<u32>) -> io::Result<Component> {
     let mut tarname = name.to_string();
     tarname.push_str(".tar.gz");
     let _ = download_to_path(&component.tarball, &tarname);
+
+    //
+
     Ok(component)
 }
 
@@ -183,8 +173,7 @@ pub fn install(xs: Vec<&str>, save: bool, savedev: bool) {
                     Ok(c) => installed.push(c),
                     Err(e) => println!("Failed to install {} ({})", pair[0], e),
                 }
-            }
-            else {
+            } else {
                 println!("Ignoring {} due to invalid version number", pair[0]);
             }
         } else {
@@ -199,13 +188,16 @@ pub fn install(xs: Vec<&str>, save: bool, savedev: bool) {
     if save || savedev {
         let mut mf = init::read_manifest().unwrap();
         // find reference to correct list
-        let mut hmap = if save { mf.dependencies.clone() } else { mf.devDependencies.clone() };
+        let mut hmap = if save {
+            mf.dependencies.clone()
+        } else {
+            mf.devDependencies.clone()
+        };
         for c in &installed {
-            //println!("Successfully installed {} at version {}", &c.name, c.version);
+            // println!("Successfully installed {} at version {}", &c.name, c.version);
             if hmap.contains_key(&c.name) {
                 *hmap.get_mut(&c.name).unwrap() = c.version;
-            }
-            else {
+            } else {
                 hmap.insert(c.name.clone(), c.version);
             }
         }
