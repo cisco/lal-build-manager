@@ -157,6 +157,7 @@ fn download_to_path(uri: &str, save: &str) -> io::Result<()> {
         let path = Path::new(save);
         let mut f = try!(File::create(&path));
         try!(f.write_all(r));
+        return Ok(());
     }
     Err(Error::new(ErrorKind::Other, "failed to download file"))
 }
