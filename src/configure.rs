@@ -1,7 +1,7 @@
 use std::io;
 use rustc_serialize::json;
 use std::path::Path;
-use std::fs::File;
+use std::fs;
 use std::env;
 use std::io::prelude::*;
 
@@ -38,7 +38,7 @@ pub fn current_config() -> io::Result<Config> {
         panic!("You need to run `lal configure` to create `lalrc` \
             before using other commands.");
     }
-    let mut f = try!(File::open(&cfg_path));
+    let mut f = try!(fs::File::open(&cfg_path));
     let mut cfg_str = String::new();
     try!(f.read_to_string(&mut cfg_str));
     return Ok(json::decode(&cfg_str).unwrap());
@@ -54,6 +54,8 @@ pub fn configure() -> io::Result<Config> {
 
     let home = env::home_dir().unwrap(); // crash if no $HOME
     let cfg_path = Path::new(&home).join(".lal/lalrc");
+    let laldir = Path::new(&home).join(".lal");
+    try!(fs::create_dir(&laldir));
 
     // Prompt for values:
     cfg.registry = prompt("registry", cfg.registry);
@@ -64,7 +66,7 @@ pub fn configure() -> io::Result<Config> {
     // Encode
     let encoded = json::as_pretty_json(&cfg);
 
-    let mut f = try!(File::create(&cfg_path));
+    let mut f = try!(fs::File::create(&cfg_path));
     try!(write!(f, "{}\n", encoded));
 
     println!("Wrote config {}: \n{}", cfg_path.display(), encoded);
