@@ -1,5 +1,6 @@
 use std::io;
 use regex::Regex;
+use std::io::{Error, ErrorKind};
 
 struct Component {
     name: String,
@@ -37,9 +38,8 @@ fn get_latest(uri: &str) -> Option<u32> {
     None
 }
 
-fn get_blob(uri: &str) -> io::Result<String> {
+fn get_blob(uri: &str) -> Option<String> {
     use curl::http;
-    use std::io::{Error, ErrorKind};
 
     println!("GET {}", uri);
     let resp = http::handle().get(uri).exec().unwrap();
@@ -60,15 +60,13 @@ fn get_blob(uri: &str) -> io::Result<String> {
             for i in 0..16 {
                 splits.push(&blob[4 * i..4 * (i + 1)]);
             }
-            return Ok(splits.join("/"));
+            return Some(splits.join("/"));
         }
     }
-    return Err(Error::new(ErrorKind::Other, "no yaml found"));
+    None
 }
 
 fn get_dependency_url_latest(name: &str) -> io::Result<Component> {
-    use std::io::{Error, ErrorKind};
-
     let globalroot = "http://builds.lal.cisco.com/globalroot/ARTIFACTS";
     let target = "ncp.amd64"; // TODO: from config::Config
 
@@ -102,8 +100,6 @@ fn get_dependency_url_latest(name: &str) -> io::Result<Component> {
 }
 
 fn get_dependency_url(name: &str, version: u32) -> io::Result<String> {
-    use std::io::{Error, ErrorKind};
-
     let globalroot = "http://builds.lal.cisco.com/globalroot/ARTIFACTS";
     let target = "ncp.amd64"; // TODO: from config::Config
 
@@ -120,11 +116,11 @@ fn get_dependency_url(name: &str, version: u32) -> io::Result<String> {
     let mut tar_url = [globalroot, ".blobs"].join("/");
     tar_url.push_str("/");
 
-    if let Ok(blob) = get_blob(&cloud_yurl) {
+    if let Some(blob) = get_blob(&cloud_yurl) {
         println!("Found corresponding blob in cloud");
         tar_url.push_str(&blob);
         Ok(tar_url)
-    } else if let Ok(blob) = get_blob(&def_yurl) {
+    } else if let Some(blob) = get_blob(&def_yurl) {
         println!("Found corresponding blob in default");
         tar_url.push_str(&blob);
         Ok(tar_url)
@@ -145,6 +141,24 @@ fn get_tarball_uri(name: &str, version: Option<u32>) -> io::Result<Component> {
     } else {
         get_dependency_url_latest(name)
     }
+}
+
+fn download_to_path(uri: &str, save: &str) -> io::Result<()> {
+    use std::fs::File;
+    use std::path::Path;
+    use curl::http;
+    use std::io::prelude::*;
+
+    println!("GET {}", uri);
+    let resp = http::handle().get(uri).exec().unwrap();
+
+    if resp.get_code() == 200 {
+        let r = resp.get_body();
+        let path = Path::new(save);
+        let mut f = try!(File::create(&path));
+        try!(f.write_all(r));
+    }
+    Err(Error::new(ErrorKind::Other, "failed to download file"))
 }
 
 fn fetch_component(name: &str, version: Option<u32>) -> io::Result<Component> {
@@ -224,24 +238,6 @@ pub fn install(xs: Vec<&str>, save: bool, savedev: bool) {
         }
         let _ = init::save_manifest(&mf);
     }
-}
-
-fn download_to_path(uri: &str, save: &str) -> io::Result<bool> {
-    use std::fs::File;
-    use std::path::Path;
-    use curl::http;
-    use std::io::prelude::*;
-
-    println!("GET {}", uri);
-    let resp = http::handle().get(uri).exec().unwrap();
-
-    if resp.get_code() == 200 {
-        let r = resp.get_body();
-        let path = Path::new(save);
-        let mut f = try!(File::create(&path));
-        try!(f.write_all(r));
-    }
-    Ok(resp.get_code() == 200)
 }
 
 pub fn install_all(dev: bool) {
