@@ -29,6 +29,17 @@ pub fn read_manifest() -> io::Result<Manifest> {
     return Ok(json::decode(&manifest_str).unwrap());
 }
 
+pub fn save_manifest(m: &Manifest) -> io::Result<()> {
+    let pwd = env::current_dir().unwrap();
+    let encoded = json::as_pretty_json(&m);
+
+    let manifest_path = Path::new(&pwd).join("manifest.json");
+    let mut f = try!(File::create(&manifest_path));
+    try!(write!(f, "{}\n", encoded));
+    println!("Wrote manifest {}: \n{}", manifest_path.display(), encoded);
+    Ok(())
+}
+
 pub fn init(force: bool) -> io::Result<Manifest> {
     let pwd = env::current_dir().unwrap();
     let last_comp = pwd.components().last().unwrap(); // std::path::Component
@@ -53,5 +64,5 @@ pub fn init(force: bool) -> io::Result<Manifest> {
     try!(write!(f, "{}\n", encoded));
 
     println!("Wrote manifest {}: \n{}", manifest_path.display(), encoded);
-    return Ok(manifest.clone());
+    Ok(manifest.clone())
 }

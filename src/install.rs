@@ -2,6 +2,7 @@ use std::io;
 use regex::Regex;
 
 struct Component {
+    name: String,
     version: u32,
     tarball: String, // TODO: Option<Path> for cache path
 }
@@ -84,6 +85,7 @@ fn get_dependency_url_latest(name: &str) -> io::Result<Component> {
                 Ok(Component {
                     tarball: uri,
                     version: v,
+                    name: name.to_string(),
                 })
             }
             Err(e) => Err(e),
@@ -95,6 +97,7 @@ fn get_dependency_url_latest(name: &str) -> io::Result<Component> {
                 Ok(Component {
                     tarball: uri,
                     version: v,
+                    name: name.to_string(),
                 })
             }
             Err(e) => Err(e),
@@ -144,6 +147,7 @@ fn get_tarball_uri(name: &str, version: Option<u32>) -> io::Result<Component> {
                 Ok(Component {
                     tarball: uri,
                     version: v,
+                    name: name.to_string(),
                 })
             }
             Err(s) => Err(s),
@@ -167,21 +171,51 @@ fn fetch_component(name: &str, version: Option<u32>) -> io::Result<Component> {
 }
 
 pub fn install(xs: Vec<&str>, save: bool, savedev: bool) {
+    use init;
     println!("Install specific deps: {:?} {} {}", xs, save, savedev);
+
+    let mut installed = Vec::with_capacity(xs.len());
     for v in &xs {
         if v.contains("=") {
             let pair: Vec<&str> = v.split("=").collect();
             if let Ok(n) = pair[1].parse::<u32>() {
-                let _ = fetch_component(pair[0], Some(n));
+                match fetch_component(pair[0], Some(n)) {
+                    Ok(c) => installed.push(c),
+                    Err(e) => println!("Failed to install {} ({})", pair[0], e),
+                }
             }
             else {
                 println!("Ignoring {} due to invalid version number", pair[0]);
             }
         } else {
-            let _ = fetch_component(&v, None);
+            match fetch_component(&v, None) {
+                Ok(c) => installed.push(c),
+                Err(e) => println!("Failed to install {} ({})", &v, e),
+            }
         }
     }
-    // TODO: use returns of fetch_component to implement save and savedev.
+
+    // Update manifest if saving in any way
+    if save || savedev {
+        let mut mf = init::read_manifest().unwrap();
+        // find reference to correct list
+        let mut hmap = if save { mf.dependencies.clone() } else { mf.devDependencies.clone() };
+        for c in &installed {
+            //println!("Successfully installed {} at version {}", &c.name, c.version);
+            if hmap.contains_key(&c.name) {
+                *hmap.get_mut(&c.name).unwrap() = c.version;
+            }
+            else {
+                hmap.insert(c.name.clone(), c.version);
+            }
+        }
+        if save {
+            mf.dependencies = hmap;
+        } else {
+            mf.devDependencies = hmap;
+        }
+        let _ = init::save_manifest(&mf);
+    }
 }
 
 fn download_to_path(uri: &str, save: &str) -> io::Result<bool> {
