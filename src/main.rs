@@ -19,6 +19,7 @@ pub mod shell;
 pub mod init;
 
 fn main() {
+    use std::process;
     env_logger::init().unwrap();
     let args = App::new("lal")
                    .version(crate_version!())
@@ -104,8 +105,8 @@ fn main() {
         return shell::shell(&config);
     }
     if let Some(_) = args.subcommand_matches("verify") {
-        let _ = verify::verify();
-        return;
+        let res = verify::verify().map_err(|e| error!("{}", e));
+        process::exit(if res.is_ok() { 0 } else { 1 });
     }
     if let Some(a) = args.subcommand_matches("init") {
         let _ = init::init(a.is_present("force"));

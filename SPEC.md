@@ -163,8 +163,7 @@ Stashes the current `OUTPUT` folder to in `~/.lal/cache/stash/${target}/${compon
 #### lal verify
 Verifies that:
 
-- `manifest.json` exists in `$PWD`
-- `manifest.json` is valid json.
+- `manifest.json` exists in `$PWD` and is valid JSON
 - dependencies in `INPUT` match `manifest.json`.
 - the dependency tree is flat.
 - `INPUT` contains only global dependencies.

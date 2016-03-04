@@ -216,6 +216,7 @@ pub fn install(xs: Vec<&str>, save: bool, savedev: bool) {
                     Err(e) => warn!("Failed to install {} ({})", pair[0], e),
                 }
             } else {
+                // TODO: this should try to install from stash!
                 warn!("Ignoring {} due to invalid version number", pair[0]);
             }
         } else {
