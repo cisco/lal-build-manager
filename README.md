@@ -32,11 +32,10 @@ docker> ./bcm shared_tests -t
 ```
 
 Updating dependencies:
-(This example presumes ciscossl has independently been updated to version 6 and is ready to be bumped.)
+(This example presumes ciscossl has independently been updated to version 6 and is ready to be used elsewhere.)
 
 ```sh
 lal install ciscossl 6 --save
-lal verify # checks the tree for consistency
 lal build # check it builds with new version
 git commit manifest.json -m "updated ciscossl to version 6"
 git push
@@ -75,7 +74,6 @@ git ci -m "init newcomponent"
 lal install gtest --save-dev
 lal install libwebsockets --save
 # create source and iterate until `lal build` and `lal test` succeeds
-lal version --bump # new version
 git commit -a -m "inital working version"
 git push -u origin master
 ```
