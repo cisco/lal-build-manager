@@ -39,3 +39,22 @@ pub fn shell(cfg: &configure::Config) {
     println!("Entering docker container");
     docker_run(&cfg, vec!["/bin/bash"], true);
 }
+
+
+#[cfg(test)]
+mod tests {
+    use shell;
+    use configure;
+
+    #[test]
+    fn can_run_commands() {
+        let cfg = configure::current_config().unwrap();
+        shell::docker_run(&cfg, vec!["echo", "echo from docker"], false);
+    }
+    #[test]
+    fn can_touch_mounted_files() {
+        let cfg = configure::current_config().unwrap();
+        shell::docker_run(&cfg, vec!["touch", "BUILD"], false);
+    }
+
+}

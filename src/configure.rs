@@ -91,7 +91,11 @@ mod tests {
         let home = env::home_dir().unwrap();
         Path::new(&home).join(".lal/")
     }
+    // These tests screw with the other tests which are also reading lalrc
+    // Can run them from scratch with cargo test -- --ignored
+
     #[test]
+    #[ignore]
     fn hide_lalrc() {
         let ldir = lal_dir();
         if ldir.is_dir() {
@@ -101,6 +105,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn configure_without_lalrc() {
         let r = configure::configure(false);
         assert_eq!(r.is_ok(), true);
