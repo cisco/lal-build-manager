@@ -54,7 +54,7 @@ mod tests {
     #[test]
     fn can_touch_mounted_files() {
         let cfg = configure::current_config().unwrap();
-        shell::docker_run(&cfg, vec!["touch", "BUILD"], false);
+        shell::docker_run(&cfg, vec!["touch", "README.md"], false);
     }
 
 }
