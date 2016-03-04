@@ -11,7 +11,7 @@ struct Component {
 fn get_latest(uri: &str) -> Option<u32> {
     use curl::http;
 
-    println!("GET {}", uri);
+    debug!("GET {}", uri);
     let resp = http::handle().get(uri).exec().unwrap();
 
     if resp.get_code() == 200 {
@@ -41,7 +41,7 @@ fn get_latest(uri: &str) -> Option<u32> {
 fn get_blob(uri: &str) -> Option<String> {
     use curl::http;
 
-    println!("GET {}", uri);
+    debug!("GET {}", uri);
     let resp = http::handle().get(uri).exec().unwrap();
 
     if resp.get_code() == 200 {
@@ -117,11 +117,11 @@ fn get_dependency_url(name: &str, version: u32) -> io::Result<String> {
     tar_url.push_str("/");
 
     if let Some(blob) = get_blob(&cloud_yurl) {
-        println!("Found corresponding blob in cloud");
+        debug!("Found corresponding blob in cloud");
         tar_url.push_str(&blob);
         Ok(tar_url)
     } else if let Some(blob) = get_blob(&def_yurl) {
-        println!("Found corresponding blob in default");
+        debug!("Found corresponding blob in default");
         tar_url.push_str(&blob);
         Ok(tar_url)
     } else {
@@ -149,7 +149,7 @@ fn download_to_path(uri: &str, save: &str) -> io::Result<()> {
     use curl::http;
     use std::io::prelude::*;
 
-    println!("GET {}", uri);
+    debug!("GET {}", uri);
     let resp = http::handle().get(uri).exec().unwrap();
 
     if resp.get_code() == 200 {
@@ -170,12 +170,11 @@ fn fetch_component(name: &str, version: Option<u32>) -> io::Result<Component> {
     use std::env;
 
     let component = try!(get_tarball_uri(name, version));
-    // println!("fetching dependency {} at {}", component.version.to_string(), component.tarball);
-
     let tarname = ["./", name, ".tar"].concat();
 
     let dl = download_to_path(&component.tarball, &tarname);
     if dl.is_ok() {
+        debug!("Unpacking tarball {}", tarname);
         let data = try!(fs::File::open(&tarname));
         let decompressed = try!(GzDecoder::new(data));
         let mut archive = Archive::new(decompressed);
@@ -191,6 +190,18 @@ fn fetch_component(name: &str, version: Option<u32>) -> io::Result<Component> {
     Ok(component)
 }
 
+fn clean_input() {
+    use std::path::Path;
+    use std::env;
+    use std::fs;
+
+
+    let input = Path::new(&env::current_dir().unwrap()).join("INPUT");
+    if input.is_dir() {
+        let _ = fs::remove_dir_all(&input).unwrap();
+    }
+}
+
 pub fn install(xs: Vec<&str>, save: bool, savedev: bool) {
     use init;
     println!("Install specific deps: {:?} {} {}", xs, save, savedev);
@@ -202,15 +213,15 @@ pub fn install(xs: Vec<&str>, save: bool, savedev: bool) {
             if let Ok(n) = pair[1].parse::<u32>() {
                 match fetch_component(pair[0], Some(n)) {
                     Ok(c) => installed.push(c),
-                    Err(e) => println!("Failed to install {} ({})", pair[0], e),
+                    Err(e) => warn!("Failed to install {} ({})", pair[0], e),
                 }
             } else {
-                println!("Ignoring {} due to invalid version number", pair[0]);
+                warn!("Ignoring {} due to invalid version number", pair[0]);
             }
         } else {
             match fetch_component(&v, None) {
                 Ok(c) => installed.push(c),
-                Err(e) => println!("Failed to install {} ({})", &v, e),
+                Err(e) => warn!("Failed to install {} ({})", &v, e),
             }
         }
     }
@@ -225,7 +236,9 @@ pub fn install(xs: Vec<&str>, save: bool, savedev: bool) {
             mf.devDependencies.clone()
         };
         for c in &installed {
-            // println!("Successfully installed {} at version {}", &c.name, c.version);
+            debug!("Successfully installed {} at version {}",
+                   &c.name,
+                   c.version);
             if hmap.contains_key(&c.name) {
                 *hmap.get_mut(&c.name).unwrap() = c.version;
             } else {
@@ -246,13 +259,14 @@ pub fn install_all(dev: bool) {
     use std::thread;
     use std::sync::mpsc;
 
-    println!("Installing all dependencies{}",
-             if dev {
-                 " and devDependencies"
-             } else {
-                 ""
-             });
+    info!("Installing all dependencies{}",
+          if dev {
+              " and devDependencies"
+          } else {
+              ""
+          });
     let manifest = init::read_manifest().unwrap();
+    clean_input();
 
     // create the joined hashmap of dependencies and possibly devdependencies
     let mut deps = manifest.dependencies.clone();
@@ -266,7 +280,7 @@ pub fn install_all(dev: bool) {
     // install them in parallel
     let (tx, rx) = mpsc::channel();
     for (k, v) in deps {
-        println!("Installing {} {}", k, v);
+        info!("Installing {} {}", k, v);
         let tx = tx.clone();
         thread::spawn(move || {
             let _ = fetch_component(&k, Some(v)).map_err(|e| {
@@ -296,7 +310,7 @@ mod tests {
     fn blank_state() {
         let input = Path::new(&env::current_dir().unwrap()).join("INPUT");
         if input.is_dir() {
-            fs::remove_dir_all(&input);
+            fs::remove_dir_all(&input).unwrap();
         }
         assert_eq!(input.is_dir(), false);
     }

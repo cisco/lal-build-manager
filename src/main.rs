@@ -5,6 +5,9 @@ extern crate rustc_serialize;
 extern crate regex;
 extern crate tar;
 extern crate flate2;
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 
 use clap::{Arg, App, SubCommand};
 
@@ -16,6 +19,7 @@ pub mod shell;
 pub mod init;
 
 fn main() {
+    env_logger::init().unwrap();
     let args = App::new("lal")
                    .version(crate_version!())
                    .setting(clap::AppSettings::GlobalVersion)

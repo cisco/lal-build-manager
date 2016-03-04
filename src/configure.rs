@@ -95,7 +95,7 @@ mod tests {
     fn hide_lalrc() {
         let ldir = lal_dir();
         if ldir.is_dir() {
-            fs::remove_dir_all(&ldir);
+            fs::remove_dir_all(&ldir).unwrap();
         }
         assert_eq!(ldir.is_dir(), false);
     }
