@@ -85,7 +85,7 @@ mod tests {
     use std::env;
     use std::path::{Path, PathBuf};
     use std::fs;
-    use configure::configure;
+    use configure;
 
     fn lal_dir() -> PathBuf {
         let home = env::home_dir().unwrap();
@@ -102,8 +102,10 @@ mod tests {
 
     #[test]
     fn configure_without_lalrc() {
-        let r = configure(false);
+        let r = configure::configure(false);
         assert_eq!(r.is_ok(), true);
+        let cfg = configure::current_config();
+        assert_eq!(cfg.is_ok(), true);
     }
 
 }
