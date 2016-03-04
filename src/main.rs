@@ -60,7 +60,12 @@ fn main() {
                                             .required(true)
                                             .help("name used for current build")))
                    .subcommand(SubCommand::with_name("verify").about("runs verify script"))
-                   .subcommand(SubCommand::with_name("configure").about("configures lal"))
+                   .subcommand(SubCommand::with_name("configure")
+                                   .about("configures lal")
+                                   .arg(Arg::with_name("yes")
+                                            .short("y")
+                                            .long("yes")
+                                            .help("Assume default without prompting")))
                    .subcommand(SubCommand::with_name("status")
                                    .about("Prints current dependencies and their status"))
                    .subcommand(SubCommand::with_name("init")
@@ -74,8 +79,8 @@ fn main() {
                    .get_matches();
 
     // Configuration of lal first.
-    if let Some(_) = args.subcommand_matches("configure") {
-        let _ = configure::configure(true).map_err(|e| {
+    if let Some(a) = args.subcommand_matches("configure") {
+        let _ = configure::configure(!a.is_present("yes")).map_err(|e| {
             println!("Failed to configure {}", e);
         });
         return;
@@ -99,7 +104,8 @@ fn main() {
         return shell::shell(&config);
     }
     if let Some(_) = args.subcommand_matches("verify") {
-        return verify::verify();
+        let _ = verify::verify();
+        return;
     }
     if let Some(a) = args.subcommand_matches("init") {
         let _ = init::init(a.is_present("force"));

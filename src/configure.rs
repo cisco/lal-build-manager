@@ -92,7 +92,7 @@ mod tests {
         Path::new(&home).join(".lal/")
     }
     // These tests screw with the other tests which are also reading lalrc
-    // Can run them from scratch with cargo test -- --ignored
+    // Can run them from scratch with `cargo test -- --ignored`
 
     #[test]
     #[ignore]
