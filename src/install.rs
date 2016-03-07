@@ -172,7 +172,7 @@ fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> io::Result<
     let component = try!(get_tarball_uri(name, cfg.target.as_ref(), version));
     let tarname = ["./", name, ".tar"].concat();
 
-    // always just download for now since we
+    // always just download for now - TODO: eventually check cache
     let dl = download_to_path(&component.tarball, &tarname);
     if dl.is_ok() {
         debug!("Unpacking tarball {}", tarname);
@@ -184,10 +184,11 @@ fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> io::Result<
         let extract_path = Path::new(&pwd).join("INPUT").join(&name).join(&cfg.target);
         try!(fs::create_dir_all(&extract_path));
         try!(archive.unpack(&extract_path));
-        // TODO: move tarball in PWD to cachedir from lalrc
+
+        // Move tarball into cfg.cache
         let r = cache::store_tarball(&cfg, name, component.version);
         if let Err(e) = r {
-            // can wrap this in CliError later
+            // TODO: wrap this in CliError later
             error!("Failed to cache {}: {}", name, e);
             return Err(Error::new(ErrorKind::Other, "failed to cache component"));
         }

@@ -40,7 +40,6 @@ pub fn current_config() -> Result<Config, CliError> {
     let mut f = try!(fs::File::open(&cfg_path));
     let mut cfg_str = String::new();
     try!(f.read_to_string(&mut cfg_str));
-    // TODO: handle last error too
     let res = try!(json::decode(&cfg_str));
     Ok(res)
 }
