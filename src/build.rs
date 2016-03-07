@@ -1,7 +1,8 @@
+use std::process::Command;
+
 use configure;
 use shell;
 use init;
-use std::process::Command;
 
 pub fn build(cfg: &configure::Config) {
     // Create OUTPUT

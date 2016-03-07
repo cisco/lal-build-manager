@@ -18,6 +18,7 @@ pub mod shell;
 pub mod build;
 pub mod install;
 pub mod verify;
+pub mod cache;
 
 fn main() {
     use std::process;
@@ -87,35 +88,48 @@ fn main() {
     if let Some(a) = args.subcommand_matches("configure") {
         let _ = configure::configure(!a.is_present("yes")).map_err(|e| {
             error!("Failed to configure {}", e);
+            process::exit(1);
         });
-        return;
     }
     // Assume config exists before allowing other actions
-    let config = configure::current_config().map_err(|e| {
-        error!("Configuration error: {}", e);
-        println!("Ensure you have run `lal configure` and that ~/.lal/lalrc is valid json");
-        process::exit(1);
-    }).unwrap();
+    let config = configure::current_config()
+                     .map_err(|e| {
+                         error!("Configuration error: {}", e);
+                         println!("Ensure you have run `lal configure` and that ~/.lal/lalrc is \
+                                   valid json");
+                         process::exit(1);
+                     })
+                     .unwrap();
 
     if let Some(a) = args.subcommand_matches("init") {
-        let _ = init::init(a.is_present("force"));
-        return;
+        let _ = init::init(a.is_present("force")).map_err(|e| {
+            error!("Init error: {}", e);
+            process::exit(1);
+        });
+        process::exit(0);
     }
 
     // The other commands require a valid manifest
-    let manifest = init::read_manifest().map_err(|e| {
-        error!("Manifest error: {}", e);
-        println!("Ensure you have run `lal init` and that manifest.json is valid json");
-        process::exit(1);
-    }).unwrap();
+    let manifest = init::read_manifest()
+                       .map_err(|e| {
+                           error!("Manifest error: {}", e);
+                           println!("Ensure you have run `lal init` and that manifest.json is \
+                                     valid json");
+                           process::exit(1);
+                       })
+                       .unwrap();
 
 
     if let Some(a) = args.subcommand_matches("install") {
         if a.is_present("components") {
             let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
-            return install::install(manifest, xs, a.is_present("save"), a.is_present("savedev"));
+            return install::install(manifest,
+                                    config,
+                                    xs,
+                                    a.is_present("save"),
+                                    a.is_present("savedev"));
         } else {
-            return install::install_all(manifest, a.is_present("dev"));
+            return install::install_all(manifest, config, a.is_present("dev"));
         }
     }
 
@@ -127,7 +141,11 @@ fn main() {
     }
     if let Some(_) = args.subcommand_matches("verify") {
         let res = verify::verify().map_err(|e| error!("{}", e));
-        process::exit(if res.is_ok() { 0 } else { 1 });
+        process::exit(if res.is_ok() {
+            0
+        } else {
+            1
+        });
     }
 
     println!("{}", args.usage());

@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fmt;
-use rustc_serialize::json;
 use std::io;
+use rustc_serialize::json;
 
 #[derive(Debug)]
 pub enum CliError {

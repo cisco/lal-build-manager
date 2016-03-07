@@ -5,7 +5,7 @@ use std::env;
 use init;
 use errors::CliError;
 
-pub fn verify() -> Result<(), CliError>  {
+pub fn verify() -> Result<(), CliError> {
     // 1. `manifest.json` exists in `$PWD` and is valid JSON
     let m = try!(init::read_manifest()); // TODO: better error output
 
@@ -41,19 +41,23 @@ mod tests {
     use verify;
     use install;
     use init;
+    use configure;
 
     #[test]
     #[ignore]
     fn fails_on_missing_dir() {
         // Can't really run this consistenly unless create an order of tests
         // if they're all in separate files all messing with INPUT it's silly
-        let mf = init::read_manifest();
-        assert_eq!(mf.is_ok(), true);
-        let manifest = mf.unwrap();
+        let manifest = init::read_manifest();
+        assert_eq!(manifest.is_ok(), true);
+        let mf = manifest.unwrap();
+        let config = configure::current_config();
+        assert_eq!(config.is_ok(), true);
+        let cfg = config.unwrap();
 
         let r = verify::verify();
         assert_eq!(r.is_err(), true);
-        install::install_all(manifest, false);
+        install::install_all(mf, cfg, false);
         let r = verify::verify();
         assert_eq!(r.is_ok(), true);
     }

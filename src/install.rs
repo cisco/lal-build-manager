@@ -1,7 +1,11 @@
 use std::io;
-use regex::Regex;
 use std::io::{Error, ErrorKind};
+use std::fs;
+use std::path::Path;
+use std::env;
+use regex::Regex;
 use init::Manifest;
+use configure::Config;
 
 struct Component {
     name: String,
@@ -47,7 +51,7 @@ fn get_blob(uri: &str) -> Option<String> {
 
     if resp.get_code() == 200 {
         let body = String::from_utf8_lossy(resp.get_body());
-        //trace!("resp {}", body);
+        // trace!("resp {}", body);
 
         // Assume yaml is sane for now as this is a temporary hack:
         // Since yaml is a temporary interface, this eludes the need for a yaml parser
@@ -67,9 +71,8 @@ fn get_blob(uri: &str) -> Option<String> {
     None
 }
 
-fn get_dependency_url_latest(name: &str) -> io::Result<Component> {
+fn get_dependency_url_latest(name: &str, target: &str) -> io::Result<Component> {
     let globalroot = "http://builds.lal.cisco.com/globalroot/ARTIFACTS";
-    let target = "ncp.amd64"; // TODO: from config::Config
 
     // try cloud first
     let mut cloud_url = [globalroot, name, target, "global", "cloud", "latest"].join("/");
@@ -88,7 +91,7 @@ fn get_dependency_url_latest(name: &str) -> io::Result<Component> {
             default_version.unwrap()
         };
         debug!("Found latest version as {}", v);
-        get_dependency_url(name, v).map(|uri| {
+        get_dependency_url(name, target.as_ref(), v).map(|uri| {
             Component {
                 tarball: uri,
                 version: v,
@@ -100,9 +103,8 @@ fn get_dependency_url_latest(name: &str) -> io::Result<Component> {
     }
 }
 
-fn get_dependency_url(name: &str, version: u32) -> io::Result<String> {
+fn get_dependency_url(name: &str, target: &str, version: u32) -> io::Result<String> {
     let globalroot = "http://builds.lal.cisco.com/globalroot/ARTIFACTS";
-    let target = "ncp.amd64"; // TODO: from config::Config
 
     let mut cloud_yurl = [globalroot, name, target, "global", "cloud"].join("/");
     cloud_yurl.push_str("/");
@@ -130,9 +132,9 @@ fn get_dependency_url(name: &str, version: u32) -> io::Result<String> {
     }
 }
 
-fn get_tarball_uri(name: &str, version: Option<u32>) -> io::Result<Component> {
+fn get_tarball_uri(name: &str, target: &str, version: Option<u32>) -> io::Result<Component> {
     if let Some(v) = version {
-        get_dependency_url(name, v).map(|uri| {
+        get_dependency_url(name, target, v).map(|uri| {
             Component {
                 tarball: uri,
                 version: v,
@@ -140,13 +142,11 @@ fn get_tarball_uri(name: &str, version: Option<u32>) -> io::Result<Component> {
             }
         })
     } else {
-        get_dependency_url_latest(name)
+        get_dependency_url_latest(name, target)
     }
 }
 
 fn download_to_path(uri: &str, save: &str) -> io::Result<()> {
-    use std::fs::File;
-    use std::path::Path;
     use curl::http;
     use std::io::prelude::*;
 
@@ -156,7 +156,7 @@ fn download_to_path(uri: &str, save: &str) -> io::Result<()> {
     if resp.get_code() == 200 {
         let r = resp.get_body();
         let path = Path::new(save);
-        let mut f = try!(File::create(&path));
+        let mut f = try!(fs::File::create(&path));
         try!(f.write_all(r));
         Ok(())
     } else {
@@ -164,16 +164,14 @@ fn download_to_path(uri: &str, save: &str) -> io::Result<()> {
     }
 }
 
-fn fetch_component(name: &str, version: Option<u32>) -> io::Result<Component> {
+fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> io::Result<Component> {
     use tar::Archive;
     use flate2::read::GzDecoder;
-    use std::fs;
-    use std::path::Path;
-    use std::env;
 
-    let component = try!(get_tarball_uri(name, version));
+    let component = try!(get_tarball_uri(name, cfg.target.as_ref(), version));
     let tarname = ["./", name, ".tar"].concat();
 
+    // always just download for now since we
     let dl = download_to_path(&component.tarball, &tarname);
     if dl.is_ok() {
         debug!("Unpacking tarball {}", tarname);
@@ -182,8 +180,7 @@ fn fetch_component(name: &str, version: Option<u32>) -> io::Result<Component> {
         let mut archive = Archive::new(decompressed);
 
         let pwd = env::current_dir().unwrap();
-        let target = "ncp.amd64"; // TODO: from lalrc
-        let extract_path = Path::new(&pwd).join("INPUT").join(&name).join(&target);
+        let extract_path = Path::new(&pwd).join("INPUT").join(&name).join(&cfg.target);
         try!(fs::create_dir_all(&extract_path));
         try!(archive.unpack(&extract_path));
         // TODO: move tarball in PWD to cachedir from lalrc
@@ -193,27 +190,22 @@ fn fetch_component(name: &str, version: Option<u32>) -> io::Result<Component> {
 }
 
 fn clean_input() {
-    use std::path::Path;
-    use std::env;
-    use std::fs;
-
-
     let input = Path::new(&env::current_dir().unwrap()).join("INPUT");
     if input.is_dir() {
         let _ = fs::remove_dir_all(&input).unwrap();
     }
 }
 
-pub fn install(manifest: Manifest, xs: Vec<&str>, save: bool, savedev: bool) {
+pub fn install(manifest: Manifest, cfg: Config, xs: Vec<&str>, save: bool, savedev: bool) {
     use init;
-    info!("Install specific deps: {:?} {} {}", xs, save, savedev);
+    info!("Install specific deps: {:?}", xs);
 
     let mut installed = Vec::with_capacity(xs.len());
     for v in &xs {
         if v.contains("=") {
             let pair: Vec<&str> = v.split("=").collect();
             if let Ok(n) = pair[1].parse::<u32>() {
-                match fetch_component(pair[0], Some(n)) {
+                match fetch_component(cfg.clone(), pair[0], Some(n)) {
                     Ok(c) => installed.push(c),
                     Err(e) => warn!("Failed to install {} ({})", pair[0], e),
                 }
@@ -222,7 +214,7 @@ pub fn install(manifest: Manifest, xs: Vec<&str>, save: bool, savedev: bool) {
                 warn!("Ignoring {} due to invalid version number", pair[0]);
             }
         } else {
-            match fetch_component(&v, None) {
+            match fetch_component(cfg.clone(), &v, None) {
                 Ok(c) => installed.push(c),
                 Err(e) => warn!("Failed to install {} ({})", &v, e),
             }
@@ -257,7 +249,11 @@ pub fn install(manifest: Manifest, xs: Vec<&str>, save: bool, savedev: bool) {
     }
 }
 
-pub fn install_all(manifest: Manifest, dev: bool) {
+// pub fn uninstall(manifest: Manifest, xs: Vec<&str>, save: bool, savedev: bool) {
+//    // TODO: implement
+// }
+
+pub fn install_all(manifest: Manifest, cfg: Config, dev: bool) {
     use std::thread;
     use std::sync::mpsc;
 
@@ -283,8 +279,9 @@ pub fn install_all(manifest: Manifest, dev: bool) {
     for (k, v) in deps {
         info!("Installing {} {}", k, v);
         let tx = tx.clone();
+        let cfgcpy = cfg.clone();
         thread::spawn(move || {
-            let _ = fetch_component(&k, Some(v)).map_err(|e| {
+            let _ = fetch_component(cfgcpy, &k, Some(v)).map_err(|e| {
                 warn!("Failed to install {} ({})", &v, e);
             });
             tx.send(()).unwrap();
@@ -298,11 +295,13 @@ pub fn install_all(manifest: Manifest, dev: bool) {
 
 #[cfg(test)]
 mod tests {
-    use std::env;
     use std::path::{Path, PathBuf};
+    use std::env;
     use std::fs;
+
     use install::install;
     use init;
+    use configure;
 
     fn component_dir(name: &str) -> PathBuf {
         Path::new(&env::current_dir().unwrap()).join("INPUT").join(&name).join("ncp.amd64")
@@ -320,12 +319,16 @@ mod tests {
 
     #[test]
     fn install_basic() {
-        let mf = init::read_manifest();
-        assert_eq!(mf.is_ok(), true);
-        let manifest = mf.unwrap();
-        install(manifest.clone(), vec!["gtest"], false, false);
+        let manifest = init::read_manifest();
+        assert_eq!(manifest.is_ok(), true);
+        let mf = manifest.unwrap();
+        let config = configure::current_config();
+        assert_eq!(config.is_ok(), true);
+        let cfg = config.unwrap();
+
+        install(mf.clone(), cfg.clone(), vec!["gtest"], false, false);
         assert_eq!(component_dir("gtest").is_dir(), true);
-        install(manifest.clone(), vec!["libyaml"], false, false);
+        install(mf.clone(), cfg.clone(), vec!["libyaml"], false, false);
         assert_eq!(component_dir("libyaml").is_dir(), true);
     }
 }

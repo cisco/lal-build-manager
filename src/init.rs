@@ -41,7 +41,7 @@ pub fn save_manifest(m: &Manifest) -> Result<(), CliError> {
     Ok(())
 }
 
-pub fn init(force: bool) -> Result<Manifest, CliError> {
+pub fn init(force: bool) -> Result<(), CliError> {
     let pwd = env::current_dir().unwrap();
     let last_comp = pwd.components().last().unwrap(); // std::path::Component
     let dirname = last_comp.as_os_str().to_str().unwrap();
@@ -65,5 +65,5 @@ pub fn init(force: bool) -> Result<Manifest, CliError> {
     try!(write!(f, "{}\n", encoded));
 
     info!("Wrote manifest {}: \n{}", manifest_path.display(), encoded);
-    Ok(manifest.clone())
+    Ok(())
 }
