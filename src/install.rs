@@ -1,6 +1,7 @@
 use std::io;
 use regex::Regex;
 use std::io::{Error, ErrorKind};
+use init::Manifest;
 
 struct Component {
     name: String,
@@ -203,7 +204,7 @@ fn clean_input() {
     }
 }
 
-pub fn install(xs: Vec<&str>, save: bool, savedev: bool) {
+pub fn install(manifest: Manifest, xs: Vec<&str>, save: bool, savedev: bool) {
     use init;
     info!("Install specific deps: {:?} {} {}", xs, save, savedev);
 
@@ -230,7 +231,7 @@ pub fn install(xs: Vec<&str>, save: bool, savedev: bool) {
 
     // Update manifest if saving in any way
     if save || savedev {
-        let mut mf = init::read_manifest().unwrap();
+        let mut mf = manifest.clone();
         // find reference to correct list
         let mut hmap = if save {
             mf.dependencies.clone()
@@ -256,8 +257,7 @@ pub fn install(xs: Vec<&str>, save: bool, savedev: bool) {
     }
 }
 
-pub fn install_all(manifest: &Manifest, dev: bool) {
-    use init;
+pub fn install_all(manifest: Manifest, dev: bool) {
     use std::thread;
     use std::sync::mpsc;
 
@@ -267,7 +267,6 @@ pub fn install_all(manifest: &Manifest, dev: bool) {
           } else {
               ""
           });
-    let manifest = init::read_manifest().unwrap();
     clean_input();
 
     // create the joined hashmap of dependencies and possibly devdependencies
@@ -303,6 +302,7 @@ mod tests {
     use std::path::{Path, PathBuf};
     use std::fs;
     use install::install;
+    use init;
 
     fn component_dir(name: &str) -> PathBuf {
         Path::new(&env::current_dir().unwrap()).join("INPUT").join(&name).join("ncp.amd64")
@@ -320,9 +320,12 @@ mod tests {
 
     #[test]
     fn install_basic() {
-        install(vec!["gtest"], false, false);
+        let mf = init::read_manifest();
+        assert_eq!(mf.is_ok(), true);
+        let manifest = mf.unwrap();
+        install(manifest.clone(), vec!["gtest"], false, false);
         assert_eq!(component_dir("gtest").is_dir(), true);
-        install(vec!["libyaml"], false, false);
+        install(manifest.clone(), vec!["libyaml"], false, false);
         assert_eq!(component_dir("libyaml").is_dir(), true);
     }
 }

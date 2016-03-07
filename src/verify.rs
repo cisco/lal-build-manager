@@ -1,12 +1,11 @@
-use std::io;
 use std::fs;
 use std::path::Path;
 use std::env;
-use std::io::{Error, ErrorKind};
 
 use init;
+use errors::CliError;
 
-pub fn verify() -> io::Result<()> {
+pub fn verify() -> Result<(), CliError>  {
     // 1. `manifest.json` exists in `$PWD` and is valid JSON
     let m = try!(init::read_manifest()); // TODO: better error output
 
@@ -24,8 +23,8 @@ pub fn verify() -> io::Result<()> {
     for (d, v) in m.dependencies {
         debug!("Verifying dependency from manifest: {}", d);
         if !deps.contains(&d) {
-            let reason = format!("Dependency {} not found in INPUT", d);
-            return Err(Error::new(ErrorKind::Other, reason));
+            warn!("Dependency {} not found in INPUT", d);
+            return Err(CliError::MissingDependencies);
         }
     }
 
@@ -41,15 +40,20 @@ pub fn verify() -> io::Result<()> {
 mod tests {
     use verify;
     use install;
+    use init;
 
     #[test]
     #[ignore]
     fn fails_on_missing_dir() {
         // Can't really run this consistenly unless create an order of tests
         // if they're all in separate files all messing with INPUT it's silly
+        let mf = init::read_manifest();
+        assert_eq!(mf.is_ok(), true);
+        let manifest = mf.unwrap();
+
         let r = verify::verify();
         assert_eq!(r.is_err(), true);
-        install::install_all(false);
+        install::install_all(manifest, false);
         let r = verify::verify();
         assert_eq!(r.is_ok(), true);
     }
