@@ -167,6 +167,7 @@ fn download_to_path(uri: &str, save: &str) -> io::Result<()> {
 fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> io::Result<Component> {
     use tar::Archive;
     use flate2::read::GzDecoder;
+    use cache;
 
     let component = try!(get_tarball_uri(name, cfg.target.as_ref(), version));
     let tarname = ["./", name, ".tar"].concat();
@@ -184,6 +185,12 @@ fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> io::Result<
         try!(fs::create_dir_all(&extract_path));
         try!(archive.unpack(&extract_path));
         // TODO: move tarball in PWD to cachedir from lalrc
+        let r = cache::store_tarball(&cfg, name, component.version);
+        if let Err(e) = r {
+            // can wrap this in CliError later
+            error!("Failed to cache {}: {}", name, e);
+            return Err(Error::new(ErrorKind::Other, "failed to cache component"));
+        }
     }
 
     Ok(component)

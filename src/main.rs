@@ -90,6 +90,7 @@ fn main() {
             error!("Failed to configure {}", e);
             process::exit(1);
         });
+        process::exit(0);
     }
     // Assume config exists before allowing other actions
     let config = configure::current_config()

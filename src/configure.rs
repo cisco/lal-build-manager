@@ -46,19 +46,19 @@ pub fn current_config() -> Result<Config, CliError> {
 }
 
 pub fn configure(term_prompt: bool) -> Result<Config, CliError> {
-    let mut cfg = Config {
-        registry: "http://localhost".to_string(),
-        cache: "~/.lal/cache".to_string(),
-        target: "ncp.amd64".to_string(),
-        container: "edonusdevelopers/centos_build".to_string(),
-    };
-
     let home = env::home_dir().unwrap(); // crash if no $HOME
     let cfg_path = Path::new(&home).join(".lal/lalrc");
     let laldir = Path::new(&home).join(".lal");
     if !laldir.is_dir() {
         try!(fs::create_dir(&laldir));
     }
+
+    let mut cfg = Config {
+        registry: "http://localhost".to_string(),
+        cache: laldir.join("cache").as_path().to_str().unwrap().to_string(),
+        target: "ncp.amd64".to_string(),
+        container: "edonusdevelopers/centos_build".to_string(),
+    };
 
     if term_prompt {
         // Prompt for values:

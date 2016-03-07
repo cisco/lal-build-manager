@@ -11,6 +11,7 @@ pub enum CliError {
     MissingManifest,
     MissingConfig,
     MissingDependencies, // TODO: extend to take which dependency?
+    MissingTarball, // ditto
 }
 
 impl fmt::Display for CliError {
@@ -22,6 +23,7 @@ impl fmt::Display for CliError {
             CliError::MissingManifest => write!(f, "No manifest.json found"),
             CliError::MissingConfig => write!(f, "No ~/.lal/lalrc found"),
             CliError::MissingDependencies => write!(f, "Dependencies missing in INPUT"),
+            CliError::MissingTarball => write!(f, "Tarball missing in PWD"),
         }
     }
 }
@@ -35,6 +37,7 @@ impl Error for CliError {
             CliError::MissingManifest => "manifest not found",
             CliError::MissingConfig => "lalrc not found",
             CliError::MissingDependencies => "dependencies not all found",
+            CliError::MissingTarball => "tarball not found",
         }
     }
 }
