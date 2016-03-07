@@ -105,15 +105,13 @@ cargo fmt # requires `cargo install rustfmt` and $HOME/.carg/bin on $PATH
 ```
 
 ## Logging
-Configurable via the [env_logger](http://rust-lang-nursery.github.io/log/env_logger/index.html) by setting the `RUST_LOG` environment variable.
+Configurable via flags before the subcommand:
 
 ```sh
-RUST_LOG=debug lal install # debug output
-RUST_LOG=lal lal install # all output from lal
-RUST_LOG=info lal install
+lal -v install # debug output
+lal -vv install # all output
+lal install # normal output 
 ```
-
-Normally, only error messages are printed. This is the most basic rust logging atm. This may be upgraded if necessary.
 
 ## Updating
 TODO: We want an auto-update-available notification system. We also want a system to notify on new versions of the docker image.
