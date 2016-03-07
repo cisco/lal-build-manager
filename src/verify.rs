@@ -40,10 +40,17 @@ pub fn verify() -> io::Result<()> {
 #[cfg(test)]
 mod tests {
     use verify;
+    use install;
 
     #[test]
+    #[ignore]
     fn fails_on_missing_dir() {
+        // Can't really run this consistenly unless create an order of tests
+        // if they're all in separate files all messing with INPUT it's silly
         let r = verify::verify();
         assert_eq!(r.is_err(), true);
+        install::install_all(false);
+        let r = verify::verify();
+        assert_eq!(r.is_ok(), true);
     }
 }

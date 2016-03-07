@@ -26,7 +26,7 @@ pub fn read_manifest() -> io::Result<Manifest> {
     let mut f = try!(File::open(&manifest_path));
     let mut manifest_str = String::new();
     try!(f.read_to_string(&mut manifest_str));
-    return Ok(json::decode(&manifest_str).unwrap());
+    Ok(json::decode(&manifest_str).unwrap())
 }
 
 pub fn save_manifest(m: &Manifest) -> io::Result<()> {
@@ -36,7 +36,7 @@ pub fn save_manifest(m: &Manifest) -> io::Result<()> {
     let manifest_path = Path::new(&pwd).join("manifest.json");
     let mut f = try!(File::create(&manifest_path));
     try!(write!(f, "{}\n", encoded));
-    println!("Wrote manifest {}: \n{}", manifest_path.display(), encoded);
+    info!("Wrote manifest {}: \n{}", manifest_path.display(), encoded);
     Ok(())
 }
 
@@ -63,6 +63,6 @@ pub fn init(force: bool) -> io::Result<Manifest> {
     let mut f = try!(File::create(&manifest_path));
     try!(write!(f, "{}\n", encoded));
 
-    println!("Wrote manifest {}: \n{}", manifest_path.display(), encoded);
+    info!("Wrote manifest {}: \n{}", manifest_path.display(), encoded);
     Ok(manifest.clone())
 }

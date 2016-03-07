@@ -36,7 +36,7 @@ pub fn docker_run(cfg: &configure::Config, command: Vec<&str>, interactive: bool
 }
 
 pub fn shell(cfg: &configure::Config) {
-    println!("Entering docker container");
+    info!("Entering docker container");
     docker_run(&cfg, vec!["/bin/bash"], true);
 }
 

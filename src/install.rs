@@ -26,7 +26,7 @@ fn get_latest(uri: &str) -> Option<u32> {
         let matches = re.captures(&body).unwrap();
         let version = matches.at(1).unwrap().to_string();
 
-        // println!("version: {}", version);
+        debug!("Parsed version: {} from {}", version, uri);
         if version == "latest" {
             return None;
         }
@@ -46,14 +46,14 @@ fn get_blob(uri: &str) -> Option<String> {
 
     if resp.get_code() == 200 {
         let body = String::from_utf8_lossy(resp.get_body());
-        // println!("resp {}", body);
+        //trace!("resp {}", body);
 
         // Assume yaml is sane for now as this is a temporary hack:
         // Since yaml is a temporary interface, this eludes the need for a yaml parser
         let re = Regex::new(r"blob: (.{64})").unwrap();
         if re.is_match(&body) {
             let blob = re.captures(&body).unwrap().at(1).unwrap().to_string();
-            // println!("blob: {}", blob);
+            debug!("Found blob: {}", blob);
 
             // split the urls into chunks of 4
             let mut splits = vec![];
@@ -86,7 +86,7 @@ fn get_dependency_url_latest(name: &str) -> io::Result<Component> {
         } else {
             default_version.unwrap()
         };
-        println!("Found latest version as {}", v);
+        debug!("Found latest version as {}", v);
         get_dependency_url(name, v).map(|uri| {
             Component {
                 tarball: uri,
@@ -157,9 +157,10 @@ fn download_to_path(uri: &str, save: &str) -> io::Result<()> {
         let path = Path::new(save);
         let mut f = try!(File::create(&path));
         try!(f.write_all(r));
-        return Ok(());
+        Ok(())
+    } else {
+        Err(Error::new(ErrorKind::Other, "failed to download file"))
     }
-    Err(Error::new(ErrorKind::Other, "failed to download file"))
 }
 
 fn fetch_component(name: &str, version: Option<u32>) -> io::Result<Component> {
@@ -204,7 +205,7 @@ fn clean_input() {
 
 pub fn install(xs: Vec<&str>, save: bool, savedev: bool) {
     use init;
-    println!("Install specific deps: {:?} {} {}", xs, save, savedev);
+    info!("Install specific deps: {:?} {} {}", xs, save, savedev);
 
     let mut installed = Vec::with_capacity(xs.len());
     for v in &xs {
@@ -255,7 +256,7 @@ pub fn install(xs: Vec<&str>, save: bool, savedev: bool) {
     }
 }
 
-pub fn install_all(dev: bool) {
+pub fn install_all(manifest: &Manifest, dev: bool) {
     use init;
     use std::thread;
     use std::sync::mpsc;
@@ -285,7 +286,7 @@ pub fn install_all(dev: bool) {
         let tx = tx.clone();
         thread::spawn(move || {
             let _ = fetch_component(&k, Some(v)).map_err(|e| {
-                println!("Failed to install {} ({})", &v, e);
+                warn!("Failed to install {} ({})", &v, e);
             });
             tx.send(()).unwrap();
         });
@@ -308,6 +309,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn blank_state() {
         let input = Path::new(&env::current_dir().unwrap()).join("INPUT");
         if input.is_dir() {
@@ -320,7 +322,6 @@ mod tests {
     fn install_basic() {
         install(vec!["gtest"], false, false);
         assert_eq!(component_dir("gtest").is_dir(), true);
-        assert_eq!(component_dir("libyaml").is_dir(), false);
         install(vec!["libyaml"], false, false);
         assert_eq!(component_dir("libyaml").is_dir(), true);
     }

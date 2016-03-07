@@ -9,9 +9,9 @@ pub fn build(cfg: &configure::Config) {
         panic!("failed to create OUTPUT dir {}", e);
     });
 
-    println!("Running build script in docker container");
+    info!("Running build script in docker container");
     let manifest = init::read_manifest().unwrap();
     let cmd = vec!["./BUILD", &manifest.name, &cfg.target];
-    println!("Build script is {:?}", cmd);
+    debug!("Build script is {:?}", cmd);
     shell::docker_run(&cfg, cmd, false);
 }

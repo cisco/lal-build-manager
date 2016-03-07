@@ -7,7 +7,7 @@ extern crate tar;
 extern crate flate2;
 #[macro_use]
 extern crate log;
-extern crate env_logger;
+extern crate loggerv;
 
 use clap::{Arg, App, SubCommand};
 
@@ -20,13 +20,13 @@ pub mod init;
 
 fn main() {
     use std::process;
-    env_logger::init().unwrap();
     let args = App::new("lal")
                    .version(crate_version!())
                    .setting(clap::AppSettings::GlobalVersion)
                    .about("lal dependency manager")
                    .arg(Arg::with_name("verbose")
                             .short("v")
+                            .multiple(true)
                             .help("Use verbose output"))
                    .subcommand(SubCommand::with_name("install")
                                    .about("installs dependencies")
@@ -79,10 +79,13 @@ fn main() {
                                            directory"))
                    .get_matches();
 
+    // by default, always show INFO messages for now (+1)
+    loggerv::init_with_verbosity(args.occurrences_of("verbose") + 1).unwrap();
+
     // Configuration of lal first.
     if let Some(a) = args.subcommand_matches("configure") {
         let _ = configure::configure(!a.is_present("yes")).map_err(|e| {
-            println!("Failed to configure {}", e);
+            error!("Failed to configure {}", e);
         });
         return;
     }

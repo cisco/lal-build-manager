@@ -73,7 +73,7 @@ pub fn configure(term_prompt: bool) -> io::Result<Config> {
     let mut f = try!(fs::File::create(&cfg_path));
     try!(write!(f, "{}\n", encoded));
 
-    println!("Wrote config {}: \n{}", cfg_path.display(), encoded);
+    info!("Wrote config {}: \n{}", cfg_path.display(), encoded);
 
     // TODO: check that docker is present and warn if not
     // TODO: check that docker images contains cfg.container and provide info if not
