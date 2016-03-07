@@ -122,6 +122,8 @@ fn main() {
 
 
     if let Some(a) = args.subcommand_matches("install") {
+        // TODO: these functions only really need the cfg.target string
+        // a bit overkill passing these down and cloning them
         if a.is_present("components") {
             let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
             return install::install(manifest,

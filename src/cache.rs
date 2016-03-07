@@ -15,7 +15,6 @@ pub fn store_tarball(cfg: &configure::Config, name: &str, version: u32) -> Resul
     let pwd = env::current_dir().unwrap();
     let destdir = Path::new(&cfg.cache).join(&cfg.target).join(name).join(version.to_string());
     if !destdir.is_dir() {
-        debug!("where tf is dest? {:?}", destdir);
         try!(fs::create_dir_all(&destdir));
     }
     // 2. stuff $PWD/$name.tar in there
