@@ -51,19 +51,21 @@ pub fn status(manifest: Manifest) -> Result<(), CliError> {
         let mut extra_str = "".to_string();
         if missing && !is_dev {
             error = Some(CliError::MissingDependencies);
-            extra_str = Colour::Fixed(9).paint("(missing)").to_string();
+            extra_str = Colour::Red.paint("(missing)").to_string();
         } else if missing {
-            extra_str = Colour::Fixed(11).paint("(missing)").to_string();
+            extra_str = Colour::Yellow.paint("(missing)").to_string();
         } else if is_dev {
             extra_str = "(dev)".to_string();
         }
+        // TODO: cross reference version with the installed ones!
 
         let format_str = format!("{}@{} {}", d, v, extra_str);
         res.push(format_str);
     }
+    // figure out status of installed deps (may find extraneous ones)
     for name in deps {
         if !saved_deps.contains_key(&name) {
-            let extra_str = Colour::Fixed(10).paint("(extraneous)").to_string();
+            let extra_str = Colour::Green.paint("(extraneous)").to_string();
             let version = "?"; // TODO: get version from INPUT as well..
             res.push(format!("{}@{} {}", name, version, extra_str));
             // this dependency is neither a dependency nor a devDependency!

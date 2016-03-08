@@ -212,28 +212,41 @@ pub fn install(manifest: Manifest,
                savedev: bool)
                -> Result<(), CliError> {
     use init;
-    info!("Install specific deps: {:?}", xs);
+    debug!("Install specific deps: {:?}", xs);
 
-    // TODO: return a InstallFailure if fetch_component fails
+    let mut error = None;
     let mut installed = Vec::with_capacity(xs.len());
     for v in &xs {
+        info!("Fetch {}", v);
         if v.contains("=") {
             let pair: Vec<&str> = v.split("=").collect();
             if let Ok(n) = pair[1].parse::<u32>() {
                 match fetch_component(cfg.clone(), pair[0], Some(n)) {
                     Ok(c) => installed.push(c),
-                    Err(e) => warn!("Failed to install {} ({})", pair[0], e),
+                    Err(e) => {
+                        warn!("Failed to install {} ({})", pair[0], e);
+                        error = Some(CliError::InstallFailure);
+                    }
                 }
             } else {
                 // TODO: this should try to install from stash!
-                warn!("Ignoring {} due to invalid version number", pair[0]);
+                warn!("Failed to install {} labelled {} build from stash",
+                      pair[1],
+                      pair[0]);
+                error = Some(CliError::InstallFailure);
             }
         } else {
             match fetch_component(cfg.clone(), &v, None) {
                 Ok(c) => installed.push(c),
-                Err(e) => warn!("Failed to install {} ({})", &v, e),
+                Err(e) => {
+                    warn!("Failed to install {} ({})", &v, e);
+                    error = Some(CliError::InstallFailure);
+                }
             }
         }
+    }
+    if error.is_some() {
+        return Err(error.unwrap());
     }
 
     // Update manifest if saving in any way
@@ -260,7 +273,7 @@ pub fn install(manifest: Manifest,
         } else {
             mf.devDependencies = hmap;
         }
-        let _ = init::save_manifest(&mf);
+        try!(init::save_manifest(&mf));
     }
     Ok(())
 }
@@ -273,12 +286,12 @@ pub fn install_all(manifest: Manifest, cfg: Config, dev: bool) -> Result<(), Cli
     use std::thread;
     use std::sync::mpsc;
 
-    info!("Installing all dependencies{}",
-          if dev {
-              " and devDependencies"
-          } else {
-              ""
-          });
+    debug!("Installing dependencies{}",
+           if dev {
+               " and devDependencies"
+           } else {
+               ""
+           });
     clean_input();
 
     // create the joined hashmap of dependencies and possibly devdependencies
@@ -293,7 +306,7 @@ pub fn install_all(manifest: Manifest, cfg: Config, dev: bool) -> Result<(), Cli
     // install them in parallel
     let (tx, rx) = mpsc::channel();
     for (k, v) in deps {
-        info!("Installing {} {}", k, v);
+        info!("Fetch {} {}", k, v);
         let tx = tx.clone();
         let cfgcpy = cfg.clone();
         thread::spawn(move || {
