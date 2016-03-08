@@ -7,12 +7,11 @@ use rustc_serialize::json;
 pub enum CliError {
     Io(io::Error),
     Parse(json::DecoderError),
-    NoSuchComponent,
     MissingManifest,
     MissingConfig,
-    MissingDependencies, // TODO: extend to take which dependency?
+    MissingDependencies,
     ExtraneousDependencies,
-    MissingTarball, // ditto
+    MissingTarball,
     SubprocessFailure(i32),
     InstallFailure,
 }
@@ -22,7 +21,6 @@ impl fmt::Display for CliError {
         match *self {
             CliError::Io(ref err) => err.fmt(f),
             CliError::Parse(ref err) => err.fmt(f),
-            CliError::NoSuchComponent => write!(f, "No such component found"),
             CliError::MissingManifest => write!(f, "No manifest.json found"),
             CliError::MissingConfig => write!(f, "No ~/.lal/lalrc found"),
             CliError::MissingDependencies => write!(f, "Dependencies missing in INPUT"),
@@ -39,7 +37,6 @@ impl Error for CliError {
         match *self {
             CliError::Io(ref err) => err.description(),
             CliError::Parse(ref err) => err.description(),
-            CliError::NoSuchComponent => "component not found",
             CliError::MissingManifest => "manifest not found",
             CliError::MissingConfig => "lalrc not found",
             CliError::MissingDependencies => "dependencies not all found",

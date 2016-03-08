@@ -36,7 +36,6 @@ fn result_exit<T>(name: &str, x: Result<T, errors::CliError>) {
 fn main() {
     let args = App::new("lal")
                    .version(crate_version!())
-                   .setting(AppSettings::GlobalVersion)
                    .setting(AppSettings::VersionlessSubcommands)
                    .setting(AppSettings::SubcommandRequiredElseHelp)
                    .about("lal dependency manager")
