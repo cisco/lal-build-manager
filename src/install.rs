@@ -6,6 +6,7 @@ use std::env;
 use regex::Regex;
 use init::Manifest;
 use configure::Config;
+use errors::CliError;
 
 struct Component {
     name: String,
@@ -204,10 +205,16 @@ fn clean_input() {
     }
 }
 
-pub fn install(manifest: Manifest, cfg: Config, xs: Vec<&str>, save: bool, savedev: bool) {
+pub fn install(manifest: Manifest,
+               cfg: Config,
+               xs: Vec<&str>,
+               save: bool,
+               savedev: bool)
+               -> Result<(), CliError> {
     use init;
     info!("Install specific deps: {:?}", xs);
 
+    // TODO: return a InstallFailure if fetch_component fails
     let mut installed = Vec::with_capacity(xs.len());
     for v in &xs {
         if v.contains("=") {
@@ -255,13 +262,14 @@ pub fn install(manifest: Manifest, cfg: Config, xs: Vec<&str>, save: bool, saved
         }
         let _ = init::save_manifest(&mf);
     }
+    Ok(())
 }
 
 // pub fn uninstall(manifest: Manifest, xs: Vec<&str>, save: bool, savedev: bool) {
 //    unimplemented!()
 // }
 
-pub fn install_all(manifest: Manifest, cfg: Config, dev: bool) {
+pub fn install_all(manifest: Manifest, cfg: Config, dev: bool) -> Result<(), CliError> {
     use std::thread;
     use std::sync::mpsc;
 
@@ -289,16 +297,25 @@ pub fn install_all(manifest: Manifest, cfg: Config, dev: bool) {
         let tx = tx.clone();
         let cfgcpy = cfg.clone();
         thread::spawn(move || {
-            let _ = fetch_component(cfgcpy, &k, Some(v)).map_err(|e| {
-                warn!("Failed to install {} ({})", &v, e);
+            let r = fetch_component(cfgcpy, &k, Some(v)).map_err(|e| {
+                warn!("Failed to completely install {} ({})", k, e);
+                // likely symlinks inside tarball that are being dodgy
+                // this is why we clean_input
             });
-            tx.send(()).unwrap();
+            tx.send(r.is_ok()).unwrap();
         });
     }
+
     // join
-    for _ in 0..len {
-        rx.recv().unwrap();
+    let mut success = true;
+    for i in 0..len {
+        let res = rx.recv().unwrap();
+        success = res && success;
     }
+    if !success {
+        return Err(CliError::InstallFailure);
+    }
+    Ok(())
 }
 
 #[cfg(test)]

@@ -110,7 +110,7 @@ Configurable via flags before the subcommand:
 ```sh
 lal -v install # debug output
 lal -vv install # all output
-lal install # normal output 
+lal install # normal output
 ```
 
 ## Updating

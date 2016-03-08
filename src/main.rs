@@ -95,11 +95,12 @@ fn main() {
     // by default, always show INFO messages for now (+1)
     loggerv::init_with_verbosity(args.occurrences_of("verbose") + 1).unwrap();
 
-    // Configuration of lal first.
+    // Allow lal configure without assumptions
     if let Some(a) = args.subcommand_matches("configure") {
         result_exit("configure", configure::configure(!a.is_present("yes")));
     }
-    // Assume config exists before allowing other actions
+
+    // Force config to exists before allowing remaining actions
     let config = configure::current_config()
                      .map_err(|e| {
                          error!("Configuration error: {}", e);
@@ -109,11 +110,12 @@ fn main() {
                      })
                      .unwrap();
 
+    // Allow lal init without manifest existing
     if let Some(a) = args.subcommand_matches("init") {
         result_exit("init", init::init(a.is_present("force")));
     }
 
-    // The other commands require a valid manifest
+    // Force manifest to exist before allowing remaining actions
     let manifest = init::read_manifest()
                        .map_err(|e| {
                            error!("Manifest error: {}", e);
@@ -124,29 +126,28 @@ fn main() {
                        .unwrap();
 
 
+    // Remaining actions
     if let Some(a) = args.subcommand_matches("install") {
         // TODO: these functions only really need the cfg.target string
         // a bit overkill passing these down and cloning them
         if a.is_present("components") {
             let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
-            return install::install(manifest,
+            let res= install::install(manifest,
                                     config,
                                     xs,
                                     a.is_present("save"),
                                     a.is_present("savedev"));
+            result_exit("install", res);
         } else {
-            return install::install_all(manifest, config, a.is_present("dev"));
+            let res = install::install_all(manifest, config, a.is_present("dev"));
+            result_exit("install", res);
         }
-    }
-
-    if let Some(a) = args.subcommand_matches("build") {
-        let res = build::build(&config, manifest, a.value_of("component"));
+    } else if let Some(a) = args.subcommand_matches("build") {
+        let res = build::build(&config, &manifest, a.value_of("component"));
         result_exit("build", res);
-    }
-    if let Some(_) = args.subcommand_matches("shell") {
+    } else if let Some(_) = args.subcommand_matches("shell") {
         result_exit("shell", shell::shell(&config));
-    }
-    if let Some(_) = args.subcommand_matches("verify") {
+    } else if let Some(_) = args.subcommand_matches("verify") {
         result_exit("verify", verify::verify());
     }
 

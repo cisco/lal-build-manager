@@ -12,6 +12,8 @@ pub enum CliError {
     MissingConfig,
     MissingDependencies, // TODO: extend to take which dependency?
     MissingTarball, // ditto
+    SubprocessFailure(i32),
+    InstallFailure,
 }
 
 impl fmt::Display for CliError {
@@ -24,6 +26,8 @@ impl fmt::Display for CliError {
             CliError::MissingConfig => write!(f, "No ~/.lal/lalrc found"),
             CliError::MissingDependencies => write!(f, "Dependencies missing in INPUT"),
             CliError::MissingTarball => write!(f, "Tarball missing in PWD"),
+            CliError::SubprocessFailure(n) => write!(f, "Process exited with {}", n),
+            CliError::InstallFailure => write!(f, "Install failed"),
         }
     }
 }
@@ -38,6 +42,8 @@ impl Error for CliError {
             CliError::MissingConfig => "lalrc not found",
             CliError::MissingDependencies => "dependencies not all found",
             CliError::MissingTarball => "tarball not found",
+            CliError::SubprocessFailure(_) => "process exited with non-zero return code",
+            CliError::InstallFailure => "install failed",
         }
     }
 }

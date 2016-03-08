@@ -15,7 +15,7 @@ pub fn docker_run(cfg: &configure::Config,
     let git_cfg = Path::new(&home).join(".gitconfig");
     let pwd = env::current_dir().unwrap();
 
-    let r = try!(Command::new("docker")
+    let s = try!(Command::new("docker")
                      .arg("run")
                      .arg("-v")
                      .arg(format!("{}:/home/lal/.gitconfig", git_cfg.display()))
@@ -35,7 +35,11 @@ pub fn docker_run(cfg: &configure::Config,
                      .stdout(Stdio::inherit())
                      .stdin(Stdio::inherit())
                      .stderr(Stdio::inherit())
-                     .output());
+                     .status());
+
+    if !s.success() {
+        return Err(CliError::SubprocessFailure(s.code().unwrap_or(1001)));
+    }
     Ok(())
 }
 

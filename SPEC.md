@@ -16,11 +16,10 @@ A per-repo file. Format looks like this (here annotated with illegal comments):
 {
   "name": "libwebsockets",  // name of repo
   "version": 10,            // corresponds to latest tag
-  "components": ["$1"],     // list of components (used if more than one)
-  "scripts": {              // canonical build + test scripts for repo
-    "build": "./BUILD $1 $2",
-    "test": "./BUILD $1-unit-tests $2"
-  },
+  "components": [           // list of components (used if more than one)
+    "libwebsockets",
+    "websockets_tests"
+  ],
   "dependencies": {
     "ciscossl": 42
   },
@@ -114,10 +113,11 @@ If they are not in the manifest they will be listed as _extraneous_.
 If they are modified (not a global fetch) they will be listed as _modified_.
 
 #### lal build [name]
-Runs the `scripts.build` shell script in the manifest file inside the configured container.
+Runs the `BUILD` script in the current directory in the container.
 
-E.g. `"build": "./BUILD $1 $2"` key in the manifest under `scripts` will cause `lal build dme` to run `./BUILD dme ncp.amd64` in the configured container.
-If no positional argument (name) is set, it will assume the repository name and do the canonical build.
+If no arguments are suppplied it will run `./BUILD $name $target` where `name` is the value of `name` in the manifest, and `target` is the value of target in the `lalrc`.
+
+E.g. `lal build` in monolith will `./BUILD dme ncp.amd64` in the container.
 
 `lal build` will run `lal verify` and warn if this fails, but proceed anyway. The warning is a developer notice that the build will not be identical on jenkins due to local modifications and should not be ignored indefinitely.
 
