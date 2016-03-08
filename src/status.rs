@@ -26,7 +26,12 @@ fn print_as_tree(root: &str, xs: Vec<String>) {
     let mut i = 0;
     for name in xs {
         i += 1;
-        let branch_str = format!("{}", if i == len { "└" } else { "├" });
+        let branch_str = format!("{}",
+                                 if i == len {
+                                     "└"
+                                 } else {
+                                     "├"
+                                 });
         println!("{}── {}", branch_str, name);
     }
 }
@@ -59,7 +64,8 @@ pub fn status(manifest: Manifest) -> Result<(), CliError> {
     for name in deps {
         if !saved_deps.contains_key(&name) {
             let extra_str = Colour::Fixed(10).paint("(extraneous)").to_string();
-            res.push(format!("{}@? {}", name, extra_str));
+            let version = "?"; // TODO: get version from INPUT as well..
+            res.push(format!("{}@{} {}", name, version, extra_str));
             // this dependency is neither a dependency nor a devDependency!
             error = Some(CliError::ExtraneousDependencies);
         }
@@ -75,5 +81,4 @@ pub fn status(manifest: Manifest) -> Result<(), CliError> {
 }
 
 #[cfg(test)]
-mod tests {
-}
+mod tests {}

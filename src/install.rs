@@ -308,7 +308,7 @@ pub fn install_all(manifest: Manifest, cfg: Config, dev: bool) -> Result<(), Cli
 
     // join
     let mut success = true;
-    for i in 0..len {
+    for _ in 0..len {
         let res = rx.recv().unwrap();
         success = res && success;
     }

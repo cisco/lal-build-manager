@@ -138,10 +138,10 @@ fn main() {
         if a.is_present("components") {
             let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
             let res = install::install(manifest,
-                                    config,
-                                    xs,
-                                    a.is_present("save"),
-                                    a.is_present("savedev"));
+                                       config,
+                                       xs,
+                                       a.is_present("save"),
+                                       a.is_present("savedev"));
             result_exit("install", res);
         } else {
             let res = install::install_all(manifest, config, a.is_present("dev"));
