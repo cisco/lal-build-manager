@@ -258,7 +258,7 @@ pub fn install(manifest: Manifest, cfg: Config, xs: Vec<&str>, save: bool, saved
 }
 
 // pub fn uninstall(manifest: Manifest, xs: Vec<&str>, save: bool, savedev: bool) {
-//    // TODO: implement
+//    unimplemented!()
 // }
 
 pub fn install_all(manifest: Manifest, cfg: Config, dev: bool) {

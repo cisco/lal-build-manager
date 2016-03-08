@@ -20,8 +20,17 @@ pub mod install;
 pub mod verify;
 pub mod cache;
 
+use std::process;
+
+fn result_exit<T>(name: &str, x: Result<T, errors::CliError>) {
+    let _ = x.map_err(|e| {
+        error!("{} error: {}", name, e);
+        process::exit(1);
+    });
+    process::exit(0);
+}
+
 fn main() {
-    use std::process;
     let args = App::new("lal")
                    .version(crate_version!())
                    .setting(clap::AppSettings::GlobalVersion)
@@ -56,6 +65,8 @@ fn main() {
                                                    manifest")))
                    .subcommand(SubCommand::with_name("build")
                                    .about("runs build script")
+                                   .arg(Arg::with_name("component")
+                                            .help("Build a specific component"))
                                    .arg(Arg::with_name("name").help("build a specific component")))
                    .subcommand(SubCommand::with_name("stash")
                                    .about("stashes current build OUTPUT in cache for later reuse")
@@ -86,11 +97,7 @@ fn main() {
 
     // Configuration of lal first.
     if let Some(a) = args.subcommand_matches("configure") {
-        let _ = configure::configure(!a.is_present("yes")).map_err(|e| {
-            error!("Failed to configure {}", e);
-            process::exit(1);
-        });
-        process::exit(0);
+        result_exit("configure", configure::configure(!a.is_present("yes")));
     }
     // Assume config exists before allowing other actions
     let config = configure::current_config()
@@ -103,11 +110,7 @@ fn main() {
                      .unwrap();
 
     if let Some(a) = args.subcommand_matches("init") {
-        let _ = init::init(a.is_present("force")).map_err(|e| {
-            error!("Init error: {}", e);
-            process::exit(1);
-        });
-        process::exit(0);
+        result_exit("init", init::init(a.is_present("force")));
     }
 
     // The other commands require a valid manifest
@@ -136,19 +139,15 @@ fn main() {
         }
     }
 
-    if let Some(_) = args.subcommand_matches("build") {
-        return build::build(&config);
+    if let Some(a) = args.subcommand_matches("build") {
+        let res = build::build(&config, manifest, a.value_of("component"));
+        result_exit("build", res);
     }
     if let Some(_) = args.subcommand_matches("shell") {
-        return shell::shell(&config);
+        result_exit("shell", shell::shell(&config));
     }
     if let Some(_) = args.subcommand_matches("verify") {
-        let res = verify::verify().map_err(|e| error!("{}", e));
-        process::exit(if res.is_ok() {
-            0
-        } else {
-            1
-        });
+        result_exit("verify", verify::verify());
     }
 
     println!("{}", args.usage());

@@ -2,17 +2,19 @@ use std::process::Command;
 
 use configure;
 use shell;
-use init;
+use init::Manifest;
+use errors::CliError;
 
-pub fn build(cfg: &configure::Config) {
-    // Create OUTPUT
-    Command::new("mkdir").arg("-p").arg("OUTPUT").output().unwrap_or_else(|e| {
-        panic!("failed to create OUTPUT dir {}", e);
-    });
+pub fn build(cfg: &configure::Config,
+             manifest: Manifest,
+             name: Option<&str>)
+             -> Result<(), CliError> {
+    try!(Command::new("mkdir").arg("-p").arg("OUTPUT").output());
 
     info!("Running build script in docker container");
-    let manifest = init::read_manifest().unwrap();
-    let cmd = vec!["./BUILD", &manifest.name, &cfg.target];
+    let component = name.unwrap_or(&manifest.name);
+    // TODO: allow passing in target decorators?
+    let cmd = vec!["./BUILD", &component, &cfg.target];
     debug!("Build script is {:?}", cmd);
-    shell::docker_run(&cfg, cmd, false);
+    shell::docker_run(&cfg, cmd, false)
 }

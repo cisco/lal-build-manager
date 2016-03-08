@@ -4,6 +4,7 @@ use std::env;
 use std::path::Path;
 use std::fs::File;
 use std::collections::HashMap;
+use std::vec::Vec;
 use rustc_serialize::json;
 
 use errors::CliError;
@@ -13,6 +14,7 @@ use errors::CliError;
 pub struct Manifest {
     pub name: String,
     pub version: String,
+    pub components: Option<Vec<String>>,
     pub dependencies: HashMap<String, u32>,
     pub devDependencies: HashMap<String, u32>,
 }
@@ -49,6 +51,7 @@ pub fn init(force: bool) -> Result<(), CliError> {
     let manifest = Manifest {
         name: dirname.to_string(),
         version: "0".to_string(),
+        components: Some(vec![dirname.to_string()]),
         dependencies: HashMap::new(),
         devDependencies: HashMap::new(),
     };
