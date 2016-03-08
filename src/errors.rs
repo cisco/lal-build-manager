@@ -11,6 +11,7 @@ pub enum CliError {
     MissingManifest,
     MissingConfig,
     MissingDependencies, // TODO: extend to take which dependency?
+    ExtraneousDependencies,
     MissingTarball, // ditto
     SubprocessFailure(i32),
     InstallFailure,
@@ -25,6 +26,7 @@ impl fmt::Display for CliError {
             CliError::MissingManifest => write!(f, "No manifest.json found"),
             CliError::MissingConfig => write!(f, "No ~/.lal/lalrc found"),
             CliError::MissingDependencies => write!(f, "Dependencies missing in INPUT"),
+            CliError::ExtraneousDependencies => write!(f, "Extraneous dependencies in INPUT"),
             CliError::MissingTarball => write!(f, "Tarball missing in PWD"),
             CliError::SubprocessFailure(n) => write!(f, "Process exited with {}", n),
             CliError::InstallFailure => write!(f, "Install failed"),
@@ -41,6 +43,7 @@ impl Error for CliError {
             CliError::MissingManifest => "manifest not found",
             CliError::MissingConfig => "lalrc not found",
             CliError::MissingDependencies => "dependencies not all found",
+            CliError::ExtraneousDependencies => "extraneous dependencies found",
             CliError::MissingTarball => "tarball not found",
             CliError::SubprocessFailure(_) => "process exited with non-zero return code",
             CliError::InstallFailure => "install failed",

@@ -19,6 +19,16 @@ pub struct Manifest {
     pub devDependencies: HashMap<String, u32>,
 }
 
+// helper fn
+pub fn merge_dependencies(m: &Manifest) -> HashMap<String, u32> {
+    // create the joined hashmap of dependencies and possibly devdependencies
+    let mut deps = m.dependencies.clone();
+    for (k, v) in &m.devDependencies {
+        deps.insert(k.clone(), v.clone());
+    }
+    deps
+}
+
 pub fn read_manifest() -> Result<Manifest, CliError> {
     let pwd = env::current_dir().unwrap();
     let manifest_path = Path::new(&pwd).join("manifest.json");

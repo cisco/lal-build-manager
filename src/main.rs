@@ -8,8 +8,9 @@ extern crate flate2;
 #[macro_use]
 extern crate log;
 extern crate loggerv;
+extern crate ansi_term;
 
-use clap::{Arg, App, SubCommand};
+use clap::{Arg, App, AppSettings, SubCommand};
 
 pub mod errors;
 pub mod configure;
@@ -19,11 +20,13 @@ pub mod build;
 pub mod install;
 pub mod verify;
 pub mod cache;
+pub mod status;
 
 use std::process;
 
 fn result_exit<T>(name: &str, x: Result<T, errors::CliError>) {
     let _ = x.map_err(|e| {
+        println!(""); // add a separator
         error!("{} error: {}", name, e);
         process::exit(1);
     });
@@ -33,7 +36,9 @@ fn result_exit<T>(name: &str, x: Result<T, errors::CliError>) {
 fn main() {
     let args = App::new("lal")
                    .version(crate_version!())
-                   .setting(clap::AppSettings::GlobalVersion)
+                   .setting(AppSettings::GlobalVersion)
+                   .setting(AppSettings::VersionlessSubcommands)
+                   .setting(AppSettings::SubcommandRequiredElseHelp)
                    .about("lal dependency manager")
                    .arg(Arg::with_name("verbose")
                             .short("v")
@@ -132,7 +137,7 @@ fn main() {
         // a bit overkill passing these down and cloning them
         if a.is_present("components") {
             let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
-            let res= install::install(manifest,
+            let res = install::install(manifest,
                                     config,
                                     xs,
                                     a.is_present("save"),
@@ -149,7 +154,8 @@ fn main() {
         result_exit("shell", shell::shell(&config));
     } else if let Some(_) = args.subcommand_matches("verify") {
         result_exit("verify", verify::verify());
+    } else if let Some(_) = args.subcommand_matches("status") {
+        result_exit("status", status::status(manifest));
     }
-
-    println!("{}", args.usage());
+    unreachable!();
 }

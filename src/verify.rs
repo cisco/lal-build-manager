@@ -7,7 +7,7 @@ use errors::CliError;
 
 pub fn verify() -> Result<(), CliError> {
     // 1. `manifest.json` exists in `$PWD` and is valid JSON
-    let m = try!(init::read_manifest()); // TODO: better error output
+    let m = try!(init::read_manifest());
 
     // 2. dependencies in `INPUT` match `manifest.json`.
     let input = Path::new(&env::current_dir().unwrap()).join("INPUT");
