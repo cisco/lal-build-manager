@@ -79,38 +79,3 @@ pub fn configure(term_prompt: bool) -> Result<Config, CliError> {
     // TODO: check that docker images contains cfg.container and provide info if not
     Ok(cfg.clone())
 }
-
-#[cfg(test)]
-mod tests {
-    use std::env;
-    use std::path::{Path, PathBuf};
-    use std::fs;
-
-    use configure;
-
-    fn lal_dir() -> PathBuf {
-        let home = env::home_dir().unwrap();
-        Path::new(&home).join(".lal/")
-    }
-    // These tests screw with the other tests which are also reading lalrc
-    // Can run them from scratch with `cargo test -- --ignored`
-
-    #[test]
-    #[ignore]
-    fn hide_lalrc() {
-        let ldir = lal_dir();
-        if ldir.is_dir() {
-            fs::remove_dir_all(&ldir).unwrap();
-        }
-        assert_eq!(ldir.is_dir(), false);
-    }
-
-    #[test]
-    #[ignore]
-    fn configure_without_lalrc() {
-        let r = configure::configure(false);
-        assert_eq!(r.is_ok(), true);
-        let cfg = configure::current_config();
-        assert_eq!(cfg.is_ok(), true);
-    }
-}

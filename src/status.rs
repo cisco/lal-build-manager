@@ -76,6 +76,3 @@ pub fn status(manifest: Manifest) -> Result<(), CliError> {
     }
     Ok(())
 }
-
-#[cfg(test)]
-mod tests {}

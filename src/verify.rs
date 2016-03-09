@@ -35,32 +35,3 @@ pub fn verify() -> Result<(), CliError> {
     // TODO:
     Ok(())
 }
-
-#[cfg(test)]
-mod tests {
-    use verify;
-    use install;
-    use init;
-    use configure;
-
-    #[test]
-    #[ignore]
-    fn fails_on_missing_dir() {
-        // Can't really run this consistenly unless create an order of tests
-        // if they're all in separate files all messing with INPUT it's silly
-        let manifest = init::read_manifest();
-        assert_eq!(manifest.is_ok(), true);
-        let mf = manifest.unwrap();
-        let config = configure::current_config();
-        assert_eq!(config.is_ok(), true);
-        let cfg = config.unwrap();
-
-        let r = verify::verify();
-        assert_eq!(r.is_err(), true);
-        let ri = install::install_all(mf, cfg, false);
-        assert_eq!(ri.is_ok(), true);
-
-        let r = verify::verify();
-        assert_eq!(r.is_ok(), true);
-    }
-}

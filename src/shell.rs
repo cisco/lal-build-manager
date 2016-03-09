@@ -43,24 +43,3 @@ pub fn shell(cfg: &configure::Config) -> Result<(), CliError> {
     info!("Entering docker container");
     docker_run(&cfg, vec!["/bin/bash"], true)
 }
-
-
-#[cfg(test)]
-mod tests {
-    use shell;
-    use configure;
-
-    #[test]
-    fn can_run_commands() {
-        let cfg = configure::current_config().unwrap();
-        let r = shell::docker_run(&cfg, vec!["echo", "echo from docker"], false);
-        assert_eq!(r.is_ok(), true);
-    }
-    #[test]
-    fn can_touch_mounted_files() {
-        let cfg = configure::current_config().unwrap();
-        let r = shell::docker_run(&cfg, vec!["touch", "README.md"], false);
-        assert_eq!(r.is_ok(), true);
-    }
-
-}
