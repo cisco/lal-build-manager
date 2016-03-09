@@ -11,6 +11,9 @@ pub fn verify() -> LalResult<()> {
 
     // 2. dependencies in `INPUT` match `manifest.json`.
     let input = Path::new(&env::current_dir().unwrap()).join("INPUT");
+    if !input.is_dir() && m.dependencies.len() == 0 {
+        return Ok(()); // nothing to verify - so accept a missing directory
+    }
     let mut deps = vec![];
     for entry in try!(fs::read_dir(&input)) {
         let pth = try!(entry).path();

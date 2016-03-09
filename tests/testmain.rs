@@ -16,49 +16,49 @@ fn main() {
     //init_with_verbosity(0).unwrap();
     println!("# lal tests");
     println!("1..10");
-    let mut i = 1;
+    let mut i = 0;
 
+    i += 1;
     kill_laldir();
     println!("ok {} kill_laldir", i);
-    i += 1;
 
+    i += 1;
     kill_input();
     println!("ok {} kill_input", i);
-    i += 1;
 
+    i += 1;
     kill_manifest();
     println!("ok {} kill_manifest", i);
-    i += 1;
 
+    i += 1;
     configure_yes();
     println!("ok {} configure_yes", i);
-    i += 1;
 
+    i += 1;
     init_force();
     println!("ok {} configure_yes", i);
-    i += 1;
 
+    i += 1;
     sanity();
     println!("ok {} sanity", i);
-    i += 1;
 
     // assume we have manifest and config after this point
 
+    i += 1;
     install_save();
     println!("ok {} install_save", i);
-    i += 1;
 
+    i += 1;
     verify_checks();
     println!("ok {} verify_checks", i);
-    i += 1;
 
+    i += 1;
     shell_echo();
     println!("ok {} shell_echo", i);
-    i += 1;
 
+    i += 1;
     shell_permissions();
     println!("ok {} shell_permissions", i);
-    i += 1;
 }
 
 fn lal_dir() -> PathBuf {
@@ -112,9 +112,8 @@ fn init_force() {
     let m3 = init::init(true);
     assert!(m3.is_ok(), "could re-init with force param");
 
-    // TODO: Need to move process::exit out of that fn!
-    //let m4 = init::init(false);
-    //assert!(m4.is_err(), "could not re-init without force ");
+    let m4 = init::init(false);
+    assert!(m4.is_err(), "could not re-init without force ");
 }
 
 // Tests need to be run in a directory with a manifest
@@ -129,7 +128,9 @@ fn sanity() {
     let manifest = init::read_manifest();
     assert_eq!(manifest.is_ok(), true);
 
-    // TODO: should `lal verify` work on blank manifest?
+    // There is no INPUT yet, but we have no dependencies, so this should work:
+    let r = verify::verify();
+    assert!(r.is_ok(), "could verify after install");
 }
 
 // add some dependencies

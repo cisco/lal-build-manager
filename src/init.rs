@@ -1,5 +1,4 @@
 use std::io::prelude::*;
-use std::process;
 use std::env;
 use std::path::Path;
 use std::fs::File;
@@ -70,9 +69,7 @@ pub fn init(force: bool) -> LalResult<()> {
 
     let manifest_path = Path::new(&pwd).join("manifest.json");
     if !force && manifest_path.exists() {
-        println!("manifest.json already exists, stopping.");
-        println!("Use -f to overwrite");
-        process::exit(1);
+        return Err(CliError::ManifestExists);
     }
     let mut f = try!(File::create(&manifest_path));
     try!(write!(f, "{}\n", encoded));
