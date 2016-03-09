@@ -1,2 +1,5 @@
 target
 *.rs.bk
+INPUT
+manifest.json
+lal.coreos.tar
