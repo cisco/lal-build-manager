@@ -81,10 +81,9 @@ git push -u origin master
 The last changeset will be tagged by jenkins if it succeeds. These have been done in two changesets here for clarity, but they could be done  in the same change.
 
 ### Historical Documentation
-Terms used herin reference [so you want to write a package manager](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#.rlvjqxc4r) (long read).
+Terms used herein reference [so you want to write a package manager](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#.rlvjqxc4r) (long read).
 
 Original [buildroot notes](https://hg.lal.cisco.com/root/files/tip/NOTES).
-
 
 ## Developing
 To hack on `lal`, follow normal install procedure, but build non-release builds iteratively.
@@ -108,9 +107,9 @@ cargo fmt # requires `cargo install rustfmt` and $HOME/.carg/bin on $PATH
 Configurable via flags before the subcommand:
 
 ```sh
+lal install # normal output
 lal -v install # debug output
 lal -vv install # all output
-lal install # normal output
 ```
 
 ## Updating

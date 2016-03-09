@@ -36,7 +36,7 @@ fn main() {
 
     i += 1;
     init_force();
-    println!("ok {} configure_yes", i);
+    println!("ok {} init_force", i);
 
     i += 1;
     sanity();
