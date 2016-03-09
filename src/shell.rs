@@ -6,10 +6,7 @@ use std::vec::Vec;
 use configure;
 use errors::{CliError, LalResult};
 
-pub fn docker_run(cfg: &configure::Config,
-                  command: Vec<&str>,
-                  interactive: bool)
-                  -> LalResult<()> {
+pub fn docker_run(cfg: &configure::Config, command: Vec<&str>, interactive: bool) -> LalResult<()> {
 
     let home = env::home_dir().unwrap(); // crash if no $HOME
     let git_cfg = Path::new(&home).join(".gitconfig");

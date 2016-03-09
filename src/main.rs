@@ -85,7 +85,8 @@ fn main() {
 
     // Allow lal configure without assumptions
     if let Some(a) = args.subcommand_matches("configure") {
-        result_exit("configure", configure::configure(!a.is_present("yes"), true));
+        result_exit("configure",
+                    configure::configure(!a.is_present("yes"), true));
     }
 
     // Force config to exists before allowing remaining actions
