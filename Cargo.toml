@@ -3,6 +3,14 @@ name = "lal"
 version = "0.1.0"
 authors = ["Eirik Albrigtsen <ealbrigt@cisco.com>"]
 
+[lib]
+name = "lal"
+path = "src/lib.rs"
+
+[[bin]]
+name = "lal"
+path = "src/main.rs"
+
 [dependencies]
 clap = "2.1.2"
 curl = "0.2.16"

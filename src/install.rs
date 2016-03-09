@@ -356,9 +356,11 @@ mod tests {
         assert_eq!(config.is_ok(), true);
         let cfg = config.unwrap();
 
-        install(mf.clone(), cfg.clone(), vec!["gtest"], false, false);
+        let r1 = install(mf.clone(), cfg.clone(), vec!["gtest"], false, false);
+        assert_eq!(r1.is_ok(), true);
         assert_eq!(component_dir("gtest").is_dir(), true);
-        install(mf.clone(), cfg.clone(), vec!["libyaml"], false, false);
+        let r2 = install(mf.clone(), cfg.clone(), vec!["libyaml"], false, false);
+        assert_eq!(r2.is_ok(), true);
         assert_eq!(component_dir("libyaml").is_dir(), true);
     }
 }

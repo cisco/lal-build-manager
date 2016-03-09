@@ -1,29 +1,16 @@
 #[macro_use]
 extern crate clap;
-extern crate curl;
-extern crate rustc_serialize;
-extern crate regex;
-extern crate tar;
-extern crate flate2;
 #[macro_use]
 extern crate log;
 extern crate loggerv;
-extern crate ansi_term;
+
+extern crate lal;
+use lal::*;
 
 use clap::{Arg, App, AppSettings, SubCommand};
 
-pub mod errors;
-pub mod configure;
-pub mod init;
-pub mod shell;
-pub mod build;
-pub mod install;
-pub mod verify;
-pub mod cache;
-pub mod status;
-
 use std::process;
-use errors::CliError;
+use lal::errors::CliError;
 
 fn result_exit<T>(name: &str, x: Result<T, CliError>) {
     let _ = x.map_err(|e| {

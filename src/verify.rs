@@ -20,7 +20,7 @@ pub fn verify() -> Result<(), CliError> {
         }
     }
     debug!("Found the following deps in INPUT: {:?}", deps);
-    for (d, v) in m.dependencies {
+    for (d, _) in m.dependencies {
         debug!("Verifying dependency from manifest: {}", d);
         if !deps.contains(&d) {
             warn!("Dependency {} not found in INPUT", d);
@@ -57,7 +57,9 @@ mod tests {
 
         let r = verify::verify();
         assert_eq!(r.is_err(), true);
-        install::install_all(mf, cfg, false);
+        let ri = install::install_all(mf, cfg, false);
+        assert_eq!(ri.is_ok(), true);
+
         let r = verify::verify();
         assert_eq!(r.is_ok(), true);
     }
