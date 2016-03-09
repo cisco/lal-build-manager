@@ -15,7 +15,7 @@ use lal::{configure, install, verify, init, shell};
 fn main() {
     //init_with_verbosity(0).unwrap();
     println!("# lal tests");
-    println!("1..7");
+    println!("1..10");
     let mut i = 1;
 
     kill_laldir();
