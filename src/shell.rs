@@ -16,26 +16,22 @@ pub fn docker_run(cfg: &configure::Config,
     let pwd = env::current_dir().unwrap();
 
     let s = try!(Command::new("docker")
-                     .arg("run")
-                     .arg("-v")
-                     .arg(format!("{}:/home/lal/.gitconfig", git_cfg.display()))
-                     .arg("-v")
-                     .arg(format!("{}:/home/lal/root", pwd.display()))
-                     .args(&vec!["-w", "/home/lal/root"])
-                     .args(&vec!["--net", "host"])
-                     .args(&vec!["--cap-add", "SYS_NICE"])
-                     .args(&vec!["--user", "lal"])
-                     .arg(if interactive {
-                         "-it"
-                     } else {
-                         "-t"
-                     })
-                     .arg(&cfg.container)
-                     .args(&command)
-                     .stdout(Stdio::inherit())
-                     .stdin(Stdio::inherit())
-                     .stderr(Stdio::inherit())
-                     .status());
+        .arg("run")
+        .arg("-v")
+        .arg(format!("{}:/home/lal/.gitconfig", git_cfg.display()))
+        .arg("-v")
+        .arg(format!("{}:/home/lal/root", pwd.display()))
+        .args(&vec!["-w", "/home/lal/root"])
+        .args(&vec!["--net", "host"])
+        .args(&vec!["--cap-add", "SYS_NICE"])
+        .args(&vec!["--user", "lal"])
+        .arg(if interactive { "-it" } else { "-t" })
+        .arg(&cfg.container)
+        .args(&command)
+        .stdout(Stdio::inherit())
+        .stdin(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .status());
 
     if !s.success() {
         return Err(CliError::SubprocessFailure(s.code().unwrap_or(1001)));

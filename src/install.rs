@@ -253,11 +253,7 @@ pub fn install(manifest: Manifest,
     if save || savedev {
         let mut mf = manifest.clone();
         // find reference to correct list
-        let mut hmap = if save {
-            mf.dependencies.clone()
-        } else {
-            mf.devDependencies.clone()
-        };
+        let mut hmap = if save { mf.dependencies.clone() } else { mf.devDependencies.clone() };
         for c in &installed {
             debug!("Successfully installed {} at version {}",
                    &c.name,
@@ -287,11 +283,7 @@ pub fn install_all(manifest: Manifest, cfg: Config, dev: bool) -> Result<(), Cli
     use std::sync::mpsc;
 
     debug!("Installing dependencies{}",
-           if dev {
-               " and devDependencies"
-           } else {
-               ""
-           });
+           if dev { " and devDependencies" } else { "" });
     clean_input();
 
     // create the joined hashmap of dependencies and possibly devdependencies

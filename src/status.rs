@@ -26,12 +26,7 @@ fn print_as_tree(root: &str, xs: Vec<String>) {
     let mut i = 0;
     for name in xs {
         i += 1;
-        let branch_str = format!("{}",
-                                 if i == len {
-                                     "└"
-                                 } else {
-                                     "├"
-                                 });
+        let branch_str = format!("{}", if i == len { "└" } else { "├" });
         println!("{}── {}", branch_str, name);
     }
 }
