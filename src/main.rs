@@ -23,8 +23,9 @@ pub mod cache;
 pub mod status;
 
 use std::process;
+use errors::CliError;
 
-fn result_exit<T>(name: &str, x: Result<T, errors::CliError>) {
+fn result_exit<T>(name: &str, x: Result<T, CliError>) {
     let _ = x.map_err(|e| {
         println!(""); // add a separator
         error!("{} error: {}", name, e);
@@ -126,20 +127,18 @@ fn main() {
 
     // Remaining actions
     if let Some(a) = args.subcommand_matches("install") {
-        // TODO: these functions only really need the cfg.target string
-        // a bit overkill passing these down and cloning them
-        if a.is_present("components") {
+        let res = if a.is_present("components") {
             let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
-            let res = install::install(manifest,
-                                       config,
-                                       xs,
-                                       a.is_present("save"),
-                                       a.is_present("savedev"));
-            result_exit("install", res);
+            install::install(manifest,
+                             config,
+                             xs,
+                             a.is_present("save"),
+                             a.is_present("savedev"))
+
         } else {
-            let res = install::install_all(manifest, config, a.is_present("dev"));
-            result_exit("install", res);
-        }
+            install::install_all(manifest, config, a.is_present("dev"))
+        };
+        result_exit("install", res);
     } else if let Some(a) = args.subcommand_matches("build") {
         let res = build::build(&config, &manifest, a.value_of("component"));
         result_exit("build", res);

@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::fmt;
 use std::io;
 use rustc_serialize::json;
@@ -31,23 +30,6 @@ impl fmt::Display for CliError {
         }
     }
 }
-
-impl Error for CliError {
-    fn description(&self) -> &str {
-        match *self {
-            CliError::Io(ref err) => err.description(),
-            CliError::Parse(ref err) => err.description(),
-            CliError::MissingManifest => "manifest not found",
-            CliError::MissingConfig => "lalrc not found",
-            CliError::MissingDependencies => "dependencies not all found",
-            CliError::ExtraneousDependencies => "extraneous dependencies found",
-            CliError::MissingTarball => "tarball not found",
-            CliError::SubprocessFailure(_) => "process exited with non-zero return code",
-            CliError::InstallFailure => "install failed",
-        }
-    }
-}
-
 
 impl From<io::Error> for CliError {
     fn from(err: io::Error) -> CliError {
