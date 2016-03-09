@@ -11,6 +11,10 @@ path = "src/lib.rs"
 name = "lal"
 path = "src/main.rs"
 
+[[test]]
+name = "testmain"
+harness = false
+
 [dependencies]
 clap = "2.1.2"
 curl = "0.2.16"
