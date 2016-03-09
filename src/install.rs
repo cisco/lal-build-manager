@@ -6,12 +6,12 @@ use std::env;
 use regex::Regex;
 use init::Manifest;
 use configure::Config;
-use errors::CliError;
+use errors::{CliError, LalResult};
 
 struct Component {
     name: String,
     version: u32,
-    tarball: String, // TODO: Option<Path> for cache path
+    tarball: String,
 }
 
 fn get_latest(uri: &str) -> Option<u32> {
@@ -72,7 +72,7 @@ fn get_blob(uri: &str) -> Option<String> {
     None
 }
 
-fn get_dependency_url_latest(name: &str, target: &str) -> io::Result<Component> {
+fn get_dependency_url_latest(name: &str, target: &str) -> LalResult<Component> {
     let globalroot = "http://builds.lal.cisco.com/globalroot/ARTIFACTS";
 
     // try cloud first
@@ -100,11 +100,11 @@ fn get_dependency_url_latest(name: &str, target: &str) -> io::Result<Component> 
             }
         })
     } else {
-        Err(Error::new(ErrorKind::Other, "failed to find component"))
+        Err(CliError::GlobalRootFailure("No tarball at corresponding blob url"))
     }
 }
 
-fn get_dependency_url(name: &str, target: &str, version: u32) -> io::Result<String> {
+fn get_dependency_url(name: &str, target: &str, version: u32) -> LalResult<String> {
     let globalroot = "http://builds.lal.cisco.com/globalroot/ARTIFACTS";
 
     let mut cloud_yurl = [globalroot, name, target, "global", "cloud"].join("/");
@@ -129,11 +129,11 @@ fn get_dependency_url(name: &str, target: &str, version: u32) -> io::Result<Stri
         tar_url.push_str(&blob);
         Ok(tar_url)
     } else {
-        Err(Error::new(ErrorKind::Other, "failed to find blob"))
+        Err(CliError::GlobalRootFailure("Could not find a blob"))
     }
 }
 
-fn get_tarball_uri(name: &str, target: &str, version: Option<u32>) -> io::Result<Component> {
+fn get_tarball_uri(name: &str, target: &str, version: Option<u32>) -> LalResult<Component> {
     if let Some(v) = version {
         get_dependency_url(name, target, v).map(|uri| {
             Component {
@@ -165,7 +165,7 @@ fn download_to_path(uri: &str, save: &str) -> io::Result<()> {
     }
 }
 
-fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> io::Result<Component> {
+fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> LalResult<Component> {
     use tar::Archive;
     use flate2::read::GzDecoder;
     use cache;
@@ -187,12 +187,7 @@ fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> io::Result<
         try!(archive.unpack(&extract_path));
 
         // Move tarball into cfg.cache
-        let r = cache::store_tarball(&cfg, name, component.version);
-        if let Err(e) = r {
-            // TODO: wrap this in CliError later
-            error!("Failed to cache {}: {}", name, e);
-            return Err(Error::new(ErrorKind::Other, "failed to cache component"));
-        }
+        try!(cache::store_tarball(&cfg, name, component.version));
     }
 
     Ok(component)
@@ -210,7 +205,7 @@ pub fn install(manifest: Manifest,
                xs: Vec<&str>,
                save: bool,
                savedev: bool)
-               -> Result<(), CliError> {
+               -> LalResult<()> {
     use init;
     debug!("Install specific deps: {:?}", xs);
 
@@ -225,7 +220,7 @@ pub fn install(manifest: Manifest,
                     Ok(c) => installed.push(c),
                     Err(e) => {
                         warn!("Failed to install {} ({})", pair[0], e);
-                        error = Some(CliError::InstallFailure);
+                        error = Some(e);
                     }
                 }
             } else {
@@ -240,7 +235,7 @@ pub fn install(manifest: Manifest,
                 Ok(c) => installed.push(c),
                 Err(e) => {
                     warn!("Failed to install {} ({})", &v, e);
-                    error = Some(CliError::InstallFailure);
+                    error = Some(e);
                 }
             }
         }
@@ -278,7 +273,7 @@ pub fn install(manifest: Manifest,
 //    unimplemented!()
 // }
 
-pub fn install_all(manifest: Manifest, cfg: Config, dev: bool) -> Result<(), CliError> {
+pub fn install_all(manifest: Manifest, cfg: Config, dev: bool) -> LalResult<()> {
     use std::thread;
     use std::sync::mpsc;
 

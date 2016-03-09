@@ -4,9 +4,9 @@ use std::env;
 use ansi_term::Colour;
 
 use init::{self, Manifest};
-use errors::CliError;
+use errors::{CliError, LalResult};
 
-fn get_installed() -> Result<Vec<String>, CliError> {
+fn get_installed() -> LalResult<Vec<String>> {
     let input = Path::new(&env::current_dir().unwrap()).join("INPUT");
     let mut deps = vec![];
     for entry in try!(fs::read_dir(&input)) {
@@ -31,7 +31,7 @@ fn print_as_tree(root: &str, xs: Vec<String>) {
     }
 }
 
-pub fn status(manifest: Manifest) -> Result<(), CliError> {
+pub fn status(manifest: Manifest) -> LalResult<()> {
     let deps = try!(get_installed());
     let saved_deps = init::merge_dependencies(&manifest);
 

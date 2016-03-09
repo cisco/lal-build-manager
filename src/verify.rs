@@ -3,9 +3,9 @@ use std::path::Path;
 use std::env;
 
 use init;
-use errors::CliError;
+use errors::{CliError, LalResult};
 
-pub fn verify() -> Result<(), CliError> {
+pub fn verify() -> LalResult<()> {
     // 1. `manifest.json` exists in `$PWD` and is valid JSON
     let m = try!(init::read_manifest());
 

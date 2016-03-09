@@ -1,9 +1,9 @@
 use rustc_serialize::json;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::fs;
 use std::env;
 use std::io::prelude::*;
-use errors::CliError;
+use errors::{CliError, LalResult};
 
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
@@ -31,7 +31,7 @@ fn prompt(name: &str, default: String) -> String {
     default
 }
 
-pub fn current_config() -> Result<Config, CliError> {
+pub fn current_config() -> LalResult<Config> {
     let home = env::home_dir().unwrap(); // crash if no $HOME
     let cfg_path = Path::new(&home).join(".lal/lalrc");
     if !cfg_path.exists() {
@@ -44,13 +44,29 @@ pub fn current_config() -> Result<Config, CliError> {
     Ok(res)
 }
 
-pub fn configure(term_prompt: bool) -> Result<Config, CliError> {
-    let home = env::home_dir().unwrap(); // crash if no $HOME
-    let cfg_path = Path::new(&home).join(".lal/lalrc");
+fn create_lal_dir() -> LalResult<PathBuf> {
+    let home = env::home_dir().unwrap();
     let laldir = Path::new(&home).join(".lal");
     if !laldir.is_dir() {
         try!(fs::create_dir(&laldir));
     }
+    Ok(laldir)
+}
+// TODO: need some extra sanity to also check that:
+//   - docker is present and warn if not
+//   - docker images contains cfg.container and provide info if not
+
+pub fn write_config(cfg: &Config, cfg_path: PathBuf) -> LalResult<()> {
+    let encoded = json::as_pretty_json(cfg);
+
+    let mut f = try!(fs::File::create(&cfg_path));
+    try!(write!(f, "{}\n", encoded));
+    info!("Wrote config {}: \n{}", cfg_path.display(), encoded);
+    Ok(())
+}
+
+pub fn configure(term_prompt: bool, save: bool) -> LalResult<Config> {
+    let laldir = try!(create_lal_dir());
 
     let mut cfg = Config {
         registry: "http://localhost".to_string(),
@@ -66,16 +82,10 @@ pub fn configure(term_prompt: bool) -> Result<Config, CliError> {
         cfg.target = prompt("target", cfg.target);
         cfg.container = prompt("container", cfg.container);
     }
+    if save {
+        let cfg_path = laldir.join("lalrc");
+        try!(write_config(&cfg, cfg_path));
+    }
 
-    // Encode
-    let encoded = json::as_pretty_json(&cfg);
-
-    let mut f = try!(fs::File::create(&cfg_path));
-    try!(write!(f, "{}\n", encoded));
-
-    info!("Wrote config {}: \n{}", cfg_path.display(), encoded);
-
-    // TODO: check that docker is present and warn if not
-    // TODO: check that docker images contains cfg.container and provide info if not
     Ok(cfg.clone())
 }

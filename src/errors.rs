@@ -6,15 +6,27 @@ use rustc_serialize::json;
 pub enum CliError {
     Io(io::Error),
     Parse(json::DecoderError),
+    // main errors (via init and configure)
     MissingManifest,
     MissingConfig,
+
+    // status/verify errors
     MissingDependencies,
     ExtraneousDependencies,
-    MissingTarball,
-    SubprocessFailure(i32),
-    InstallFailure,
-}
 
+    // cache errors
+    MissingTarball,
+
+    // shell errors
+    SubprocessFailure(i32),
+
+    // Install failures
+    InstallFailure, // generic catch all
+    GlobalRootFailure(&'static str), // fetch failure related to globalroot
+}
+pub type LalResult<T> = Result<T, CliError>;
+
+// Format implementation used when printing an error
 impl fmt::Display for CliError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
@@ -22,15 +34,17 @@ impl fmt::Display for CliError {
             CliError::Parse(ref err) => err.fmt(f),
             CliError::MissingManifest => write!(f, "No manifest.json found"),
             CliError::MissingConfig => write!(f, "No ~/.lal/lalrc found"),
-            CliError::MissingDependencies => write!(f, "Dependencies missing in INPUT"),
+            CliError::MissingDependencies => write!(f, "Core dependencies missing in INPUT"),
             CliError::ExtraneousDependencies => write!(f, "Extraneous dependencies in INPUT"),
             CliError::MissingTarball => write!(f, "Tarball missing in PWD"),
             CliError::SubprocessFailure(n) => write!(f, "Process exited with {}", n),
             CliError::InstallFailure => write!(f, "Install failed"),
+            CliError::GlobalRootFailure(ref s) => write!(f, "Globalroot - {}", s),
         }
     }
 }
 
+// Allow io and json errors to be converted to CliError in a try! without map_err
 impl From<io::Error> for CliError {
     fn from(err: io::Error) -> CliError {
         CliError::Io(err)

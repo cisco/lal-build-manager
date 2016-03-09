@@ -3,9 +3,9 @@ use std::process::Command;
 use configure::Config;
 use shell;
 use init::Manifest;
-use errors::CliError;
+use errors::LalResult;
 
-pub fn build(cfg: &Config, manifest: &Manifest, name: Option<&str>) -> Result<(), CliError> {
+pub fn build(cfg: &Config, manifest: &Manifest, name: Option<&str>) -> LalResult<()> {
     try!(Command::new("mkdir").arg("-p").arg("OUTPUT").output());
 
     info!("Running build script in docker container");

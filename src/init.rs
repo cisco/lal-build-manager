@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::vec::Vec;
 use rustc_serialize::json;
 
-use errors::CliError;
+use errors::{CliError, LalResult};
 
 #[allow(non_snake_case)]
 #[derive(RustcDecodable, RustcEncodable, Clone)]
@@ -29,7 +29,7 @@ pub fn merge_dependencies(m: &Manifest) -> HashMap<String, u32> {
     deps
 }
 
-pub fn read_manifest() -> Result<Manifest, CliError> {
+pub fn read_manifest() -> LalResult<Manifest> {
     let pwd = env::current_dir().unwrap();
     let manifest_path = Path::new(&pwd).join("manifest.json");
     if !manifest_path.exists() {
@@ -42,7 +42,7 @@ pub fn read_manifest() -> Result<Manifest, CliError> {
     Ok(res)
 }
 
-pub fn save_manifest(m: &Manifest) -> Result<(), CliError> {
+pub fn save_manifest(m: &Manifest) -> LalResult<()> {
     let pwd = env::current_dir().unwrap();
     let encoded = json::as_pretty_json(&m);
 
@@ -53,7 +53,7 @@ pub fn save_manifest(m: &Manifest) -> Result<(), CliError> {
     Ok(())
 }
 
-pub fn init(force: bool) -> Result<(), CliError> {
+pub fn init(force: bool) -> LalResult<()> {
     let pwd = env::current_dir().unwrap();
     let last_comp = pwd.components().last().unwrap(); // std::path::Component
     let dirname = last_comp.as_os_str().to_str().unwrap();
