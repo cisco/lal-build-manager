@@ -13,7 +13,8 @@ use errors::{CliError, LalResult};
 pub struct Manifest {
     pub name: String,
     pub version: String,
-    pub components: Option<Vec<String>>,
+    pub components: Vec<String>,
+    pub flags: Vec<String>,
     pub dependencies: HashMap<String, u32>,
     pub devDependencies: HashMap<String, u32>,
 }
@@ -60,7 +61,8 @@ pub fn init(force: bool) -> LalResult<()> {
     let manifest = Manifest {
         name: dirname.to_string(),
         version: "0".to_string(),
-        components: Some(vec![dirname.to_string()]),
+        components: vec![dirname.to_string()],
+        flags: vec![],
         dependencies: HashMap::new(),
         devDependencies: HashMap::new(),
     };
