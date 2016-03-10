@@ -17,6 +17,7 @@ pub enum CliError {
 
     // cache errors
     MissingTarball,
+    MissingBuild,
 
     // shell errors
     SubprocessFailure(i32),
@@ -39,6 +40,7 @@ impl fmt::Display for CliError {
             CliError::MissingDependencies => write!(f, "Core dependencies missing in INPUT"),
             CliError::ExtraneousDependencies => write!(f, "Extraneous dependencies in INPUT"),
             CliError::MissingTarball => write!(f, "Tarball missing in PWD"),
+            CliError::MissingBuild => write!(f, "No build found in OUTPUT"),
             CliError::SubprocessFailure(n) => write!(f, "Process exited with {}", n),
             CliError::InstallFailure => write!(f, "Install failed"),
             CliError::GlobalRootFailure(ref s) => write!(f, "Globalroot - {}", s),
