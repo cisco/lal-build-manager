@@ -16,11 +16,12 @@ A per-repo file. Format looks like this (here annotated with illegal comments):
 {
   "name": "libwebsockets",  // name of repo
   "version": 10,            // corresponds to latest tag
-  "components": [           // list of components that the build script understands
-    "libwebsockets",
-    "websockets_tests"
-  ],
-  "flags": [                // passthrough flags that the build script understands
+  "components": {           // map of components and default configuration
+    "libwebsockets": "default",
+    "websockets_tests": "coverage"
+  },
+  "flags": [                // alternate configurations that build understands
+    "default",
     "clang",
     "asan",
     "tsan",
