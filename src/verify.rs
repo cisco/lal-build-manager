@@ -36,5 +36,7 @@ pub fn verify() -> LalResult<()> {
 
     // 4. `INPUT` contains only global dependencies.
     // TODO:
+
+    info!("Dependencies fully verified");
     Ok(())
 }

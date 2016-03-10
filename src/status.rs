@@ -8,6 +8,9 @@ use errors::{CliError, LalResult};
 
 fn get_installed() -> LalResult<Vec<String>> {
     let input = Path::new(&env::current_dir().unwrap()).join("INPUT");
+    if !input.is_dir() {
+        return Err(CliError::MissingDependencies);
+    }
     let mut deps = vec![];
     for entry in try!(fs::read_dir(&input)) {
         let pth = try!(entry).path();
