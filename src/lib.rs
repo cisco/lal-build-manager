@@ -6,6 +6,7 @@ extern crate flate2;
 extern crate ansi_term;
 #[macro_use]
 extern crate log;
+extern crate walkdir;
 
 pub mod errors;
 pub mod configure;
