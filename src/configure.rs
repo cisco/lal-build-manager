@@ -71,7 +71,7 @@ pub fn configure(term_prompt: bool, save: bool) -> LalResult<Config> {
     let mut cfg = Config {
         registry: "http://localhost".to_string(),
         cache: laldir.join("cache").as_path().to_str().unwrap().to_string(),
-        target: "ncp.amd64".to_string(),
+        target: "centos7.amd64".to_string(),
         container: "edonusdevelopers/centos_build".to_string(),
     };
 
