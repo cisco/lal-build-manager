@@ -137,7 +137,8 @@ fn main() {
     } else if let Some(_) = args.subcommand_matches("status") {
         result_exit("status", status::status(manifest));
     } else if let Some(a) = args.subcommand_matches("stash") {
-        result_exit("stash", cache::stash(config, manifest, a.value_of("name").unwrap()));
+        result_exit("stash",
+                    cache::stash(config, manifest, a.value_of("name").unwrap()));
     }
 
     unreachable!("Subcommand valid, but not implemented");

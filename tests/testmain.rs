@@ -9,13 +9,13 @@ use std::path::{Path, PathBuf};
 use std::fs;
 
 //use loggerv::init_with_verbosity;
-use lal::{configure, install, verify, init, shell};
+use lal::{configure, install, verify, init, shell, build};
 
 // TODO: macroify this stuff
 fn main() {
     //init_with_verbosity(0).unwrap();
     println!("# lal tests");
-    println!("1..10");
+    println!("1..11");
     let mut i = 0;
 
     i += 1;
@@ -59,6 +59,10 @@ fn main() {
     i += 1;
     shell_permissions();
     println!("ok {} shell_permissions", i);
+
+    i += 1;
+    build_tar();
+    println!("ok {} build_tar", i);
 }
 
 fn lal_dir() -> PathBuf {
@@ -185,4 +189,14 @@ fn shell_permissions() {
     let cfg = configure::current_config().unwrap();
     let r = shell::docker_run(&cfg, vec!["touch", "README.md"], false);
     assert!(r.is_ok(), "could touch files in container");
+}
+
+fn build_tar() {
+    let mf = init::read_manifest().unwrap();
+    let cfg = configure::current_config().unwrap();
+
+    // TODO: need to have a BUILD script that actually creates a tarball in OUTPUT
+    // currently tests work because I have such a BUILD, but don't want to commit it
+    let r = build::build(&cfg, &mf, Some("hoot"));
+    assert!(r.is_ok(), "could run lal build and could make tarball");
 }

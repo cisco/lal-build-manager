@@ -178,8 +178,8 @@ fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> LalResult<C
     if dl.is_ok() {
         debug!("Unpacking tarball {}", tarname);
         let data = try!(fs::File::open(&tarname));
-        let decompressed = try!(GzDecoder::new(data));
-        let mut archive = Archive::new(decompressed);
+        let decompressed = try!(GzDecoder::new(data)); // decoder reads data
+        let mut archive = Archive::new(decompressed); // Archive reads decoded
 
         let pwd = env::current_dir().unwrap();
         let extract_path = Path::new(&pwd).join("INPUT").join(&name).join(&cfg.target);
