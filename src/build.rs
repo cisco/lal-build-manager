@@ -81,6 +81,7 @@ pub fn build(cfg: &Config, manifest: &Manifest, name: Option<&str>) -> LalResult
     try!(tar_output(&tarball));
 
     try!(fs::copy(&tarball, pwd.join("ARTIFACT").join([component, ".tar.gz"].concat())));
+    try!(fs::remove_file(&tarball));
     try!(lockfile::generate(manifest));
     Ok(())
 }
