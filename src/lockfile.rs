@@ -1,12 +1,12 @@
 use rustc_serialize::json;
 use std::path::Path;
-use std::fs;
-use std::env;
 use std::fs::File;
+use std::io::prelude::*;
+use std::env;
 
 use std::collections::HashMap;
 use init::Manifest;
-use errors::{CliError, LalResult};
+use errors::LalResult;
 
 
 // TODO: need a struct
@@ -41,6 +41,8 @@ pub fn generate(m: &Manifest) -> LalResult<()> {
     let pwd = env::current_dir().unwrap();
     let lockfile = Path::new(&pwd).join("ARTIFACT").join("lockfile.json");
     let mut f = try!(File::create(&lockfile));
+    try!(write!(f, "{}\n", encoded));
+
     info!("Wrote lockfile {}: \n{}", lockfile.display(), encoded);
     Ok(())
 }
