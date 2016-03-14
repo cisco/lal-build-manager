@@ -72,6 +72,11 @@ fn get_blob(uri: &str) -> Option<String> {
     None
 }
 
+fn get_dependency_url_latest_artifactory(name: &str) {
+    let artifactory = "http://engci-maven.cisco.com/artifactory/api/build/team_CME%20::%20";
+    let mut url = [artifactory, name].concat();
+}
+
 fn get_dependency_url_latest(name: &str, target: &str) -> LalResult<Component> {
     let globalroot = "http://builds.lal.cisco.com/globalroot/ARTIFACTS";
 
