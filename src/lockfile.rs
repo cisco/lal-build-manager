@@ -1,11 +1,10 @@
 use rustc_serialize::json;
 use std::path::Path;
 use std::fs::File;
-use std::io::prelude::*;
-use std::env;
+use std::io::prelude::Write;
 
 use std::collections::HashMap;
-use init::Manifest;
+
 use errors::LalResult;
 use util::input;
 
@@ -33,9 +32,9 @@ impl Lock {
             dependencies: HashMap::new(),
         }
     }
-    pub fn populate_from_input(mut self) -> Self {
-        //let deps = input::analyze();
-        self
+    pub fn populate_from_input(mut self) -> LalResult<Self> {
+        let deps = input::analyze();
+        Ok(self)
     }
     pub fn write(&self, pth: &Path) -> LalResult<()> {
         let encoded = json::as_pretty_json(self);

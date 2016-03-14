@@ -1,9 +1,4 @@
-use std::fs;
-use std::path::Path;
-use std::env;
 use ansi_term::Colour;
-use std::collections::HashMap;
-
 use init::{self, Manifest};
 use errors::{CliError, LalResult};
 use util::input;

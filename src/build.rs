@@ -70,7 +70,8 @@ pub fn build(cfg: &Config,
              -> LalResult<()> {
     try!(ensure_dir_exists_fresh("OUTPUT"));
 
-    let lockfile = Lock::new(&manifest.name, version).populate_from_input();
+    info!("Got version {}", version.unwrap_or("none"));
+    let lockfile = try!(Lock::new(&manifest.name, version).populate_from_input());
 
 
     info!("Running build script in docker container");
