@@ -2,14 +2,11 @@ use std::fs;
 use std::path::Path;
 use std::env;
 
-use init;
+use init::Manifest;
 use errors::{CliError, LalResult};
 
-pub fn verify() -> LalResult<()> {
-    // 1. `manifest.json` exists in `$PWD` and is valid JSON
-    let m = try!(init::read_manifest());
-
-    // 2. dependencies in `INPUT` match `manifest.json`.
+pub fn verify(m: Manifest) -> LalResult<()> {
+    // 1. dependencies in `INPUT` match `manifest.json`.
     let input = Path::new(&env::current_dir().unwrap()).join("INPUT");
     if !input.is_dir() && m.dependencies.len() == 0 {
         return Ok(()); // nothing to verify - so accept a missing directory

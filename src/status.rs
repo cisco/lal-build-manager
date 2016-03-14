@@ -15,9 +15,10 @@ fn print_as_tree(root: &str, xs: Vec<String>) {
     }
 }
 
+// TODO: use input algorithm and just print here
 pub fn status(manifest: Manifest) -> LalResult<()> {
     let deps = try!(input::analyze());
-    let saved_deps = init::merge_dependencies(&manifest);
+    let saved_deps = manifest.all_dependencies();
 
     let mut res = vec![];
     let mut error = None;

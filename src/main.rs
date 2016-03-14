@@ -6,6 +6,7 @@ extern crate loggerv;
 
 extern crate lal;
 use lal::*;
+use lal::init::Manifest;
 
 use clap::{Arg, App, AppSettings, SubCommand};
 
@@ -110,7 +111,7 @@ fn main() {
     }
 
     // Force manifest to exist before allowing remaining actions
-    let manifest = init::read_manifest()
+    let manifest = Manifest::read()
         .map_err(|e| {
             error!("Manifest error: {}", e);
             println!("Ensure you have run `lal init` and that manifest.json is valid json");
@@ -143,7 +144,7 @@ fn main() {
     } else if let Some(_) = args.subcommand_matches("shell") {
         result_exit("shell", shell::shell(&config));
     } else if let Some(_) = args.subcommand_matches("verify") {
-        result_exit("verify", verify::verify());
+        result_exit("verify", verify::verify(manifest));
     } else if let Some(_) = args.subcommand_matches("status") {
         result_exit("status", status::status(manifest));
     } else if let Some(a) = args.subcommand_matches("stash") {

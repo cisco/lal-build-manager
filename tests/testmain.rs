@@ -10,6 +10,7 @@ use std::fs;
 
 //use loggerv::init_with_verbosity;
 use lal::{configure, install, verify, init, shell, build};
+use lal::init::Manifest;
 
 // TODO: macroify this stuff
 fn main() {
@@ -107,7 +108,7 @@ fn configure_yes() {
 
 // Create manifest
 fn init_force() {
-    let m1 = init::read_manifest();
+    let m1 = Manifest::read();
     assert!(m1.is_err(), "no manifest at this point");
 
     let m2 = init::init(false);
@@ -129,17 +130,17 @@ fn sanity() {
     let cfg = configure::current_config();
     assert_eq!(cfg.is_ok(), true);
 
-    let manifest = init::read_manifest();
+    let manifest = Manifest::read();
     assert_eq!(manifest.is_ok(), true);
 
     // There is no INPUT yet, but we have no dependencies, so this should work:
-    let r = verify::verify();
+    let r = verify::verify(manifest.unwrap());
     assert!(r.is_ok(), "could verify after install");
 }
 
 // add some dependencies
 fn install_save() {
-    let mf1 = init::read_manifest().unwrap();
+    let mf1 = Manifest::read().unwrap();
     let cfg = configure::current_config().unwrap();
 
     // gtest savedev
@@ -147,7 +148,7 @@ fn install_save() {
     assert!(ri.is_ok(), "installed gtest and saved as dev");
 
     // three main deps (and re-read manifest to avoid overwriting devedps)
-    let mf2 = init::read_manifest().unwrap();
+    let mf2 = Manifest::read().unwrap();
     let ri = install::install(mf2, cfg.clone(), vec!["libyaml", "yajl", "libwebsockets"], true, false);
     assert!(ri.is_ok(), "installed libyaml and saved");
 }
@@ -157,25 +158,24 @@ fn install_save() {
 //}
 
 fn verify_checks() {
-    let mf = init::read_manifest().unwrap();
     let cfg = configure::current_config().unwrap();
 
-    let r = verify::verify();
+    let r = verify::verify(Manifest::read().unwrap());
     assert!(r.is_ok(), "could verify after install");
 
     // clean folders and verify it fails
     let yajl = Path::new(&env::current_dir().unwrap()).join("INPUT").join("yajl");
     fs::remove_dir_all(&yajl).unwrap();
 
-    let r2 = verify::verify();
+    let r2 = verify::verify(Manifest::read().unwrap());
     assert!(r2.is_err(), "verify failed after fiddling");
 
     // re-install everything
-    let rall = install::install_all(mf, cfg, true);
+    let rall = install::install_all(Manifest::read().unwrap(), cfg, true);
     assert!(rall.is_ok(), "install all succeeded");
     assert!(yajl.is_dir(), "yajl was reinstalled from manifest");
 
-    let r3 = verify::verify();
+    let r3 = verify::verify(Manifest::read().unwrap());
     assert!(r3.is_ok(), "verify ok again");
 }
 
@@ -192,7 +192,7 @@ fn shell_permissions() {
 }
 
 fn build_tar() {
-    let mf = init::read_manifest().unwrap();
+    let mf = Manifest::read().unwrap();
     let cfg = configure::current_config().unwrap();
 
     // TODO: need to have a BUILD script that actually creates a tarball in OUTPUT

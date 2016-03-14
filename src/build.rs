@@ -10,7 +10,7 @@ use configure::Config;
 use shell;
 use init::Manifest;
 use errors::{LalResult, CliError};
-use lockfile::Lock;
+use util::lockfile::Lock;
 
 
 fn tar_output(tarball: &Path) -> LalResult<()> {
@@ -24,6 +24,8 @@ fn tar_output(tarball: &Path) -> LalResult<()> {
     let file = try!(File::create(&tarball));
     let mut encoder = GzEncoder::new(file, Compression::Default); // encoder writes file
     let mut builder = tar::Builder::new(&mut encoder); // tar builder writes to encoder
+    // builder, THEN encoder, are finish()d at the end of this scope
+    // tarball has not been completely written until this function is over
 
     let files = WalkDir::new("OUTPUT")
         .min_depth(1)
@@ -44,9 +46,6 @@ fn tar_output(tarball: &Path) -> LalResult<()> {
     if !had_files {
         return Err(CliError::MissingBuild);
     }
-    // builder, THEN encoder, are finish()d at the end of this scope
-    // tarball has not been completely written until this function is over
-
     Ok(())
 }
 

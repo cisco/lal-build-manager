@@ -18,4 +18,3 @@ pub mod install;
 pub mod verify;
 pub mod cache;
 pub mod status;
-pub mod lockfile;

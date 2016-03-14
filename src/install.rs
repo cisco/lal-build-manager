@@ -269,7 +269,7 @@ pub fn install(manifest: Manifest,
         } else {
             mf.devDependencies = hmap;
         }
-        try!(init::save_manifest(&mf));
+        try!(mf.write());
     }
     Ok(())
 }
