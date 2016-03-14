@@ -8,6 +8,7 @@ extern crate ansi_term;
 extern crate log;
 extern crate walkdir;
 
+mod util;
 pub mod errors;
 pub mod configure;
 pub mod init;

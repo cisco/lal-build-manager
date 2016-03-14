@@ -7,42 +7,41 @@ use std::env;
 use std::collections::HashMap;
 use init::Manifest;
 use errors::LalResult;
-
-
-// TODO: need a struct
-// TODO: try to parse a versions.yaml
+use util::input;
 
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Dependency {
     pub name: String,
-    pub version: u32,
+    pub version: String,
     // TODO: other stash data if using a stashed build
-    pub dependencies: HashMap<String, Dependency>
+    pub dependencies: HashMap<String, Dependency>,
 }
 
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Lock {
     pub name: String,
-    //pub date: String,
-    pub version: u32,
+    // pub date: String,
+    pub version: String,
     pub dependencies: HashMap<String, Dependency>,
 }
 
-
-// The main interface from build()
-pub fn generate(m: &Manifest) -> LalResult<()> {
-    let lock = Lock {
-        name: m.name.clone(),
-        version: m.version,
-        dependencies: HashMap::new(),
-    };
-    let encoded = json::as_pretty_json(&lock);
-
-    let pwd = env::current_dir().unwrap();
-    let lockfile = Path::new(&pwd).join("ARTIFACT").join("lockfile.json");
-    let mut f = try!(File::create(&lockfile));
-    try!(write!(f, "{}\n", encoded));
-
-    info!("Wrote lockfile {}: \n{}", lockfile.display(), encoded);
-    Ok(())
+impl Lock {
+    pub fn new(n: &str, v: Option<&str>) -> Lock {
+        Lock {
+            name: n.to_string(),
+            version: v.unwrap_or("experimental").to_string(),
+            dependencies: HashMap::new(),
+        }
+    }
+    pub fn populate_from_input(mut self) -> Self {
+        //let deps = input::analyze();
+        self
+    }
+    pub fn write(&self, pth: &Path) -> LalResult<()> {
+        let encoded = json::as_pretty_json(self);
+        let mut f = try!(File::create(pth));
+        try!(write!(f, "{}\n", encoded));
+        info!("Wrote lockfile {}: \n{}", pth.display(), encoded);
+        Ok(())
+    }
 }

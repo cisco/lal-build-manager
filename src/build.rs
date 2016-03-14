@@ -10,7 +10,7 @@ use configure::Config;
 use shell;
 use init::Manifest;
 use errors::{LalResult, CliError};
-use lockfile;
+use lockfile::Lock;
 
 
 fn tar_output(tarball: &Path) -> LalResult<()> {
@@ -62,10 +62,17 @@ fn ensure_dir_exists_fresh(subdir: &str) -> io::Result<()> {
     Ok(())
 }
 
-pub fn build(cfg: &Config, manifest: &Manifest, name: Option<&str>) -> LalResult<()> {
+pub fn build(cfg: &Config,
+             manifest: &Manifest,
+             name: Option<&str>,
+             release: bool,
+             version: Option<&str>)
+             -> LalResult<()> {
     try!(ensure_dir_exists_fresh("OUTPUT"));
 
-    // TODO: generate lockfile
+    let lockfile = Lock::new(&manifest.name, version).populate_from_input();
+
+
     info!("Running build script in docker container");
     let component = name.unwrap_or(&manifest.name);
     // TODO: build flags
@@ -73,15 +80,20 @@ pub fn build(cfg: &Config, manifest: &Manifest, name: Option<&str>) -> LalResult
     debug!("Build script is {:?}", cmd);
     try!(shell::docker_run(&cfg, cmd, false));
 
-    try!(ensure_dir_exists_fresh("ARTIFACT"));
+    if release {
+        try!(ensure_dir_exists_fresh("ARTIFACT"));
 
-    let cwd = try!(env::current_dir());
-    let pwd = Path::new(&cwd);
-    let tarball = pwd.join(["./", component, ".tar.gz"].concat());
-    try!(tar_output(&tarball));
+        let cwd = try!(env::current_dir());
+        let pwd = Path::new(&cwd);
+        let tarball = pwd.join(["./", component, ".tar.gz"].concat());
+        try!(tar_output(&tarball));
 
-    try!(fs::copy(&tarball, pwd.join("ARTIFACT").join([component, ".tar.gz"].concat())));
-    try!(fs::remove_file(&tarball));
-    try!(lockfile::generate(manifest));
+        try!(fs::copy(&tarball,
+                      pwd.join("ARTIFACT").join([component, ".tar.gz"].concat())));
+        try!(fs::remove_file(&tarball));
+
+        let lockpath = pwd.join("ARTIFACT").join("lockfile.json");
+        try!(lockfile.write(&lockpath));
+    }
     Ok(())
 }

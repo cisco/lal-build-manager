@@ -2,27 +2,11 @@ use std::fs;
 use std::path::Path;
 use std::env;
 use ansi_term::Colour;
+use std::collections::HashMap;
 
 use init::{self, Manifest};
 use errors::{CliError, LalResult};
-
-fn get_installed() -> LalResult<Vec<String>> {
-    let input = Path::new(&env::current_dir().unwrap()).join("INPUT");
-    let mut deps = vec![];
-
-    if !input.is_dir() {
-        return Ok(deps);
-    }
-
-    for entry in try!(fs::read_dir(&input)) {
-        let pth = try!(entry).path();
-        if pth.is_dir() {
-            let component = pth.to_str().unwrap().split("/").last().unwrap();
-            deps.push(component.to_string());
-        }
-    }
-    Ok(deps)
-}
+use util::input;
 
 // dumb helper to print a one-level tree
 fn print_as_tree(root: &str, xs: Vec<String>) {
@@ -37,7 +21,7 @@ fn print_as_tree(root: &str, xs: Vec<String>) {
 }
 
 pub fn status(manifest: Manifest) -> LalResult<()> {
-    let deps = try!(get_installed());
+    let deps = try!(input::analyze());
     let saved_deps = init::merge_dependencies(&manifest);
 
     let mut res = vec![];
@@ -45,7 +29,7 @@ pub fn status(manifest: Manifest) -> LalResult<()> {
 
     // figure out status of saved deps
     for (d, v) in saved_deps.clone() {
-        let missing = !deps.contains(&d);
+        let missing = deps.get(&d).is_none();
         let is_dev = manifest.devDependencies.contains_key(&d);
 
         let mut extra_str = "".to_string();
@@ -63,8 +47,8 @@ pub fn status(manifest: Manifest) -> LalResult<()> {
         res.push(format_str);
     }
     // figure out status of installed deps (may find extraneous ones)
-    for name in deps {
-        if !saved_deps.contains_key(&name) {
+    for name in deps.keys() {
+        if !saved_deps.contains_key(name) {
             let extra_str = Colour::Green.paint("(extraneous)").to_string();
             let version = "?"; // TODO: get version from INPUT as well..
             res.push(format!("{}@{} {}", name, version, extra_str));

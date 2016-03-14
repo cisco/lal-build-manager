@@ -7,7 +7,7 @@ use errors::{CliError, LalResult};
 
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
-    pub registry: String,
+    pub artifactory: String,
     pub cache: String,
     pub target: String,
     pub container: String,
@@ -69,15 +69,15 @@ pub fn configure(term_prompt: bool, save: bool) -> LalResult<Config> {
     let laldir = try!(create_lal_dir());
 
     let mut cfg = Config {
-        registry: "http://localhost".to_string(),
+        artifactory: "http://engci-maven.cisco.com/artifactory/CME-group".to_string(),
         cache: laldir.join("cache").as_path().to_str().unwrap().to_string(),
-        target: "ncp.amd64".to_string(),
+        target: "centos7.amd64".to_string(),
         container: "edonusdevelopers/centos_build".to_string(),
     };
 
     if term_prompt {
         // Prompt for values:
-        cfg.registry = prompt("registry", cfg.registry);
+        cfg.artifactory = prompt("artifactory", cfg.artifactory);
         cfg.cache = prompt("cache", cfg.cache);
         cfg.target = prompt("target", cfg.target);
         cfg.container = prompt("container", cfg.container);

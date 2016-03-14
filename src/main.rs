@@ -57,6 +57,14 @@ fn main() {
             .about("runs build script")
             .arg(Arg::with_name("component").help("Build a specific component"))
             .arg(Arg::with_name("name").help("build a specific component")))
+        .arg(Arg::with_name("release")
+            .long("release")
+            .short("r")
+            .help("Create release output for artifactory"))
+        .arg(Arg::with_name("with-version")
+            .long("with-version")
+            .short("w")
+            .help("Configure lockfiles for a new release with an explicit new version"))
         .subcommand(SubCommand::with_name("stash")
             .about("stashes current build OUTPUT in cache for later reuse")
             .arg(Arg::with_name("name")
@@ -128,7 +136,11 @@ fn main() {
         };
         result_exit("install", res);
     } else if let Some(a) = args.subcommand_matches("build") {
-        let res = build::build(&config, &manifest, a.value_of("component"));
+        let res = build::build(&config,
+                               &manifest,
+                               a.value_of("component"),
+                               a.is_present("release"),
+                               a.value_of("with-version"));
         result_exit("build", res);
     } else if let Some(_) = args.subcommand_matches("shell") {
         result_exit("shell", shell::shell(&config));
