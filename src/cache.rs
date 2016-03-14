@@ -35,7 +35,6 @@ pub fn store_tarball(cfg: &Config, name: &str, version: u32) -> Result<(), CliEr
 
     // 3. TODO: get metadata as well in there?
 
-
     // Done
     Ok(())
 }

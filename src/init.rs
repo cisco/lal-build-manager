@@ -12,7 +12,7 @@ use errors::{CliError, LalResult};
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Manifest {
     pub name: String,
-    pub version: String,
+    pub version: u32,
     pub components: HashMap<String, String>,
     pub flags: Vec<String>,
     pub dependencies: HashMap<String, u32>,
@@ -60,7 +60,7 @@ pub fn init(force: bool) -> LalResult<()> {
 
     let manifest = Manifest {
         name: dirname.to_string(),
-        version: "0".to_string(),
+        version: 0,
         components: HashMap::new(),
         flags: vec![],
         dependencies: HashMap::new(),
