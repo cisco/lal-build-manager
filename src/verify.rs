@@ -6,6 +6,7 @@ use init::Manifest;
 use errors::{CliError, LalResult};
 
 pub fn verify(m: Manifest) -> LalResult<()> {
+    let mut error = None;
     // 1. dependencies in `INPUT` match `manifest.json`.
     let input = Path::new(&env::current_dir().unwrap()).join("INPUT");
     if !input.is_dir() && m.dependencies.len() == 0 {
@@ -24,7 +25,7 @@ pub fn verify(m: Manifest) -> LalResult<()> {
         debug!("Verifying dependency from manifest: {}", d);
         if !deps.contains(&d) {
             warn!("Dependency {} not found in INPUT", d);
-            return Err(CliError::MissingDependencies);
+            error = Some(CliError::MissingDependencies);
         }
     }
 
@@ -34,6 +35,10 @@ pub fn verify(m: Manifest) -> LalResult<()> {
     // 4. `INPUT` contains only global dependencies.
     // TODO:
 
+    // Return one of the errors as the main one (no need to vectorize these..)
+    if error.is_some() {
+        return Err(error.unwrap());
+    }
     info!("Dependencies fully verified");
     Ok(())
 }
