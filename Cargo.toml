@@ -1,6 +1,6 @@
 [package]
 name = "lal"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Eirik Albrigtsen <ealbrigt@cisco.com>"]
 
 [lib]
