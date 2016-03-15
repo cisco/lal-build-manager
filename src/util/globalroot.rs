@@ -131,7 +131,8 @@ fn get_dependency_url(name: &str, target: &str, version: u32) -> LalResult<Strin
 ///
 /// Either of these will return a blob (if the version exists)
 /// This blob is then turned into a tarball url that is returned along with some metadata
-pub fn get_tarball_uri(name: &str, target: &str, version: Option<u32>) -> LalResult<Component> {
+pub fn get_tarball_uri(name: &str, version: Option<u32>) -> LalResult<Component> {
+    let target = "ncp.amd64"; // worked with globalroot with this target
     if let Some(v) = version {
         get_dependency_url(name, target, v).map(|uri| {
             Component {

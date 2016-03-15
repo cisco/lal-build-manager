@@ -3,8 +3,8 @@ use std::fs;
 use std::path::Path;
 use std::env;
 
-//use util::globalroot::get_tarball_uri as globalroot_tarball;
-use util::artifactory::get_tarball_uri as artifactory_tarball;
+//use util::globalroot::get_tarball_uri;
+use util::artifactory::get_tarball_uri;
 use Manifest;
 use configure::Config;
 use errors::{CliError, LalResult};
@@ -38,8 +38,7 @@ fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> LalResult<C
     use flate2::read::GzDecoder;
     use cache;
 
-    //let component = try!(globalroot_tarball(name, cfg.target.as_ref(), version));
-    let component = try!(artifactory_tarball(name, version));
+    let component = try!(get_tarball_uri(name, version));
     let tarname = ["./", name, ".tar"].concat();
 
     // always just download for now - TODO: eventually check cache
@@ -51,7 +50,7 @@ fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> LalResult<C
         let mut archive = Archive::new(decompressed); // Archive reads decoded
 
         let pwd = env::current_dir().unwrap();
-        let extract_path = Path::new(&pwd).join("INPUT").join(&name).join(&cfg.target);
+        let extract_path = Path::new(&pwd).join("INPUT").join(&name);
         try!(fs::create_dir_all(&extract_path));
         try!(archive.unpack(&extract_path));
 

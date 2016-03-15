@@ -9,7 +9,6 @@ use errors::{CliError, LalResult};
 pub struct Config {
     pub artifactory: String,
     pub cache: String,
-    pub target: String,
     pub container: String,
 }
 
@@ -22,7 +21,6 @@ impl Config {
         Ok(Config {
             artifactory: "http://engci-maven.cisco.com/artifactory/CME-group".to_string(),
             cache: cachedir.to_string(),
-            target: "centos7.amd64".to_string(),
             container: "edonusdevelopers/centos_build".to_string(),
         })
     }
@@ -91,7 +89,6 @@ pub fn configure(term_prompt: bool, save: bool) -> LalResult<Config> {
         // Prompt for values:
         cfg.artifactory = prompt("artifactory", cfg.artifactory);
         cfg.cache = prompt("cache", cfg.cache);
-        cfg.target = prompt("target", cfg.target);
         cfg.container = prompt("container", cfg.container);
     }
     if save {

@@ -3,6 +3,8 @@ use std::path::Path;
 use std::env;
 use std::collections::HashMap;
 
+use walkdir::WalkDir;
+
 use init::Manifest;
 use errors::LalResult;
 
@@ -14,14 +16,18 @@ pub fn analyze() -> LalResult<HashMap<String, String>> {
     if !input.is_dir() {
         return Ok(deps);
     }
+    let dirs = WalkDir::new("INPUT")
+        .min_depth(1)
+        .max_depth(1)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().is_dir());
 
-    for entry in try!(fs::read_dir(&input)) {
-        let pth = try!(entry).path();
-        if pth.is_dir() {
-            let component = pth.to_str().unwrap().split("/").last().unwrap();
-            // TODO: read version from lockfile
-            deps.insert(component.to_string(), "experimental".to_string());
-        }
+    for d in dirs {
+        let pth = d.path().strip_prefix("INPUT").unwrap();
+        let component = pth.to_str().unwrap();
+        // TODO: read version from lockfile
+        deps.insert(component.to_string(), "experimental".to_string());
     }
     Ok(deps)
 }

@@ -7,16 +7,18 @@ use init::Manifest;
 use errors::{CliError, LalResult};
 
 pub fn is_cached(cfg: &Config, name: &str, version: u32) -> bool {
-    !Path::new(&cfg.cache).join(&cfg.target).join(name).join(version.to_string()).is_dir()
+    !Path::new(&cfg.cache)
+        .join(name)
+        .join(version.to_string())
+        .is_dir()
 }
 
 // for the future when we are not fetching from globalroot
 pub fn store_tarball(cfg: &Config, name: &str, version: u32) -> Result<(), CliError> {
-    // 1. mkdir -p cfg.cacheDir/$target/$name/$version
+    // 1. mkdir -p cfg.cacheDir/$name/$version
     let pwd = env::current_dir().unwrap();
     let destdir = Path::new(&cfg.cache)
         .join("globals")
-        .join(&cfg.target)
         .join(name)
         .join(version.to_string());
     if !destdir.is_dir() {
@@ -48,7 +50,10 @@ pub fn stash(cfg: Config, mf: Manifest, name: &str) -> LalResult<()> {
         return Err(CliError::MissingBuild);
         // TODO: need to verify lockfile here
     }
-    let destdir = Path::new(&cfg.cache).join("stash").join(&cfg.target).join(mf.name).join(name);
+    let destdir = Path::new(&cfg.cache)
+        .join("stash")
+        .join(mf.name)
+        .join(name);
     debug!("Creating {:?}", destdir);
     try!(fs::create_dir_all(&destdir));
 

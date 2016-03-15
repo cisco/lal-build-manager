@@ -2,23 +2,34 @@ use std::fs;
 use std::path::Path;
 use std::env;
 
+use walkdir::WalkDir;
+
 use Manifest;
 use errors::{CliError, LalResult};
 
 pub fn verify(m: Manifest) -> LalResult<()> {
     let mut error = None;
     // 1. dependencies in `INPUT` match `manifest.json`.
-    let input = Path::new(&env::current_dir().unwrap()).join("INPUT");
+    let pwd = try!(env::current_dir());
+    let input = Path::new(&pwd).join("INPUT");
     if !input.is_dir() && m.dependencies.len() == 0 {
         return Ok(()); // nothing to verify - so accept a missing directory
     }
     let mut deps = vec![];
-    for entry in try!(fs::read_dir(&input)) {
-        let pth = try!(entry).path();
-        if pth.is_dir() {
-            let component = pth.to_str().unwrap().split("/").last().unwrap();
-            deps.push(component.to_string());
-        }
+
+    let dirs = WalkDir::new("INPUT")
+        .min_depth(1)
+        .max_depth(1)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().is_dir());
+
+    for entry in dirs {
+        let pth = entry.path().strip_prefix("INPUT").unwrap();
+        debug!("-> {}", pth.display());
+
+        let component = pth.to_str().unwrap();
+        deps.push(component.to_string());
     }
     debug!("Found the following deps in INPUT: {:?}", deps);
     for (d, _) in m.dependencies {

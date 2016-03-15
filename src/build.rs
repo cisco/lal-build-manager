@@ -9,6 +9,7 @@ use walkdir::WalkDir;
 use configure::Config;
 use shell;
 use init::Manifest;
+use verify::verify;
 use errors::{LalResult, CliError};
 use util::lockfile::Lock;
 
@@ -69,14 +70,21 @@ pub fn build(cfg: &Config,
              -> LalResult<()> {
     try!(ensure_dir_exists_fresh("OUTPUT"));
 
-    info!("Got version {}", version.unwrap_or("none"));
+    debug!("Version flag is {}", version.unwrap_or("unset"));
     let lockfile = try!(Lock::new(&manifest.name, version).populate_from_input());
 
+    // Verify INPUT
+    if let Some(e) = verify(manifest.clone()).err() {
+        if version.is_some() {
+            return Err(e);
+        }
+        warn!("Verify failed - build will fail on jenkins, but continuing");
+    }
 
     info!("Running build script in docker container");
     let component = name.unwrap_or(&manifest.name);
     // TODO: build flags
-    let cmd = vec!["./BUILD", &component, &cfg.target];
+    let cmd = vec!["./BUILD", &component];
     debug!("Build script is {:?}", cmd);
     try!(shell::docker_run(&cfg, cmd, false));
 
