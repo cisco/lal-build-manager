@@ -25,6 +25,7 @@ pub enum CliError {
     // Install failures
     InstallFailure, // generic catch all
     GlobalRootFailure(&'static str), // fetch failure related to globalroot
+    ArtifactoryFailure(&'static str), // fetch failure related to artifactory
 }
 pub type LalResult<T> = Result<T, CliError>;
 
@@ -44,6 +45,7 @@ impl fmt::Display for CliError {
             CliError::SubprocessFailure(n) => write!(f, "Process exited with {}", n),
             CliError::InstallFailure => write!(f, "Install failed"),
             CliError::GlobalRootFailure(ref s) => write!(f, "Globalroot - {}", s),
+            CliError::ArtifactoryFailure(ref s) => write!(f, "Artifactory - {}", s),
         }
     }
 }

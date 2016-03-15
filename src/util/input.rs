@@ -52,26 +52,28 @@ pub fn analyze_full(manifest: &Manifest) -> LalResult<InputMap> {
 
     // check manifested deps
     for (d, v) in saved_deps.clone() {
-        depmap.insert(d.clone(), InputDependency {
-            name: d.clone(),
-            version: "experimental".to_string(), // TODO: from lockfile
-            requirement: Some(format!("{}", v)),
-            missing: deps.get(&d).is_none(),
-            development: manifest.devDependencies.contains_key(&d),
-            extraneous: false,
-        });
+        depmap.insert(d.clone(),
+                      InputDependency {
+                          name: d.clone(),
+                          version: "experimental".to_string(), // TODO: from lockfile
+                          requirement: Some(format!("{}", v)),
+                          missing: deps.get(&d).is_none(),
+                          development: manifest.devDependencies.contains_key(&d),
+                          extraneous: false,
+                      });
     }
     // check for potentially non-manifested deps
     for name in deps.keys() {
         if !saved_deps.contains_key(name) {
-            depmap.insert(name.clone(), InputDependency {
-                name: name.clone(),
-                version: "experimental".to_string(), // TODO: from lockfile!
-                requirement: None,
-                missing: false,
-                development: false,
-                extraneous: true,
-            });
+            depmap.insert(name.clone(),
+                          InputDependency {
+                              name: name.clone(),
+                              version: "experimental".to_string(), // TODO: from lockfile!
+                              requirement: None,
+                              missing: false,
+                              development: false,
+                              extraneous: true,
+                          });
         }
     }
 

@@ -2,7 +2,7 @@ use std::fs;
 use std::path::Path;
 use std::env;
 
-use init::Manifest;
+use Manifest;
 use errors::{CliError, LalResult};
 
 pub fn verify(m: Manifest) -> LalResult<()> {

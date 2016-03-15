@@ -20,7 +20,7 @@ pub fn status(manifest: Manifest) -> LalResult<()> {
     let mut error = None;
 
     for (d, dep) in try!(input::analyze_full(&manifest)) {
-         let notes = if dep.missing && !dep.development {
+        let notes = if dep.missing && !dep.development {
             error = Some(CliError::MissingDependencies);
             Colour::Red.paint("(missing)").to_string()
         } else if dep.missing {
@@ -30,7 +30,9 @@ pub fn status(manifest: Manifest) -> LalResult<()> {
         } else if dep.extraneous {
             error = Some(CliError::ExtraneousDependencies);
             Colour::Green.paint("(extraneous)").to_string()
-        } else { "".to_string() };
+        } else {
+            "".to_string()
+        };
 
         res.push(format!("{}@{} {}", d, dep.version, notes));
     }

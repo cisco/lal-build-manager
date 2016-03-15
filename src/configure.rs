@@ -22,7 +22,7 @@ impl Config {
         Ok(Config {
             artifactory: "http://engci-maven.cisco.com/artifactory/CME-group".to_string(),
             cache: cachedir.to_string(),
-            target: "ncp.amd64".to_string(),
+            target: "centos7.amd64".to_string(),
             container: "edonusdevelopers/centos_build".to_string(),
         })
     }
