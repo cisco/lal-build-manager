@@ -6,7 +6,6 @@ extern crate loggerv;
 
 extern crate lal;
 use lal::*;
-use lal::init::Manifest;
 
 use clap::{Arg, App, AppSettings, SubCommand};
 
@@ -97,7 +96,7 @@ fn main() {
     }
 
     // Force config to exists before allowing remaining actions
-    let config = configure::current_config()
+    let config = Config::read()
         .map_err(|e| {
             error!("Configuration error: {}", e);
             println!("Ensure you have run `lal configure` and that ~/.lal/lalrc is valid json");

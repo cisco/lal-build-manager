@@ -1,5 +1,5 @@
 use ansi_term::Colour;
-use init::{self, Manifest};
+use init::Manifest;
 use errors::{CliError, LalResult};
 use util::input;
 

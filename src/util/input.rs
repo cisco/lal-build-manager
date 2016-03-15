@@ -3,7 +3,7 @@ use std::path::Path;
 use std::env;
 use std::collections::HashMap;
 
-use init::{Manifest, self};
+use init::Manifest;
 use errors::LalResult;
 
 pub fn analyze() -> LalResult<HashMap<String, String>> {

@@ -13,6 +13,45 @@ pub struct Config {
     pub container: String,
 }
 
+impl Config {
+    pub fn new() -> LalResult<Config> {
+        // unwrapping things that really must succeed here
+        let home = env::home_dir().unwrap();
+        let cachepath = Path::new(&home).join(".lal").join("cache");
+        let cachedir = cachepath.as_path().to_str().unwrap();
+        Ok(Config {
+            artifactory: "http://engci-maven.cisco.com/artifactory/CME-group".to_string(),
+            cache: cachedir.to_string(),
+            target: "ncp.amd64".to_string(),
+            container: "edonusdevelopers/centos_build".to_string(),
+        })
+    }
+    pub fn read() -> LalResult<Config> {
+        let home = env::home_dir().unwrap(); // crash if no $HOME
+        let cfg_path = Path::new(&home).join(".lal/lalrc");
+        if !cfg_path.exists() {
+            return Err(CliError::MissingConfig);
+        }
+        let mut f = try!(fs::File::open(&cfg_path));
+        let mut cfg_str = String::new();
+        try!(f.read_to_string(&mut cfg_str));
+        let res = try!(json::decode(&cfg_str));
+        Ok(res)
+    }
+    pub fn write(&self) -> LalResult<()> {
+        let home = env::home_dir().unwrap();
+        let cfg_path = Path::new(&home).join(".lal").join("lalrc");
+
+        let encoded = json::as_pretty_json(self);
+
+        let mut f = try!(fs::File::create(&cfg_path));
+        try!(write!(f, "{}\n", encoded));
+        info!("Wrote config {}: \n{}", cfg_path.display(), encoded);
+        Ok(())
+    }
+}
+
+
 fn prompt(name: &str, default: String) -> String {
     use std::io::{self, Write};
     print!("Default {}: ({}) ", name, &default);
@@ -31,19 +70,6 @@ fn prompt(name: &str, default: String) -> String {
     default
 }
 
-pub fn current_config() -> LalResult<Config> {
-    let home = env::home_dir().unwrap(); // crash if no $HOME
-    let cfg_path = Path::new(&home).join(".lal/lalrc");
-    if !cfg_path.exists() {
-        return Err(CliError::MissingConfig);
-    }
-    let mut f = try!(fs::File::open(&cfg_path));
-    let mut cfg_str = String::new();
-    try!(f.read_to_string(&mut cfg_str));
-    let res = try!(json::decode(&cfg_str));
-    Ok(res)
-}
-
 fn create_lal_dir() -> LalResult<PathBuf> {
     let home = env::home_dir().unwrap();
     let laldir = Path::new(&home).join(".lal");
@@ -56,24 +82,10 @@ fn create_lal_dir() -> LalResult<PathBuf> {
 //   - docker is present and warn if not
 //   - docker images contains cfg.container and provide info if not
 
-pub fn write_config(cfg: &Config, cfg_path: PathBuf) -> LalResult<()> {
-    let encoded = json::as_pretty_json(cfg);
-
-    let mut f = try!(fs::File::create(&cfg_path));
-    try!(write!(f, "{}\n", encoded));
-    info!("Wrote config {}: \n{}", cfg_path.display(), encoded);
-    Ok(())
-}
 
 pub fn configure(term_prompt: bool, save: bool) -> LalResult<Config> {
-    let laldir = try!(create_lal_dir());
-
-    let mut cfg = Config {
-        artifactory: "http://engci-maven.cisco.com/artifactory/CME-group".to_string(),
-        cache: laldir.join("cache").as_path().to_str().unwrap().to_string(),
-        target: "ncp.amd64".to_string(),
-        container: "edonusdevelopers/centos_build".to_string(),
-    };
+    let _ = try!(create_lal_dir());
+    let mut cfg = try!(Config::new());
 
     if term_prompt {
         // Prompt for values:
@@ -83,8 +95,7 @@ pub fn configure(term_prompt: bool, save: bool) -> LalResult<Config> {
         cfg.container = prompt("container", cfg.container);
     }
     if save {
-        let cfg_path = laldir.join("lalrc");
-        try!(write_config(&cfg, cfg_path));
+        try!(cfg.write());
     }
 
     Ok(cfg.clone())

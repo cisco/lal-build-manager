@@ -9,8 +9,7 @@ use std::path::{Path, PathBuf};
 use std::fs;
 
 //use loggerv::init_with_verbosity;
-use lal::{configure, install, verify, init, shell, build};
-use lal::init::Manifest;
+use lal::{configure, install, verify, init, shell, build, Config, Manifest};
 
 // TODO: macroify this stuff
 fn main() {
@@ -96,13 +95,13 @@ fn kill_manifest() {
 
 // Create lalrc
 fn configure_yes() {
-    let config = configure::current_config();
+    let config = Config::read();
     assert!(config.is_err(), "no lalrc at this point");
 
     let r = configure::configure(false, true);
     assert!(r.is_ok(), "configure succeeded");
 
-    let cfg = configure::current_config();
+    let cfg = Config::read();
     assert!(cfg.is_ok(), "config exists now");
 }
 
@@ -127,7 +126,7 @@ fn sanity() {
     let ldir = lal_dir();
     assert_eq!(ldir.is_dir(), true);
 
-    let cfg = configure::current_config();
+    let cfg = Config::read();
     assert_eq!(cfg.is_ok(), true);
 
     let manifest = Manifest::read();
@@ -141,7 +140,7 @@ fn sanity() {
 // add some dependencies
 fn install_save() {
     let mf1 = Manifest::read().unwrap();
-    let cfg = configure::current_config().unwrap();
+    let cfg = Config::read().unwrap();
 
     // gtest savedev
     let ri = install::install(mf1, cfg.clone(), vec!["gtest"], false, true);
@@ -158,7 +157,7 @@ fn install_save() {
 //}
 
 fn verify_checks() {
-    let cfg = configure::current_config().unwrap();
+    let cfg = Config::read().unwrap();
 
     let r = verify::verify(Manifest::read().unwrap());
     assert!(r.is_ok(), "could verify after install");
@@ -181,19 +180,19 @@ fn verify_checks() {
 
 // Shell tests
 fn shell_echo() {
-    let cfg = configure::current_config().unwrap();
+    let cfg = Config::read().unwrap();
     let r = shell::docker_run(&cfg, vec!["echo", "# echo from docker"], false);
     assert!(r.is_ok(), "shell echoed");
 }
 fn shell_permissions() {
-    let cfg = configure::current_config().unwrap();
+    let cfg = Config::read().unwrap();
     let r = shell::docker_run(&cfg, vec!["touch", "README.md"], false);
     assert!(r.is_ok(), "could touch files in container");
 }
 
 fn build_tar() {
     let mf = Manifest::read().unwrap();
-    let cfg = configure::current_config().unwrap();
+    let cfg = Config::read().unwrap();
 
     // TODO: need to have a BUILD script that actually creates a tarball in OUTPUT
     // currently tests work because I have such a BUILD, but don't want to commit it

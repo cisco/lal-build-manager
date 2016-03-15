@@ -8,6 +8,7 @@ extern crate ansi_term;
 extern crate log;
 extern crate walkdir;
 
+
 mod util;
 pub mod errors;
 pub mod configure;
@@ -18,3 +19,5 @@ pub mod install;
 pub mod verify;
 pub mod cache;
 pub mod status;
+pub use init::Manifest;
+pub use configure::Config;
