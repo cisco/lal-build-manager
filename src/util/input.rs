@@ -38,7 +38,7 @@ pub struct InputDependency {
 pub type InputMap = HashMap<String, InputDependency>;
 
 
-pub fn analyze_full(manifest: Manifest) -> LalResult<InputMap> {
+pub fn analyze_full(manifest: &Manifest) -> LalResult<InputMap> {
     let cwd = try!(env::current_dir());
     let input = Path::new(&cwd).join("INPUT");
 
