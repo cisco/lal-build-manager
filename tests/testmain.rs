@@ -9,12 +9,27 @@ use std::path::{Path, PathBuf};
 use std::fs;
 
 //use loggerv::init_with_verbosity;
-use lal::{configure, install, verify, init, shell, build, Config, Manifest};
+use lal::{configure, install, verify, init, shell, build, Config, Manifest, LalResult};
 
 // TODO: macroify this stuff
-// TODO: macroify so we get good debug:
-// currently have to attach .map_err(|e| println!("got error {}", e));
-// onto things we assert!(ri.is_ok()) (since assert just panics without printing the error)
+
+mod chk {
+    use std::fmt::Display;
+    use std::process;
+    // TODO: don't need to move T into here, but since they are joined..
+    pub fn is_ok<T, E: Display>(x: Result<T, E>, name: &str) {
+        let _ = x.map_err(|e| {
+            println!("Bail out! {} failed with '{}'", name, e);
+            process::exit(1);
+        });
+    }
+}
+//fn assert_err<T>(x: LalResult<T>, name: &str) {
+//    let _ = x.map(|v| {
+//        println!("Bail out! {} unexpected ok: {}", name, v);
+//        process::exit(1);
+//    });
+//}
 
 fn main() {
     //init_with_verbosity(0).unwrap();
@@ -128,17 +143,17 @@ fn init_force() {
 // and ~/.lal + lalrc must exist
 fn sanity() {
     let ldir = lal_dir();
-    assert_eq!(ldir.is_dir(), true);
+    assert!(ldir.is_dir(), "have laldir");
 
     let cfg = Config::read();
-    assert_eq!(cfg.is_ok(), true);
+    chk::is_ok(cfg, "could read config");
 
     let manifest = Manifest::read();
-    assert_eq!(manifest.is_ok(), true);
+    chk::is_ok(Manifest::read(), "could read manifest");
 
     // There is no INPUT yet, but we have no dependencies, so this should work:
     let r = verify::verify(manifest.unwrap());
-    assert!(r.is_ok(), "could verify after install");
+    chk::is_ok(r, "could verify after install");
 }
 
 // add some dependencies
@@ -148,12 +163,12 @@ fn install_save() {
 
     // gtest savedev
     let ri = install::install(mf1, cfg.clone(), vec!["gtest"], false, true);
-    assert!(ri.is_ok(), "installed gtest and saved as dev");
+    chk::is_ok(ri, "could install gtest and save as dev");
 
     // three main deps (and re-read manifest to avoid overwriting devedps)
     let mf2 = Manifest::read().unwrap();
     let ri = install::install(mf2, cfg.clone(), vec!["libyaml", "yajl", "libwebsockets"], true, false);
-    assert!(ri.is_ok(), "installed libyaml and saved");
+    chk::is_ok(ri, "could install libyaml and save");
 }
 
 //fn component_dir(name: &str) -> PathBuf {
