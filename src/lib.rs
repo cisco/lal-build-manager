@@ -19,5 +19,8 @@ pub mod install;
 pub mod verify;
 pub mod cache;
 pub mod status;
+
+// re-exports
 pub use init::Manifest;
 pub use configure::Config;
+pub use errors::LalResult;

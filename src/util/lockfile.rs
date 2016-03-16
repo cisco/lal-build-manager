@@ -19,6 +19,7 @@ pub struct Dependency {
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Lock {
     pub name: String,
+    pub flags: Option<String>,
     // pub date: String,
     pub version: String,
     pub dependencies: HashMap<String, Dependency>,
@@ -29,6 +30,7 @@ impl Lock {
         Lock {
             name: n.to_string(),
             version: v.unwrap_or("experimental").to_string(),
+            flags: None,
             dependencies: HashMap::new(),
         }
     }

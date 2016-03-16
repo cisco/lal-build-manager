@@ -65,6 +65,7 @@ fn ensure_dir_exists_fresh(subdir: &str) -> io::Result<()> {
 pub fn build(cfg: &Config,
              manifest: &Manifest,
              name: Option<&str>,
+             mut flags: Vec<&str>,
              release: bool,
              version: Option<&str>)
              -> LalResult<()> {
@@ -83,8 +84,12 @@ pub fn build(cfg: &Config,
 
     info!("Running build script in docker container");
     let component = name.unwrap_or(&manifest.name);
-    // TODO: build flags
-    let cmd = vec!["./BUILD", &component];
+
+    debug!("Use flags {:?}", flags);
+    let mut cmd = vec!["./BUILD".to_string(), component.to_string()];
+    for f in flags {
+        cmd.push(["--", f].concat())
+    }
     debug!("Build script is {:?}", cmd);
     try!(shell::docker_run(&cfg, cmd, false));
 

@@ -12,6 +12,10 @@ use std::fs;
 use lal::{configure, install, verify, init, shell, build, Config, Manifest};
 
 // TODO: macroify this stuff
+// TODO: macroify so we get good debug:
+// currently have to attach .map_err(|e| println!("got error {}", e));
+// onto things we assert!(ri.is_ok()) (since assert just panics without printing the error)
+
 fn main() {
     //init_with_verbosity(0).unwrap();
     println!("# lal tests");
@@ -181,12 +185,12 @@ fn verify_checks() {
 // Shell tests
 fn shell_echo() {
     let cfg = Config::read().unwrap();
-    let r = shell::docker_run(&cfg, vec!["echo", "# echo from docker"], false);
+    let r = shell::docker_run(&cfg, vec!["echo".to_string(), "# echo from docker".to_string()], false);
     assert!(r.is_ok(), "shell echoed");
 }
 fn shell_permissions() {
     let cfg = Config::read().unwrap();
-    let r = shell::docker_run(&cfg, vec!["touch", "README.md"], false);
+    let r = shell::docker_run(&cfg, vec!["touch".to_string(), "README.md".to_string()], false);
     assert!(r.is_ok(), "could touch files in container");
 }
 
@@ -196,6 +200,6 @@ fn build_tar() {
 
     // TODO: need to have a BUILD script that actually creates a tarball in OUTPUT
     // currently tests work because I have such a BUILD, but don't want to commit it
-    let r = build::build(&cfg, &mf, Some("hoot"), true, None);
+    let r = build::build(&cfg, &mf, Some("hoot"), vec![], true, None);
     assert!(r.is_ok(), "could run lal build and could make tarball");
 }

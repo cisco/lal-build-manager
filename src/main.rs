@@ -8,9 +8,7 @@ extern crate lal;
 use lal::*;
 
 use clap::{Arg, App, AppSettings, SubCommand};
-
 use std::process;
-use lal::errors::LalResult;
 
 fn result_exit<T>(name: &str, x: LalResult<T>) {
     let _ = x.map_err(|e| {
@@ -32,42 +30,51 @@ fn main() {
             .multiple(true)
             .help("Use verbose output"))
         .subcommand(SubCommand::with_name("install")
-            .about("installs dependencies")
+            .about("Installs dependencies listed in the manifest into INPUT")
             .arg(Arg::with_name("components")
                 .help("Installs specific component=version pairs")
                 .multiple(true))
             .arg(Arg::with_name("dev")
                 .long("dev")
                 .short("d")
-                .help("Install devDependencies as well")
+                .help("Additionally install devDependencies")
                 .conflicts_with("components"))
             .arg(Arg::with_name("save")
                 .short("S")
                 .long("save")
                 .requires("components")
                 .conflicts_with("savedev")
-                .help("Install also updates dependencies in the manifest"))
+                .help("Save installed versions in dependencies in the manifest"))
             .arg(Arg::with_name("savedev")
                 .short("D")
                 .long("save-dev")
                 .requires("components")
                 .conflicts_with("save")
-                .help("Install also updates devDependencies in the manifest")))
+                .help("Save installed versions in devDependencies in the manifest")))
         .subcommand(SubCommand::with_name("build")
-            .about("runs build script")
-            .arg(Arg::with_name("component").help("Build a specific component"))
-            .arg(Arg::with_name("name").help("build a specific component"))
+            .about("Runs BUILD script in current directory in the configured container")
+            .arg(Arg::with_name("component")
+                .help("Build a specific component (if other than the main manifest component)"))
+            .arg(Arg::with_name("useflags")
+                .long("use")
+                .short("u")
+                .takes_value(true)
+                .multiple(true)
+                .help("Use build flags from the manifest in build"))
             .arg(Arg::with_name("release")
                 .long("release")
                 .short("r")
                 .help("Create release output for artifactory"))
-            .arg(Arg::from_usage("--with-version [version] 'Configure lockfiles for a \
-                                  release with an explicit new version'")))
-        .subcommand(SubCommand::with_name("stash")
-            .about("stashes current build OUTPUT in cache for later reuse")
+            .arg(Arg::with_name("with-version")
+                .long("with-version")
+                .takes_value(true)
+                .requires("release")
+                .help("Configure lockfiles for a release with an explicit new version")))
+        .subcommand(SubCommand::with_name("store")
+            .about("Stores current build OUTPUT in cache for later reuse")
             .arg(Arg::with_name("name")
                 .required(true)
-                .help("name used for current build")))
+                .help("Name used for current build")))
         .subcommand(SubCommand::with_name("verify").about("runs verify script"))
         .subcommand(SubCommand::with_name("configure")
             .about("configures lal")
@@ -134,9 +141,15 @@ fn main() {
         };
         result_exit("install", res);
     } else if let Some(a) = args.subcommand_matches("build") {
+        let flags = if a.is_present("useflags") {
+            a.values_of("useflags").unwrap().collect::<Vec<_>>()
+        } else {
+            vec![]
+        };
         let res = build::build(&config,
                                &manifest,
                                a.value_of("component"),
+                               flags,
                                a.is_present("release"),
                                a.value_of("with-version"));
         result_exit("build", res);
@@ -146,7 +159,7 @@ fn main() {
         result_exit("verify", verify::verify(manifest));
     } else if let Some(_) = args.subcommand_matches("status") {
         result_exit("status", status::status(manifest));
-    } else if let Some(a) = args.subcommand_matches("stash") {
+    } else if let Some(a) = args.subcommand_matches("store") {
         result_exit("stash",
                     cache::stash(config, manifest, a.value_of("name").unwrap()));
     }
