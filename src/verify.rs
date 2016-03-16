@@ -1,7 +1,3 @@
-use std::fs;
-use std::path::Path;
-use std::env;
-
 use walkdir::WalkDir;
 
 use Manifest;
@@ -10,9 +6,7 @@ use errors::{CliError, LalResult};
 pub fn verify(m: Manifest) -> LalResult<()> {
     let mut error = None;
     // 1. dependencies in `INPUT` match `manifest.json`.
-    let pwd = try!(env::current_dir());
-    let input = Path::new(&pwd).join("INPUT");
-    if !input.is_dir() && m.dependencies.len() == 0 {
+    if m.dependencies.len() == 0 {
         return Ok(()); // nothing to verify - so accept a missing directory
     }
     let mut deps = vec![];
