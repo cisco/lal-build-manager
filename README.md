@@ -1,5 +1,5 @@
-# lal dependency manager
-A dependency manager for C++ following LAL conventions. See the [spec](./SPEC.md) for background information.
+# Langley dependency manager
+A dependency manager built around artifactory and docker. See the [spec](./SPEC.md) for background information.
 
 ## Installation
 Install [stable rust](https://www.rust-lang.org/downloads.html) (inlined below), clone and install.

@@ -9,24 +9,23 @@ use errors::{CliError, LalResult};
 #[allow(non_snake_case)]
 #[derive(RustcDecodable)]
 struct ArtifactoryBuild {
-    uri: String,
-    //started: String,
+    uri: String, // started: String,
 }
 #[allow(non_snake_case)]
 #[derive(RustcDecodable)]
 struct ArtifactoryResponse {
-    buildsNumbers: Vec<ArtifactoryBuild>,
-    //uri: String,
+    buildsNumbers: Vec<ArtifactoryBuild>, // uri: String,
 }
 
 fn get_latest(uri: &str) -> LalResult<u32> {
     use curl::http;
 
     debug!("GET {}", uri);
-    let resp = http::handle()
-        .get(uri)
-        .exec()
-        .unwrap();
+    let resp = try!(http::handle().get(uri).exec().map_err(|e| {
+        warn!("Failed to GET {}: {}", uri, e);
+        CliError::ArtifactoryFailure("Get request failed")
+    }));
+
 
     if resp.get_code() == 200 {
         let body = String::from_utf8_lossy(resp.get_body());

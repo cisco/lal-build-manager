@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 use std::env;
 
-//use util::globalroot::get_tarball_uri;
+// use util::globalroot::get_tarball_uri;
 use util::artifactory::get_tarball_uri;
 use Manifest;
 use configure::Config;
