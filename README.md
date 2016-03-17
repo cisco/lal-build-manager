@@ -12,7 +12,7 @@ ln -sf $PWD/target/release/lal /usr/local/bin/lal
 lal configure
 ```
 
-In the future, we may supply single statically linked binaries via musl.
+Alternatively, fetch the static binaries compiled with [musl](http://www.musl-libc.org/) directly from [artifactory](http://engci-maven.cisco.com/artifactory/CME-group/lal/). TODO: make link active.
 
 ## Usage
 Illustrated via common workflow examples below:
