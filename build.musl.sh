@@ -1,5 +1,8 @@
 #!/bin/bash
 
+
+docker pull clux/muslrust:1.9.0-nightly-2016-03-24
+docker tag clux/muslrust clux/muslrust:latest
 docker run -v $PWD:/volume -w /volume -t clux/muslrust cargo build --verbose
 
 mkdir -p musl/bin

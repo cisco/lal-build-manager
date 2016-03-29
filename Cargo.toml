@@ -1,6 +1,6 @@
 [package]
 name = "lal"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Eirik Albrigtsen <ealbrigt@cisco.com>"]
 
 [lib]
@@ -10,6 +10,7 @@ path = "src/lib.rs"
 [[bin]]
 name = "lal"
 path = "src/main.rs"
+doc = false
 
 [[test]]
 name = "testmain"
