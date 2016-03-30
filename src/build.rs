@@ -3,12 +3,13 @@ use std::path::Path;
 use std::fs::File;
 use std::fs;
 use std::io;
+// use std::collections::HashMap;
 
 use walkdir::WalkDir;
 
 use configure::Config;
 use shell;
-use init::Manifest;
+use init::{Manifest};
 use verify::verify;
 use errors::{LalResult, CliError};
 use util::lockfile::Lock;
@@ -65,7 +66,8 @@ fn ensure_dir_exists_fresh(subdir: &str) -> io::Result<()> {
 pub fn build(cfg: &Config,
              manifest: &Manifest,
              name: Option<&str>,
-             mut flags: Vec<&str>,
+             flags: Vec<&str>,
+             configuration: Option<&str>,
              release: bool,
              version: Option<&str>)
              -> LalResult<()> {
@@ -84,9 +86,29 @@ pub fn build(cfg: &Config,
 
     info!("Running build script in docker container");
     let component = name.unwrap_or(&manifest.name);
-
-    debug!("Use flags {:?}", flags);
     let mut cmd = vec!["./BUILD".to_string(), component.to_string()];
+    debug!("Getting configurations for {}", component);
+
+    // find component details in components.NAME
+    let component_settings = manifest.components.get(component).unwrap(); // TODO: graceful error handling
+    let configuration_name: String = if let Some(c) = configuration {
+        // TODO: verify that the passed in `c` is actually an the allowed configurations
+        // i.e. it must be contained in component_settings.configurations
+        // otherwise raise error
+        c.to_string()
+    } else {
+        component_settings.defaultConfig.clone()
+    };
+
+    // loop over configuration flags
+    let configuration = manifest.configurations.get(&configuration_name).unwrap(); // TODO: handle
+    // Pass these through as value arguments to BUILD
+    for (k, v) in configuration {
+        cmd.push(format!("--{}={}", k, v));
+    }
+
+    // append use flags TODO: remove these?
+    debug!("Use flags {:?}", flags);
     for f in flags {
         cmd.push(["--", f].concat())
     }

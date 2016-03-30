@@ -55,6 +55,11 @@ fn main() {
             .about("Runs BUILD script in current directory in the configured container")
             .arg(Arg::with_name("component")
                 .help("Build a specific component (if other than the main manifest component)"))
+            .arg(Arg::with_name("configuration")
+                .long("config")
+                .short("c")
+                .takes_value(true)
+                .help("Build using a specific configuration (else will use defaultConfig)"))
             .arg(Arg::with_name("useflags")
                 .long("use")
                 .short("u")
@@ -150,6 +155,7 @@ fn main() {
                                &manifest,
                                a.value_of("component"),
                                flags,
+                               a.value_of("configuration"),
                                a.is_present("release"),
                                a.value_of("with-version"));
         result_exit("build", res);
