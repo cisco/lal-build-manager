@@ -16,16 +16,15 @@ A per-repo file. Format looks like this (here annotated with illegal comments):
 {
   "name": "libwebsockets",  // name of repo
   "components": {           // map of components and default configuration
-    "libwebsockets": "",
-    "websockets_tests": "coverage"
+    "libwebsockets": {
+      "defaultConfig": "release",
+      "configurations": ["release", "clang"]
+    }
+    "websockets_tests": {
+      "defaultConfig": "coverage",
+      "configurations": ["coverage", "release", "clang"]
+    }
   },
-  "flags": [                // alternate configurations that build understands
-    "clang",
-    "asan",
-    "tsan",
-    "afl",
-    "coverage"
-  ],
   "dependencies": {
     "ciscossl": 42
   },
