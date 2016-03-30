@@ -60,12 +60,6 @@ fn main() {
                 .short("c")
                 .takes_value(true)
                 .help("Build using a specific configuration (else will use defaultConfig)"))
-            .arg(Arg::with_name("useflags")
-                .long("use")
-                .short("u")
-                .takes_value(true)
-                .multiple(true)
-                .help("Use build flags from the manifest in build"))
             .arg(Arg::with_name("release")
                 .long("release")
                 .short("r")
@@ -146,15 +140,9 @@ fn main() {
         };
         result_exit("install", res);
     } else if let Some(a) = args.subcommand_matches("build") {
-        let flags = if a.is_present("useflags") {
-            a.values_of("useflags").unwrap().collect::<Vec<_>>()
-        } else {
-            vec![]
-        };
         let res = build::build(&config,
                                &manifest,
                                a.value_of("component"),
-                               flags,
                                a.value_of("configuration"),
                                a.is_present("release"),
                                a.value_of("with-version"));

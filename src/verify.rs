@@ -4,20 +4,29 @@ use Manifest;
 use errors::{CliError, LalResult};
 
 pub fn verify(m: Manifest) -> LalResult<()> {
-    let mut error = None;
-    // 1. dependencies in `INPUT` match `manifest.json`.
+    // 1. Verify that the manifest is sane
+    for (name, conf) in m.components {
+        // Verify ComponentSettings (manifest.components[x])
+        debug!("Verifying component {}", name);
+        if !conf.configurations.contains(&conf.defaultConfig) {
+            let ename = format!("default configuration '{}' not found in configurations list", conf.defaultConfig);
+            return Err(CliError::InvalidBuildConfiguration(ename));
+        }
+    }
+
+    // 2. dependencies in `INPUT` match `manifest.json`.
     if m.dependencies.len() == 0 {
         return Ok(()); // nothing to verify - so accept a missing directory
     }
-    let mut deps = vec![];
 
+    let mut error = None;
+    let mut deps = vec![];
     let dirs = WalkDir::new("INPUT")
         .min_depth(1)
         .max_depth(1)
         .into_iter()
         .filter_map(|e| e.ok())
         .filter(|e| e.path().is_dir());
-
     for entry in dirs {
         let pth = entry.path().strip_prefix("INPUT").unwrap();
         debug!("-> {}", pth.display());
@@ -39,6 +48,7 @@ pub fn verify(m: Manifest) -> LalResult<()> {
 
     // 4. `INPUT` contains only global dependencies.
     // TODO:
+
 
     // Return one of the errors as the main one (no need to vectorize these..)
     if error.is_some() {

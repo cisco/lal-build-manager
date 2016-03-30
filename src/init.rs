@@ -17,21 +17,17 @@ pub struct ComponentConfiguration {
 impl ComponentConfiguration {
     pub fn new() -> ComponentConfiguration {
         ComponentConfiguration {
-            defaultConfig: "release".to_string(),
             configurations: vec!["release".to_string()],
+            defaultConfig: "release".to_string(),
         }
     }
 }
-
-pub type Configurations = HashMap<String, HashMap<String, String>>;
 
 #[allow(non_snake_case)]
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Manifest {
     pub name: String,
     pub components: HashMap<String, ComponentConfiguration>,
-    pub configurations: Configurations,
-    pub opts: HashMap<String, String>,
     pub dependencies: HashMap<String, u32>,
     pub devDependencies: HashMap<String, u32>,
 }
@@ -40,13 +36,9 @@ impl Manifest {
     pub fn new(n: &str) -> Manifest {
         let mut comps = HashMap::new();
         comps.insert(n.to_string(), ComponentConfiguration::new());
-        let mut conf = HashMap::new();
-        conf.insert("release".to_string(), HashMap::new());
         Manifest {
             name: n.to_string(),
             components: comps,
-            configurations: conf,
-            opts: HashMap::new(),
             dependencies: HashMap::new(),
             devDependencies: HashMap::new(),
         }

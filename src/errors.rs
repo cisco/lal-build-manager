@@ -15,6 +15,9 @@ pub enum CliError {
     MissingDependencies,
     ExtraneousDependencies,
 
+    // build errors
+    InvalidBuildConfiguration(String),
+
     // cache errors
     MissingTarball,
     MissingBuild,
@@ -40,6 +43,9 @@ impl fmt::Display for CliError {
             CliError::ManifestExists => write!(f, "Manifest already exists (use -f to force)"),
             CliError::MissingDependencies => write!(f, "Core dependencies missing in INPUT"),
             CliError::ExtraneousDependencies => write!(f, "Extraneous dependencies in INPUT"),
+            CliError::InvalidBuildConfiguration(ref s) => {
+                write!(f, "Invalid build configuration - {}", s)
+            }
             CliError::MissingTarball => write!(f, "Tarball missing in PWD"),
             CliError::MissingBuild => write!(f, "No build found in OUTPUT"),
             CliError::SubprocessFailure(n) => write!(f, "Process exited with {}", n),
