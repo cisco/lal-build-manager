@@ -20,9 +20,11 @@ pub struct Manifest {
 
 impl Manifest {
     pub fn new(n: &str) -> Manifest {
+        let mut comps = HashMap::new();
+        comps.insert(n.to_string(), "".to_string());
         Manifest {
             name: n.to_string(),
-            components: HashMap::new(),
+            components: comps,
             flags: vec![],
             dependencies: HashMap::new(),
             devDependencies: HashMap::new(),
