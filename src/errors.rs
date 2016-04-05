@@ -9,6 +9,7 @@ pub enum CliError {
     // main errors (via init and configure)
     MissingManifest,
     MissingConfig,
+    MissingComponent(String), // in manifest component list
     ManifestExists, // when trying to init over existing one
 
     // status/verify errors
@@ -40,6 +41,7 @@ impl fmt::Display for CliError {
             CliError::Parse(ref err) => err.fmt(f),
             CliError::MissingManifest => write!(f, "No manifest.json found"),
             CliError::MissingConfig => write!(f, "No ~/.lal/lalrc found"),
+            CliError::MissingComponent(ref s) => write!(f, "Component '{}' not found in manifest", s),
             CliError::ManifestExists => write!(f, "Manifest already exists (use -f to force)"),
             CliError::MissingDependencies => write!(f, "Core dependencies missing in INPUT"),
             CliError::ExtraneousDependencies => write!(f, "Extraneous dependencies in INPUT"),

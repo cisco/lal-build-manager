@@ -87,7 +87,10 @@ pub fn build(cfg: &Config,
     debug!("Getting configurations for {}", component);
 
     // find component details in components.NAME
-    let component_settings = manifest.components.get(component).unwrap(); // TODO: graceful error handling
+    let component_settings = match manifest.components.get(component) {
+        Some(c) => c,
+        None => return Err(CliError::MissingComponent(component.to_string())),
+    };
     let configuration_name: String = if let Some(c) = configuration {
         c.to_string()
     } else {
