@@ -51,8 +51,7 @@ impl Manifest {
         deps
     }
     pub fn read() -> LalResult<Manifest> {
-        let pwd = try!(env::current_dir());
-        let manifest_path = Path::new(&pwd).join("manifest.json");
+        let manifest_path = Path::new("./manifest.json");
         if !manifest_path.exists() {
             return Err(CliError::MissingManifest);
         }
@@ -64,8 +63,7 @@ impl Manifest {
     }
 
     pub fn write(&self) -> LalResult<()> {
-        let pwd = try!(env::current_dir());;
-        let pth = Path::new(&pwd).join("manifest.json");
+        let pth = Path::new("./manifest.json");
         let encoded = json::as_pretty_json(self);
 
         let mut f = try!(File::create(&pth));
@@ -81,7 +79,7 @@ pub fn init(force: bool) -> LalResult<()> {
     let last_comp = pwd.components().last().unwrap(); // std::path::Component
     let dirname = last_comp.as_os_str().to_str().unwrap();
 
-    let manifest_path = Path::new(&pwd).join("manifest.json");
+    let manifest_path = Path::new("./manifest.json");
     if !force && manifest_path.exists() {
         return Err(CliError::ManifestExists);
     }

@@ -1,7 +1,6 @@
 use std::io::{self, Error, ErrorKind};
 use std::fs;
 use std::path::Path;
-use std::env;
 
 // use util::globalroot::get_tarball_uri;
 use util::artifactory::get_tarball_uri;
@@ -49,8 +48,7 @@ fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> LalResult<C
         let decompressed = try!(GzDecoder::new(data)); // decoder reads data
         let mut archive = Archive::new(decompressed); // Archive reads decoded
 
-        let pwd = env::current_dir().unwrap();
-        let extract_path = Path::new(&pwd).join("INPUT").join(&name);
+        let extract_path = Path::new("./INPUT").join(&name);
         try!(fs::create_dir_all(&extract_path));
         try!(archive.unpack(&extract_path));
 
@@ -62,7 +60,7 @@ fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> LalResult<C
 }
 
 fn clean_input() {
-    let input = Path::new(&env::current_dir().unwrap()).join("INPUT");
+    let input = Path::new("./INPUT");
     if input.is_dir() {
         let _ = fs::remove_dir_all(&input).unwrap();
     }

@@ -1,6 +1,5 @@
 use std::fs;
 use std::path::Path;
-use std::env;
 
 use configure::Config;
 use init::Manifest;
@@ -16,7 +15,6 @@ pub fn is_cached(cfg: &Config, name: &str, version: u32) -> bool {
 // for the future when we are not fetching from globalroot
 pub fn store_tarball(cfg: &Config, name: &str, version: u32) -> Result<(), CliError> {
     // 1. mkdir -p cfg.cacheDir/$name/$version
-    let pwd = env::current_dir().unwrap();
     let destdir = Path::new(&cfg.cache)
         .join("globals")
         .join(name)
@@ -27,7 +25,7 @@ pub fn store_tarball(cfg: &Config, name: &str, version: u32) -> Result<(), CliEr
     // 2. stuff $PWD/$name.tar in there
     let tarname = [name, ".tar"].concat();
     let dest = Path::new(&destdir).join(&tarname);
-    let src = Path::new(&pwd).join(&tarname);
+    let src = Path::new(".").join(&tarname);
     if !src.is_file() {
         return Err(CliError::MissingTarball);
     }
@@ -44,8 +42,7 @@ pub fn store_tarball(cfg: &Config, name: &str, version: u32) -> Result<(), CliEr
 pub fn stash(cfg: Config, mf: Manifest, name: &str) -> LalResult<()> {
     info!("Stashing OUTPUT into cache under {}/{}", mf.name, name);
 
-    let pwd = env::current_dir().unwrap();
-    let outputdir = Path::new(&pwd).join("OUTPUT");
+    let outputdir = Path::new("./OUTPUT");
     if !outputdir.is_dir() {
         return Err(CliError::MissingBuild);
         // TODO: need to verify lockfile here

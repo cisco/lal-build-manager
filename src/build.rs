@@ -1,4 +1,3 @@
-use std::env;
 use std::path::Path;
 use std::fs::File;
 use std::fs;
@@ -52,9 +51,7 @@ fn tar_output(tarball: &Path) -> LalResult<()> {
 }
 
 fn ensure_dir_exists_fresh(subdir: &str) -> io::Result<()> {
-    let cwd = try!(env::current_dir());
-    let pwd = Path::new(&cwd);
-    let dir = pwd.join(subdir);
+    let dir = Path::new(".").join(subdir);
     if dir.is_dir() {
         // clean it out first
         try!(fs::remove_dir_all(&dir));

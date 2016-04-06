@@ -1,5 +1,4 @@
 use std::path::Path;
-use std::env;
 use std::collections::HashMap;
 
 use walkdir::WalkDir;
@@ -8,8 +7,7 @@ use init::Manifest;
 use errors::LalResult;
 
 pub fn analyze() -> LalResult<HashMap<String, String>> {
-    let cwd = try!(env::current_dir());
-    let input = Path::new(&cwd).join("INPUT");
+    let input = Path::new("./INPUT");
 
     let mut deps = HashMap::new();
     if !input.is_dir() {
@@ -44,8 +42,7 @@ pub type InputMap = HashMap<String, InputDependency>;
 
 
 pub fn analyze_full(manifest: &Manifest) -> LalResult<InputMap> {
-    let cwd = try!(env::current_dir());
-    let input = Path::new(&cwd).join("INPUT");
+    let input = Path::new("./INPUT");
 
     let deps = try!(analyze());
     let saved_deps = manifest.all_dependencies();
