@@ -1,10 +1,28 @@
+use std::io::prelude::*;
+use std::fs::File;
 use std::path::Path;
 use std::collections::HashMap;
+use rustc_serialize::json;
 
 use walkdir::WalkDir;
 
 use init::Manifest;
-use errors::LalResult;
+use errors::{CliError, LalResult};
+
+#[derive(RustcDecodable)]
+struct PartialLock {
+  pub version: String,
+}
+fn read_partial_lockfile(component: &str) -> LalResult<PartialLock> {
+    let lock_path = Path::new("./INPUT").join(component).join("lockfile.json");
+    if ! lock_path.exists() {
+        return Err(CliError::MissingLockfile(component.to_string()));
+    }
+    let mut lock_str = String::new();
+    try!(try!(File::open(&lock_path)).read_to_string(&mut lock_str));
+    let res = try!(json::decode(&lock_str));
+    Ok(res)
+}
 
 pub fn analyze() -> LalResult<HashMap<String, String>> {
     let input = Path::new("./INPUT");
@@ -20,11 +38,12 @@ pub fn analyze() -> LalResult<HashMap<String, String>> {
         .filter_map(|e| e.ok())
         .filter(|e| e.path().is_dir());
 
+    // TODO: run in parallel
     for d in dirs {
         let pth = d.path().strip_prefix("INPUT").unwrap();
         let component = pth.to_str().unwrap();
-        // TODO: read version from lockfile
-        deps.insert(component.to_string(), "experimental".to_string());
+        let lck = try!(read_partial_lockfile(&component));
+        deps.insert(component.to_string(), lck.version);
     }
     Ok(deps)
 }
@@ -54,10 +73,11 @@ pub fn analyze_full(manifest: &Manifest) -> LalResult<InputMap> {
 
     // check manifested deps
     for (d, v) in saved_deps.clone() {
+        let actual_ver = deps.get(&d).unwrap().clone();
         depmap.insert(d.clone(),
                       InputDependency {
                           name: d.clone(),
-                          version: "experimental".to_string(), // TODO: from lockfile
+                          version: actual_ver,
                           requirement: Some(format!("{}", v)),
                           missing: deps.get(&d).is_none(),
                           development: manifest.devDependencies.contains_key(&d),
@@ -66,11 +86,12 @@ pub fn analyze_full(manifest: &Manifest) -> LalResult<InputMap> {
     }
     // check for potentially non-manifested deps
     for name in deps.keys() {
+        let actual_ver = deps.get(name).unwrap().clone();
         if !saved_deps.contains_key(name) {
             depmap.insert(name.clone(),
                           InputDependency {
                               name: name.clone(),
-                              version: "experimental".to_string(), // TODO: from lockfile!
+                              version: actual_ver,
                               requirement: None,
                               missing: false,
                               development: false,

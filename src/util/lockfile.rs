@@ -7,7 +7,6 @@ use std::collections::HashMap;
 
 use errors::{CliError, LalResult};
 use util::input;
-use init::Manifest;
 
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Lock {
@@ -29,10 +28,13 @@ impl Lock {
             dependencies: HashMap::new(),
         }
     }
-    pub fn populate_from_input(mut self, manifest: &Manifest) -> LalResult<Self> {
-        let deps = try!(input::analyze_full(manifest));
-        for (name, dep) in deps {
-            info!("got dep {} {}", name, dep.version);
+    pub fn populate_from_input(mut self) -> LalResult<Self> {
+        // NB: this is not a particularly smart algorithm
+        // We read all the lockfiles easily in analyze
+        // Then we re-read them fully in read_lockfile_from_component
+        let deps = try!(input::analyze());
+        for (name, _) in deps {
+            debug!("Populating lockfile with {}", name);
             let deplock = try!(read_lockfile_from_component(&name));
             self.dependencies.insert(name.clone(), deplock);
         }
