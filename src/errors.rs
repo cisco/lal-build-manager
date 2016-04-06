@@ -15,6 +15,7 @@ pub enum CliError {
     // status/verify errors
     MissingDependencies,
     ExtraneousDependencies,
+    MissingLockfile(String),
 
     // build errors
     InvalidBuildConfiguration(String),
@@ -45,6 +46,7 @@ impl fmt::Display for CliError {
             CliError::ManifestExists => write!(f, "Manifest already exists (use -f to force)"),
             CliError::MissingDependencies => write!(f, "Core dependencies missing in INPUT"),
             CliError::ExtraneousDependencies => write!(f, "Extraneous dependencies in INPUT"),
+            CliError::MissingLockfile(ref s) => write!(f, "No lockfile found in INPUT/{}", s),
             CliError::InvalidBuildConfiguration(ref s) => {
                 write!(f, "Invalid build configuration - {}", s)
             }

@@ -1,22 +1,13 @@
 use rustc_serialize::json;
 use std::path::Path;
 use std::fs::File;
-use std::io::prelude::Write;
+use std::io::prelude::*;
 
 use std::collections::HashMap;
 
-use errors::LalResult;
+use errors::{CliError, LalResult};
 use util::input;
 use init::Manifest;
-
-#[derive(RustcDecodable, RustcEncodable, Clone)]
-pub struct Dependency {
-    pub name: String,
-    pub version: String,
-    pub config: String,
-    // TODO: other stash data if using a stashed build
-    pub dependencies: HashMap<String, Dependency>,
-}
 
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Lock {
@@ -24,7 +15,9 @@ pub struct Lock {
     pub config: String,
     // pub date: String,
     pub version: String,
-    pub dependencies: HashMap<String, Dependency>,
+    pub dependencies: HashMap<String, Lock>,
+    // TODO: container to avoid abi smashing
+    // TODO: other stash data if using a stashed build?
 }
 
 impl Lock {
@@ -40,12 +33,8 @@ impl Lock {
         let deps = try!(input::analyze_full(manifest));
         for (name, dep) in deps {
             info!("got dep {} {}", name, dep.version);
-            self.dependencies.insert(name.clone(), Dependency {
-                name: name,
-                config: self.config.clone(),
-                version: dep.version,
-                dependencies: HashMap::new(), // TODO: get this from their lockfile..
-            });
+            let deplock = try!(read_lockfile_from_component(&name));
+            self.dependencies.insert(name.clone(), deplock);
         }
         Ok(self)
     }
@@ -56,4 +45,15 @@ impl Lock {
         info!("Wrote lockfile {}: \n{}", pth.display(), encoded);
         Ok(())
     }
+}
+
+fn read_lockfile_from_component(component: &str) -> LalResult<Lock> {
+    let lock_path = Path::new("./INPUT").join(component).join("lockfile.json");
+    if ! lock_path.exists() {
+        return Err(CliError::MissingLockfile(component.to_string()));
+    }
+    let mut lock_str = String::new();
+    try!(try!(File::open(&lock_path)).read_to_string(&mut lock_str));
+    let res = try!(json::decode(&lock_str));
+    Ok(res)
 }
