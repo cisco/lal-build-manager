@@ -51,6 +51,22 @@ fn main() {
                 .requires("components")
                 .conflicts_with("save")
                 .help("Save installed versions in devDependencies in the manifest")))
+        .subcommand(SubCommand::with_name("uninstall")
+            .about("Uninstalls specific dependencies from INPUT")
+            .arg(Arg::with_name("components")
+                .help("Installs specific component=version pairs")
+                .required(true) // unlike install which works without components
+                .multiple(true))
+            .arg(Arg::with_name("save")
+                .short("S")
+                .long("save")
+                .conflicts_with("savedev")
+                .help("Save removal of dependencies in the manifest"))
+            .arg(Arg::with_name("savedev")
+                .short("D")
+                .long("save-dev")
+                .conflicts_with("save")
+                .help("Save removal of devDependencies in the manifest")))
         .subcommand(SubCommand::with_name("build")
             .about("Runs BUILD script in current directory in the configured container")
             .arg(Arg::with_name("component")
@@ -139,6 +155,13 @@ fn main() {
             install::install_all(manifest, config, a.is_present("dev"))
         };
         result_exit("install", res);
+    } else if let Some(a) = args.subcommand_matches("uninstall") {
+        let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
+        let res = install::uninstall(manifest,
+                                 xs,
+                                 a.is_present("save"),
+                                 a.is_present("savedev"));
+        result_exit("uninstall", res);
     } else if let Some(a) = args.subcommand_matches("build") {
         let res = build::build(&config,
                                &manifest,
