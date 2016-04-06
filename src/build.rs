@@ -109,18 +109,14 @@ pub fn build(cfg: &Config,
 
     if release {
         try!(ensure_dir_exists_fresh("ARTIFACT"));
+        // Save lockfile in both ARTIFACT and OUTPUT (so it's also in the archive)
+        let lockpth = Path::new("./OUTPUT/lockfile.json");
+        try!(lockfile.write(&lockpth));
+        try!(fs::copy(&lockpth, Path::new("./ARTIFACT/lockfile.json")));
 
-        let cwd = try!(env::current_dir());
-        let pwd = Path::new(&cwd);
-        let tarball = pwd.join(["./", component, ".tar.gz"].concat());
-        try!(tar_output(&tarball));
-
-        try!(fs::copy(&tarball,
-                      pwd.join("ARTIFACT").join([component, ".tar.gz"].concat())));
-        try!(fs::remove_file(&tarball));
-
-        let lockpath = pwd.join("ARTIFACT").join("lockfile.json");
-        try!(lockfile.write(&lockpath));
+        // Tar up OUTPUT into ARTIFACT/component.tar.gz
+        let tarpth = Path::new("./ARTIFACT").join([component, ".tar.gz"].concat());
+        try!(tar_output(&tarpth));
     }
     Ok(())
 }
