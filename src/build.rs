@@ -73,7 +73,6 @@ pub fn build(cfg: &Config,
     try!(ensure_dir_exists_fresh("OUTPUT"));
 
     debug!("Version flag is {}", version.unwrap_or("unset"));
-    let lockfile = try!(Lock::new(&manifest.name, version).populate_from_input());
 
     // Verify INPUT
     if let Some(e) = verify(manifest.clone()).err() {
@@ -100,6 +99,7 @@ pub fn build(cfg: &Config,
         let ename = format!("{} not found in configurations list", configuration_name);
         return Err(CliError::InvalidBuildConfiguration(ename));
     }
+    let lockfile = try!(Lock::new(&manifest.name, version, &configuration_name).populate_from_input());
 
     let cmd = vec!["./BUILD".to_string(), component.to_string(), configuration_name];
 

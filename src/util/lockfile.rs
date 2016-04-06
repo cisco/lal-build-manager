@@ -19,18 +19,18 @@ pub struct Dependency {
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Lock {
     pub name: String,
-    pub flags: Option<String>,
+    pub config: String,
     // pub date: String,
     pub version: String,
     pub dependencies: HashMap<String, Dependency>,
 }
 
 impl Lock {
-    pub fn new(n: &str, v: Option<&str>) -> Lock {
+    pub fn new(n: &str, v: Option<&str>, cfg: &str) -> Lock {
         Lock {
             name: n.to_string(),
             version: v.unwrap_or("experimental").to_string(),
-            flags: None,
+            config: cfg.to_string(),
             dependencies: HashMap::new(),
         }
     }
