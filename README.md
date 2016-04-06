@@ -2,7 +2,9 @@
 A dependency manager built around artifactory and docker. See the [spec](./SPEC.md) for background information.
 
 ## Installation
-Install [stable rust](https://www.rust-lang.org/downloads.html) (inlined below), clone and install.
+Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) directly from [artifactory](http://engci-maven.cisco.com/artifactory/CME-group/lal/). TODO: make link active.
+
+Alternatively, install [stable rust](https://www.rust-lang.org/downloads.html) (inlined below), clone, build, and install:
 
 ```sh
 curl -sSf https://static.rust-lang.org/rustup.sh | sh
@@ -12,8 +14,6 @@ ln -sf $PWD/target/release/lal /usr/local/bin/lal
 lal configure
 ```
 
-Alternatively, fetch the static binaries compiled with [musl](http://www.musl-libc.org/) directly from [artifactory](http://engci-maven.cisco.com/artifactory/CME-group/lal/). TODO: make link active.
-
 ## Usage
 Illustrated via common workflow examples below:
 
@@ -21,8 +21,8 @@ Illustrated via common workflow examples below:
 Installing pinned versions and building:
 
 ```sh
-git clone git@sqbu-github.cisco.com:Edonus/monolith
-cd monolith
+git clone git@sqbu-github.cisco.com:Edonus/edonus
+cd edonus
 lal install --dev
 # for canonical build
 lal build
@@ -55,7 +55,7 @@ lal install ciscossl=asan # install named version (always from stash)
 lal build
 ```
 
-This workflow replaces listing multiple components to `./build` and `lal status` replaces the output for the build plan.
+This workflow replaces listing multiple components to `./build`, and `lal status` replaces the output for the build plan.
 
 ### Creating a new version
 Done automatically on validated merge. Jenkins will create a tag for each successful build and that tag should be fetchable from artifactory.
@@ -79,11 +79,6 @@ git push -u origin master
 ```
 
 The last changeset will be tagged by jenkins if it succeeds. These have been done in two changesets here for clarity, but they could be done  in the same change.
-
-### Historical Documentation
-Terms used herein reference [so you want to write a package manager](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#.rlvjqxc4r) (long read).
-
-Original [buildroot notes](https://hg.lal.cisco.com/root/files/tip/NOTES).
 
 ## Developing
 To hack on `lal`, follow normal install procedure, but build non-release builds iteratively.
@@ -114,3 +109,8 @@ lal -vv install # all output
 
 ## Updating
 TODO: We want an auto-update-available notification system. We also want a system to notify on new versions of the docker image.
+
+### Influences
+Terms used herein reference [so you want to write a package manager](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#.rlvjqxc4r) (long read).
+
+Original [buildroot notes](https://hg.lal.cisco.com/root/files/tip/NOTES).
