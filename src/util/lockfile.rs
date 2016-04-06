@@ -45,6 +45,10 @@ impl Lock {
         info!("Wrote lockfile {}: \n{}", pth.display(), encoded);
         Ok(())
     }
+
+    pub fn validate(&self) -> bool {
+        unimplemented!()
+    }
 }
 
 fn read_lockfile_from_component(component: &str) -> LalResult<Lock> {
