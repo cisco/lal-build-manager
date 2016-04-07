@@ -92,7 +92,7 @@ pub fn build(cfg: &Config,
         let ename = format!("{} not found in configurations list", configuration_name);
         return Err(CliError::InvalidBuildConfiguration(ename));
     }
-    let lockfile = try!(Lockfile::new(&manifest.name, version, Some(&configuration_name)).populate_from_input());
+    let lockfile = try!(Lockfile::new(&manifest.name, &cfg.container, version, Some(&configuration_name)).populate_from_input());
 
     let cmd = vec!["./BUILD".to_string(), component.to_string(), configuration_name];
 

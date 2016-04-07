@@ -45,7 +45,7 @@ pub fn verify(m: Manifest) -> LalResult<()> {
 
     // 3. the dependency tree is flat and only global dependencies found
     debug!("Reading all lockfiles");
-    let lf = try!(Lockfile::new("templock", None, None).populate_from_input());
+    let lf = try!(Lockfile::new("templock", "no", None, None).populate_from_input());
     let dep_usage = find_all_dependencies(&lf);
     for (name, vers) in dep_usage {
         debug!("Found version(s) for {} as {:?}", name, vers);

@@ -13,19 +13,19 @@ use util::input;
 pub struct Lockfile {
     pub name: String,
     pub config: String,
+    pub container: String,
     // pub date: String,
     pub version: String,
     pub dependencies: HashMap<String, Lockfile>,
-    // TODO: container to avoid abi smashing
-    // TODO: other stash data if using a stashed build?
 }
 
 impl Lockfile {
-    pub fn new(n: &str, v: Option<&str>, build_cfg: Option<&str>) -> Lockfile {
+    pub fn new(n: &str, container: &str, v: Option<&str>, build_cfg: Option<&str>) -> Lockfile {
         Lockfile {
             name: n.to_string(),
             version: v.unwrap_or("experimental").to_string(),
             config: build_cfg.unwrap_or("release").to_string(),
+            container: container.to_string(),
             dependencies: HashMap::new(),
         }
     }
