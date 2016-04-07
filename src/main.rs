@@ -157,10 +157,7 @@ fn main() {
         result_exit("install", res);
     } else if let Some(a) = args.subcommand_matches("uninstall") {
         let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
-        let res = install::uninstall(manifest,
-                                 xs,
-                                 a.is_present("save"),
-                                 a.is_present("savedev"));
+        let res = install::uninstall(manifest, xs, a.is_present("save"), a.is_present("savedev"));
         result_exit("uninstall", res);
     } else if let Some(a) = args.subcommand_matches("build") {
         let res = build::build(&config,

@@ -11,11 +11,11 @@ use errors::{CliError, LalResult};
 
 #[derive(RustcDecodable)]
 struct PartialLock {
-  pub version: String,
+    pub version: String,
 }
 fn read_partial_lockfile(component: &str) -> LalResult<PartialLock> {
     let lock_path = Path::new("./INPUT").join(component).join("lockfile.json");
-    if ! lock_path.exists() {
+    if !lock_path.exists() {
         return Err(CliError::MissingLockfile(component.to_string()));
     }
     let mut lock_str = String::new();

@@ -57,7 +57,7 @@ pub fn find_all_dependencies(lock: &Lockfile) -> DependencyUsage {
     // for each entry in dependencies
     for (main_name, dep) in &lock.dependencies {
         // Store the dependency
-        if ! acc.contains_key(main_name) {
+        if !acc.contains_key(main_name) {
             acc.insert(main_name.clone(), BTreeSet::new());
         }
         {
@@ -69,9 +69,12 @@ pub fn find_all_dependencies(lock: &Lockfile) -> DependencyUsage {
         // Recurse into its dependencies
         trace!("Recursing into deps for {}, acc is {:?}", main_name, acc);
         for (name, version_set) in find_all_dependencies(&dep) {
-            trace!("Found versions for for {} under {} as {:?}", name, main_name, version_set);
+            trace!("Found versions for for {} under {} as {:?}",
+                   name,
+                   main_name,
+                   version_set);
             // ensure each entry from above exists in current accumulator
-            if ! acc.contains_key(&name) {
+            if !acc.contains_key(&name) {
                 acc.insert(name.clone(), BTreeSet::new());
             }
             // union the entry of versions for the current name
@@ -87,7 +90,7 @@ pub fn find_all_dependencies(lock: &Lockfile) -> DependencyUsage {
 
 fn read_lockfile_from_component(component: &str) -> LalResult<Lockfile> {
     let lock_path = Path::new("./INPUT").join(component).join("lockfile.json");
-    if ! lock_path.exists() {
+    if !lock_path.exists() {
         return Err(CliError::MissingLockfile(component.to_string()));
     }
     let mut lock_str = String::new();

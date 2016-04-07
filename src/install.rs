@@ -149,7 +149,7 @@ pub fn uninstall(manifest: Manifest, xs: Vec<&str>, save: bool, savedev: bool) -
             // This could work, but it's not currently what install does, so not doing it.
             // => all components uninstalled from either dependencies, or all from devDependencies
             // if doing multiple components from different maps, do multiple calls
-            if ! hmap.contains_key(component) {
+            if !hmap.contains_key(component) {
                 return Err(CliError::MissingComponent(component.to_string()));
             }
             debug!("Removing {} from manifest", component);

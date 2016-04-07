@@ -44,13 +44,19 @@ impl fmt::Display for CliError {
             CliError::Parse(ref err) => err.fmt(f),
             CliError::MissingManifest => write!(f, "No manifest.json found"),
             CliError::MissingConfig => write!(f, "No ~/.lal/lalrc found"),
-            CliError::MissingComponent(ref s) => write!(f, "Component '{}' not found in manifest", s),
+            CliError::MissingComponent(ref s) => {
+                write!(f, "Component '{}' not found in manifest", s)
+            }
             CliError::ManifestExists => write!(f, "Manifest already exists (use -f to force)"),
             CliError::MissingDependencies => write!(f, "Core dependencies missing in INPUT"),
             CliError::ExtraneousDependencies => write!(f, "Extraneous dependencies in INPUT"),
             CliError::MissingLockfile(ref s) => write!(f, "No lockfile found in INPUT/{}", s),
-            CliError::MultipleVersions(ref s) => write!(f, "Depending on multiple versions of {}", s),
-            CliError::NonGlobalDependencies(ref s) => write!(f, "Depending on a custom version of {}", s),
+            CliError::MultipleVersions(ref s) => {
+                write!(f, "Depending on multiple versions of {}", s)
+            }
+            CliError::NonGlobalDependencies(ref s) => {
+                write!(f, "Depending on a custom version of {}", s)
+            }
             CliError::InvalidBuildConfiguration(ref s) => {
                 write!(f, "Invalid build configuration - {}", s)
             }
