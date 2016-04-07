@@ -1,7 +1,7 @@
 use walkdir::WalkDir;
 
-use Manifest;
-use errors::{CliError, LalResult};
+use {Lockfile, Manifest, CliError, LalResult};
+use util::lockfile::find_all_dependencies;
 
 pub fn verify(m: Manifest) -> LalResult<()> {
     // 1. Verify that the manifest is sane
@@ -43,12 +43,24 @@ pub fn verify(m: Manifest) -> LalResult<()> {
         }
     }
 
-    // 3. the dependency tree is flat.
-    // TODO:
+    // 3. the dependency tree is flat and only global dependencies found
+    debug!("Reading all lockfiles");
+    let lf = try!(Lockfile::new("templock", None, None).populate_from_input());
+    let dep_usage = find_all_dependencies(&lf);
+    for (name, vers) in dep_usage {
+        debug!("Found version(s) for {} as {:?}", name, vers);
+        if vers.len() != 1 {
+            error = Some(CliError::MultipleVersions(name.clone()));
+            // TODO: should have better way to allow user to debug here..
+        }
+        assert!(vers.len() > 0, "found versions");
+        // if version cannot be parsed as an int, it's not a global dependency
+        if let Err(e) = vers.iter().next().unwrap().parse::<u32>() {
+            debug!("Failed to parse first version of {} as int ({:?})", name, e);
+            error = Some(CliError::NonGlobalDependencies(name.clone()));
+        }
 
-    // 4. `INPUT` contains only global dependencies.
-    // TODO:
-
+    }
 
     // Return one of the errors as the main one (no need to vectorize these..)
     if error.is_some() {

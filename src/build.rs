@@ -6,13 +6,9 @@ use std::io;
 
 use walkdir::WalkDir;
 
-use configure::Config;
 use shell;
-use init::Manifest;
 use verify::verify;
-use errors::{LalResult, CliError};
-use util::lockfile::Lock;
-
+use {Lockfile, Manifest, Config, LalResult, CliError};
 
 fn tar_output(tarball: &Path) -> LalResult<()> {
     use tar;
@@ -96,7 +92,7 @@ pub fn build(cfg: &Config,
         let ename = format!("{} not found in configurations list", configuration_name);
         return Err(CliError::InvalidBuildConfiguration(ename));
     }
-    let lockfile = try!(Lock::new(&manifest.name, version, &configuration_name).populate_from_input());
+    let lockfile = try!(Lockfile::new(&manifest.name, version, Some(&configuration_name)).populate_from_input());
 
     let cmd = vec!["./BUILD".to_string(), component.to_string(), configuration_name];
 

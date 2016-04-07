@@ -23,4 +23,5 @@ pub mod status;
 // re-exports
 pub use init::Manifest;
 pub use configure::Config;
-pub use errors::LalResult;
+pub use errors::{LalResult, CliError};
+pub use util::lockfile::Lockfile;

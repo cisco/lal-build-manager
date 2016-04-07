@@ -16,6 +16,8 @@ pub enum CliError {
     MissingDependencies,
     ExtraneousDependencies,
     MissingLockfile(String),
+    MultipleVersions(String),
+    NonGlobalDependencies(String),
 
     // build errors
     InvalidBuildConfiguration(String),
@@ -47,6 +49,8 @@ impl fmt::Display for CliError {
             CliError::MissingDependencies => write!(f, "Core dependencies missing in INPUT"),
             CliError::ExtraneousDependencies => write!(f, "Extraneous dependencies in INPUT"),
             CliError::MissingLockfile(ref s) => write!(f, "No lockfile found in INPUT/{}", s),
+            CliError::MultipleVersions(ref s) => write!(f, "Depending on multiple versions of {}", s),
+            CliError::NonGlobalDependencies(ref s) => write!(f, "Depending on a custom version of {}", s),
             CliError::InvalidBuildConfiguration(ref s) => {
                 write!(f, "Invalid build configuration - {}", s)
             }

@@ -4,27 +4,28 @@ use std::fs::File;
 use std::io::prelude::*;
 
 use std::collections::HashMap;
+use std::collections::BTreeSet;
 
 use errors::{CliError, LalResult};
 use util::input;
 
 #[derive(RustcDecodable, RustcEncodable, Clone)]
-pub struct Lock {
+pub struct Lockfile {
     pub name: String,
     pub config: String,
     // pub date: String,
     pub version: String,
-    pub dependencies: HashMap<String, Lock>,
+    pub dependencies: HashMap<String, Lockfile>,
     // TODO: container to avoid abi smashing
     // TODO: other stash data if using a stashed build?
 }
 
-impl Lock {
-    pub fn new(n: &str, v: Option<&str>, build_cfg: &str) -> Lock {
-        Lock {
+impl Lockfile {
+    pub fn new(n: &str, v: Option<&str>, build_cfg: Option<&str>) -> Lockfile {
+        Lockfile {
             name: n.to_string(),
             version: v.unwrap_or("experimental").to_string(),
-            config: build_cfg.to_string(),
+            config: build_cfg.unwrap_or("release").to_string(),
             dependencies: HashMap::new(),
         }
     }
@@ -47,13 +48,44 @@ impl Lock {
         info!("Wrote lockfile {}: \n{}", pth.display(), encoded);
         Ok(())
     }
-
-    pub fn validate(&self) -> bool {
-        unimplemented!()
-    }
 }
 
-fn read_lockfile_from_component(component: &str) -> LalResult<Lock> {
+// name of component -> (ver, other_ver, ..)
+pub type DependencyUsage = HashMap<String, BTreeSet<String>>;
+pub fn find_all_dependencies(lock: &Lockfile) -> DependencyUsage {
+    let mut acc = HashMap::new();
+    // for each entry in dependencies
+    for (main_name, dep) in &lock.dependencies {
+        // Store the dependency
+        if ! acc.contains_key(main_name) {
+            acc.insert(main_name.clone(), BTreeSet::new());
+        }
+        {
+            // Only borrow as mutable once - so creating a temporary scope
+            let first_version_set = acc.get_mut(main_name).unwrap();
+            first_version_set.insert(dep.version.clone());
+        }
+
+        // Recurse into its dependencies
+        trace!("Recursing into deps for {}, acc is {:?}", main_name, acc);
+        for (name, version_set) in find_all_dependencies(&dep) {
+            trace!("Found versions for for {} under {} as {:?}", name, main_name, version_set);
+            // ensure each entry from above exists in current accumulator
+            if ! acc.contains_key(&name) {
+                acc.insert(name.clone(), BTreeSet::new());
+            }
+            // union the entry of versions for the current name
+            let full_version_set = acc.get_mut(&name).unwrap(); // know this exists now
+            for version in version_set {
+                full_version_set.insert(version);
+            }
+        }
+    }
+    acc
+}
+
+
+fn read_lockfile_from_component(component: &str) -> LalResult<Lockfile> {
     let lock_path = Path::new("./INPUT").join(component).join("lockfile.json");
     if ! lock_path.exists() {
         return Err(CliError::MissingLockfile(component.to_string()));
