@@ -2,39 +2,60 @@ use std::fmt;
 use std::io;
 use rustc_serialize::json;
 
+/// The one and only error type for the lal library
+///
+/// Every command will raise one of these on failure, and these is some reuse between
+/// commands for these errors. `Result<T, CliError>` is effectively the safety net
+/// that every single advanced call goes through to avoid `panic!`
+
 #[derive(Debug)]
 pub enum CliError {
     Io(io::Error),
     Parse(json::DecoderError),
-    // main errors (via init and configure)
+
+    // main errors
+    /// Manifest file not found in working directory
     MissingManifest,
+    /// Config (lalrc) not found in ~/.lal
     MissingConfig,
-    MissingComponent(String), // in manifest component list
-    ManifestExists, // when trying to init over existing one
+    /// Component not found in manifest
+    MissingComponent(String),
+    /// Manifest cannot be overwritten without forcing
+    ManifestExists,
 
     // status/verify errors
+    /// Core dependencies missing in INPUT
     MissingDependencies,
+    /// Extraneous dependencies in INPUT
     ExtraneousDependencies,
+    /// No lockfile found for a component in INPUT
     MissingLockfile(String),
+    /// Multiple versions of a component was involved in this build
     MultipleVersions(String),
+    /// Custom versions are stashed in INPUT which will not fly on Jenkins
     NonGlobalDependencies(String),
 
     // build errors
+    /// Build configurations does not match manifest or user input
     InvalidBuildConfiguration(String),
 
     // cache errors
+    /// Failed to find a tarball after fetching from artifactory
     MissingTarball,
+    /// Failed to find build artifacts in OUTPUT after a build or before stashing
     MissingBuild,
 
-    // shell errors
+    /// Shell errors from docker subprocess
     SubprocessFailure(i32),
 
     // Install failures
-    InstallFailure, // generic catch all
-    GlobalRootFailure(&'static str), // fetch failure related to globalroot
-    ArtifactoryFailure(&'static str), // fetch failure related to artifactory
+    /// Unspecified install failure
+    InstallFailure,
+    /// Fetch failure related to globalroot (unmaintained)
+    GlobalRootFailure(&'static str),
+    /// Fetch failure related to artifactory
+    ArtifactoryFailure(&'static str),
 }
-pub type LalResult<T> = Result<T, CliError>;
 
 // Format implementation used when printing an error
 impl fmt::Display for CliError {
@@ -82,3 +103,11 @@ impl From<json::DecoderError> for CliError {
         CliError::Parse(err)
     }
 }
+
+/// Type alias to stop having to type out CliError everywhere.
+///
+/// Most functions can simply add the return type `LalResult<T>` for some `T`,
+/// and enjoy the benefit of using `try!` or `?` without having to worry about
+/// the many different error types that can arise from using curl, json serializers,
+/// file IO, user errors, and potential logic bugs.
+pub type LalResult<T> = Result<T, CliError>;
