@@ -56,6 +56,16 @@ fn ensure_dir_exists_fresh(subdir: &str) -> io::Result<()> {
     Ok(())
 }
 
+
+/// Main build command entrypoint as used by the lal binary
+///
+/// Expects a pre-read `Manifest` file, a `Config` file, as well as a bunch of optional flags
+/// that the user may supply to `lal build`.
+///
+/// The function performs basic sanity checks, before shelling out to `docker run`
+/// to perform the actual execution of the containerized `./BUILD` script.
+///
+/// In release mode, tarballs and lockfiles are created in `./ARTIFACT/`.
 pub fn build(cfg: &Config,
              manifest: &Manifest,
              name: Option<&str>,
