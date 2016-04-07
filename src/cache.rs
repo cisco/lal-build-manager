@@ -12,7 +12,6 @@ pub fn is_cached(cfg: &Config, name: &str, version: u32) -> bool {
         .is_dir()
 }
 
-// for the future when we are not fetching from globalroot
 pub fn store_tarball(cfg: &Config, name: &str, version: u32) -> Result<(), CliError> {
     // 1. mkdir -p cfg.cacheDir/$name/$version
     let destdir = Path::new(&cfg.cache)
@@ -33,7 +32,7 @@ pub fn store_tarball(cfg: &Config, name: &str, version: u32) -> Result<(), CliEr
     try!(fs::copy(&src, &dest));
     try!(fs::remove_file(&src));
 
-    // 3. TODO: get metadata as well in there?
+    // NB: in the lockfile is in the tarball - okay for now
 
     // Done
     Ok(())
