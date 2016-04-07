@@ -10,12 +10,19 @@ use errors::{CliError, LalResult};
 use util::input;
 
 #[derive(RustcDecodable, RustcEncodable, Clone)]
+pub struct Container {
+    name: String,
+    tag: String,
+}
+
+#[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Lockfile {
     pub name: String,
     pub config: String,
-    pub container: String,
+    pub container: Container,
     // pub date: String,
     pub version: String,
+    pub tool: String,
     pub dependencies: HashMap<String, Lockfile>,
 }
 
@@ -25,7 +32,8 @@ impl Lockfile {
             name: n.to_string(),
             version: v.unwrap_or("experimental").to_string(),
             config: build_cfg.unwrap_or("release").to_string(),
-            container: container.to_string(),
+            container: Container { name: container.to_string(), tag: "latest".to_string() },
+            tool: env!("CARGO_PKG_VERSION").to_string(),
             dependencies: HashMap::new(),
         }
     }
