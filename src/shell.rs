@@ -6,6 +6,7 @@ use std::vec::Vec;
 use configure;
 use errors::{CliError, LalResult};
 
+
 /// Runs an arbitrary command in the configured docker environment
 ///
 /// This will mount the current directory as `~/volume` as well as a few conveniences,

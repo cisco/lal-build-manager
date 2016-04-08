@@ -85,8 +85,8 @@ fn main() {
                 .takes_value(true)
                 .requires("release")
                 .help("Configure lockfiles for a release with an explicit new version")))
-        .subcommand(SubCommand::with_name("store")
-            .about("Stores current build OUTPUT in cache for later reuse")
+        .subcommand(SubCommand::with_name("stash")
+            .about("Stashes current build OUTPUT in cache for later reuse")
             .arg(Arg::with_name("name")
                 .required(true)
                 .help("Name used for current build")))
@@ -173,10 +173,10 @@ fn main() {
     } else if let Some(_) = args.subcommand_matches("status") {
         result_exit("status", lal::status(manifest));
     }
-    // else if let Some(a) = args.subcommand_matches("store") {
-    //   result_exit("stash",
-    //               lal::stash(config, manifest, a.value_of("name").unwrap()));
-    // }
+    else if let Some(a) = args.subcommand_matches("stash") {
+       result_exit("stash",
+                   lal::stash(config, manifest, a.value_of("name").unwrap()));
+     }
 
     unreachable!("Subcommand valid, but not implemented");
 }

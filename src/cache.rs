@@ -38,8 +38,16 @@ pub fn store_tarball(cfg: &Config, name: &str, version: u32) -> Result<(), CliEr
     Ok(())
 }
 
+/// Saves current build `./OUTPUT` to the local cache under a specific name
+///
+/// This tars up `/OUTPUT` similar to how `build` is generating a tarball,
+/// then copies this to `~/.lal/cache/stash/${name}/`.
+///
+/// This file can then be installed via `install` using a component=${name} argument.
+/// TODO: complete this
 pub fn stash(cfg: Config, mf: Manifest, name: &str) -> LalResult<()> {
     info!("Stashing OUTPUT into cache under {}/{}", mf.name, name);
+    // TODO: verify name does NOT parse as a u32
 
     let outputdir = Path::new("./OUTPUT");
     if !outputdir.is_dir() {

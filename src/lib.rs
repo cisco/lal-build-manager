@@ -41,7 +41,7 @@ pub use shell::{shell, docker_run};
 pub use install::{install, install_all, uninstall};
 pub use status::status;
 pub use verify::verify;
-// pub use cache::stash;
+pub use cache::stash;
 
 mod util;
 mod errors;
