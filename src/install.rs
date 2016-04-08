@@ -28,7 +28,7 @@ fn download_to_path(uri: &str, save: &str) -> io::Result<()> {
         try!(f.write_all(r));
         Ok(())
     } else {
-        Err(Error::new(ErrorKind::Other, "failed to download file"))
+        Err(Error::new(ErrorKind::Other, format!("Failed to download file {}", uri)))
     }
 }
 
@@ -37,25 +37,24 @@ fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> LalResult<C
     use flate2::read::GzDecoder;
     use cache;
 
+    trace!("Fetch component {}", name);
     let component = try!(get_tarball_uri(name, version));
     let tarname = ["./", name, ".tar"].concat();
 
     // always just download for now - TODO: eventually check cache
-    let dl = download_to_path(&component.tarball, &tarname);
-    if dl.is_ok() {
-        debug!("Unpacking tarball {}", tarname);
-        let data = try!(fs::File::open(&tarname));
-        let decompressed = try!(GzDecoder::new(data)); // decoder reads data
-        let mut archive = Archive::new(decompressed); // Archive reads decoded
+    let dl = try!(download_to_path(&component.tarball, &tarname));
 
-        let extract_path = Path::new("./INPUT").join(&name);
-        try!(fs::create_dir_all(&extract_path));
-        try!(archive.unpack(&extract_path));
+    debug!("Unpacking tarball {}", tarname);
+    let data = try!(fs::File::open(&tarname));
+    let decompressed = try!(GzDecoder::new(data)); // decoder reads data
+    let mut archive = Archive::new(decompressed); // Archive reads decoded
 
-        // Move tarball into cfg.cache
-        try!(cache::store_tarball(&cfg, name, component.version));
-    }
+    let extract_path = Path::new("./INPUT").join(&name);
+    try!(fs::create_dir_all(&extract_path));
+    try!(archive.unpack(&extract_path));
 
+    // Move tarball into cfg.cache
+    try!(cache::store_tarball(&cfg, name, component.version));
     Ok(component)
 }
 
@@ -76,21 +75,23 @@ fn clean_input() {
 /// manifest. This provides an easy way to not have to deal with strict JSON manually.
 pub fn install(manifest: Manifest,
                cfg: Config,
-               xs: Vec<&str>,
+               components: Vec<&str>,
                save: bool,
                savedev: bool)
                -> LalResult<()> {
-    debug!("Install specific deps: {:?}", xs);
+    debug!("Install specific deps: {:?}", components);
 
     let mut error = None;
-    let mut installed = Vec::with_capacity(xs.len());
-    for v in &xs {
-        info!("Fetch {}", v);
-        if v.contains("=") {
-            let pair: Vec<&str> = v.split("=").collect();
+    let mut installed = Vec::with_capacity(components.len());
+    for comp in &components {
+        info!("Fetch {}", comp);
+        if comp.contains("=") {
+            let pair: Vec<&str> = comp.split("=").collect();
             if let Ok(n) = pair[1].parse::<u32>() {
                 match fetch_component(cfg.clone(), pair[0], Some(n)) {
-                    Ok(c) => installed.push(c),
+                    Ok(c) => {
+                        installed.push(c);
+                    }
                     Err(e) => {
                         warn!("Failed to install {} ({})", pair[0], e);
                         error = Some(e);
@@ -104,10 +105,10 @@ pub fn install(manifest: Manifest,
                 error = Some(CliError::InstallFailure);
             }
         } else {
-            match fetch_component(cfg.clone(), &v, None) {
+            match fetch_component(cfg.clone(), &comp, None) {
                 Ok(c) => installed.push(c),
                 Err(e) => {
-                    warn!("Failed to install {} ({})", &v, e);
+                    warn!("Failed to install {} ({})", &comp, e);
                     error = Some(e);
                 }
             }

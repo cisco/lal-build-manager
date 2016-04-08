@@ -7,7 +7,6 @@ use rustc_serialize::json;
 /// Every command will raise one of these on failure, and these is some reuse between
 /// commands for these errors. `Result<T, CliError>` is effectively the safety net
 /// that every single advanced call goes through to avoid `panic!`
-
 #[derive(Debug)]
 pub enum CliError {
     Io(io::Error),

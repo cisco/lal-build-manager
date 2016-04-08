@@ -33,7 +33,10 @@ impl Lockfile {
             name: n.to_string(),
             version: v.unwrap_or("experimental").to_string(),
             config: build_cfg.unwrap_or("release").to_string(),
-            container: Container { name: container.to_string(), tag: "latest".to_string() },
+            container: Container {
+                name: container.to_string(),
+                tag: "latest".to_string(),
+            },
             tool: env!("CARGO_PKG_VERSION").to_string(),
             dependencies: HashMap::new(),
         }

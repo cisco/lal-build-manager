@@ -113,8 +113,7 @@ fn main() {
 
     // Allow lal configure without assumptions
     if let Some(a) = args.subcommand_matches("configure") {
-        result_exit("configure",
-                    lal::configure(!a.is_present("yes"), true));
+        result_exit("configure", lal::configure(!a.is_present("yes"), true));
     }
 
     // Force config to exists before allowing remaining actions
@@ -146,10 +145,10 @@ fn main() {
         let res = if a.is_present("components") {
             let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
             lal::install(manifest,
-                             config,
-                             xs,
-                             a.is_present("save"),
-                             a.is_present("savedev"))
+                         config,
+                         xs,
+                         a.is_present("save"),
+                         a.is_present("savedev"))
 
         } else {
             lal::install_all(manifest, config, a.is_present("dev"))
@@ -161,11 +160,11 @@ fn main() {
         result_exit("uninstall", res);
     } else if let Some(a) = args.subcommand_matches("build") {
         let res = lal::build(&config,
-                               &manifest,
-                               a.value_of("component"),
-                               a.value_of("configuration"),
-                               a.is_present("release"),
-                               a.value_of("with-version"));
+                             &manifest,
+                             a.value_of("component"),
+                             a.value_of("configuration"),
+                             a.is_present("release"),
+                             a.value_of("with-version"));
         result_exit("build", res);
     } else if let Some(_) = args.subcommand_matches("shell") {
         result_exit("shell", lal::shell(&config));
@@ -177,7 +176,7 @@ fn main() {
     // else if let Some(a) = args.subcommand_matches("store") {
     //   result_exit("stash",
     //               lal::stash(config, manifest, a.value_of("name").unwrap()));
-    //}
+    // }
 
     unreachable!("Subcommand valid, but not implemented");
 }
