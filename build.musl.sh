@@ -1,8 +1,8 @@
 #!/bin/bash
 set -ex
 
-docker pull edonusdevelopers/muslrust:1.9.0-nightly-2016-04-08
-docker tag edonusdevelopers/muslrust:1.9.0-nightly-2016-04-08 edonusdevelopers/muslrust:latest
+#docker pull edonusdevelopers/muslrust:1.9.0-nightly-2016-04-08
+#docker tag edonusdevelopers/muslrust:1.9.0-nightly-2016-04-08 edonusdevelopers/muslrust:latest
 docker run -u lal -v "$PWD:/volume" -w /volume \
   -t edonusdevelopers/muslrust cargo build --release --verbose
 
