@@ -173,10 +173,11 @@ fn main() {
         result_exit("verify", lal::verify(manifest));
     } else if let Some(_) = args.subcommand_matches("status") {
         result_exit("status", lal::status(manifest));
-    } else if let Some(a) = args.subcommand_matches("store") {
-        result_exit("stash",
-                    lal::stash(config, manifest, a.value_of("name").unwrap()));
     }
+    // else if let Some(a) = args.subcommand_matches("store") {
+    //   result_exit("stash",
+    //               lal::stash(config, manifest, a.value_of("name").unwrap()));
+    //}
 
     unreachable!("Subcommand valid, but not implemented");
 }
