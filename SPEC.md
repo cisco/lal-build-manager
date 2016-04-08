@@ -8,7 +8,7 @@
 - [`lal shell`](#lal-shell) - enter container environment mounting current directory
 - [`lal configure`](#lal-configure) - generate configuration file
 - [`lal init`](#lal-init) - generate manifest file
-- [`lal store name`](#lal-store-name) - copies current `OUTPUT` to cache
+- [`lal stash name`](#lal-stash-name) - copies current `OUTPUT` to cache
 - `lal update-manifest`
 
 ## Manifest
@@ -104,7 +104,7 @@ A per-machine configuration file from `lal configure`.
 A specialized per-repo configuration file (`$PWD/.lalrc`) with the same format can override specific keys from the machine configuration.
 
 ## Caching
-The local cache is populated when doing installs from the registry, when building locally, storing them, or when linking them directly.
+The local cache is populated when doing installs from the registry, when building locally, stashing them, or when linking them directly.
 
 ```sh
 ~/.lal/cache $ tree .
@@ -114,7 +114,7 @@ The local cache is populated when doing installs from the registry, when buildin
 │       └── 6
 │           ├── ciscossl.tar.gz
 │           └── lockfile.json
-└── store
+└── stash
     └── ciscossl
         └── asan
             ├── ciscossl.tar.gz
@@ -124,7 +124,7 @@ The local cache is populated when doing installs from the registry, when buildin
 Sources:
 
 - `globals` are unpacked straight from the registry
-- `store` are tarballs of OUTPUT of builds when doing `lal store <name>`
+- `stash` are tarballs of OUTPUT of builds when doing `lal stash <name>`
 
 
 ### Common Command Specification
@@ -162,7 +162,7 @@ Comes in two variants.
 
  - *lal install component=version [--save]*: fetches a specific version. The optional `--save` flag will also update the manifest file locally.
 
-The specific version is either a number corresponding to the last tag, or it's a name corresponding to something in `store` (see `lal store`). Without a specific version, the latest version is installed.
+The specific version is either a number corresponding to the last tag, or it's a name corresponding to something in `stash` (see `lal stash`). Without a specific version, the latest version is installed.
 
 ### Uncommon/Advanced/Internal Command Specification
 #### lal shell
@@ -187,8 +187,8 @@ docker run \
 
 You may just have your own wrapper for this anyway, but this is the canonical one. You can not use `lal` inside the container anyway.
 
-#### lal store <name>
-Stashes the current `OUTPUT` folder to in `~/.lal/cache/store/${component}/${NAME}` for future reuse. This can be installed into another repository with `lal install component=name`
+#### lal stash <name>
+Stashes the current `OUTPUT` folder to in `~/.lal/cache/stash/${component}/${NAME}` for future reuse. This can be installed into another repository with `lal install component=name`
 
 #### lal verify
 Verifies that:
