@@ -12,6 +12,6 @@ tar czf lal.musl.tar -C musl .
 rm -rf musl/
 
 rm -rf ARTIFACT
-mkdir ARTIFACT -p
 lalversion=$(grep version Cargo.toml | awk -F"\"" '{print $2}')
-cp target/x86_64-unknown-linux-musl/release/lal  "ARTIFACT/lal"
+mkdir "ARTIFACT/${lalversion}" -p
+cp target/x86_64-unknown-linux-musl/release/lal  "ARTIFACT/${lalversion}/"
