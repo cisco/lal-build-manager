@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use std::fs;
 
 //use loggerv::init_with_verbosity;
-use lal::{configure, install, verify, init, shell, build, Config, Manifest, LalResult};
+use lal::{Config, Manifest, LalResult};
 
 // TODO: macroify this stuff
 
@@ -117,7 +117,7 @@ fn configure_yes() {
     let config = Config::read();
     assert!(config.is_err(), "no lalrc at this point");
 
-    let r = configure::configure(false, true);
+    let r = lal::configure(false, true);
     assert!(r.is_ok(), "configure succeeded");
 
     let cfg = Config::read();
@@ -129,13 +129,13 @@ fn init_force() {
     let m1 = Manifest::read();
     assert!(m1.is_err(), "no manifest at this point");
 
-    let m2 = init::init(false);
+    let m2 = lal::init(false);
     assert!(m2.is_ok(), "could init without force param");
 
-    let m3 = init::init(true);
+    let m3 = lal::init(true);
     assert!(m3.is_ok(), "could re-init with force param");
 
-    let m4 = init::init(false);
+    let m4 = lal::init(false);
     assert!(m4.is_err(), "could not re-init without force ");
 }
 
@@ -152,7 +152,7 @@ fn sanity() {
     chk::is_ok(Manifest::read(), "could read manifest");
 
     // There is no INPUT yet, but we have no dependencies, so this should work:
-    let r = verify::verify(manifest.unwrap());
+    let r = lal::verify(manifest.unwrap());
     chk::is_ok(r, "could verify after install");
 }
 
@@ -162,12 +162,12 @@ fn install_save() {
     let cfg = Config::read().unwrap();
 
     // gtest savedev
-    let ri = install::install(mf1, cfg.clone(), vec!["gtest"], false, true);
+    let ri = lal::install(mf1, cfg.clone(), vec!["gtest"], false, true);
     chk::is_ok(ri, "could install gtest and save as dev");
 
     // three main deps (and re-read manifest to avoid overwriting devedps)
     let mf2 = Manifest::read().unwrap();
-    let ri = install::install(mf2, cfg.clone(), vec!["libyaml", "yajl", "libwebsockets"], true, false);
+    let ri = lal::install(mf2, cfg.clone(), vec!["libyaml", "yajl", "libwebsockets"], true, false);
     chk::is_ok(ri, "could install libyaml and save");
 }
 
@@ -178,34 +178,34 @@ fn install_save() {
 fn verify_checks() {
     let cfg = Config::read().unwrap();
 
-    let r = verify::verify(Manifest::read().unwrap());
+    let r = lal::verify(Manifest::read().unwrap());
     assert!(r.is_ok(), "could verify after install");
 
     // clean folders and verify it fails
     let yajl = Path::new(&env::current_dir().unwrap()).join("INPUT").join("yajl");
     fs::remove_dir_all(&yajl).unwrap();
 
-    let r2 = verify::verify(Manifest::read().unwrap());
+    let r2 = lal::verify(Manifest::read().unwrap());
     assert!(r2.is_err(), "verify failed after fiddling");
 
     // re-install everything
-    let rall = install::install_all(Manifest::read().unwrap(), cfg, true);
+    let rall = lal::install_all(Manifest::read().unwrap(), cfg, true);
     assert!(rall.is_ok(), "install all succeeded");
     assert!(yajl.is_dir(), "yajl was reinstalled from manifest");
 
-    let r3 = verify::verify(Manifest::read().unwrap());
+    let r3 = lal::verify(Manifest::read().unwrap());
     assert!(r3.is_ok(), "verify ok again");
 }
 
 // Shell tests
 fn shell_echo() {
     let cfg = Config::read().unwrap();
-    let r = shell::docker_run(&cfg, vec!["echo".to_string(), "# echo from docker".to_string()], false);
+    let r = lal::docker_run(&cfg, vec!["echo".to_string(), "# echo from docker".to_string()], false);
     assert!(r.is_ok(), "shell echoed");
 }
 fn shell_permissions() {
     let cfg = Config::read().unwrap();
-    let r = shell::docker_run(&cfg, vec!["touch".to_string(), "README.md".to_string()], false);
+    let r = lal::docker_run(&cfg, vec!["touch".to_string(), "README.md".to_string()], false);
     assert!(r.is_ok(), "could touch files in container");
 }
 
@@ -215,6 +215,6 @@ fn build_tar() {
 
     // TODO: need to have a BUILD script that actually creates a tarball in OUTPUT
     // currently tests work because I have such a BUILD, but don't want to commit it
-    let r = build::build(&cfg, &mf, None, None, true, None);
+    let r = lal::build(&cfg, &mf, None, None, true, None);
     assert!(r.is_ok(), "could run lal build and could make tarball");
 }

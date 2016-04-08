@@ -23,6 +23,7 @@ impl ComponentConfiguration {
     }
 }
 
+/// Representation of `manifest.json`
 #[allow(non_snake_case)]
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Manifest {
@@ -74,6 +75,13 @@ impl Manifest {
     }
 }
 
+/// Generates a blank manifest in the current directory
+///
+/// This will use the directory name as the assumed default component name
+/// Then fill in the blanks as best as possible.
+///
+/// The function will not overwrite an existing `manifest.json`,
+/// unless the `force` bool is set.
 pub fn init(force: bool) -> LalResult<()> {
     let pwd = try!(env::current_dir());
     let last_comp = pwd.components().last().unwrap(); // std::path::Component

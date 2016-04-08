@@ -6,6 +6,12 @@ use std::vec::Vec;
 use configure;
 use errors::{CliError, LalResult};
 
+/// Runs an arbitrary command in the configured docker environment
+///
+/// This will mount the current directory as `~/volume` as well as a few conveniences,
+/// and absorb the `Stdio` supplied by this `Command`.
+///
+/// This is the most general function, used by both `lal build` and `lal shell`.
 pub fn docker_run(cfg: &configure::Config,
                   command: Vec<String>,
                   interactive: bool)
@@ -41,6 +47,7 @@ pub fn docker_run(cfg: &configure::Config,
     Ok(())
 }
 
+/// Mounts and enters `.` in an interactive bash shell using the configured container.
 pub fn shell(cfg: &configure::Config) -> LalResult<()> {
     info!("Entering docker container");
     docker_run(&cfg, vec!["/bin/bash".to_string()], true)

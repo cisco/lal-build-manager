@@ -17,6 +17,9 @@
 //! This library performs the basic actions needed to adhere to the
 //! [SPEC.md](https://sqbu-github.cisco.com/Edonus/lal/blob/master/SPEC.md).
 //!
+//! ## Dependencies
+//! This tool depends on the rust ecosystem and their crates. Dependencies referenced
+//! explicitly or implicitly is listed on the left of this page.
 
 extern crate curl;
 extern crate rustc_serialize;
@@ -38,7 +41,7 @@ pub use shell::{shell, docker_run};
 pub use install::{install, install_all, uninstall};
 pub use status::status;
 pub use verify::verify;
-pub use cache::stash;
+//pub use cache::stash;
 
 mod util;
 mod errors;

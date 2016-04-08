@@ -57,10 +57,10 @@ fn ensure_dir_exists_fresh(subdir: &str) -> io::Result<()> {
 }
 
 
-/// Main build command entrypoint as used by the lal binary
+/// Runs the `./BUILD` script in a container and packages artifacts.
 ///
 /// Expects a pre-read `Manifest` file, a `Config` file, as well as a bunch of optional flags
-/// that the user may supply to `lal build`.
+/// that the user may supply..
 ///
 /// The function performs basic sanity checks, before shelling out to `docker run`
 /// to perform the actual execution of the containerized `./BUILD` script.

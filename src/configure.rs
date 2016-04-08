@@ -5,6 +5,7 @@ use std::env;
 use std::io::prelude::*;
 use errors::{CliError, LalResult};
 
+/// Representation of `.lalrc`
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
     pub artifactory: String,
@@ -80,7 +81,12 @@ fn create_lal_dir() -> LalResult<PathBuf> {
 //   - docker is present and warn if not
 //   - docker images contains cfg.container and provide info if not
 
-
+/// Create  `~/.lal/lalrc` interactively
+///
+/// This will prompt you interactively when setting `term_prompt`
+/// Otherwise will just use the defaults.
+///
+/// A third boolean option to discard the output is supplied for tests.
 pub fn configure(term_prompt: bool, save: bool) -> LalResult<Config> {
     let _ = try!(create_lal_dir());
     let mut cfg = try!(Config::new());

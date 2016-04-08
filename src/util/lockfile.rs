@@ -15,6 +15,7 @@ pub struct Container {
     tag: String,
 }
 
+/// Representation of `lockfile.json`
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Lockfile {
     pub name: String,

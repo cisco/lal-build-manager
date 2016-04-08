@@ -3,6 +3,18 @@ use walkdir::WalkDir;
 use {Lockfile, Manifest, CliError, LalResult};
 use util::lockfile::find_all_dependencies;
 
+/// Verifies that `./INPUT` satisfies all strictness conditions.
+///
+/// This first verifies that there are no key mismatches between `defaultConfig` and
+/// `configurations` in the manifest.
+///
+/// Once this is done, `INPUT` is analysed thoroughly via each components lockfiles.
+/// Missing dependencies, or multiple versions dependend on implicitly are both
+/// considered errors for verify, as are having custom versions in `./INPUT`.
+///
+/// This function is meant to be a helper for when we want official builds, but also
+/// a way to tell developers that they are using things that differ from what jenkins
+/// would use.
 pub fn verify(m: Manifest) -> LalResult<()> {
     // 1. Verify that the manifest is sane
     for (name, conf) in m.components {

@@ -15,6 +15,16 @@ fn print_as_tree(root: &str, xs: Vec<String>) {
     }
 }
 
+/// Prints a fancy dependency tree of `./INPUT` to stdout.
+///
+/// This is the quick version information of what you currently have in `./INPUT`.
+/// It prints the tree and highlights versions, as well as both missing and extraneous
+/// dependencies in `./INPUT`.
+///
+/// TODO: This function should be extended to also print the FULL tree by analysing
+/// lockfiles.
+///
+/// It is not intended as a verifier, but will nevertheless produce a summary at the end.
 pub fn status(manifest: Manifest) -> LalResult<()> {
     let mut res = vec![];
     let mut error = None;

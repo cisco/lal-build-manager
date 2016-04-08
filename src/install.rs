@@ -66,6 +66,14 @@ fn clean_input() {
     }
 }
 
+/// Install specific dependencies outside the manifest
+///
+/// Multiple "components=version" strings can be supplied, where the version is optional.
+/// If no version is supplied, latest is fetched.
+///
+/// If installation was successful, the fetched tarballs are unpacked into `./INPUT`.
+/// If one `save` or `savedev` was set, the fetched versions are also updated in the
+/// manifest. This provides an easy way to not have to deal with strict JSON manually.
 pub fn install(manifest: Manifest,
                cfg: Config,
                xs: Vec<&str>,
@@ -134,6 +142,13 @@ pub fn install(manifest: Manifest,
     Ok(())
 }
 
+/// Remove specific components from `./INPUT` and the manifest.
+///
+/// This takes multiple components strings (without versions), and if the component
+/// is found in `./INPUT` it is deleted.
+///
+/// If one of `save` or `savedev` was set, `manifest.json` is also updated to remove
+/// the specified components from the corresponding dictionary.
 pub fn uninstall(manifest: Manifest, xs: Vec<&str>, save: bool, savedev: bool) -> LalResult<()> {
     debug!("Removing dependencies {:?}", xs);
 
@@ -179,6 +194,10 @@ pub fn uninstall(manifest: Manifest, xs: Vec<&str>, save: bool, savedev: bool) -
     Ok(())
 }
 
+/// Install all dependencies from `manifest.json`
+///
+/// This will read, and HTTP GET all the `dependencies` at the specified versions
+/// in parallel. If the `dev` bool is set, then `devDependencies` are also installed.
 pub fn install_all(manifest: Manifest, cfg: Config, dev: bool) -> LalResult<()> {
     use std::thread;
     use std::sync::mpsc;
