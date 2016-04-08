@@ -29,18 +29,24 @@ extern crate log;
 extern crate walkdir;
 
 // re-exports
-pub use init::Manifest;
-pub use configure::Config;
-pub use errors::{LalResult, CliError};
 pub use util::lockfile::Lockfile;
+pub use errors::{LalResult, CliError};
+pub use build::build;
+pub use configure::{configure, Config};
+pub use init::{init, Manifest};
+pub use shell::{shell, docker_run};
+pub use install::{install, install_all, uninstall};
+pub use status::status;
+pub use verify::verify;
+pub use cache::stash;
 
 mod util;
-pub mod errors;
-pub mod configure;
-pub mod init;
-pub mod shell;
-pub mod build;
-pub mod install;
-pub mod verify;
-pub mod cache;
-pub mod status;
+mod errors;
+mod configure;
+mod init;
+mod shell;
+mod build;
+mod install;
+mod verify;
+mod cache;
+mod status;

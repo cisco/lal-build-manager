@@ -44,7 +44,6 @@ pub fn stash(cfg: Config, mf: Manifest, name: &str) -> LalResult<()> {
     let outputdir = Path::new("./OUTPUT");
     if !outputdir.is_dir() {
         return Err(CliError::MissingBuild);
-        // TODO: need to verify lockfile here
     }
     let destdir = Path::new(&cfg.cache)
         .join("stash")

@@ -5,7 +5,7 @@ extern crate log;
 extern crate loggerv;
 
 extern crate lal;
-use lal::*;
+use lal::{LalResult, Config, Manifest};
 
 use clap::{Arg, App, AppSettings, SubCommand};
 use std::process;
@@ -114,7 +114,7 @@ fn main() {
     // Allow lal configure without assumptions
     if let Some(a) = args.subcommand_matches("configure") {
         result_exit("configure",
-                    configure::configure(!a.is_present("yes"), true));
+                    lal::configure(!a.is_present("yes"), true));
     }
 
     // Force config to exists before allowing remaining actions
@@ -128,7 +128,7 @@ fn main() {
 
     // Allow lal init without manifest existing
     if let Some(a) = args.subcommand_matches("init") {
-        result_exit("init", init::init(a.is_present("force")));
+        result_exit("init", lal::init(a.is_present("force")));
     }
 
     // Force manifest to exist before allowing remaining actions
@@ -145,22 +145,22 @@ fn main() {
     if let Some(a) = args.subcommand_matches("install") {
         let res = if a.is_present("components") {
             let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
-            install::install(manifest,
+            lal::install(manifest,
                              config,
                              xs,
                              a.is_present("save"),
                              a.is_present("savedev"))
 
         } else {
-            install::install_all(manifest, config, a.is_present("dev"))
+            lal::install_all(manifest, config, a.is_present("dev"))
         };
         result_exit("install", res);
     } else if let Some(a) = args.subcommand_matches("uninstall") {
         let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
-        let res = install::uninstall(manifest, xs, a.is_present("save"), a.is_present("savedev"));
+        let res = lal::uninstall(manifest, xs, a.is_present("save"), a.is_present("savedev"));
         result_exit("uninstall", res);
     } else if let Some(a) = args.subcommand_matches("build") {
-        let res = build::build(&config,
+        let res = lal::build(&config,
                                &manifest,
                                a.value_of("component"),
                                a.value_of("configuration"),
@@ -168,14 +168,14 @@ fn main() {
                                a.value_of("with-version"));
         result_exit("build", res);
     } else if let Some(_) = args.subcommand_matches("shell") {
-        result_exit("shell", shell::shell(&config));
+        result_exit("shell", lal::shell(&config));
     } else if let Some(_) = args.subcommand_matches("verify") {
-        result_exit("verify", verify::verify(manifest));
+        result_exit("verify", lal::verify(manifest));
     } else if let Some(_) = args.subcommand_matches("status") {
-        result_exit("status", status::status(manifest));
+        result_exit("status", lal::status(manifest));
     } else if let Some(a) = args.subcommand_matches("store") {
         result_exit("stash",
-                    cache::stash(config, manifest, a.value_of("name").unwrap()));
+                    lal::stash(config, manifest, a.value_of("name").unwrap()));
     }
 
     unreachable!("Subcommand valid, but not implemented");
