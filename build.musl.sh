@@ -1,10 +1,10 @@
 #!/bin/bash
+set -ex
 
-
-docker pull clux/muslrust:1.9.0-nightly-2016-03-24
-docker tag clux/muslrust clux/muslrust:latest
-docker run -v "$PWD:/volume" -w /volume \
-  -t clux/muslrust cargo build --release --verbose
+docker pull edonusdevelopers/muslrust:1.9.0-nightly-2016-04-08
+docker tag edonusdevelopers/muslrust:1.9.0-nightly-2016-04-08 edonusdevelopers/muslrust:latest
+docker run -u lal -v "$PWD:/volume" -w /volume \
+  -t edonusdevelopers/muslrust cargo build --release --verbose
 
 mkdir -p musl/bin
 cp target/x86_64-unknown-linux-musl/release/lal musl/bin
