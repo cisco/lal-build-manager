@@ -2,7 +2,16 @@
 A dependency manager built around artifactory and docker. See the [spec](./SPEC.md) for background information.
 
 ## Installation
-Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) directly from [artifactory](http://engci-maven.cisco.com/artifactory/CME-group/lal/). TODO: make link active.
+Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) directly from [artifactory](http://engci-maven.cisco.com/artifactory/CME-group/lal/):
+
+```sh
+wget http://engci-maven.cisco.com/artifactory/CME-group/lal/0.10.0/lal
+chmod +x lal
+diff <(echo "$(curl -s http://engci-maven.cisco.com/artifactory/CME-group/lal/0.10.0/lal.sha1)  lal") <(sha1sum lal)
+cp lal /usr/local/bin
+```
+
+Plan is to integrate this into the executable to run periodically.
 
 Alternatively, install [stable rust](https://www.rust-lang.org/downloads.html) (inlined below), clone, build, and install:
 
