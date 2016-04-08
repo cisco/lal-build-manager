@@ -32,11 +32,6 @@ A per-repo file. Format looks like this (here annotated with illegal comments):
   },
   "devDependencies": {
     "gtest": 42
-  },
-  "optionalDependencies": {
-    "afl": {
-      "afl-compiler": 20
-    }
   }
 }
 ```
@@ -156,9 +151,9 @@ If `--with-version` is passed, `lal verify` must pass for build to pass.
 
 Passing configuration flags:
 
-- *--use flagname*: Pass a named flag to `BUILD` to use this configuration.
+- *--config=name*: Passes a named config to `BUILD` as `$2`.
 
-This allows multiple invocations, i.e. `lal build --use asan --use clang` is valid, provided the manifest specifies both "asan" and "clang" in its `flags` array.
+This allows multiple blessed configurations of the same component, i.e. `lal build dme-unit-tests --config=asan` and `lal build dme-uni-tests --config=debug`. Both are valid provided `dme-unit-tests` provides those `configurations` in the `components` part of the manifest.
 
 #### lal install [components..]
 Comes in two variants.
