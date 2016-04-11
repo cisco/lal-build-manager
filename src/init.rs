@@ -2,7 +2,7 @@ use std::io::prelude::*;
 use std::env;
 use std::path::Path;
 use std::fs::File;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::vec::Vec;
 use rustc_serialize::json;
 
@@ -28,23 +28,23 @@ impl ComponentConfiguration {
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Manifest {
     pub name: String,
-    pub components: HashMap<String, ComponentConfiguration>,
-    pub dependencies: HashMap<String, u32>,
-    pub devDependencies: HashMap<String, u32>,
+    pub components: BTreeMap<String, ComponentConfiguration>,
+    pub dependencies: BTreeMap<String, u32>,
+    pub devDependencies: BTreeMap<String, u32>,
 }
 
 impl Manifest {
     pub fn new(n: &str) -> Manifest {
-        let mut comps = HashMap::new();
+        let mut comps = BTreeMap::new();
         comps.insert(n.to_string(), ComponentConfiguration::new());
         Manifest {
             name: n.to_string(),
             components: comps,
-            dependencies: HashMap::new(),
-            devDependencies: HashMap::new(),
+            dependencies: BTreeMap::new(),
+            devDependencies: BTreeMap::new(),
         }
     }
-    pub fn all_dependencies(&self) -> HashMap<String, u32> {
+    pub fn all_dependencies(&self) -> BTreeMap<String, u32> {
         let mut deps = self.dependencies.clone();
         for (k, v) in &self.devDependencies {
             deps.insert(k.clone(), v.clone());

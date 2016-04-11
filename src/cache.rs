@@ -62,4 +62,6 @@ pub fn stash(cfg: Config, mf: Manifest, name: &str) -> LalResult<()> {
 
     // Need to implement build before doing the rest here
     unimplemented!();
+    // TODO: then implement install from stash
+    // could actually implement `lal reuse ciscossl` and not use install for this..
 }

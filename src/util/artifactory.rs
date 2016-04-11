@@ -1,6 +1,7 @@
 /// Globalroot shim to get components from
 use std::vec::Vec;
 use rustc_serialize::json;
+use semver::Version;
 
 use install::Component;
 use errors::{CliError, LalResult};
@@ -103,7 +104,7 @@ struct ArtifactoryStorageResponse {
     children: Vec<ArtifactoryVersion>,
 }
 
-pub fn find_latest_lal_version() -> LalResult<Vec<String>> {
+pub fn find_latest_lal_version() -> LalResult<Version> {
     use curl::http;
     let uri = "http://engci-maven.cisco.com/artifactory/api/storage/CME-group/lal";
 
@@ -119,12 +120,18 @@ pub fn find_latest_lal_version() -> LalResult<Vec<String>> {
         trace!("Got body {}", body);
 
         let res: ArtifactoryStorageResponse = try!(json::decode(&body));
-        let vers: Vec<String> = res.children
-                                   .iter()
-                                   .map(|r| r.uri.trim_matches('/').to_string())
-                                   .collect();
+        let latest: Option<Version> = res.children
+                                         .iter()
+                                         .map(|r| r.uri.trim_matches('/').to_string())
+                                         .inspect(|v| debug!("Found lal version {}", v))
+                                         .filter_map(|v| Version::parse(&v).ok())
+                                         .max(); // Semver::Version implements an order
 
-        return Ok(vers);
+        if latest.is_some() {
+            return Ok(latest.unwrap());
+        } else {
+            warn!("Failed to parse version information from artifactory storage api for lal");
+        }
     }
     Err(CliError::ArtifactoryFailure("No version information found on API"))
 }
