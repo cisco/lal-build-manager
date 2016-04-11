@@ -42,7 +42,7 @@ fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> LalResult<C
     let tarname = ["./", name, ".tar"].concat();
 
     // always just download for now - TODO: eventually check cache
-    let dl = try!(download_to_path(&component.tarball, &tarname));
+    try!(download_to_path(&component.tarball, &tarname));
 
     debug!("Unpacking tarball {}", tarname);
     let data = try!(fs::File::open(&tarname));
