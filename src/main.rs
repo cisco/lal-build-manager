@@ -106,6 +106,12 @@ fn main() {
                 .help("overwrites manifest if necessary")))
         .subcommand(SubCommand::with_name("shell")
             .about("Enters the configured container mounting the current directory"))
+        .subcommand(SubCommand::with_name("upgrade")
+            .about("Check or upgrade lal")
+            .arg(Arg::with_name("check")
+                .long("check")
+                .short("c")
+                .help("Check for new versions only")))
         .get_matches();
 
     // by default, always show INFO messages for now (+1)
@@ -172,11 +178,13 @@ fn main() {
         result_exit("verify", lal::verify(manifest));
     } else if let Some(_) = args.subcommand_matches("status") {
         result_exit("status", lal::status(manifest));
+    } else if let Some(a) = args.subcommand_matches("stash") {
+        result_exit("stash",
+                    lal::stash(config, manifest, a.value_of("name").unwrap()));
+    } else if let Some(a) = args.subcommand_matches("upgrade") {
+        result_exit("upgrade", lal::upgrade(config, a.is_present("check")));
     }
-    else if let Some(a) = args.subcommand_matches("stash") {
-       result_exit("stash",
-                   lal::stash(config, manifest, a.value_of("name").unwrap()));
-     }
+
 
     unreachable!("Subcommand valid, but not implemented");
 }

@@ -30,6 +30,7 @@ extern crate ansi_term;
 #[macro_use]
 extern crate log;
 extern crate walkdir;
+extern crate semver;
 
 // re-exports
 pub use util::lockfile::Lockfile;
@@ -42,6 +43,7 @@ pub use install::{install, install_all, uninstall};
 pub use status::status;
 pub use verify::verify;
 pub use cache::stash;
+pub use upgrade::upgrade;
 
 mod util;
 mod errors;
@@ -53,3 +55,4 @@ mod install;
 mod verify;
 mod cache;
 mod status;
+mod upgrade;

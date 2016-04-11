@@ -10,6 +10,7 @@ dependencies = [
  "loggerv 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 0.1.58 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-serialize 0.3.18 (registry+https://github.com/rust-lang/crates.io-index)",
+ "semver 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "tar 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "walkdir 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -170,6 +171,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "nom"
+version = "1.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "openssl-sys"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -222,6 +228,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "rustc-serialize"
 version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "semver"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "nom 1.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "strsim"

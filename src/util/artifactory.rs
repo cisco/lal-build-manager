@@ -13,7 +13,7 @@ struct ArtifactoryBuild {
 }
 #[allow(non_snake_case)]
 #[derive(RustcDecodable)]
-struct ArtifactoryResponse {
+struct ArtifactoryBuildResponse {
     buildsNumbers: Vec<ArtifactoryBuild>, // uri: String,
 }
 
@@ -23,7 +23,7 @@ fn get_latest(uri: &str) -> LalResult<u32> {
     debug!("GET {}", uri);
     let resp = try!(http::handle().get(uri).exec().map_err(|e| {
         warn!("Failed to GET {}: {}", uri, e);
-        CliError::ArtifactoryFailure("Get request failed")
+        CliError::ArtifactoryFailure("GET build request failed")
     }));
 
 
@@ -31,7 +31,7 @@ fn get_latest(uri: &str) -> LalResult<u32> {
         let body = String::from_utf8_lossy(resp.get_body());
         trace!("Got body {}", body);
 
-        let res: ArtifactoryResponse = try!(json::decode(&body));
+        let res: ArtifactoryBuildResponse = try!(json::decode(&body));
         let build: Option<u32> = res.buildsNumbers
                                     .iter()
                                     .map(|r| r.uri.as_str())
@@ -43,6 +43,7 @@ fn get_latest(uri: &str) -> LalResult<u32> {
             return Ok(nr);
         }
     }
+    // TODO: handle other error codes better
     Err(CliError::ArtifactoryFailure("No version information found on API"))
 }
 
@@ -88,4 +89,42 @@ pub fn get_tarball_uri(name: &str, version: Option<u32>) -> LalResult<Component>
     } else {
         get_dependency_url_latest(name)
     }
+}
+
+// Need these to query for stored artifacts:
+// This query has tons of info, but we only care about the version
+// And the version is encoded in children.uri with leading slash
+#[derive(RustcDecodable)]
+struct ArtifactoryVersion {
+    uri: String, // folder: bool,
+}
+#[derive(RustcDecodable)]
+struct ArtifactoryStorageResponse {
+    children: Vec<ArtifactoryVersion>,
+}
+
+pub fn find_latest_lal_version() -> LalResult<Vec<String>> {
+    use curl::http;
+    let uri = "http://engci-maven.cisco.com/artifactory/api/storage/CME-group/lal";
+
+    debug!("GET {}", uri);
+    let resp = try!(http::handle().get(uri).exec().map_err(|e| {
+        warn!("Failed to GET {}: {}", uri, e);
+        CliError::ArtifactoryFailure("Storage request failed")
+    }));
+
+
+    if resp.get_code() == 200 {
+        let body = String::from_utf8_lossy(resp.get_body());
+        trace!("Got body {}", body);
+
+        let res: ArtifactoryStorageResponse = try!(json::decode(&body));
+        let vers: Vec<String> = res.children
+                                   .iter()
+                                   .map(|r| r.uri.trim_matches('/').to_string())
+                                   .collect();
+
+        return Ok(vers);
+    }
+    Err(CliError::ArtifactoryFailure("No version information found on API"))
 }
