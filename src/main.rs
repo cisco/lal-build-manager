@@ -107,11 +107,15 @@ fn main() {
         .subcommand(SubCommand::with_name("shell")
             .about("Enters the configured container mounting the current directory"))
         .subcommand(SubCommand::with_name("upgrade")
-            .about("Check or upgrade lal")
+            .about("Upgrade lal installation in /usr/local")
             .arg(Arg::with_name("check")
                 .long("check")
                 .short("c")
-                .help("Check for new versions only")))
+                .help("Perform a check of new versions only"))
+            .arg(Arg::with_name("prefix")
+                .long("prefix")
+                .takes_value(true)
+                .help("Change /usr/local to a custom prefix")))
         .get_matches();
 
     // by default, always show INFO messages for now (+1)
@@ -145,6 +149,20 @@ fn main() {
         })
         .unwrap();
 
+    // Timed daily, silent upgrade check (if not using upgrade)
+    if args.subcommand_name() != Some("upgrade") && config.update_check_time() {
+        debug!("Performing daily upgrade check");
+        // silent dry-run
+        let _ = lal::upgrade(config.clone(), "usr/local", true, true).map_err(|e| {
+            error!("Daily update check failed: {}", e);
+            // don't halt here if this ever happens as it could break it for users
+        });
+        let _ = config.clone().performed_update().map_err(|e| {
+            error!("Daily update check updating lastUpdate failed: {}", e);
+            // Ditto
+        });
+        debug!("Upgrade check done - continuing to requested operation\n");
+    }
 
     // Remaining actions
     if let Some(a) = args.subcommand_matches("install") {
@@ -182,9 +200,12 @@ fn main() {
         result_exit("stash",
                     lal::stash(config, manifest, a.value_of("name").unwrap()));
     } else if let Some(a) = args.subcommand_matches("upgrade") {
-        result_exit("upgrade", lal::upgrade(config, a.is_present("check")));
+        result_exit("upgrade",
+                    lal::upgrade(config,
+                                 a.value_of("prefix").unwrap_or("/usr/local"),
+                                 a.is_present("check"),
+                                 false));
     }
-
 
     unreachable!("Subcommand valid, but not implemented");
 }

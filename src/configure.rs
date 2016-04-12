@@ -1,4 +1,5 @@
 use rustc_serialize::json;
+use chrono::*;
 use std::path::{Path, PathBuf};
 use std::fs;
 use std::env;
@@ -6,11 +7,13 @@ use std::io::prelude::*;
 use errors::{CliError, LalResult};
 
 /// Representation of `.lalrc`
+#[allow(non_snake_case)]
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
     pub artifactory: String,
     pub cache: String,
     pub container: String,
+    pub updateCheck: String,
 }
 
 impl Config {
@@ -19,10 +22,12 @@ impl Config {
         let home = env::home_dir().unwrap();
         let cachepath = Path::new(&home).join(".lal").join("cache");
         let cachedir = cachepath.as_path().to_str().unwrap();
+        let time = UTC::now() - Duration::days(2);
         Ok(Config {
             artifactory: "http://engci-maven.cisco.com/artifactory/CME-group".to_string(),
             cache: cachedir.to_string(),
             container: "edonusdevelopers/centos_build".to_string(),
+            updateCheck: time.to_rfc3339(),
         })
     }
     pub fn read() -> LalResult<Config> {
@@ -37,7 +42,16 @@ impl Config {
         let res = try!(json::decode(&cfg_str));
         Ok(res)
     }
-    pub fn write(&self) -> LalResult<()> {
+    pub fn update_check_time(&self) -> bool {
+        let last = self.updateCheck.parse::<DateTime<UTC>>().unwrap();
+        let cutoff = UTC::now() - Duration::days(1);
+        last < cutoff
+    }
+    pub fn performed_update(&mut self) -> LalResult<()> {
+        self.updateCheck = UTC::now().to_rfc3339();
+        Ok(try!(self.write(true)))
+    }
+    pub fn write(&self, silent: bool) -> LalResult<()> {
         let home = env::home_dir().unwrap();
         let cfg_path = Path::new(&home).join(".lal").join("lalrc");
 
@@ -45,7 +59,11 @@ impl Config {
 
         let mut f = try!(fs::File::create(&cfg_path));
         try!(write!(f, "{}\n", encoded));
-        info!("Wrote config {}: \n{}", cfg_path.display(), encoded);
+        if silent {
+            debug!("Wrote config {}: \n{}", cfg_path.display(), encoded);
+        } else {
+            info!("Wrote config {}: \n{}", cfg_path.display(), encoded);
+        }
         Ok(())
     }
 }
@@ -98,7 +116,7 @@ pub fn configure(term_prompt: bool, save: bool) -> LalResult<Config> {
         cfg.container = prompt("container", cfg.container);
     }
     if save {
-        try!(cfg.write());
+        try!(cfg.write(false));
     }
 
     Ok(cfg.clone())

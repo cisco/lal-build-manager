@@ -14,7 +14,7 @@ pub struct Component {
     pub tarball: String,
 }
 
-fn download_to_path(uri: &str, save: &str) -> io::Result<()> {
+pub fn download_to_path(uri: &str, save: &str) -> io::Result<()> {
     use curl::http;
     use std::io::prelude::*;
 

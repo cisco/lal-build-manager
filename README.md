@@ -2,19 +2,22 @@
 A dependency manager built around artifactory and docker. See the [spec](./SPEC.md) for background information.
 
 ## Installation
+Two ways to install, depending on whether you can be bothered to run the rust install script:
+
+### Precompiled releases (instant)
 Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) directly from [artifactory](http://engci-maven.cisco.com/artifactory/CME-group/lal/):
 
 ```sh
-lalurl=$(http://engci-maven.cisco.com/artifactory/CME-group/lal/0.10.0/lal)
-wget $lalurl
+wget http://engci-maven.cisco.com/artifactory/CME-group/lal/0.11.0/lal
 chmod +x lal
-diff <(echo "$(curl -s $lalurl.sha1)  lal") <(sha1sum lal)
 cp lal /usr/local/bin
+lal configure
 ```
 
-Plan is to integrate this into the executable to run periodically.
+Future upgrades just require `lal upgrade` and `lal` will check silently once per day for updates.
 
-To install from source, fetch [stable rust](https://www.rust-lang.org/downloads.html) (inlined below), clone, build, install, and make it available:
+### From source (<10 minutes)
+Get [stable rust](https://www.rust-lang.org/downloads.html) (inlined below), clone, build, install, and make it available:
 
 ```sh
 curl -sSf https://static.rust-lang.org/rustup.sh | sh
@@ -23,6 +26,8 @@ cargo build --release
 ln -sf $PWD/target/release/lal /usr/local/bin/lal
 lal configure
 ```
+
+Subsequent updates then just require `git pull && cargo build --release`. You will still be notified when there is a version bump, but it will just tell you to pull and build.
 
 ## Usage
 Illustrated via common workflow examples below:

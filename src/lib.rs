@@ -31,6 +31,7 @@ extern crate ansi_term;
 extern crate log;
 extern crate walkdir;
 extern crate semver;
+extern crate chrono;
 
 // re-exports
 pub use util::lockfile::Lockfile;
