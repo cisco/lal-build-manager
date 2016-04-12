@@ -50,7 +50,7 @@ Updating dependencies:
 (This example presumes ciscossl has independently been updated to version 6 and is ready to be used elsewhere.)
 
 ```sh
-lal install ciscossl 6 --save
+lal install ciscossl=6 --save
 lal build # check it builds with new version
 git commit manifest.json -m "updated ciscossl to version 6"
 git push
