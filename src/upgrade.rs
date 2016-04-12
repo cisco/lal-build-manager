@@ -7,7 +7,12 @@ use util::artifactory::find_latest_lal_version;
 use install::download_to_path;
 use {LalResult, Config, CliError};
 
-/// Check for updated versions of the lal binary on artifactory
+/// Check and optionally upgrade lal from artifactory
+///
+/// This is run silently in a dry_run mode every day on the first lal command.
+/// Since users can get lal from source of from artifactory musl distributions,
+/// this function is slightly complicated. But this is mostly just down to how
+/// and if we install musl distributions. We don't really want to hostwap lal ourselves.
 pub fn upgrade(cfg: Config, prefix: &str, dry_run: bool, silent: bool) -> LalResult<()> {
     let latest = try!(find_latest_lal_version());
     let current = Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
@@ -15,6 +20,7 @@ pub fn upgrade(cfg: Config, prefix: &str, dry_run: bool, silent: bool) -> LalRes
         // New version found - always full output now
         info!("A new version of lal is available: {}", latest);
         if cfg!(target_family = "musl") {
+            // Dry run only matters for musl, because source tells you what to do
             if dry_run {
                 // Don't want to silently upgrade from the silent upgrade check
                 info!("Your version is compiled with musl");
@@ -28,6 +34,7 @@ pub fn upgrade(cfg: Config, prefix: &str, dry_run: bool, silent: bool) -> LalRes
                 if !bindir.is_dir() {
                     try!(fs::create_dir(&bindir));
                 }
+                // TODO: will this even work if we're hotswapping the binary we are using!?
                 let dest = bindir.join("lal");
                 try!(download_to_path(&uri, dest.to_str().unwrap()));
                 // make executable
@@ -41,7 +48,7 @@ pub fn upgrade(cfg: Config, prefix: &str, dry_run: bool, silent: bool) -> LalRes
             }
         }
         else {
-            // Source install - just tell the user what to do:
+            // Source install - just tell the user what to do regardless of dry_run:
             info!("Your version is compiled from source");
             info!("Please `git pull` and `cargo build --release` in the source checkout");
         }
