@@ -7,10 +7,11 @@ docker run -u lal -v "$PWD:/volume" -w /volume \
 
 mkdir -p musl/bin
 cp target/x86_64-unknown-linux-musl/release/lal musl/bin
-tar czf lal.musl.tar -C musl .
+tar czf lal.tar -C musl .
 rm -rf musl/
 
-rm -rf ARTIFACT
 lalversion=$(grep version Cargo.toml | awk -F"\"" '{print $2}')
+
+rm -rf ARTIFACT
 mkdir "ARTIFACT/${lalversion}" -p
-cp target/x86_64-unknown-linux-musl/release/lal  "ARTIFACT/${lalversion}/"
+cp lal.tar "ARTIFACT/${lalversion}/"
