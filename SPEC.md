@@ -21,7 +21,7 @@ A per-repo file. Format looks like this (here annotated with illegal comments):
     "libwebsockets": {
       "defaultConfig": "release",
       "configurations": ["release", "clang"]
-    }
+    },
     "websockets_tests": {
       "defaultConfig": "coverage",
       "configurations": ["coverage", "release", "clang"]

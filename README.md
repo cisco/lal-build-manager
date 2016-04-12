@@ -36,7 +36,7 @@ Illustrated via common workflow examples below:
 Installing pinned versions and building:
 
 ```sh
-git clone git@sqbu-github.cisco.com:Edonus/edonus
+git clone git@sqbu-github.cisco.com:Edonus/media-engine
 cd edonus
 lal install --dev
 # for canonical build
