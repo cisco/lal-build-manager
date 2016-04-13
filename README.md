@@ -1,4 +1,6 @@
 # Langley dependency manager
+[![build status](https://engci-jenkins-gpk.cisco.com/jenkins/job/team_CME/job/lal/badge/icon)](https://engci-jenkins-gpk.cisco.com/jenkins/job/team_CME/job/lal/)
+
 A dependency manager built around artifactory and docker. See the [spec](./SPEC.md) for background information.
 
 ## Installation
@@ -8,13 +10,13 @@ Two ways to install, depending on whether you can be bothered to run the rust in
 Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) directly from [artifactory](http://engci-maven.cisco.com/artifactory/CME-group/lal/):
 
 ```sh
-wget http://engci-maven.cisco.com/artifactory/CME-group/lal/0.12.0/lal
-chmod +x lal
-cp lal /usr/local/bin
+curl https://engci-maven.cisco.com/artifactory/CME-group/lal/0.12.0/lal.tar | tar xz -C /usr/local
 lal configure
 ```
 
-Future upgrades just require `lal upgrade` and `lal` will check silently once per day for updates.
+Note that you will need to `sudo chown -R "$USER" /usr/local` to avoid using sudo on the tar side. Alternatively, chose your own install prefix (`-C`) and manage `$PATH` yourself.
+
+When new verions are released, you will be told to run a similar command (but with different version numbers).
 
 ### From source (<10 minutes)
 Get [stable rust](https://www.rust-lang.org/downloads.html) (inlined below), clone, build, install, and make it available:
@@ -27,7 +29,7 @@ ln -sf $PWD/target/release/lal /usr/local/bin/lal
 lal configure
 ```
 
-Subsequent updates then just require `git pull && cargo build --release`. You will still be notified when there is a version bump, but it will just tell you to pull and build.
+When new versions are released, you will be told to `git pull && cargo build --release`.
 
 ## Usage
 Illustrated via common workflow examples below:

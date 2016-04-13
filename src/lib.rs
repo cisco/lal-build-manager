@@ -44,7 +44,7 @@ pub use install::{install, install_all, uninstall};
 pub use status::status;
 pub use verify::verify;
 pub use cache::stash;
-pub use upgrade::{upgrade_check, upgrade_binary};
+pub use upgrade::upgrade_check;
 
 mod util;
 mod errors;

@@ -107,22 +107,7 @@ fn main() {
         .subcommand(SubCommand::with_name("shell")
             .about("Enters the configured container mounting the current directory"))
         .subcommand(SubCommand::with_name("upgrade")
-            .about("Check and optionally upgrade a binary lal installation")
-            .arg(Arg::with_name("binary")
-                .long("binary")
-                .short("b")
-                .help("Install musl dist to /usr/local"))
-            .arg(Arg::with_name("version")
-                .long("version")
-                .short("v")
-                .takes_value(true)
-                .requires("binary")
-                .help("Install an explicit version of lal"))
-            .arg(Arg::with_name("prefix")
-                .long("prefix")
-                .requires("binary")
-                .takes_value(true)
-                .help("Change musl install prefix from /usr/local to a specified value")))
+            .about("Checks for a new version of lal manually"))
         .get_matches();
 
     // by default, always show INFO messages for now (+1)
@@ -143,15 +128,8 @@ fn main() {
         .unwrap();
 
     // Allow lal upgrade without manifest
-    if let Some(a) = args.subcommand_matches("upgrade") {
-        let res = if a.is_present("binary") {
-            lal::upgrade_binary(config.clone(),
-                                a.value_of("version"),
-                                a.value_of("prefix"))
-        } else {
-            lal::upgrade_check(false) // explicit, verbose check
-        };
-        result_exit("upgrade", res);
+    if let Some(_) = args.subcommand_matches("upgrade") {
+        result_exit("upgrade", lal::upgrade_check(false)); // explicit, verbose check
     }
     // Timed daily, silent upgrade check (if not using upgrade)
     if args.subcommand_name() != Some("upgrade") && config.update_check_time() {

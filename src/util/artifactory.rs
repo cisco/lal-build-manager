@@ -123,7 +123,7 @@ pub fn find_latest_lal_version() -> LalResult<Version> {
         let latest: Option<Version> = res.children
                                          .iter()
                                          .map(|r| r.uri.trim_matches('/').to_string())
-                                         .inspect(|v| debug!("Found lal version {}", v))
+                                         .inspect(|v| trace!("Found lal version {}", v))
                                          .filter_map(|v| Version::parse(&v).ok())
                                          .max(); // Semver::Version implements an order
 
