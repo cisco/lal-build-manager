@@ -189,10 +189,10 @@ docker run \
 
 You may just have your own wrapper for this anyway, but this is the canonical one. You can not use `lal` inside the container anyway.
 
-#### lal stash <name>
+#### lal stash [name]
 Stashes the current `OUTPUT` folder to in `~/.lal/cache/stash/${component}/${NAME}` for future reuse. This can be installed into another repository with `lal install component=name`
 
-#### lal multibuild <components>...
+#### lal multibuild [components]...
 Allows for multiple builds of components in different repositories like `./build` did. This must be run above your github checkouts, i.e.:
 
 ```sh
