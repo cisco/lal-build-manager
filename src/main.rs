@@ -76,6 +76,11 @@ fn main() {
                 .short("c")
                 .takes_value(true)
                 .help("Build using a specific configuration (else will use defaultConfig)"))
+            .arg(Arg::with_name("strict")
+                .long("strict")
+                .short("s")
+                .conflicts_with("release") // release is always strict
+                .help("Fail build if verify fails"))
             .arg(Arg::with_name("release")
                 .long("release")
                 .short("r")
@@ -184,7 +189,8 @@ fn main() {
                              a.value_of("component"),
                              a.value_of("configuration"),
                              a.is_present("release"),
-                             a.value_of("with-version"));
+                             a.value_of("with-version"),
+                             a.is_present("strict"));
         result_exit("build", res);
     } else if let Some(_) = args.subcommand_matches("shell") {
         result_exit("shell", lal::shell(&config));

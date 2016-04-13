@@ -71,7 +71,8 @@ pub fn build(cfg: &Config,
              name: Option<&str>,
              configuration: Option<&str>,
              release: bool,
-             version: Option<&str>)
+             version: Option<&str>,
+             strict: bool)
              -> LalResult<()> {
     try!(ensure_dir_exists_fresh("OUTPUT"));
 
@@ -79,7 +80,7 @@ pub fn build(cfg: &Config,
 
     // Verify INPUT
     if let Some(e) = verify(manifest.clone()).err() {
-        if version.is_some() {
+        if version.is_some() || strict {
             return Err(e);
         }
         warn!("Verify failed - build will fail on jenkins, but continuing");
