@@ -1,5 +1,5 @@
 use rustc_serialize::json;
-use chrono::*;
+use chrono::{Duration, UTC, DateTime};
 use std::path::{Path, PathBuf};
 use std::fs;
 use std::env;
