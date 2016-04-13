@@ -9,7 +9,8 @@
 - [`lal configure`](#lal-configure) - generate configuration file
 - [`lal init`](#lal-init) - generate manifest file
 - [`lal stash name`](#lal-stash-name) - copies current `OUTPUT` to cache
-- `lal update-manifest`
+- [`lal update-manifest`](#lal-update-manifest) - updates manifest to match `INPUT`
+- [`lal multibuild`](#lal-multibuild-components) - automate stash and install to allow simultaneous rebuilds
 
 ## Manifest
 A per-repo file. Format looks like this (here annotated with illegal comments):
@@ -189,6 +190,43 @@ You may just have your own wrapper for this anyway, but this is the canonical on
 
 #### lal stash <name>
 Stashes the current `OUTPUT` folder to in `~/.lal/cache/stash/${component}/${NAME}` for future reuse. This can be installed into another repository with `lal install component=name`
+
+#### lal multibuild <components>...
+Allows for multiple builds of components in different repositories like `./build` did. This must be run above your github checkouts, i.e.:
+
+```sh
+~/repos $ tree -d -L 1
+.
+├── ciscossl
+├── ciscossl-fom
+├── expat
+├── freetype
+├── fribidi
+├── gperftools
+├── libarchive
+├── libcurl
+├── libldns
+├── liblzma
+├── libopus
+├── libpng
+├── libunbound
+├── libwebsockets
+├── libyaml
+├── mari-adaptation-resilience
+├── media-engine
+├── p7zip
+├── yajl
+└── zlib
+
+~/repos $ lal multibuild ciscossl dme
+```
+
+This would traverse the immediate subdirectories, inspect their manifest files, and find two components named `ciscossl` and `dme`, then figure out what order to build them in, and build them sequentially.
+
+In this case, it would build `ciscossl` inside `ciscossl`, stash it, install it into `media-engine`, then `lal build dme` inside `media-engine`.
+
+#### lal update-manifest
+Updates the manifest according to what's actually in `./INPUT`. This will read the version information in each `INPUT` subdirectory, then if these are all global dependencies, it will update `manifest.json` with the updated versions.
 
 #### lal verify
 Verifies that:
