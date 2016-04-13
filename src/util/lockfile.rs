@@ -31,7 +31,7 @@ impl Lockfile {
     pub fn new(n: &str, container: &str, v: Option<&str>, build_cfg: Option<&str>) -> Lockfile {
         Lockfile {
             name: n.to_string(),
-            version: v.unwrap_or("experimental").to_string(),
+            version: v.unwrap_or("EXPERIMENTAL").to_string(),
             config: build_cfg.unwrap_or("release").to_string(),
             container: Container {
                 name: container.to_string(),
