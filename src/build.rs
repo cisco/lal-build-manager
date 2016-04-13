@@ -108,6 +108,8 @@ pub fn build(cfg: &Config,
                                       version,
                                       Some(&configuration_name))
         .populate_from_input());
+    let lockpth = Path::new("./OUTPUT/lockfile.json");
+    try!(lockfile.write(&lockpth)); // always put a lockfile in OUTPUT at the start of a build
 
     let cmd = vec!["./BUILD".to_string(), component.to_string(), configuration_name];
 
@@ -118,8 +120,6 @@ pub fn build(cfg: &Config,
     if release {
         try!(ensure_dir_exists_fresh("ARTIFACT"));
         // Save lockfile in both ARTIFACT and OUTPUT (so it's also in the archive)
-        let lockpth = Path::new("./OUTPUT/lockfile.json");
-        try!(lockfile.write(&lockpth));
         try!(fs::copy(&lockpth, Path::new("./ARTIFACT/lockfile.json")));
 
         // Tar up OUTPUT into ARTIFACT/component.tar.gz

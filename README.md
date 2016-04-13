@@ -16,7 +16,7 @@ lal configure
 
 Note that you will need to `sudo chown -R "$USER" /usr/local` to avoid using sudo on the tar side. Alternatively, chose your own install prefix (`-C`) and manage `$PATH` yourself.
 
-When new verions are released, you will be told to run a similar command (but with different version numbers).
+When new versions are released, you will be told to run a similar command (but with different version numbers).
 
 ### From source (<10 minutes)
 Get [stable rust](https://www.rust-lang.org/downloads.html) (inlined below), clone, build, install, and make it available:

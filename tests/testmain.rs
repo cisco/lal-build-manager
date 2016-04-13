@@ -215,6 +215,6 @@ fn build_tar() {
 
     // TODO: need to have a BUILD script that actually creates a tarball in OUTPUT
     // currently tests work because I have such a BUILD, but don't want to commit it
-    let r = lal::build(&cfg, &mf, None, None, true, None);
+    let r = lal::build(&cfg, &mf, None, None, true, None, true);
     assert!(r.is_ok(), "could run lal build and could make tarball");
 }
