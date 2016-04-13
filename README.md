@@ -124,9 +124,6 @@ lal -v install # debug output
 lal -vv install # all output
 ```
 
-## Updating
-TODO: We want an auto-update-available notification system. We also want a system to notify on new versions of the docker image.
-
 ### Influences
 Terms used herein reference [so you want to write a package manager](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#.rlvjqxc4r) (long read).
 

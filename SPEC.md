@@ -11,6 +11,7 @@
 - [`lal stash name`](#lal-stash-name) - copies current `OUTPUT` to cache
 - [`lal update-manifest`](#lal-update-manifest) - updates manifest to match `INPUT`
 - [`lal multibuild`](#lal-multibuild-components) - automate stash and install to allow simultaneous rebuilds
+- [`lal upgrade`](#lal-upgrade) - performs an upgrade check
 
 ## Manifest
 A per-repo file. Format looks like this (here annotated with illegal comments):
@@ -248,6 +249,9 @@ To get defaults use `lal configure -y`.
 
 #### lal init
 Creates a basic `manifest.json` in the current directory, assuming directory name as the name of the main component.
+
+#### lal upgrade
+Performs an upgrade check of `lal`. If new versions are found, it reports how to upgrade your lal tool. This is normally only done implicitly (daily). But can be done explicitly with this command.
 
 ### Universal Options
 
