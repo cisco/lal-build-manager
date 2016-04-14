@@ -53,11 +53,15 @@ impl Lockfile {
         }
         Ok(self)
     }
-    pub fn write(&self, pth: &Path) -> LalResult<()> {
+    pub fn write(&self, pth: &Path, silent: bool) -> LalResult<()> {
         let encoded = json::as_pretty_json(self);
         let mut f = try!(File::create(pth));
         try!(write!(f, "{}\n", encoded));
-        info!("Wrote lockfile {}: \n{}", pth.display(), encoded);
+        if silent {
+            debug!("Wrote lockfile {}: \n{}", pth.display(), encoded);
+        } else {
+            info!("Wrote lockfile {}: \n{}", pth.display(), encoded);
+        }
         Ok(())
     }
 }
