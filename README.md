@@ -1,4 +1,4 @@
-# Langley dependency manager
+# Edonus dependency manager
 [![build status](https://engci-jenkins-gpk.cisco.com/jenkins/job/team_CME/job/lal/badge/icon)](https://engci-jenkins-gpk.cisco.com/jenkins/job/team_CME/job/lal/)
 
 A dependency manager built around artifactory and docker. See the [spec](./SPEC.md) for background information.
@@ -86,7 +86,7 @@ cd newcomponent
 lal init # create manifest
 git init
 git add manifest.json
-git ci -m "init newcomponent"
+git commit -m "init newcomponent"
 # add git remotes (depends on where we host)
 lal install gtest --save-dev
 lal install libwebsockets --save
