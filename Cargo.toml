@@ -18,7 +18,7 @@ harness = false
 
 [dependencies]
 clap = "2.1.2"
-curl = "0.2.16"
+curl = "0.2.18"
 rustc-serialize = "0.3.18"
 regex = "0.1.55"
 tar = "0.4.4"
