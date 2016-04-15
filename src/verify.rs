@@ -49,7 +49,7 @@ pub fn verify(m: Manifest) -> LalResult<()> {
     }
     debug!("Found the following deps in INPUT: {:?}", deps);
     for (d, _) in m.dependencies {
-        debug!("Verifying dependency from manifest: {}", d);
+        trace!("Verifying dependency from manifest: {}", d);
         if !deps.contains(&d) {
             warn!("Dependency {} not found in INPUT", d);
             error = Some(CliError::MissingDependencies);

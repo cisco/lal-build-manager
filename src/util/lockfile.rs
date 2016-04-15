@@ -47,7 +47,7 @@ impl Lockfile {
         // Then we re-read them fully in read_lockfile_from_component
         let deps = try!(input::analyze());
         for (name, _) in deps {
-            debug!("Populating lockfile with {}", name);
+            trace!("Populating lockfile with {}", name);
             let deplock = try!(read_lockfile_from_component(&name));
             self.dependencies.insert(name.clone(), deplock);
         }
