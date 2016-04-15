@@ -19,7 +19,12 @@ pub fn download_to_path(uri: &str, save: &str) -> io::Result<()> {
     use std::io::prelude::*;
 
     debug!("GET {}", uri);
-    let resp = http::handle().get(uri).exec().unwrap();
+    // unwrapping has seen this error:
+    // "Problem with the SSL CA cert (path? access rights?)""
+    let resp = match http::handle().get(uri).exec() {
+        Ok(r) => r,
+        Err(e) => return Err(Error::new(ErrorKind::Other, format!("Failed to download file {}", e))),
+    };
 
     if resp.get_code() == 200 {
         let r = resp.get_body();
@@ -197,12 +202,9 @@ pub fn uninstall(manifest: Manifest, xs: Vec<&str>, save: bool, savedev: bool) -
 
 /// Install all dependencies from `manifest.json`
 ///
-/// This will read, and HTTP GET all the `dependencies` at the specified versions
-/// in parallel. If the `dev` bool is set, then `devDependencies` are also installed.
+/// This will read, and HTTP GET all the `dependencies` at the specified versions.
+/// If the `dev` bool is set, then `devDependencies` are also installed.
 pub fn install_all(manifest: Manifest, cfg: Config, dev: bool) -> LalResult<()> {
-    use std::thread;
-    use std::sync::mpsc;
-
     debug!("Installing dependencies{}",
            if dev { " and devDependencies" } else { "" });
     clean_input();
@@ -214,31 +216,18 @@ pub fn install_all(manifest: Manifest, cfg: Config, dev: bool) -> LalResult<()> 
             deps.insert(k.clone(), v.clone());
         }
     }
-    let len = deps.len();
-
-    // install them in parallel
-    let (tx, rx) = mpsc::channel();
+    let mut err = None;
     for (k, v) in deps {
         info!("Fetch {} {}", k, v);
-        let tx = tx.clone();
-        let cfgcpy = cfg.clone();
-        thread::spawn(move || {
-            let r = fetch_component(cfgcpy, &k, Some(v)).map_err(|e| {
-                warn!("Failed to completely install {} ({})", k, e);
-                // likely symlinks inside tarball that are being dodgy
-                // this is why we clean_input
-            });
-            tx.send(r.is_ok()).unwrap();
+        let _ = fetch_component(cfg.clone(), &k, Some(v)).map_err(|e| {
+            warn!("Failed to completely install {} ({})", k, e);
+            // likely symlinks inside tarball that are being dodgy
+            // this is why we clean_input
+            err = Some(e);
         });
     }
 
-    // join
-    let mut success = true;
-    for _ in 0..len {
-        let res = rx.recv().unwrap();
-        success = res && success;
-    }
-    if !success {
+    if err.is_some() {
         return Err(CliError::InstallFailure);
     }
     Ok(())

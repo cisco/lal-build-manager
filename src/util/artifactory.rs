@@ -48,44 +48,39 @@ fn get_latest(uri: &str) -> LalResult<u32> {
     Err(CliError::ArtifactoryFailure("No version information found on API"))
 }
 
-fn get_dependency_url(name: &str, version: u32) -> LalResult<String> {
-    let artifactory = "http://engci-maven.cisco.com/artifactory/CME-group";
+fn get_dependency_url(name: &str, version: u32) -> String {
+    let artifactory = "https://engci-maven.cisco.com/artifactory/CME-group";
     let tar_url = [artifactory,
                    name,
                    version.to_string().as_str(),
                    format!("{}.tar.gz", name).as_str()]
         .join("/");
-    debug!("Inferring tarball location as {}", tar_url);
-    Ok(tar_url)
+    trace!("Inferring tarball location as {}", tar_url);
+    tar_url
 }
 
 fn get_dependency_url_latest(name: &str) -> LalResult<Component> {
-    let artifactory = "http://engci-maven.cisco.com/artifactory/api/build/team_CME%20::%20";
+    let artifactory = "https://engci-maven.cisco.com/artifactory/api/build/team_CME%20::%20";
     let url = [artifactory, name].concat();
 
     let v = try!(get_latest(&url));
 
     debug!("Found latest version as {}", v);
-    let c = try!(get_dependency_url(name, v).map(|uri| {
-        Component {
-            tarball: uri,
-            version: v,
-            name: name.to_string(),
-        }
-    }));
-    Ok(c)
+    Ok(Component {
+        tarball: get_dependency_url(name, v),
+        version: v,
+        name: name.to_string(),
+    })
 }
 
 
 /// Main entry point for install
 pub fn get_tarball_uri(name: &str, version: Option<u32>) -> LalResult<Component> {
     if let Some(v) = version {
-        get_dependency_url(name, v).map(|uri| {
-            Component {
-                tarball: uri,
-                version: v,
-                name: name.to_string(),
-            }
+        Ok(Component {
+            tarball: get_dependency_url(name, v),
+            version: v,
+            name: name.to_string(),
         })
     } else {
         get_dependency_url_latest(name)

@@ -38,7 +38,6 @@ pub fn analyze() -> LalResult<HashMap<String, String>> {
         .filter_map(|e| e.ok())
         .filter(|e| e.path().is_dir());
 
-    // TODO: run in parallel
     for d in dirs {
         let pth = d.path().strip_prefix("INPUT").unwrap();
         let component = pth.to_str().unwrap();
@@ -72,19 +71,24 @@ pub fn analyze_full(manifest: &Manifest) -> LalResult<InputMap> {
     }
 
     // check manifested deps
+    // something in manifest
     for (d, v) in saved_deps.clone() {
-        let actual_ver = deps.get(&d).unwrap().clone();
-        depmap.insert(d.clone(),
-                      InputDependency {
-                          name: d.clone(),
-                          version: actual_ver,
-                          requirement: Some(format!("{}", v)),
-                          missing: deps.get(&d).is_none(),
-                          development: manifest.devDependencies.contains_key(&d),
-                          extraneous: false,
-                      });
+        // use manifest ver if not in INPUT
+        let version : String = match deps.get(&d) {
+            Some(v) => v.clone(),
+            None => v.to_string(),
+        };
+        depmap.insert(d.clone(), InputDependency {
+            name: d.clone(),
+            version: version,
+            requirement: Some(format!("{}", v)),
+            missing: deps.get(&d).is_none(),
+            development: manifest.devDependencies.contains_key(&d),
+            extraneous: false,
+        });
     }
     // check for potentially non-manifested deps
+    // i.e. something in INPUT, but not in manifest
     for name in deps.keys() {
         let actual_ver = deps.get(name).unwrap().clone();
         if !saved_deps.contains_key(name) {
