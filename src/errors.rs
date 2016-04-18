@@ -44,10 +44,13 @@ pub enum CliError {
     /// Failed to find build artifacts in OUTPUT after a build or before stashing
     MissingBuild,
 
+    /// Invalid integer name used with lal stash
+    InvalidStashName(u32),
+
     /// Shell errors from docker subprocess
     SubprocessFailure(i32),
 
-    // Install failures
+    // fetch/update failures
     /// Unspecified install failure
     InstallFailure,
     /// Fetch failure related to globalroot (unmaintained)
@@ -82,6 +85,7 @@ impl fmt::Display for CliError {
             }
             CliError::MissingTarball => write!(f, "Tarball missing in PWD"),
             CliError::MissingBuild => write!(f, "No build found in OUTPUT"),
+            CliError::InvalidStashName(n) => write!(f, "Invalid name '{}' to stash under - must not be an integer", n),
             CliError::SubprocessFailure(n) => write!(f, "Process exited with {}", n),
             CliError::InstallFailure => write!(f, "Install failed"),
             CliError::GlobalRootFailure(ref s) => write!(f, "Globalroot - {}", s),

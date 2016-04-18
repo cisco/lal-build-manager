@@ -10,7 +10,7 @@ use shell;
 use verify::verify;
 use {Lockfile, Manifest, Config, LalResult, CliError};
 
-fn tar_output(tarball: &Path) -> LalResult<()> {
+pub fn tar_output(tarball: &Path) -> LalResult<()> {
     use tar;
     use flate2::write::GzEncoder;
     use flate2::Compression;

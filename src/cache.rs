@@ -3,6 +3,7 @@ use std::path::Path;
 
 use configure::Config;
 use init::Manifest;
+use build::tar_output;
 use errors::{CliError, LalResult};
 
 pub fn is_cached(cfg: &Config, name: &str, version: u32) -> bool {
@@ -47,7 +48,10 @@ pub fn store_tarball(cfg: &Config, name: &str, version: u32) -> Result<(), CliEr
 /// TODO: complete this
 pub fn stash(cfg: Config, mf: Manifest, name: &str) -> LalResult<()> {
     info!("Stashing OUTPUT into cache under {}/{}", mf.name, name);
-    // TODO: verify name does NOT parse as a u32
+    // sanity: verify name does NOT parse as a u32
+    if let Ok(n) = name.parse::<u32>() {
+        return Err(CliError::InvalidStashName(n));
+    }
 
     let outputdir = Path::new("./OUTPUT");
     if !outputdir.is_dir() {
@@ -55,13 +59,17 @@ pub fn stash(cfg: Config, mf: Manifest, name: &str) -> LalResult<()> {
     }
     let destdir = Path::new(&cfg.cache)
         .join("stash")
-        .join(mf.name)
+        .join(&mf.name)
         .join(name);
     debug!("Creating {:?}", destdir);
     try!(fs::create_dir_all(&destdir));
 
-    // Need to implement build before doing the rest here
-    unimplemented!();
-    // TODO: then implement install from stash
-    // could actually implement `lal reuse ciscossl` and not use install for this..
+    // Tar it straight into destination
+    try!(tar_output(&destdir.join(format!("{}.tar.gz", mf.name))));
+
+    // Copy the lockfile there for sanity
+    // NB: this is not really needed, as it's included in the tarball anyway
+    try!(fs::copy("./OUTPUT/lockfile.json", destdir.join("lockfile.json")));
+
+    Ok(())
 }
