@@ -1,8 +1,9 @@
 # lal spec
 `lal` is a simple command line tool that works on folders with a valid `manifest.json`, and accepts the following commands:
 
-- [`lal install`](#lal-install-components) - install dependencies from `manifest.json` into `INPUT`
-- [`lal status`](#lal-status) - print current installed dependencies with origin
+- [`lal fetch`](#lal-fetch) - fetch dependencies from `manifest.json` into `INPUT`
+- [`lal update`](#lal-update-components) - update arbitrary dependencies into `INPUT`
+- [`lal status`](#lal-status) - print current INPUT dependencies with origin
 - [`lal verify`](#lal-verify) - verify manifest validity + verify flat lockfile dependency tree
 - [`lal build [name]`](#lal-build-name-flags) - run canonical build in docker with current directory mounted
 - [`lal shell`](#lal-shell) - enter container environment mounting current directory
@@ -10,7 +11,7 @@
 - [`lal init`](#lal-init) - generate manifest file
 - [`lal stash name`](#lal-stash-name) - copies current `OUTPUT` to cache
 - [`lal update-manifest`](#lal-update-manifest) - updates manifest to match `INPUT`
-- [`lal multibuild`](#lal-multibuild-components) - automate stash and install to allow simultaneous rebuilds
+- [`lal multibuild`](#lal-multibuild-components) - automate `stash` and `get` to allow simultaneous rebuilds
 - [`lal upgrade`](#lal-upgrade) - performs an upgrade check
 
 ## Manifest
@@ -106,7 +107,7 @@ A per-machine configuration file from `lal configure`.
 A specialized per-repo configuration file (`$PWD/.lalrc`) with the same format can override specific keys from the machine configuration.
 
 ## Caching
-The local cache is populated when doing installs from the registry, when building locally, stashing them, or when linking them directly.
+The local cache is populated when doing fetches from the registry, when building locally, stashing them, or when linking them directly.
 
 ```sh
 ~/.lal/cache $ tree .
@@ -131,7 +132,7 @@ Sources:
 
 ### Common Command Specification
 #### lal status
-Provides list of dependencies currently installed.
+Provides list of dependencies currently in `INPUT`.
 If they are not in the manifest they will be listed as _extraneous_.
 If they are modified (not a global fetch) they will be listed as _modified_.
 
@@ -157,21 +158,23 @@ Passing configuration flags:
 
 This allows multiple blessed configurations of the same component, i.e. `lal build dme-unit-tests --config=asan` and `lal build dme-uni-tests --config=debug`. Both are valid provided `dme-unit-tests` provides those `configurations` in the `components` part of the manifest.
 
-#### lal install [components..]
-Comes in two variants.
+#### lal update [components..]
 
- - *lal install [--dev]*: fetches versions corresponding to the manifest from the registry and puts them into `INPUT`. The optional `--dev` flag will also cause `devDependencies` to be installed.
+ - *lal update component [--save]*: fetches the latest version of a component. The optional `--save` flag will also update the manifest file locally.
 
- - *lal install component=version [--save]*: fetches a specific version. The optional `--save` flag will also update the manifest file locally.
+ - *lal update component=version [--save]*: fetches a specific version. If the version is parsable as an integer, it is fetched from artifactory. Otherwise, it is assumed to be a stashed version.
 
-The specific version is either a number corresponding to the last tag, or it's a name corresponding to something in `stash` (see `lal stash`). Without a specific version, the latest version is installed.
+Many `component` or `component=version` arguments can be used in one invocation.
+
+#### lal fetch
+ - *lal fetch [--dev]*: fetches versions corresponding to the manifest from the registry and puts them into `INPUT`. The optional `--dev` flag will also cause `devDependencies` to be fetched.
 
 ### Uncommon/Advanced/Internal Command Specification
 #### lal shell
 Enters an interactive shell in the container listed in `.lalrc` mounting the current directory.
 
 Useful for experimental builds with stuff like `bcm` and `opts`.
-Assumes you have run `lal install` or equivalent so that `INPUT` is ready for this.
+Assumes you have run `lal fetch` or equivalent so that `INPUT` is ready for this.
 
 Should run:
 
@@ -190,7 +193,7 @@ docker run \
 You may just have your own wrapper for this anyway, but this is the canonical one. You can not use `lal` inside the container anyway.
 
 #### lal stash [name]
-Stashes the current `OUTPUT` folder to in `~/.lal/cache/stash/${component}/${NAME}` for future reuse. This can be installed into another repository with `lal install component=name`
+Stashes the current `OUTPUT` folder to in `~/.lal/cache/stash/${component}/${NAME}` for future reuse. This can be put into another repository with `lal update component=name`
 
 #### lal multibuild [components]...
 Allows for multiple builds of components in different repositories like `./build` did. This must be run above your github checkouts, i.e.:
@@ -224,7 +227,7 @@ Allows for multiple builds of components in different repositories like `./build
 
 This would traverse the immediate subdirectories, inspect their manifest files, and find two components named `ciscossl` and `dme`, then figure out what order to build them in, and build them sequentially.
 
-In this case, it would build `ciscossl` inside `ciscossl`, stash it, install it into `media-engine`, then `lal build dme` inside `media-engine`.
+In this case, it would build `ciscossl` inside `ciscossl`, `stash` it, `update` it into `media-engine`, then `lal build dme` inside `media-engine`.
 
 #### lal update-manifest
 Updates the manifest according to what's actually in `./INPUT`. This will read the version information in each `INPUT` subdirectory, then if these are all global dependencies, it will update `manifest.json` with the updated versions.

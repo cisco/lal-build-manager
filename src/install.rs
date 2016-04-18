@@ -70,7 +70,7 @@ fn clean_input() {
     }
 }
 
-/// Install specific dependencies outside the manifest
+/// Update specific dependencies outside the manifest
 ///
 /// Multiple "components=version" strings can be supplied, where the version is optional.
 /// If no version is supplied, latest is fetched.
@@ -78,16 +78,16 @@ fn clean_input() {
 /// If installation was successful, the fetched tarballs are unpacked into `./INPUT`.
 /// If one `save` or `savedev` was set, the fetched versions are also updated in the
 /// manifest. This provides an easy way to not have to deal with strict JSON manually.
-pub fn install(manifest: Manifest,
-               cfg: Config,
-               components: Vec<&str>,
-               save: bool,
-               savedev: bool)
-               -> LalResult<()> {
-    debug!("Install specific deps: {:?}", components);
+pub fn update(manifest: Manifest,
+              cfg: Config,
+              components: Vec<&str>,
+              save: bool,
+              savedev: bool)
+              -> LalResult<()> {
+    debug!("Update specific deps: {:?}", components);
 
     let mut error = None;
-    let mut installed = Vec::with_capacity(components.len());
+    let mut updated = Vec::with_capacity(components.len());
     for comp in &components {
         info!("Fetch {}", comp);
         if comp.contains("=") {
@@ -95,25 +95,25 @@ pub fn install(manifest: Manifest,
             if let Ok(n) = pair[1].parse::<u32>() {
                 match fetch_component(cfg.clone(), pair[0], Some(n)) {
                     Ok(c) => {
-                        installed.push(c);
+                        updated.push(c);
                     }
                     Err(e) => {
-                        warn!("Failed to install {} ({})", pair[0], e);
+                        warn!("Failed to update {} ({})", pair[0], e);
                         error = Some(e);
                     }
                 }
             } else {
-                // TODO: this should try to install from stash!
-                warn!("Failed to install {} labelled {} build from stash",
+                // TODO: this should try to update from stash!
+                warn!("Failed to update {} labelled {} build from stash",
                       pair[1],
                       pair[0]);
                 error = Some(CliError::InstallFailure);
             }
         } else {
             match fetch_component(cfg.clone(), &comp, None) {
-                Ok(c) => installed.push(c),
+                Ok(c) => updated.push(c),
                 Err(e) => {
-                    warn!("Failed to install {} ({})", &comp, e);
+                    warn!("Failed to update {} ({})", &comp, e);
                     error = Some(e);
                 }
             }
@@ -128,8 +128,8 @@ pub fn install(manifest: Manifest,
         let mut mf = manifest.clone();
         // find reference to correct list
         let mut hmap = if save { mf.dependencies.clone() } else { mf.devDependencies.clone() };
-        for c in &installed {
-            debug!("Successfully installed {} at version {}",
+        for c in &updated {
+            debug!("Successfully updated {} at version {}",
                    &c.name,
                    c.version);
             if hmap.contains_key(&c.name) {
@@ -155,7 +155,7 @@ pub fn install(manifest: Manifest,
 ///
 /// If one of `save` or `savedev` was set, `manifest.json` is also updated to remove
 /// the specified components from the corresponding dictionary.
-pub fn uninstall(manifest: Manifest, xs: Vec<&str>, save: bool, savedev: bool) -> LalResult<()> {
+pub fn remove(manifest: Manifest, xs: Vec<&str>, save: bool, savedev: bool) -> LalResult<()> {
     debug!("Removing dependencies {:?}", xs);
 
     // remove entries in xs from manifest.
@@ -200,11 +200,11 @@ pub fn uninstall(manifest: Manifest, xs: Vec<&str>, save: bool, savedev: bool) -
     Ok(())
 }
 
-/// Install all dependencies from `manifest.json`
+/// Fetch all dependencies from `manifest.json`
 ///
 /// This will read, and HTTP GET all the `dependencies` at the specified versions.
 /// If the `dev` bool is set, then `devDependencies` are also installed.
-pub fn install_all(manifest: Manifest, cfg: Config, dev: bool) -> LalResult<()> {
+pub fn fetch(manifest: Manifest, cfg: Config, dev: bool) -> LalResult<()> {
     debug!("Installing dependencies{}",
            if dev { " and devDependencies" } else { "" });
     clean_input();

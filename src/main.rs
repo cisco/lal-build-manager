@@ -29,32 +29,32 @@ fn main() {
             .short("v")
             .multiple(true)
             .help("Use verbose output"))
-        .subcommand(SubCommand::with_name("install")
-            .about("Installs dependencies listed in the manifest into INPUT")
-            .arg(Arg::with_name("components")
-                .help("Installs specific component=version pairs")
-                .multiple(true))
+        .subcommand(SubCommand::with_name("fetch")
+            .about("Fetch dependencies listed in the manifest into INPUT")
             .arg(Arg::with_name("dev")
                 .long("dev")
                 .short("d")
-                .help("Additionally install devDependencies")
-                .conflicts_with("components"))
+                .help("Additionally fetch devDependencies")))
+        .subcommand(SubCommand::with_name("update")
+            .about("Update arbitrary dependencies into INPUT")
+            .arg(Arg::with_name("components")
+                .help("The specific component=version pairs to update")
+                .required(true)
+                .multiple(true))
             .arg(Arg::with_name("save")
                 .short("S")
                 .long("save")
-                .requires("components")
                 .conflicts_with("savedev")
-                .help("Save installed versions in dependencies in the manifest"))
+                .help("Save updated versions in dependencies in the manifest"))
             .arg(Arg::with_name("savedev")
                 .short("D")
                 .long("save-dev")
-                .requires("components")
                 .conflicts_with("save")
-                .help("Save installed versions in devDependencies in the manifest")))
-        .subcommand(SubCommand::with_name("uninstall")
-            .about("Uninstalls specific dependencies from INPUT")
+                .help("Save updated versions in devDependencies in the manifest")))
+        .subcommand(SubCommand::with_name("remove")
+            .about("Remove specific dependencies from INPUT")
             .arg(Arg::with_name("components")
-                .help("Installs specific component=version pairs")
+                .help("Remove specific component=version pairs")
                 .required(true) // unlike install which works without components
                 .multiple(true))
             .arg(Arg::with_name("save")
@@ -166,23 +166,21 @@ fn main() {
         .unwrap();
 
     // Remaining actions - assume Manifest and Config
-    if let Some(a) = args.subcommand_matches("install") {
-        let res = if a.is_present("components") {
-            let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
-            lal::install(manifest,
-                         config,
-                         xs,
-                         a.is_present("save"),
-                         a.is_present("savedev"))
-
-        } else {
-            lal::install_all(manifest, config, a.is_present("dev"))
-        };
-        result_exit("install", res);
-    } else if let Some(a) = args.subcommand_matches("uninstall") {
+    if let Some(a) = args.subcommand_matches("update") {
         let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
-        let res = lal::uninstall(manifest, xs, a.is_present("save"), a.is_present("savedev"));
-        result_exit("uninstall", res);
+        let res = lal::update(manifest,
+                             config,
+                             xs,
+                             a.is_present("save"),
+                             a.is_present("savedev"));
+        result_exit("update", res);
+    } else if let Some(a) = args.subcommand_matches("fetch") {
+        let res = lal::fetch(manifest, config, a.is_present("dev"));        
+        result_exit("fetch", res);
+    } else if let Some(a) = args.subcommand_matches("remove") {
+        let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
+        let res = lal::remove(manifest, xs, a.is_present("save"), a.is_present("savedev"));
+        result_exit("remove", res);
     } else if let Some(a) = args.subcommand_matches("build") {
         let res = lal::build(&config,
                              &manifest,

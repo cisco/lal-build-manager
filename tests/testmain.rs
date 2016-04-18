@@ -64,8 +64,8 @@ fn main() {
     // assume we have manifest and config after this point
 
     i += 1;
-    install_save();
-    println!("ok {} install_save", i);
+    update_save();
+    println!("ok {} update_save", i);
 
     i += 1;
     verify_checks();
@@ -157,18 +157,18 @@ fn sanity() {
 }
 
 // add some dependencies
-fn install_save() {
+fn update_save() {
     let mf1 = Manifest::read().unwrap();
     let cfg = Config::read().unwrap();
 
     // gtest savedev
-    let ri = lal::install(mf1, cfg.clone(), vec!["gtest"], false, true);
-    chk::is_ok(ri, "could install gtest and save as dev");
+    let ri = lal::update(mf1, cfg.clone(), vec!["gtest"], false, true);
+    chk::is_ok(ri, "could update gtest and save as dev");
 
     // three main deps (and re-read manifest to avoid overwriting devedps)
     let mf2 = Manifest::read().unwrap();
-    let ri = lal::install(mf2, cfg.clone(), vec!["libyaml", "yajl", "libwebsockets"], true, false);
-    chk::is_ok(ri, "could install libyaml and save");
+    let ri = lal::update(mf2, cfg.clone(), vec!["libyaml", "yajl", "libwebsockets"], true, false);
+    chk::is_ok(ri, "could update libyaml and save");
 }
 
 //fn component_dir(name: &str) -> PathBuf {
@@ -189,7 +189,7 @@ fn verify_checks() {
     assert!(r2.is_err(), "verify failed after fiddling");
 
     // re-install everything
-    let rall = lal::install_all(Manifest::read().unwrap(), cfg, true);
+    let rall = lal::fetch(Manifest::read().unwrap(), cfg, true);
     assert!(rall.is_ok(), "install all succeeded");
     assert!(yajl.is_dir(), "yajl was reinstalled from manifest");
 

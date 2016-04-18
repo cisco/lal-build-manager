@@ -43,7 +43,7 @@ Installing pinned versions and building:
 ```sh
 git clone git@sqbu-github.cisco.com:Edonus/media-engine
 cd edonus
-lal install --dev
+lal fetch --dev
 # for canonical build
 lal build
 # for experimental
@@ -55,7 +55,7 @@ Updating dependencies:
 (This example presumes ciscossl has independently been updated to version 6 and is ready to be used elsewhere.)
 
 ```sh
-lal install ciscossl=6 --save
+lal update ciscossl=6 --save
 lal build # check it builds with new version
 git commit manifest.json -m "updated ciscossl to version 6"
 git push
@@ -71,7 +71,7 @@ cd ciscossl
 lal build
 lal stash asan
 cd ../monolith
-lal install ciscossl=asan # install named version (always from stash)
+lal update ciscossl=asan # update named version (always from stash)
 lal build
 ```
 
@@ -81,7 +81,7 @@ This workflow replaces listing multiple components to `./build`, and `lal status
 Done automatically on validated merge. Jenkins will create a tag for each successful build and that tag should be fetchable from artifactory.
 
 ### Creating a new component
-Create a git repo, `lal init` it, then install deps and verify it builds.
+Create a git repo, `lal init` it, then update deps and verify it builds.
 
 ```sh
 mkdir newcomponent
@@ -91,8 +91,8 @@ git init
 git add manifest.json
 git commit -m "init newcomponent"
 # add git remotes (depends on where we host)
-lal install gtest --save-dev
-lal install libwebsockets --save
+lal update gtest --save-dev
+lal update libwebsockets --save
 # create source and iterate until `lal build` and `lal test` succeeds
 git commit -a -m "inital working version"
 git push -u origin master
@@ -122,9 +122,9 @@ cargo fmt # requires `cargo install rustfmt` and $HOME/.carg/bin on $PATH
 Configurable via flags before the subcommand:
 
 ```sh
-lal install # normal output
-lal -v install # debug output
-lal -vv install # all output
+lal fetch # normal output
+lal -v fetch # debug output
+lal -vv fetch # all output
 ```
 
 ### Influences
@@ -137,5 +137,5 @@ Update all dependencies to latest:
 
 ```bash
 # using npmjs.org/package/json
-for d in $(json dependencies -f manifest.json | json -ka); do lal install ${d} --save; done
+for d in $(json dependencies -f manifest.json | json -ka); do lal update ${d} --save; done
 ```
