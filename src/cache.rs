@@ -4,6 +4,7 @@ use std::path::Path;
 use configure::Config;
 use init::Manifest;
 use build::tar_output;
+use install;
 use errors::{CliError, LalResult};
 
 pub fn is_cached(cfg: &Config, name: &str, version: u32) -> bool {
@@ -44,8 +45,7 @@ pub fn store_tarball(cfg: &Config, name: &str, version: u32) -> Result<(), CliEr
 /// This tars up `/OUTPUT` similar to how `build` is generating a tarball,
 /// then copies this to `~/.lal/cache/stash/${name}/`.
 ///
-/// This file can then be installed via `install` using a component=${name} argument.
-/// TODO: complete this
+/// This file can then be installed via `update` using a component=${name} argument.
 pub fn stash(cfg: Config, mf: Manifest, name: &str) -> LalResult<()> {
     info!("Stashing OUTPUT into cache under {}/{}", mf.name, name);
     // sanity: verify name does NOT parse as a u32
@@ -71,5 +71,18 @@ pub fn stash(cfg: Config, mf: Manifest, name: &str) -> LalResult<()> {
     // NB: this is not really needed, as it's included in the tarball anyway
     try!(fs::copy("./OUTPUT/lockfile.json", destdir.join("lockfile.json")));
 
+    Ok(())
+}
+
+// helper for install::update
+pub fn fetch_from_stash(cfg: &Config, component: &str, stashname: &str) -> LalResult<()> {
+    let stashdir = Path::new(&cfg.cache).join("stash").join(component).join(stashname);
+    if !stashdir.is_dir() {
+        return Err(CliError::MissingStashArtifact(format!("{}/{}", component, stashname)));
+    }
+    // grab it and dump it into INPUT
+    debug!("Fetching stashed version {} of component {}", stashname, component);
+    let tarname = stashdir.join(format!("{}.tar.gz", component));
+    try!(install::extract_tarball_to_input(tarname, &component));
     Ok(())
 }

@@ -1,6 +1,6 @@
 use std::io::{self, Error, ErrorKind};
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 // use util::globalroot::get_tarball_uri;
 use util::artifactory::get_tarball_uri;
@@ -14,7 +14,7 @@ pub struct Component {
     pub tarball: String,
 }
 
-pub fn download_to_path(uri: &str, save: &str) -> io::Result<()> {
+pub fn download_to_path(uri: &str, save: &PathBuf) -> io::Result<()> {
     use curl::http;
     use std::io::prelude::*;
 
@@ -28,8 +28,7 @@ pub fn download_to_path(uri: &str, save: &str) -> io::Result<()> {
 
     if resp.get_code() == 200 {
         let r = resp.get_body();
-        let path = Path::new(save);
-        let mut f = try!(fs::File::create(&path));
+        let mut f = try!(fs::File::create(save));
         try!(f.write_all(r));
         Ok(())
     } else {
@@ -37,26 +36,33 @@ pub fn download_to_path(uri: &str, save: &str) -> io::Result<()> {
     }
 }
 
-fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> LalResult<Component> {
+// helper for fetch_component and stash::fetch_from_stash
+pub fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<()> {
     use tar::Archive;
     use flate2::read::GzDecoder;
+
+    let data = try!(fs::File::open(tarname));
+    let decompressed = try!(GzDecoder::new(data)); // decoder reads data
+    let mut archive = Archive::new(decompressed); // Archive reads decoded
+
+    let extract_path = Path::new("./INPUT").join(component);
+    try!(fs::create_dir_all(&extract_path));
+    try!(archive.unpack(&extract_path));
+    Ok(())
+}
+
+fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> LalResult<Component> {
     use cache;
 
     trace!("Fetch component {}", name);
     let component = try!(get_tarball_uri(name, version));
-    let tarname = ["./", name, ".tar"].concat();
+    let tarname = Path::new(".").join(format!("{}.tar", name));
 
     // always just download for now - TODO: eventually check cache
     try!(download_to_path(&component.tarball, &tarname));
 
-    debug!("Unpacking tarball {}", tarname);
-    let data = try!(fs::File::open(&tarname));
-    let decompressed = try!(GzDecoder::new(data)); // decoder reads data
-    let mut archive = Archive::new(decompressed); // Archive reads decoded
-
-    let extract_path = Path::new("./INPUT").join(&name);
-    try!(fs::create_dir_all(&extract_path));
-    try!(archive.unpack(&extract_path));
+    debug!("Unpacking tarball for {}", component.name);
+    try!(extract_tarball_to_input(tarname, &name));
 
     // Move tarball into cfg.cache
     try!(cache::store_tarball(&cfg, name, component.version));
@@ -84,6 +90,7 @@ pub fn update(manifest: Manifest,
               save: bool,
               savedev: bool)
               -> LalResult<()> {
+    use cache;
     debug!("Update specific deps: {:?}", components);
 
     let mut error = None;
@@ -93,23 +100,24 @@ pub fn update(manifest: Manifest,
         if comp.contains("=") {
             let pair: Vec<&str> = comp.split("=").collect();
             if let Ok(n) = pair[1].parse::<u32>() {
+                // standard fetch with an integer version
                 match fetch_component(cfg.clone(), pair[0], Some(n)) {
-                    Ok(c) => {
-                        updated.push(c);
-                    }
+                    Ok(c) => updated.push(c),
                     Err(e) => {
                         warn!("Failed to update {} ({})", pair[0], e);
                         error = Some(e);
                     }
                 }
             } else {
-                // TODO: this should try to update from stash!
-                warn!("Failed to update {} labelled {} build from stash",
-                      pair[1],
-                      pair[0]);
-                error = Some(CliError::InstallFailure);
+                // fetch from stash - this does not go into `updated` it it succeeds
+                // because we wont and cannot save stashed versions in the manifest
+                let _ = cache::fetch_from_stash(&cfg, pair[0], pair[1]).map_err(|e| {
+                    warn!("Failed to update {} from stash ({})", pair[0], e);
+                    error = Some(e);
+                });
             }
         } else {
+            // fetch without a specific version (latest)
             match fetch_component(cfg.clone(), &comp, None) {
                 Ok(c) => updated.push(c),
                 Err(e) => {
