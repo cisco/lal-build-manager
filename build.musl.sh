@@ -12,6 +12,12 @@ rm -rf musl/
 
 lalversion=$(grep version Cargo.toml | awk -F"\"" '{print $2}')
 
-rm -rf ARTIFACT
-mkdir "ARTIFACT/${lalversion}" -p
-cp lal.tar "ARTIFACT/${lalversion}/"
+buildurl="http://engci-maven.cisco.com/artifactory/api/storage/CME-group/lal "
+if curl -s "${buildurl}" | grep -q "$lalversion"; then
+    echo "lal version already uploaded - stopping" # don't want to overwrite
+else
+  echo "Packaging new lal version"
+  rm -rf ARTIFACT
+  mkdir "ARTIFACT/${lalversion}" -p
+  cp lal.tar "ARTIFACT/${lalversion}/"
+fi
