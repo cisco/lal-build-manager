@@ -56,16 +56,26 @@ fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> LalResult<C
 
     trace!("Fetch component {}", name);
     let component = try!(get_tarball_uri(name, version));
-    let tarname = Path::new(".").join(format!("{}.tar", name));
 
-    // always just download for now - TODO: eventually check cache
-    try!(download_to_path(&component.tarball, &tarname));
+    let mut must_cache = true;
+    let tarname = if cache::is_cached(&cfg, &component.name, component.version) {
+        trace!("Fetching {} from cache", name);
+        must_cache = false; // we already got this from stash!
+        cache::get_cache_dir(&cfg, &component.name, component.version).join(format!("{}.tar", name))
+    }
+    else {
+        let local_tarball = Path::new(".").join(format!("{}.tar", name));
+        try!(download_to_path(&component.tarball, &local_tarball));
+        local_tarball
+    };
 
-    debug!("Unpacking tarball for {}", component.name);
+    debug!("Unpacking tarball {} for {}", tarname.to_str().unwrap(), component.name);
     try!(extract_tarball_to_input(tarname, &name));
 
-    // Move tarball into cfg.cache
-    try!(cache::store_tarball(&cfg, name, component.version));
+    // Move tarball into cfg.cache - if it was not already fetched from cache
+    if must_cache {
+        try!(cache::store_tarball(&cfg, name, component.version));
+    }
     Ok(component)
 }
 

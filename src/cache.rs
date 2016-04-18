@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use configure::Config;
 use init::Manifest;
@@ -8,18 +8,19 @@ use install;
 use errors::{CliError, LalResult};
 
 pub fn is_cached(cfg: &Config, name: &str, version: u32) -> bool {
-    !Path::new(&cfg.cache)
+    get_cache_dir(cfg, name, version).is_dir()
+}
+
+pub fn get_cache_dir(cfg: &Config, name: &str, version: u32) -> PathBuf {
+    Path::new(&cfg.cache)
+        .join("globals")
         .join(name)
         .join(version.to_string())
-        .is_dir()
 }
 
 pub fn store_tarball(cfg: &Config, name: &str, version: u32) -> Result<(), CliError> {
     // 1. mkdir -p cfg.cacheDir/$name/$version
-    let destdir = Path::new(&cfg.cache)
-        .join("globals")
-        .join(name)
-        .join(version.to_string());
+    let destdir = get_cache_dir(cfg, name, version);
     if !destdir.is_dir() {
         try!(fs::create_dir_all(&destdir));
     }
