@@ -31,12 +31,13 @@ impl Lockfile {
     pub fn new(n: &str, container: &str, v: Option<&str>, build_cfg: Option<&str>) -> Lockfile {
         let split : Vec<&str> = container.split(":").collect();
         let tag = if split.len() == 2 { split[1] } else { "latest" };
+        let cname = if split.len() == 2 { split[0] } else { container };
         Lockfile {
             name: n.to_string(),
             version: v.unwrap_or("EXPERIMENTAL").to_string(),
             config: build_cfg.unwrap_or("release").to_string(),
             container: Container {
-                name: container.to_string(),
+                name: cname.to_string(),
                 tag: tag.to_string(),
             },
             tool: env!("CARGO_PKG_VERSION").to_string(),
