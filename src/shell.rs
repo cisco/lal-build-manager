@@ -22,8 +22,6 @@ pub fn docker_run(cfg: &configure::Config,
     let git_cfg = Path::new(&home).join(".gitconfig");
     let pwd = env::current_dir().unwrap();
 
-    // TODO: can probably infer name of volume mount from current dir name
-    // but requires some bash tweaks in container i think
     let s = try!(Command::new("docker")
         .arg("run")
         .arg("-v")

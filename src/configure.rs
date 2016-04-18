@@ -26,7 +26,7 @@ impl Config {
         Ok(Config {
             artifactory: "http://engci-maven.cisco.com/artifactory/CME-group".to_string(),
             cache: cachedir.to_string(),
-            container: "edonusdevelopers/centos_build".to_string(),
+            container: "edonusdevelopers/centos_build:latest".to_string(),
             updateCheck: time.to_rfc3339(),
         })
     }
