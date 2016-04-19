@@ -1,6 +1,6 @@
 use std::io::prelude::*;
 use std::env;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::collections::BTreeMap;
 use std::vec::Vec;
@@ -27,9 +27,13 @@ impl ComponentConfiguration {
 #[allow(non_snake_case)]
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Manifest {
+    /// Name of the main component
     pub name: String,
+    /// Components and their available configurations that are buildable
     pub components: BTreeMap<String, ComponentConfiguration>,
+    /// Dependencies that are always needed
     pub dependencies: BTreeMap<String, u32>,
+    /// Development dependencies
     pub devDependencies: BTreeMap<String, u32>,
 }
 
@@ -44,6 +48,7 @@ impl Manifest {
             devDependencies: BTreeMap::new(),
         }
     }
+    /// Merge dependencies and devDependencies into one convenience map
     pub fn all_dependencies(&self) -> BTreeMap<String, u32> {
         let mut deps = self.dependencies.clone();
         for (k, v) in &self.devDependencies {
@@ -51,18 +56,24 @@ impl Manifest {
         }
         deps
     }
+    /// Read a manifest file in PWD
     pub fn read() -> LalResult<Manifest> {
-        let manifest_path = Path::new("./manifest.json");
-        if !manifest_path.exists() {
+        Ok(try!(Manifest::read_from(Path::new(".").to_path_buf())))
+    }
+    /// Read a manifest file in an arbitrary path
+    pub fn read_from(pth: PathBuf) -> LalResult<Manifest> {
+        let mpath = pth.join("manifest.json");
+        if !mpath.exists() {
             return Err(CliError::MissingManifest);
         }
-        let mut f = try!(File::open(&manifest_path));
-        let mut manifest_str = String::new();
-        try!(f.read_to_string(&mut manifest_str));
-        let res = try!(json::decode(&manifest_str));
+        let mut f = try!(File::open(&mpath));
+        let mut data = String::new();
+        try!(f.read_to_string(&mut data));
+        let res = try!(json::decode(&data));
         Ok(res)
     }
 
+    /// Update the manifest file in the current folder
     pub fn write(&self) -> LalResult<()> {
         let pth = Path::new("./manifest.json");
         let encoded = json::as_pretty_json(self);

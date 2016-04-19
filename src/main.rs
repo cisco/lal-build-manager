@@ -55,7 +55,7 @@ fn main() {
             .about("Remove specific dependencies from INPUT")
             .arg(Arg::with_name("components")
                 .help("Remove specific component=version pairs")
-                .required(true) // unlike install which works without components
+                .required(true)
                 .multiple(true))
             .arg(Arg::with_name("save")
                 .short("S")
@@ -90,6 +90,12 @@ fn main() {
                 .takes_value(true)
                 .requires("release")
                 .help("Configure lockfiles for a release with an explicit new version")))
+        //.subcommand(SubCommand::with_name("multibuild")
+        //    .about("Runs multiple builds sequentially on subdirectories with manifests")
+        //    .arg(Arg::with_name("components")
+        //        .help("Specific components to be built")
+        //        .required(true)
+        //        .multiple(true)))
         .subcommand(SubCommand::with_name("stash")
             .about("Stashes current build OUTPUT in cache for later reuse")
             .arg(Arg::with_name("name")
@@ -151,10 +157,13 @@ fn main() {
         debug!("Upgrade check done - continuing to requested operation\n");
     }
 
-    // Allow lal init without manifest existing
+    // Allow lal init and lal multibuild without manifest existing in PWD
     if let Some(a) = args.subcommand_matches("init") {
         result_exit("init", lal::init(a.is_present("force")));
-    }
+    }// else if let Some(a) = args.subcommand_matches("multibuild") {
+    //    let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
+    //    result_exit("multibuild", lal::multibuild(&config, xs));
+    //}
 
     // Force manifest to exist before allowing remaining actions
     let manifest = Manifest::read()
