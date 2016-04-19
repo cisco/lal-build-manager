@@ -37,7 +37,7 @@ mod chk {
 
 fn main() {
     //init_with_verbosity(0).unwrap();
-    let has_docker = false;
+    let has_docker = true;
     let num_tests = if has_docker { 14 } else { 10 };
 
     println!("# lal tests");

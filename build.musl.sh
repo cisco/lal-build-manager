@@ -7,7 +7,8 @@ docker_run() {
   docker run -u lal -v "$PWD:/volume" -w /volume -t ${container} $@
 }
 
-docker_run cargo test
+docker_run cargo build --test testmain
+./target/x86_64-unknown-linux-musl/debug/testmain-*
 docker_run cargo build --release --verbose
 
 mkdir -p musl/bin
