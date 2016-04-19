@@ -178,13 +178,13 @@ fn main() {
     if let Some(a) = args.subcommand_matches("update") {
         let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
         let res = lal::update(manifest,
-                             config,
-                             xs,
-                             a.is_present("save"),
-                             a.is_present("savedev"));
+                              config,
+                              xs,
+                              a.is_present("save"),
+                              a.is_present("savedev"));
         result_exit("update", res);
     } else if let Some(a) = args.subcommand_matches("fetch") {
-        let res = lal::fetch(manifest, config, a.is_present("dev"));        
+        let res = lal::fetch(manifest, config, a.is_present("dev"));
         result_exit("fetch", res);
     } else if let Some(a) = args.subcommand_matches("remove") {
         let xs = a.values_of("components").unwrap().collect::<Vec<_>>();

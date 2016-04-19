@@ -18,22 +18,32 @@ pub struct Container {
 /// Representation of `lockfile.json`
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Lockfile {
+    /// Name of the component built
     pub name: String,
+    /// Build configuration used
     pub config: String,
+    /// Container and tag used to build
     pub container: Container,
-    // pub date: String,
+    /// Version of the component built
     pub version: String,
+    /// Version of the lal tool
     pub tool: String,
+    /// Recursive map of dependencies used
     pub dependencies: HashMap<String, Lockfile>,
 }
 
 impl Lockfile {
-    pub fn new(n: &str, container: &str, v: Option<&str>, build_cfg: Option<&str>) -> Lockfile {
-        let split : Vec<&str> = container.split(":").collect();
+    /// Initialize an empty Lockfile with defaults
+    ///
+    /// This will split the container on : to actually fetch the tag, and if no tag
+    /// was present, it will assume tag is latest as per docker conventions.
+    /// If no version is given, the version is EXPERIMENTAL for buildlib compat.
+    pub fn new(name: &str, container: &str, v: Option<&str>, build_cfg: Option<&str>) -> Lockfile {
+        let split: Vec<&str> = container.split(":").collect();
         let tag = if split.len() == 2 { split[1] } else { "latest" };
         let cname = if split.len() == 2 { split[0] } else { container };
         Lockfile {
-            name: n.to_string(),
+            name: name.to_string(),
             version: v.unwrap_or("EXPERIMENTAL").to_string(),
             config: build_cfg.unwrap_or("release").to_string(),
             container: Container {
@@ -44,10 +54,11 @@ impl Lockfile {
             dependencies: HashMap::new(),
         }
     }
+    /// Read all the lockfiles in INPUT to generate the full lockfile
+    ///
+    /// NB: This currently reads all the lockfiles partially in `analyze`,
+    /// the re-reads them fully in `read_lockfile_from_component` so can be sped up.
     pub fn populate_from_input(mut self) -> LalResult<Self> {
-        // NB: this is not a particularly smart algorithm
-        // We read all the lockfiles easily in analyze
-        // Then we re-read them fully in read_lockfile_from_component
         let deps = try!(input::analyze());
         for (name, _) in deps {
             trace!("Populating lockfile with {}", name);
@@ -56,6 +67,7 @@ impl Lockfile {
         }
         Ok(self)
     }
+    /// Write the current `Lockfile` struct to a Path
     pub fn write(&self, pth: &Path, silent: bool) -> LalResult<()> {
         let encoded = json::as_pretty_json(self);
         let mut f = try!(File::create(pth));
@@ -71,6 +83,8 @@ impl Lockfile {
 
 // name of component -> (ver, other_ver, ..)
 pub type DependencyUsage = HashMap<String, BTreeSet<String>>;
+
+// Recursive function used by `verify` to check for multiple version use
 pub fn find_all_dependencies(lock: &Lockfile) -> DependencyUsage {
     let mut acc = HashMap::new();
     // for each entry in dependencies

@@ -90,8 +90,14 @@ impl fmt::Display for CliError {
             }
             CliError::MissingTarball => write!(f, "Tarball missing in PWD"),
             CliError::MissingBuild => write!(f, "No build found in OUTPUT"),
-            CliError::InvalidStashName(n) => write!(f, "Invalid name '{}' to stash under - must not be an integer", n),
-            CliError::MissingStashArtifact(ref s) => write!(f, "No stashed artifact '{}' found in ~/.lal/cache/stash", s),
+            CliError::InvalidStashName(n) => {
+                write!(f,
+                       "Invalid name '{}' to stash under - must not be an integer",
+                       n)
+            }
+            CliError::MissingStashArtifact(ref s) => {
+                write!(f, "No stashed artifact '{}' found in ~/.lal/cache/stash", s)
+            }
             CliError::SubprocessFailure(n) => write!(f, "Process exited with {}", n),
             CliError::InstallFailure => write!(f, "Install failed"),
             CliError::GlobalRootFailure(ref s) => write!(f, "Globalroot - {}", s),

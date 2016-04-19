@@ -82,7 +82,9 @@ pub fn fetch_from_stash(cfg: &Config, component: &str, stashname: &str) -> LalRe
         return Err(CliError::MissingStashArtifact(format!("{}/{}", component, stashname)));
     }
     // grab it and dump it into INPUT
-    debug!("Fetching stashed version {} of component {}", stashname, component);
+    debug!("Fetching stashed version {} of component {}",
+           stashname,
+           component);
     let tarname = stashdir.join(format!("{}.tar.gz", component));
     try!(install::extract_tarball_to_input(tarname, &component));
     Ok(())

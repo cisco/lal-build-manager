@@ -23,7 +23,9 @@ pub fn download_to_path(uri: &str, save: &PathBuf) -> io::Result<()> {
     // "Problem with the SSL CA cert (path? access rights?)""
     let resp = match http::handle().get(uri).exec() {
         Ok(r) => r,
-        Err(e) => return Err(Error::new(ErrorKind::Other, format!("Failed to download file {}", e))),
+        Err(e) => {
+            return Err(Error::new(ErrorKind::Other, format!("Failed to download file {}", e)))
+        }
     };
 
     if resp.get_code() == 200 {
@@ -62,14 +64,15 @@ fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> LalResult<C
         trace!("Fetching {} from cache", name);
         must_cache = false; // we already got this from stash!
         cache::get_cache_dir(&cfg, &component.name, component.version).join(format!("{}.tar", name))
-    }
-    else {
+    } else {
         let local_tarball = Path::new(".").join(format!("{}.tar", name));
         try!(download_to_path(&component.tarball, &local_tarball));
         local_tarball
     };
 
-    debug!("Unpacking tarball {} for {}", tarname.to_str().unwrap(), component.name);
+    debug!("Unpacking tarball {} for {}",
+           tarname.to_str().unwrap(),
+           component.name);
     try!(extract_tarball_to_input(tarname, &name));
 
     // Move tarball into cfg.cache - if it was not already fetched from cache
@@ -147,9 +150,7 @@ pub fn update(manifest: Manifest,
         // find reference to correct list
         let mut hmap = if save { mf.dependencies.clone() } else { mf.devDependencies.clone() };
         for c in &updated {
-            debug!("Successfully updated {} at version {}",
-                   &c.name,
-                   c.version);
+            debug!("Successfully updated {} at version {}", &c.name, c.version);
             if hmap.contains_key(&c.name) {
                 *hmap.get_mut(&c.name).unwrap() = c.version;
             } else {

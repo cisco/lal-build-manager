@@ -1,6 +1,6 @@
 use semver::Version;
 use util::artifactory::find_latest_lal_version;
-use {LalResult};
+use LalResult;
 
 /// Check for new versions of lal on artifactory
 ///
@@ -18,7 +18,9 @@ pub fn upgrade_check(silent: bool) -> LalResult<()> {
         info!("If your version is compiled from source:");
         info!(" - `git pull && cargo build --release` in the source checkout");
         info!("If your version is prebuilt:");
-        info!(" - `curl https://engci-maven.cisco.com/artifactory/CME-group/lal/{}/lal.tar | tar xz -C /usr/local`", latest);
+        info!(" - `curl https://engci-maven.cisco.com/artifactory/CME-group/lal/{}/lal.tar | tar \
+               xz -C /usr/local`",
+              latest);
     } else {
         // No new version
         if silent {

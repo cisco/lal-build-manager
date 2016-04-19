@@ -74,18 +74,19 @@ pub fn analyze_full(manifest: &Manifest) -> LalResult<InputMap> {
     // something in manifest
     for (d, v) in saved_deps.clone() {
         // use manifest ver if not in INPUT
-        let version : String = match deps.get(&d) {
+        let version: String = match deps.get(&d) {
             Some(v) => v.clone(),
             None => v.to_string(),
         };
-        depmap.insert(d.clone(), InputDependency {
-            name: d.clone(),
-            version: version,
-            requirement: Some(format!("{}", v)),
-            missing: deps.get(&d).is_none(),
-            development: manifest.devDependencies.contains_key(&d),
-            extraneous: false,
-        });
+        depmap.insert(d.clone(),
+                      InputDependency {
+                          name: d.clone(),
+                          version: version,
+                          requirement: Some(format!("{}", v)),
+                          missing: deps.get(&d).is_none(),
+                          development: manifest.devDependencies.contains_key(&d),
+                          extraneous: false,
+                      });
     }
     // check for potentially non-manifested deps
     // i.e. something in INPUT, but not in manifest
