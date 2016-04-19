@@ -152,7 +152,7 @@ fn sanity() {
     chk::is_ok(Manifest::read(), "could read manifest");
 
     // There is no INPUT yet, but we have no dependencies, so this should work:
-    let r = lal::verify(manifest.unwrap());
+    let r = lal::verify(&manifest.unwrap());
     chk::is_ok(r, "could verify after install");
 }
 
@@ -162,12 +162,12 @@ fn update_save() {
     let cfg = Config::read().unwrap();
 
     // gtest savedev
-    let ri = lal::update(mf1, cfg.clone(), vec!["gtest"], false, true);
+    let ri = lal::update(mf1, &cfg, vec!["gtest"], false, true);
     chk::is_ok(ri, "could update gtest and save as dev");
 
     // three main deps (and re-read manifest to avoid overwriting devedps)
     let mf2 = Manifest::read().unwrap();
-    let ri = lal::update(mf2, cfg.clone(), vec!["libyaml", "yajl", "libwebsockets"], true, false);
+    let ri = lal::update(mf2, &cfg, vec!["libyaml", "yajl", "libwebsockets"], true, false);
     chk::is_ok(ri, "could update libyaml and save");
 }
 
@@ -177,23 +177,24 @@ fn update_save() {
 
 fn verify_checks() {
     let cfg = Config::read().unwrap();
+    let mf = Manifest::read().unwrap();
 
-    let r = lal::verify(Manifest::read().unwrap());
+    let r = lal::verify(&mf);
     assert!(r.is_ok(), "could verify after install");
 
     // clean folders and verify it fails
     let yajl = Path::new(&env::current_dir().unwrap()).join("INPUT").join("yajl");
     fs::remove_dir_all(&yajl).unwrap();
 
-    let r2 = lal::verify(Manifest::read().unwrap());
+    let r2 = lal::verify(&mf);
     assert!(r2.is_err(), "verify failed after fiddling");
 
     // re-install everything
-    let rall = lal::fetch(Manifest::read().unwrap(), cfg, true);
+    let rall = lal::fetch(&mf, cfg, true);
     assert!(rall.is_ok(), "install all succeeded");
     assert!(yajl.is_dir(), "yajl was reinstalled from manifest");
 
-    let r3 = lal::verify(Manifest::read().unwrap());
+    let r3 = lal::verify(&mf);
     assert!(r3.is_ok(), "verify ok again");
 }
 

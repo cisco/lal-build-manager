@@ -53,7 +53,7 @@ pub fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<
     Ok(())
 }
 
-fn fetch_component(cfg: Config, name: &str, version: Option<u32>) -> LalResult<Component> {
+fn fetch_component(cfg: &Config, name: &str, version: Option<u32>) -> LalResult<Component> {
     use cache;
 
     trace!("Fetch component {}", name);
@@ -98,7 +98,7 @@ fn clean_input() {
 /// If one `save` or `savedev` was set, the fetched versions are also updated in the
 /// manifest. This provides an easy way to not have to deal with strict JSON manually.
 pub fn update(manifest: Manifest,
-              cfg: Config,
+              cfg: &Config,
               components: Vec<&str>,
               save: bool,
               savedev: bool)
@@ -114,7 +114,7 @@ pub fn update(manifest: Manifest,
             let pair: Vec<&str> = comp.split("=").collect();
             if let Ok(n) = pair[1].parse::<u32>() {
                 // standard fetch with an integer version
-                match fetch_component(cfg.clone(), pair[0], Some(n)) {
+                match fetch_component(&cfg, pair[0], Some(n)) {
                     Ok(c) => updated.push(c),
                     Err(e) => {
                         warn!("Failed to update {} ({})", pair[0], e);
@@ -131,7 +131,7 @@ pub fn update(manifest: Manifest,
             }
         } else {
             // fetch without a specific version (latest)
-            match fetch_component(cfg.clone(), &comp, None) {
+            match fetch_component(&cfg, &comp, None) {
                 Ok(c) => updated.push(c),
                 Err(e) => {
                     warn!("Failed to update {} ({})", &comp, e);
@@ -223,7 +223,7 @@ pub fn remove(manifest: Manifest, xs: Vec<&str>, save: bool, savedev: bool) -> L
 ///
 /// This will read, and HTTP GET all the `dependencies` at the specified versions.
 /// If the `dev` bool is set, then `devDependencies` are also installed.
-pub fn fetch(manifest: Manifest, cfg: Config, dev: bool) -> LalResult<()> {
+pub fn fetch(manifest: &Manifest, cfg: Config, dev: bool) -> LalResult<()> {
     debug!("Installing dependencies{}",
            if dev { " and devDependencies" } else { "" });
     clean_input();
@@ -238,7 +238,7 @@ pub fn fetch(manifest: Manifest, cfg: Config, dev: bool) -> LalResult<()> {
     let mut err = None;
     for (k, v) in deps {
         info!("Fetch {} {}", k, v);
-        let _ = fetch_component(cfg.clone(), &k, Some(v)).map_err(|e| {
+        let _ = fetch_component(&cfg, &k, Some(v)).map_err(|e| {
             warn!("Failed to completely install {} ({})", k, e);
             // likely symlinks inside tarball that are being dodgy
             // this is why we clean_input

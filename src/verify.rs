@@ -15,9 +15,9 @@ use util::lockfile::find_all_dependencies;
 /// This function is meant to be a helper for when we want official builds, but also
 /// a way to tell developers that they are using things that differ from what jenkins
 /// would use.
-pub fn verify(m: Manifest) -> LalResult<()> {
+pub fn verify(m: &Manifest) -> LalResult<()> {
     // 1. Verify that the manifest is sane
-    for (name, conf) in m.components {
+    for (name, conf) in &m.components {
         // Verify ComponentSettings (manifest.components[x])
         debug!("Verifying component {}", name);
         if !conf.configurations.contains(&conf.defaultConfig) {
@@ -48,7 +48,7 @@ pub fn verify(m: Manifest) -> LalResult<()> {
         deps.push(component.to_string());
     }
     debug!("Found the following deps in INPUT: {:?}", deps);
-    for (d, _) in m.dependencies {
+    for (d, _) in &m.dependencies {
         trace!("Verifying dependency from manifest: {}", d);
         if !deps.contains(&d) {
             warn!("Dependency {} not found in INPUT", d);
@@ -63,7 +63,7 @@ pub fn verify(m: Manifest) -> LalResult<()> {
     for (name, vers) in dep_usage {
         debug!("Found version(s) for {} as {:?}", name, vers);
         if vers.len() != 1 {
-            error = Some(CliError::MultipleVersions(name.clone()));
+            error = Some(CliError::MultipleVersions(name.clone());
             // TODO: should have better way to allow user to debug here..
         }
         assert!(vers.len() > 0, "found versions");

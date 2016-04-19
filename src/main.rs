@@ -178,13 +178,13 @@ fn main() {
     if let Some(a) = args.subcommand_matches("update") {
         let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
         let res = lal::update(manifest,
-                              config,
+                              &config,
                               xs,
                               a.is_present("save"),
                               a.is_present("savedev"));
         result_exit("update", res);
     } else if let Some(a) = args.subcommand_matches("fetch") {
-        let res = lal::fetch(manifest, config, a.is_present("dev"));
+        let res = lal::fetch(&manifest, config, a.is_present("dev"));
         result_exit("fetch", res);
     } else if let Some(a) = args.subcommand_matches("remove") {
         let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
@@ -202,7 +202,7 @@ fn main() {
     } else if let Some(_) = args.subcommand_matches("shell") {
         result_exit("shell", lal::shell(&config));
     } else if let Some(_) = args.subcommand_matches("verify") {
-        result_exit("verify", lal::verify(manifest));
+        result_exit("verify", lal::verify(&manifest));
     } else if let Some(_) = args.subcommand_matches("status") {
         result_exit("status", lal::status(manifest));
     } else if let Some(a) = args.subcommand_matches("stash") {
