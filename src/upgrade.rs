@@ -7,7 +7,7 @@ use LalResult;
 /// This will just query for the latest version, and not install anything.
 /// If a newer version found (> in semver), then this is logged depending on mode.
 /// If run as part of the automatic update check, then it's silent.
-pub fn upgrade_check(silent: bool) -> LalResult<()> {
+pub fn upgrade_check(silent: bool) -> LalResult<bool> {
     let latest = try!(find_latest_lal_version());
     let current = Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
     if latest > current {
@@ -29,5 +29,5 @@ pub fn upgrade_check(silent: bool) -> LalResult<()> {
             info!("You are running the latest version of lal");
         }
     }
-    Ok(())
+    Ok(latest > current)
 }

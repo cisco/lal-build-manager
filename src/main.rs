@@ -207,7 +207,7 @@ fn main() {
         result_exit("status", lal::status(manifest));
     } else if let Some(a) = args.subcommand_matches("stash") {
         result_exit("stash",
-                    lal::stash(config, manifest, a.value_of("name").unwrap()));
+                    lal::stash(&config, &manifest, a.value_of("name").unwrap()));
     }
 
     unreachable!("Subcommand valid, but not implemented");

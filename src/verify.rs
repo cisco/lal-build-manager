@@ -63,7 +63,7 @@ pub fn verify(m: &Manifest) -> LalResult<()> {
     for (name, vers) in dep_usage {
         debug!("Found version(s) for {} as {:?}", name, vers);
         if vers.len() != 1 {
-            error = Some(CliError::MultipleVersions(name.clone());
+            error = Some(CliError::MultipleVersions(name.clone()));
             // TODO: should have better way to allow user to debug here..
         }
         assert!(vers.len() > 0, "found versions");

@@ -6,7 +6,9 @@ extern crate loggerv;
 
 use std::env;
 use std::path::{Path, PathBuf};
-use std::fs;
+use std::fs::{self, File};
+use std::process::Command;
+use std::io::prelude::*;
 
 //use loggerv::init_with_verbosity;
 use lal::{Config, Manifest, LalResult};
@@ -34,7 +36,7 @@ mod chk {
 fn main() {
     //init_with_verbosity(0).unwrap();
     println!("# lal tests");
-    println!("1..11");
+    println!("1..12");
     let mut i = 0;
 
     i += 1;
@@ -58,9 +60,8 @@ fn main() {
     println!("ok {} init_force", i);
 
     i += 1;
-    sanity();
-    println!("ok {} sanity", i);
-
+    has_config_and_manifest();
+    println!("ok {} has_config_and_manifest", i);
     // assume we have manifest and config after this point
 
     i += 1;
@@ -80,8 +81,16 @@ fn main() {
     println!("ok {} shell_permissions", i);
 
     i += 1;
-    build_tar();
-    println!("ok {} build_tar", i);
+    build_stash_and_update_from_stash();
+    println!("ok {} build_stash_and_update_from_stash", i);
+
+    i += 1;
+    upgrade_does_not_fail();
+    println!("ok {} upgrade_does_not_fail", i);
+
+    i += 1;
+    status_on_experimentals();
+    println!("ok {} status_on_experimentals", i);
 }
 
 fn lal_dir() -> PathBuf {
@@ -141,7 +150,7 @@ fn init_force() {
 
 // Tests need to be run in a directory with a manifest
 // and ~/.lal + lalrc must exist
-fn sanity() {
+fn has_config_and_manifest() {
     let ldir = lal_dir();
     assert!(ldir.is_dir(), "have laldir");
 
@@ -170,10 +179,6 @@ fn update_save() {
     let ri = lal::update(mf2, &cfg, vec!["libyaml", "yajl", "libwebsockets"], true, false);
     chk::is_ok(ri, "could update libyaml and save");
 }
-
-//fn component_dir(name: &str) -> PathBuf {
-//    Path::new(&env::current_dir().unwrap()).join("INPUT").join(&name).join("ncp.amd64")
-//}
 
 fn verify_checks() {
     let cfg = Config::read().unwrap();
@@ -210,12 +215,37 @@ fn shell_permissions() {
     assert!(r.is_ok(), "could touch files in container");
 }
 
-fn build_tar() {
+fn build_stash_and_update_from_stash() {
     let mf = Manifest::read().unwrap();
     let cfg = Config::read().unwrap();
 
-    // TODO: need to have a BUILD script that actually creates a tarball in OUTPUT
-    // currently tests work because I have such a BUILD, but don't want to commit it
+    {
+        let mut f = File::create("./BUILD").unwrap();
+        write!(f, "#!/bin/bash\necho hi > OUTPUT/test.txt\n").unwrap();
+        Command::new("chmod").arg("+x").arg("BUILD").output().unwrap();
+    } // scope ensures file is not busy before lal::build
+
     let r = lal::build(&cfg, &mf, None, None, true, None, true);
     assert!(r.is_ok(), "could run lal build and could make tarball");
+
+    // lal stash testmain
+    let r2 = lal::stash(&cfg, &mf, "testmain");
+    assert!(r2.is_ok(), "could stash lal build artifact");
+
+    // lal update lal=testmain
+    let ri = lal::update(mf.clone(), &cfg, vec!["lal=testmain"], false, false);
+    chk::is_ok(ri, "could update lal from stash");
+}
+
+fn status_on_experimentals() {
+    let mf = Manifest::read().unwrap();
+    let r = lal::status(mf);
+    assert!(r.is_err(), "status should complain at experimental deps");
+}
+
+fn upgrade_does_not_fail() {
+    let uc = lal::upgrade_check(true);
+    assert!(uc.is_ok(), "could perform upgrade check");
+    let upgraded = uc.unwrap();
+    assert!(!upgraded, "we never have upgrades in the tip source tree");
 }

@@ -47,7 +47,7 @@ pub fn store_tarball(cfg: &Config, name: &str, version: u32) -> Result<(), CliEr
 /// then copies this to `~/.lal/cache/stash/${name}/`.
 ///
 /// This file can then be installed via `update` using a component=${name} argument.
-pub fn stash(cfg: Config, mf: Manifest, name: &str) -> LalResult<()> {
+pub fn stash(cfg: &Config, mf: &Manifest, name: &str) -> LalResult<()> {
     info!("Stashing OUTPUT into cache under {}/{}", mf.name, name);
     // sanity: verify name does NOT parse as a u32
     if let Ok(n) = name.parse::<u32>() {
