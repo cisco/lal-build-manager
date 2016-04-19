@@ -3,6 +3,7 @@ set -ex
 container="edonusdevelopers/muslrust:1.8.0-2016-04-15"
 
 docker_run() {
+  # shellcheck disable=SC2068
   docker run -u lal -v "$PWD:/volume" -w /volume -t ${container} $@
 }
 
