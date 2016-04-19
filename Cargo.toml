@@ -1,6 +1,6 @@
 [package]
 name = "lal"
-version = "0.16.1"
+version = "0.17.0"
 authors = ["Eirik Albrigtsen <ealbrigt@cisco.com>"]
 
 [lib]
@@ -29,3 +29,4 @@ ansi_term = "0.7.2"
 walkdir = "0.1.5"
 semver = "0.2.3"
 chrono = "0.2"
+filetime = "0.1"

@@ -3,12 +3,14 @@ extern crate lal;
 #[macro_use]
 extern crate log;
 extern crate loggerv;
+extern crate walkdir;
 
 use std::env;
 use std::path::{Path, PathBuf};
 use std::fs::{self, File};
 use std::process::Command;
 use std::io::prelude::*;
+use walkdir::WalkDir;
 
 //use loggerv::init_with_verbosity;
 use lal::{Config, Manifest, LalResult};
@@ -36,7 +38,7 @@ mod chk {
 fn main() {
     //init_with_verbosity(0).unwrap();
     println!("# lal tests");
-    println!("1..12");
+    println!("1..14");
     let mut i = 0;
 
     i += 1;
@@ -91,6 +93,10 @@ fn main() {
     i += 1;
     status_on_experimentals();
     println!("ok {} status_on_experimentals", i);
+
+    i += 1;
+    clean_check();
+    println!("ok {} clean_check", i);
 }
 
 fn lal_dir() -> PathBuf {
@@ -248,4 +254,36 @@ fn upgrade_does_not_fail() {
     assert!(uc.is_ok(), "could perform upgrade check");
     let upgraded = uc.unwrap();
     assert!(!upgraded, "we never have upgrades in the tip source tree");
+}
+
+fn clean_check() {
+    let cfg = Config::read().unwrap();
+    let r = lal::clean(&cfg, 1);
+    assert!(r.is_ok(), "could run partial lal cleanup");
+
+    // scan cache dir
+    let mut dirs = WalkDir::new(&cfg.cache)
+        .min_depth(3)
+        .max_depth(3)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().is_dir());
+
+    let first = dirs.next();
+    assert!(first.is_some(), "some artifacts cached since last time");
+
+    // run check again cleaning everything
+    let r = lal::clean(&cfg, 0);
+    assert!(r.is_ok(), "could run full lal cleanup");
+
+    // scan cache dir
+    let mut dirs2 = WalkDir::new(&cfg.cache)
+        .min_depth(3)
+        .max_depth(3)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().is_dir());
+
+    let first2 = dirs2.next();
+    assert!(first2.is_none(), "no artifacts left in cache");
 }

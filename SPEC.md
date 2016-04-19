@@ -13,6 +13,7 @@
 - [`lal update-manifest`](#lal-update-manifest) - updates manifest to match `INPUT`
 - [`lal multibuild`](#lal-multibuild-components) - automate `stash` and `get` to allow simultaneous rebuilds
 - [`lal upgrade`](#lal-upgrade) - performs an upgrade check
+- [`lal clean`](#lal-clean) - cleans up cache directory
 
 ## Manifest
 A per-repo file. Format looks like this (here annotated with illegal comments):
@@ -255,6 +256,9 @@ Creates a basic `manifest.json` in the current directory, assuming directory nam
 
 #### lal upgrade
 Performs an upgrade check of `lal`. If new versions are found, it reports how to upgrade your lal tool. This is normally only done implicitly (daily). But can be done explicitly with this command.
+
+#### lal clean
+Deletes artifacts in the cache directory older than 14 days. The day is configurable with `-d <days>`.
 
 ### Universal Options
 

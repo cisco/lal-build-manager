@@ -19,6 +19,10 @@ fn result_exit<T>(name: &str, x: LalResult<T>) {
     process::exit(0);
 }
 
+fn is_integer(v: String) -> Result<(), String> {
+    if v.parse::<u32>().is_ok() { return Ok(()); }
+    Err(format!("{} is not an integer", v))
+}
 fn main() {
     let args = App::new("lal")
         .version(crate_version!())
@@ -119,6 +123,15 @@ fn main() {
             .about("Enters the configured container mounting the current directory"))
         .subcommand(SubCommand::with_name("upgrade")
             .about("Checks for a new version of lal manually"))
+        .subcommand(SubCommand::with_name("clean")
+            .about("Clean old artifacts in the cache directory to save space")
+            .arg(Arg::with_name("days")
+                .short("d")
+                .long("days")
+                .takes_value(true)
+                .default_value("14")
+                .validator(is_integer)
+                .help("Number of days to serve as cutoff")))
         .get_matches();
 
     // by default, always show INFO messages for now (+1)
@@ -208,6 +221,9 @@ fn main() {
     } else if let Some(a) = args.subcommand_matches("stash") {
         result_exit("stash",
                     lal::stash(&config, &manifest, a.value_of("name").unwrap()));
+    } else if let Some(a) = args.subcommand_matches("clean") {
+        let days = a.value_of("days").unwrap().parse().unwrap();
+        result_exit("clean", lal::clean(&config, days));
     }
 
     unreachable!("Subcommand valid, but not implemented");

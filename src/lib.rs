@@ -32,6 +32,7 @@ extern crate log;
 extern crate walkdir;
 extern crate semver;
 extern crate chrono;
+extern crate filetime;
 
 // re-exports
 pub use util::lockfile::Lockfile;
@@ -44,7 +45,7 @@ pub use shell::{shell, docker_run};
 pub use install::{fetch, update, remove};
 pub use status::status;
 pub use verify::verify;
-pub use cache::stash;
+pub use cache::{stash, clean};
 pub use upgrade::upgrade_check;
 
 mod util;
