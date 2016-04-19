@@ -10,13 +10,21 @@ use errors::{CliError, LalResult};
 #[allow(non_snake_case)]
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
-    pub artifactory: String,
+    /// Location of artifactory root
+    pub artifactory: String, // TODO: use! hardcoded in artifactory.rs
+    /// Cache directory for global and stashed builds
     pub cache: String,
+    /// Docker container (potentially with tag) to use
     pub container: String,
-    pub updateCheck: String,
+    /// Time of last upgrade_check
+    pub upgradeCheck: String,
 }
 
 impl Config {
+    /// Initialize a Config with defaults
+    ///
+    /// This will locate you homedir, and set last update check 2 days in the past.
+    /// Thus, with a blank default config, you will always trigger an upgrade check.
     pub fn new() -> LalResult<Config> {
         // unwrapping things that really must succeed here
         let home = env::home_dir().unwrap();
@@ -27,9 +35,10 @@ impl Config {
             artifactory: "http://engci-maven.cisco.com/artifactory/CME-group".to_string(),
             cache: cachedir.to_string(),
             container: "edonusdevelopers/centos_build:latest".to_string(),
-            updateCheck: time.to_rfc3339(),
+            upgradeCheck: time.to_rfc3339(),
         })
     }
+    /// Read and deserialize a Config from ~/.lal/lalrc
     pub fn read() -> LalResult<Config> {
         let home = env::home_dir().unwrap(); // crash if no $HOME
         let cfg_path = Path::new(&home).join(".lal/lalrc");
@@ -42,15 +51,18 @@ impl Config {
         let res = try!(json::decode(&cfg_str));
         Ok(res)
     }
-    pub fn update_check_time(&self) -> bool {
-        let last = self.updateCheck.parse::<DateTime<UTC>>().unwrap();
+    /// Checks if it is time to perform an upgrade check
+    pub fn upgrade_check_time(&self) -> bool {
+        let last = self.upgradeCheck.parse::<DateTime<UTC>>().unwrap();
         let cutoff = UTC::now() - Duration::days(1);
         last < cutoff
     }
-    pub fn performed_update(&mut self) -> LalResult<()> {
-        self.updateCheck = UTC::now().to_rfc3339();
+    /// Update the upgradeCheck time to avoid triggering it for another day
+    pub fn performed_upgrade(&mut self) -> LalResult<()> {
+        self.upgradeCheck = UTC::now().to_rfc3339();
         Ok(try!(self.write(true)))
     }
+    /// Overwrite `~/.lal/lalrc` with serialized data from this struct
     pub fn write(&self, silent: bool) -> LalResult<()> {
         let home = env::home_dir().unwrap();
         let cfg_path = Path::new(&home).join(".lal").join("lalrc");

@@ -38,11 +38,15 @@ pub struct Manifest {
 }
 
 impl Manifest {
-    pub fn new(n: &str) -> Manifest {
+    /// Initialize a manifest struct based on a name
+    ///
+    /// The name is assumed to be the default component and will create a
+    /// component configuration for it with its default values.
+    pub fn new(name: &str) -> Manifest {
         let mut comps = BTreeMap::new();
-        comps.insert(n.to_string(), ComponentConfiguration::new());
+        comps.insert(name.to_string(), ComponentConfiguration::new());
         Manifest {
-            name: n.to_string(),
+            name: name.to_string(),
             components: comps,
             dependencies: BTreeMap::new(),
             devDependencies: BTreeMap::new(),

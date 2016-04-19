@@ -143,15 +143,15 @@ fn main() {
         result_exit("upgrade", lal::upgrade_check(false)); // explicit, verbose check
     }
     // Timed daily, silent upgrade check (if not using upgrade)
-    if args.subcommand_name() != Some("upgrade") && config.update_check_time() {
+    if args.subcommand_name() != Some("upgrade") && config.upgrade_check_time() {
         debug!("Performing daily upgrade check");
         // silent dry-run
         let _ = lal::upgrade_check(false).map_err(|e| {
-            error!("Daily update check failed: {}", e);
+            error!("Daily upgrade check failed: {}", e);
             // don't halt here if this ever happens as it could break it for users
         });
-        let _ = config.clone().performed_update().map_err(|e| {
-            error!("Daily update check updating lastUpdate failed: {}", e);
+        let _ = config.clone().performed_upgrade().map_err(|e| {
+            error!("Daily upgrade check updating lastUpgrade failed: {}", e);
             // Ditto
         });
         debug!("Upgrade check done - continuing to requested operation\n");
