@@ -1,9 +1,13 @@
 #!/bin/bash
 set -ex
+container="edonusdevelopers/muslrust:1.8.0-2016-04-15"
 
-#docker pull edonusdevelopers/muslrust:1.9.0-nightly-2016-04-08
-docker run -u lal -v "$PWD:/volume" -w /volume \
-  -t edonusdevelopers/muslrust:1.8.0-2016-04-15 cargo build --release --verbose
+docker_run() {
+  docker run -u lal -v "$PWD:/volume" -w /volume -t ${container} $@
+}
+
+docker_run cargo test
+docker_run cargo build --release --verbose
 
 mkdir -p musl/bin
 cp target/x86_64-unknown-linux-musl/release/lal musl/bin
