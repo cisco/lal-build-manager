@@ -37,8 +37,11 @@ mod chk {
 
 fn main() {
     //init_with_verbosity(0).unwrap();
+    let has_docker = false;
+    let num_tests = if has_docker { 14 } else { 10 };
+
     println!("# lal tests");
-    println!("1..14");
+    println!("1..{}", num_tests);
     let mut i = 0;
 
     i += 1;
@@ -74,25 +77,27 @@ fn main() {
     verify_checks();
     println!("ok {} verify_checks", i);
 
-    i += 1;
-    shell_echo();
-    println!("ok {} shell_echo", i);
+    if has_docker {
+        i += 1;
+        shell_echo();
+        println!("ok {} shell_echo", i);
 
-    i += 1;
-    shell_permissions();
-    println!("ok {} shell_permissions", i);
+        i += 1;
+        shell_permissions();
+        println!("ok {} shell_permissions", i);
 
-    i += 1;
-    build_stash_and_update_from_stash();
-    println!("ok {} build_stash_and_update_from_stash", i);
+        i += 1;
+        build_stash_and_update_from_stash();
+        println!("ok {} build_stash_and_update_from_stash", i);
+
+        i += 1;
+        status_on_experimentals();
+        println!("ok {} status_on_experimentals", i);
+    }
 
     i += 1;
     upgrade_does_not_fail();
     println!("ok {} upgrade_does_not_fail", i);
-
-    i += 1;
-    status_on_experimentals();
-    println!("ok {} status_on_experimentals", i);
 
     i += 1;
     clean_check();
