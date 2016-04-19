@@ -170,10 +170,13 @@ fn main() {
         debug!("Upgrade check done - continuing to requested operation\n");
     }
 
-    // Allow lal init and lal multibuild without manifest existing in PWD
+    // Allow lal init / clean / multibuild without manifest existing in PWD
     if let Some(a) = args.subcommand_matches("init") {
         result_exit("init", lal::init(a.is_present("force")));
-    }// else if let Some(a) = args.subcommand_matches("multibuild") {
+    } else if let Some(a) = args.subcommand_matches("clean") {
+        let days = a.value_of("days").unwrap().parse().unwrap();
+        result_exit("clean", lal::clean(&config, days));
+    } // else if let Some(a) = args.subcommand_matches("multibuild") {
     //    let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
     //    result_exit("multibuild", lal::multibuild(&config, xs));
     //}
@@ -221,9 +224,6 @@ fn main() {
     } else if let Some(a) = args.subcommand_matches("stash") {
         result_exit("stash",
                     lal::stash(&config, &manifest, a.value_of("name").unwrap()));
-    } else if let Some(a) = args.subcommand_matches("clean") {
-        let days = a.value_of("days").unwrap().parse().unwrap();
-        result_exit("clean", lal::clean(&config, days));
     }
 
     unreachable!("Subcommand valid, but not implemented");
