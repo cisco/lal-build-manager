@@ -115,7 +115,7 @@ cargo test # write tests
 Before committing:
 
 ```sh
-cargo fmt # requires `cargo install rustfmt` and $HOME/.carg/bin on $PATH
+cargo fmt # requires `cargo install rustfmt` and $HOME/.cargo/bin on $PATH
 ```
 
 ## Logging
