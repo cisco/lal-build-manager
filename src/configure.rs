@@ -107,9 +107,6 @@ fn create_lal_dir() -> LalResult<PathBuf> {
     }
     Ok(laldir)
 }
-// TODO: need some extra sanity to also check that:
-//   - docker is present and warn if not
-//   - docker images contains cfg.container and provide info if not
 
 /// Create  `~/.lal/lalrc` interactively
 ///
