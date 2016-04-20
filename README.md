@@ -131,11 +131,3 @@ lal -vv fetch # all output
 Terms used herein reference [so you want to write a package manager](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#.rlvjqxc4r) (long read).
 
 Original [buildroot notes](https://hg.lal.cisco.com/root/files/tip/NOTES).
-
-## Tips and tricks
-Update all dependencies to latest:
-
-```bash
-# using npmjs.org/package/json
-for d in $(json dependencies -f manifest.json | json -ka); do lal update ${d} --save; done
-```
