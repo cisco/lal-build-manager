@@ -64,7 +64,8 @@ pub fn verify(m: &Manifest) -> LalResult<()> {
         debug!("Found version(s) for {} as {:?}", name, vers);
         if vers.len() != 1 {
             error = Some(CliError::MultipleVersions(name.clone()));
-            // TODO: should have better way to allow user to debug here..
+            // This error isn't super helpful even with debug on, but one can investigate
+            // where the versions came from by grepping `lal status --full` in the future: TODO
         }
         assert!(vers.len() > 0, "found versions");
         // if version cannot be parsed as an int, it's not a global dependency
