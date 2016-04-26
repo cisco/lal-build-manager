@@ -7,22 +7,30 @@ docker_run() {
   docker run -u lal -v "$PWD:/volume" -w /volume -t ${container} $@
 }
 
+# compile test executable
 docker_run cargo build --test testmain
+# ensure we don't overwrite a buildmachines lalrc - back it up
+[ -f ~/.lal/lalrc ] && cp ~/.lal/lalrc ./buplalrc
+# run tests
 ./target/x86_64-unknown-linux-musl/debug/testmain-*
+# restore lalrc if we backed it up
+[ -f ./buplalrc ] && mv buplalrc ~/.lal/lalrc
+
+# compile lal
 docker_run cargo build --release --verbose
 
-mkdir -p musl/bin
-cp target/x86_64-unknown-linux-musl/release/lal musl/bin
-tar czf lal.tar -C musl .
-rm -rf musl/
-
+# create release tarball in right dir structure for artifactory
 lalversion=$(grep version Cargo.toml | awk -F"\"" '{print $2}')
 
-buildurl="http://engci-maven.cisco.com/artifactory/api/storage/CME-group/lal "
+buildurl="http://engci-maven.cisco.com/artifactory/api/storage/CME-release/lal"
 if curl -s "${buildurl}" | grep -q "$lalversion"; then
     echo "lal version already uploaded - stopping" # don't want to overwrite
 else
   echo "Packaging new lal version"
+  mkdir -p musl/bin
+  cp target/x86_64-unknown-linux-musl/release/lal musl/bin
+  tar czf lal.tar -C musl .
+  rm -rf musl/
   rm -rf ARTIFACT
   mkdir "ARTIFACT/${lalversion}" -p
   cp lal.tar "ARTIFACT/${lalversion}/"
