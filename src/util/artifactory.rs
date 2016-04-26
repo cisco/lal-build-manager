@@ -49,7 +49,7 @@ fn get_latest(uri: &str) -> LalResult<u32> {
 }
 
 fn get_dependency_url(name: &str, version: u32) -> String {
-    let artifactory = "https://engci-maven.cisco.com/artifactory/CME-group";
+    let artifactory = "https://engci-maven.cisco.com/artifactory/CME-release";
     let tar_url = [artifactory,
                    name,
                    version.to_string().as_str(),
@@ -101,7 +101,7 @@ struct ArtifactoryStorageResponse {
 
 pub fn find_latest_lal_version() -> LalResult<Version> {
     use curl::http;
-    let uri = "http://engci-maven.cisco.com/artifactory/api/storage/CME-group/lal";
+    let uri = "https://engci-maven.cisco.com/artifactory/api/storage/CME-release/lal";
 
     debug!("GET {}", uri);
     let resp = try!(http::handle().get(uri).exec().map_err(|e| {
