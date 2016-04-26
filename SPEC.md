@@ -168,7 +168,7 @@ This allows multiple blessed configurations of the same component, i.e. `lal bui
 Many `component` or `component=version` arguments can be used in one invocation.
 
 #### lal fetch
- - *lal fetch [--dev]*: fetches versions corresponding to the manifest from the registry and puts them into `INPUT`. The optional `--dev` flag will also cause `devDependencies` to be fetched.
+ - *lal fetch [--core]*: fetches all versions corresponding to the manifest from the registry and puts them into `INPUT`. The optional `--core` flag will disregard any `devDependencies`.
 
 ### Uncommon/Advanced/Internal Command Specification
 #### lal shell

@@ -198,6 +198,7 @@ fn verify_checks() {
     let r = lal::verify(&mf);
     assert!(r.is_ok(), "could verify after install");
 
+    let gtest = Path::new(&env::current_dir().unwrap()).join("INPUT").join("gtest");
     // clean folders and verify it fails
     let yajl = Path::new(&env::current_dir().unwrap()).join("INPUT").join("yajl");
     fs::remove_dir_all(&yajl).unwrap();
@@ -209,6 +210,8 @@ fn verify_checks() {
     let rall = lal::fetch(&mf, cfg, true);
     assert!(rall.is_ok(), "install all succeeded");
     assert!(yajl.is_dir(), "yajl was reinstalled from manifest");
+    assert!(!gtest.is_dir(), "gtest was not reinstalled from manifest with core");
+
 
     let r3 = lal::verify(&mf);
     assert!(r3.is_ok(), "verify ok again");

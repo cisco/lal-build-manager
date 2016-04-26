@@ -35,10 +35,10 @@ fn main() {
             .help("Use verbose output"))
         .subcommand(SubCommand::with_name("fetch")
             .about("Fetch dependencies listed in the manifest into INPUT")
-            .arg(Arg::with_name("dev")
-                .long("dev")
-                .short("d")
-                .help("Additionally fetch devDependencies")))
+            .arg(Arg::with_name("core")
+                .long("core")
+                .short("c")
+                .help("Only fetch core dependencies")))
         .subcommand(SubCommand::with_name("update")
             .about("Update arbitrary dependencies into INPUT")
             .arg(Arg::with_name("components")
@@ -200,7 +200,7 @@ fn main() {
                               a.is_present("savedev"));
         result_exit("update", res);
     } else if let Some(a) = args.subcommand_matches("fetch") {
-        let res = lal::fetch(&manifest, config, a.is_present("dev"));
+        let res = lal::fetch(&manifest, config, a.is_present("core"));
         result_exit("fetch", res);
     } else if let Some(a) = args.subcommand_matches("remove") {
         let xs = a.values_of("components").unwrap().collect::<Vec<_>>();

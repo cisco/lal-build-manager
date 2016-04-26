@@ -43,7 +43,7 @@ Installing pinned versions and building:
 ```sh
 git clone git@sqbu-github.cisco.com:Edonus/media-engine
 cd edonus
-lal fetch --dev
+lal fetch
 # for canonical build
 lal build
 # for experimental

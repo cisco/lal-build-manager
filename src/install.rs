@@ -221,16 +221,16 @@ pub fn remove(manifest: Manifest, xs: Vec<&str>, save: bool, savedev: bool) -> L
 
 /// Fetch all dependencies from `manifest.json`
 ///
-/// This will read, and HTTP GET all the `dependencies` at the specified versions.
-/// If the `dev` bool is set, then `devDependencies` are also installed.
-pub fn fetch(manifest: &Manifest, cfg: Config, dev: bool) -> LalResult<()> {
+/// This will read, and HTTP GET all the dependencies at the specified versions.
+/// If the `core` bool is set, then `devDependencies` are not installed.
+pub fn fetch(manifest: &Manifest, cfg: Config, core: bool) -> LalResult<()> {
     debug!("Installing dependencies{}",
-           if dev { " and devDependencies" } else { "" });
+           if !core { " and devDependencies" } else { "" });
     clean_input();
 
     // create the joined hashmap of dependencies and possibly devdependencies
     let mut deps = manifest.dependencies.clone();
-    if dev {
+    if !core {
         for (k, v) in &manifest.devDependencies {
             deps.insert(k.clone(), v.clone());
         }
