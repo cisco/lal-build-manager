@@ -1,5 +1,4 @@
-# Edonus dependency manager
-[![build status](https://engci-jenkins-gpk.cisco.com/jenkins/job/team_CME/job/lal/badge/icon)](https://engci-jenkins-gpk.cisco.com/jenkins/job/team_CME/job/lal/)
+# Edonus dependency manager [![build Status](https://engci-jenkins-gpk.cisco.com/jenkins/buildStatus/icon?job=team_CME/lal)](https://engci-jenkins-gpk.cisco.com/jenkins/job/team_CME/job/lal/)
 
 A dependency manager built around artifactory and docker. See the [spec](./SPEC.md) for background information.
 
