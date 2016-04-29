@@ -14,6 +14,7 @@
 - [`lal multibuild`](#lal-multibuild-components) - automate `stash` and `get` to allow simultaneous rebuilds
 - [`lal upgrade`](#lal-upgrade) - performs an upgrade check
 - [`lal clean`](#lal-clean) - cleans up cache directory
+- [`lal export`](#lal-export) - obtain a raw tarball from artifactory
 
 ## Manifest
 A per-repo file. Format looks like this (here annotated with illegal comments):
@@ -259,6 +260,17 @@ Performs an upgrade check of `lal`. If new versions are found, it reports how to
 
 #### lal clean
 Deletes artifacts in the cache directory older than 14 days. The day is configurable with `-d <days>`.
+
+#### lal export <component>
+Exports a build artifact from artifactory for a component into `$PWD` or directory of choice. The component can be either the name of the component for latest version, or suffixed with `=version` for a specific version:
+
+```sh
+lal export gtest -o mystorage/
+test -f mystorage/gtest.tar.gz
+
+lal export liblzma=6
+test -f ./liblzma.tar.gz
+```
 
 ### Universal Options
 

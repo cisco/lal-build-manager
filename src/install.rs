@@ -38,7 +38,7 @@ pub fn download_to_path(uri: &str, save: &PathBuf) -> io::Result<()> {
     }
 }
 
-// helper for fetch_component and stash::fetch_from_stash
+// helper for fetch_and_unpack_component and stash::fetch_from_stash
 pub fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<()> {
     use tar::Archive;
     use flate2::read::GzDecoder;
@@ -53,32 +53,35 @@ pub fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<
     Ok(())
 }
 
-fn fetch_component(cfg: &Config, name: &str, version: Option<u32>) -> LalResult<Component> {
+// export a component from artifactory to stash
+fn fetch_via_artifactory(cfg: &Config, name: &str, version: Option<u32>) -> LalResult<(PathBuf, Component)> {
     use cache;
 
-    trace!("Fetch component {}", name);
+    trace!("Locate component {}", name);
     let component = try!(get_tarball_uri(name, version));
 
-    let mut must_cache = true;
-    let tarname = if cache::is_cached(&cfg, &component.name, component.version) {
-        trace!("Fetching {} from cache", name);
-        must_cache = false; // we already got this from stash!
-        cache::get_cache_dir(&cfg, &component.name, component.version).join(format!("{}.tar", name))
-    } else {
+    if ! cache::is_cached(&cfg, &component.name, component.version) {
+        // download to PWD then move it to stash immediately
         let local_tarball = Path::new(".").join(format!("{}.tar", name));
         try!(download_to_path(&component.tarball, &local_tarball));
-        local_tarball
-    };
+        try!(cache::store_tarball(&cfg, name, component.version));
+    }
+    assert!(cache::is_cached(&cfg, &component.name, component.version), "cached component");
+
+    trace!("Fetching {} from cache", name);
+    let tarname = cache::get_cache_dir(&cfg, &component.name, component.version).join(format!("{}.tar", name));
+    Ok((tarname, component))
+}
+
+// import a component from stash to artifactory
+fn fetch_and_unpack_component(cfg: &Config, name: &str, version: Option<u32>) -> LalResult<Component> {
+    let (tarname, component) = try!(fetch_via_artifactory(cfg, name, version));
 
     debug!("Unpacking tarball {} for {}",
            tarname.to_str().unwrap(),
            component.name);
     try!(extract_tarball_to_input(tarname, &name));
 
-    // Move tarball into cfg.cache - if it was not already fetched from cache
-    if must_cache {
-        try!(cache::store_tarball(&cfg, name, component.version));
-    }
     Ok(component)
 }
 
@@ -114,7 +117,7 @@ pub fn update(manifest: Manifest,
             let pair: Vec<&str> = comp.split("=").collect();
             if let Ok(n) = pair[1].parse::<u32>() {
                 // standard fetch with an integer version
-                match fetch_component(&cfg, pair[0], Some(n)) {
+                match fetch_and_unpack_component(&cfg, pair[0], Some(n)) {
                     Ok(c) => updated.push(c),
                     Err(e) => {
                         warn!("Failed to update {} ({})", pair[0], e);
@@ -131,7 +134,7 @@ pub fn update(manifest: Manifest,
             }
         } else {
             // fetch without a specific version (latest)
-            match fetch_component(&cfg, &comp, None) {
+            match fetch_and_unpack_component(&cfg, &comp, None) {
                 Ok(c) => updated.push(c),
                 Err(e) => {
                     warn!("Failed to update {} ({})", &comp, e);
@@ -164,6 +167,36 @@ pub fn update(manifest: Manifest,
         }
         try!(mf.write());
     }
+    Ok(())
+}
+
+/// Export a specific component from artifactory
+pub fn export(cfg: &Config, comp: &str, output: Option<&str>) -> LalResult<()> {
+    use cache;
+    let dir = output.unwrap_or(".");
+    info!("Export {} to {}", comp, dir);
+
+    let mut component_name = comp; // this is only correct if no =version suffix
+    let tarname = if comp.contains("=") {
+        let pair: Vec<&str> = comp.split("=").collect();
+        if let Ok(n) = pair[1].parse::<u32>() {
+            // standard fetch with an integer version
+            component_name = pair[0]; // save so we have sensible tarball names
+            try!(fetch_via_artifactory(cfg, pair[0], Some(n))).0
+        } else {
+            // string version -> stash
+            component_name = pair[0]; // save so we have sensible tarball names
+            try!(cache::get_path_to_stashed_component(cfg, pair[0], pair[1]))
+        }
+    } else {
+        // fetch without a specific version (latest)
+        try!(fetch_via_artifactory(cfg, &comp, None)).0
+    };
+
+    let dest = Path::new(dir).join(format!("{}.tar.gz", component_name));
+    debug!("Copying {:?} to {:?}", tarname, dest);
+
+    try!(fs::copy(tarname, dest));
     Ok(())
 }
 
@@ -238,7 +271,7 @@ pub fn fetch(manifest: &Manifest, cfg: Config, core: bool) -> LalResult<()> {
     let mut err = None;
     for (k, v) in deps {
         info!("Fetch {} {}", k, v);
-        let _ = fetch_component(&cfg, &k, Some(v)).map_err(|e| {
+        let _ = fetch_and_unpack_component(&cfg, &k, Some(v)).map_err(|e| {
             warn!("Failed to completely install {} ({})", k, e);
             // likely symlinks inside tarball that are being dodgy
             // this is why we clean_input

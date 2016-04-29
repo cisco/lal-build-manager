@@ -100,6 +100,10 @@ fn main() {
     println!("ok {} upgrade_does_not_fail", i);
 
     i += 1;
+    export_check();
+    println!("ok {} export_check", i);
+
+    i += 1;
     clean_check();
     println!("ok {} clean_check", i);
 }
@@ -294,4 +298,19 @@ fn clean_check() {
 
     let first2 = dirs2.next();
     assert!(first2.is_none(), "no artifacts left in cache");
+}
+
+fn export_check() {
+    let cfg = Config::read().unwrap();
+
+    let r = lal::export(&cfg, "gtest=6", Some("tests"));
+    assert!(r.is_ok(), "could export gtest=6 into subdir");
+
+    let r2 = lal::export(&cfg, "libcurl", None);
+    assert!(r2.is_ok(), "could export latest libcurl into PWD");
+
+    let gtest = Path::new(&env::current_dir().unwrap()).join("tests").join("gtest.tar.gz");
+    assert!(gtest.is_file(), "gtest was copied correctly");
+    let libcurl = Path::new(&env::current_dir().unwrap()).join("libcurl.tar.gz");
+    assert!(libcurl.is_file(), "libcurl was copied correctly");
 }

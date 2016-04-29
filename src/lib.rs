@@ -42,7 +42,7 @@ pub use build::build;
 pub use configure::{configure, Config};
 pub use init::{init, Manifest};
 pub use shell::{shell, docker_run};
-pub use install::{fetch, update, remove};
+pub use install::{fetch, update, remove, export};
 pub use status::status;
 pub use verify::verify;
 pub use cache::{stash, clean};

@@ -71,6 +71,16 @@ fn main() {
                 .long("save-dev")
                 .conflicts_with("save")
                 .help("Save removal of devDependencies in the manifest")))
+        .subcommand(SubCommand::with_name("export")
+            .about("Fetch a raw tarball from artifactory")
+            .arg(Arg::with_name("component")
+                .help("The component to export")
+                .required(true))
+            .arg(Arg::with_name("output")
+                .short("o")
+                .long("output")
+                .takes_value(true)
+                .help("Output directory to save to")))
         .subcommand(SubCommand::with_name("build")
             .about("Runs BUILD script in current directory in the configured container")
             .arg(Arg::with_name("component")
@@ -224,6 +234,10 @@ fn main() {
     } else if let Some(a) = args.subcommand_matches("stash") {
         result_exit("stash",
                     lal::stash(&config, &manifest, a.value_of("name").unwrap()));
+    } else if let Some(a) = args.subcommand_matches("export") {
+        result_exit("export", lal::export(&config,
+                                          a.value_of("component").unwrap(),
+                                          a.value_of("output")));
     }
 
     unreachable!("Subcommand valid, but not implemented");

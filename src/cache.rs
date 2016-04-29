@@ -76,17 +76,23 @@ pub fn stash(cfg: &Config, mf: &Manifest, name: &str) -> LalResult<()> {
     Ok(())
 }
 
-// helper for install::update
-pub fn fetch_from_stash(cfg: &Config, component: &str, stashname: &str) -> LalResult<()> {
+// helper for install::export
+pub fn get_path_to_stashed_component(cfg: &Config, component: &str, stashname: &str) -> LalResult<PathBuf> {
     let stashdir = Path::new(&cfg.cache).join("stash").join(component).join(stashname);
     if !stashdir.is_dir() {
         return Err(CliError::MissingStashArtifact(format!("{}/{}", component, stashname)));
     }
-    // grab it and dump it into INPUT
-    debug!("Fetching stashed version {} of component {}",
+    // grab it and copy it to a directory
+    debug!("Inferring stashed version {} of component {}",
            stashname,
            component);
     let tarname = stashdir.join(format!("{}.tar.gz", component));
+    Ok(tarname)
+}
+
+// helper for install::update
+pub fn fetch_from_stash(cfg: &Config, component: &str, stashname: &str) -> LalResult<()> {
+    let tarname = try!(get_path_to_stashed_component(cfg, component, stashname));
     try!(install::extract_tarball_to_input(tarname, &component));
     Ok(())
 }
