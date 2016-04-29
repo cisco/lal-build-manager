@@ -9,10 +9,10 @@ You need [docker](https://docs.docker.com/linux/step_one/) (minimum version 1.10
 Two ways to install, depending on whether you can be bothered to run the rust install script:
 
 ### Precompiled releases (instant)
-Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) directly from [artifactory](http://engci-maven.cisco.com/artifactory/CME-group/lal/):
+Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) directly from [artifactory](https://engci-maven.cisco.com/artifactory/CME-release/lal/):
 
 ```sh
-curl https://engci-maven.cisco.com/artifactory/CME-group/lal/0.13.0/lal.tar | tar xz -C /usr/local
+curl https://engci-maven.cisco.com/artifactory/CME-release/lal/0.19.0/lal.tar | tar xz -C /usr/local
 lal configure
 ```
 
