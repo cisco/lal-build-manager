@@ -14,7 +14,7 @@
 - [`lal multibuild`](#lal-multibuild-components) - automate `stash` and `get` to allow simultaneous rebuilds
 - [`lal upgrade`](#lal-upgrade) - performs an upgrade check
 - [`lal clean`](#lal-clean) - cleans up cache directory
-- [`lal export`](#lal-export) - obtain a raw tarball from artifactory
+- [`lal export`](#lal-export-component) - obtain a raw tarball from artifactory
 
 ## Manifest
 A per-repo file. Format looks like this (here annotated with illegal comments):

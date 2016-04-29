@@ -82,7 +82,6 @@ pub fn get_path_to_stashed_component(cfg: &Config, component: &str, stashname: &
     if !stashdir.is_dir() {
         return Err(CliError::MissingStashArtifact(format!("{}/{}", component, stashname)));
     }
-    // grab it and copy it to a directory
     debug!("Inferring stashed version {} of component {}",
            stashname,
            component);
