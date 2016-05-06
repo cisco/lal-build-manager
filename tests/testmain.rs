@@ -141,7 +141,7 @@ fn configure_yes() {
     let config = Config::read();
     assert!(config.is_err(), "no lalrc at this point");
 
-    let r = lal::configure(false, true);
+    let r = lal::configure(false, true, Some("edonusdevelopers/muslrust:1.8.0-2016-04-15"));
     assert!(r.is_ok(), "configure succeeded");
 
     let cfg = Config::read();

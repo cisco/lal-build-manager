@@ -113,8 +113,8 @@ fn create_lal_dir() -> LalResult<PathBuf> {
 /// This will prompt you interactively when setting `term_prompt`
 /// Otherwise will just use the defaults.
 ///
-/// A third boolean option to discard the output is supplied for tests.
-pub fn configure(term_prompt: bool, save: bool) -> LalResult<Config> {
+/// A second boolean option to discard the output is supplied for tests.
+pub fn configure(term_prompt: bool, save: bool, container: Option<&str>) -> LalResult<Config> {
     let _ = try!(create_lal_dir());
     let mut cfg = try!(Config::new());
 
@@ -124,6 +124,11 @@ pub fn configure(term_prompt: bool, save: bool) -> LalResult<Config> {
         cfg.cache = prompt("cache", cfg.cache);
         cfg.container = prompt("container", cfg.container);
     }
+    // Tests to avoid depending on other containers
+    if container.is_some() {
+        cfg.container = container.unwrap().to_string();
+    }
+
     if save {
         try!(cfg.write(false));
     }
