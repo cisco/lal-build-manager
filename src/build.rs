@@ -118,11 +118,12 @@ pub fn build(cfg: &Config,
     try!(shell::docker_run(&cfg, cmd, false));
 
     if release {
+        trace!("Create ARTIFACT dir");
         try!(ensure_dir_exists_fresh("ARTIFACT"));
-        // Save lockfile in both ARTIFACT and OUTPUT (so it's also in the archive)
+        trace!("Copy lockfile to ARTIFACT dir");
         try!(fs::copy(&lockpth, Path::new("./ARTIFACT/lockfile.json")));
 
-        // Tar up OUTPUT into ARTIFACT/component.tar.gz
+        trace!("Tar up OUTPUT into ARTIFACT/component.tar.gz");
         let tarpth = Path::new("./ARTIFACT").join([component, ".tar.gz"].concat());
         try!(tar_output(&tarpth));
     }
