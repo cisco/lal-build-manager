@@ -87,6 +87,7 @@ mkdir newcomponent
 cd newcomponent
 lal init # create manifest
 git init
+git remote add origin git@sqbu-github.cisco.com:Edonus/newcomponent.git
 git add manifest.json
 git commit -m "init newcomponent"
 # add git remotes (depends on where we host)
