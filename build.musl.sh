@@ -2,8 +2,6 @@
 set -ex
 container="edonusdevelopers/muslrust:1.8.0-2016-04-15"
 
-root="$PWD"
-
 docker_run() {
   # shellcheck disable=SC2068
   docker run -u lal -v "$PWD:/volume" -w /volume -t ${container} $@
@@ -16,14 +14,12 @@ docker_run cargo build --test testmain
 # back it up, then restore on EXIT
 [ -f ~/.lal/lalrc ] && cp ~/.lal/lalrc ./buplalrc
 restore_lalrc() {
-  [ -f "$root/buplalrc" ] && mv "$root/buplalrc" ~/.lal/lalrc
+  [ -f buplalrc ] && mv buplalrc ~/.lal/lalrc
 }
 trap restore_lalrc EXIT
 
 # run tests
 ./target/x86_64-unknown-linux-musl/debug/testmain-*
-# restore lalrc if we backed it up
-[ -f ./buplalrc ] && mv buplalrc ~/.lal/lalrc
 
 # compile lal
 docker_run cargo build --release --verbose
