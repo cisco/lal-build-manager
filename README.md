@@ -90,10 +90,12 @@ git init
 git remote add origin git@sqbu-github.cisco.com:Edonus/newcomponent.git
 git add manifest.json
 git commit -m "init newcomponent"
-# add git remotes (depends on where we host)
+# add some dependencies to manifest
 lal update gtest --save-dev
 lal update libwebsockets --save
 # create source and iterate until `lal build` and `lal test` succeeds
+
+# later..
 git commit -a -m "inital working version"
 git push -u origin master
 ```
