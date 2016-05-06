@@ -93,7 +93,7 @@ git commit -m "init newcomponent"
 # add some dependencies to manifest
 lal update gtest --save-dev
 lal update libwebsockets --save
-# create source and iterate until `lal build` and `lal test` succeeds
+# create source and iterate until `lal build`
 
 # later..
 git commit -a -m "inital working version"
