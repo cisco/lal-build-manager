@@ -33,7 +33,7 @@ if curl -s "${buildurl}" | grep -q "$lalversion"; then
 else
   echo "Packaging new lal version"
   mkdir -p musl/bin
-  mkdir -p musl/share/lal/completions
+  mkdir -p musl/share/lal/
   cp target/x86_64-unknown-linux-musl/release/lal musl/bin
   cp lal.complete* musl/share/lal/
   tar czf lal.tar -C musl .
