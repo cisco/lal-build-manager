@@ -1,32 +1,32 @@
 [package]
+authors = ["Eirik Albrigtsen <ealbrigt@cisco.com>"]
 name = "lal"
 version = "0.19.1"
-authors = ["Eirik Albrigtsen <ealbrigt@cisco.com>"]
+
+[[bin]]
+doc = false
+name = "lal"
+path = "src/main.rs"
+
+[dependencies]
+ansi_term = "0.7.2"
+chrono = "0.2"
+clap = "2.5.1"
+curl = "0.2.18"
+filetime = "0.1"
+flate2 = "0.2"
+log = "0.3.5"
+loggerv = "0.1.0"
+regex = "0.1.55"
+rustc-serialize = "0.3.18"
+semver = "0.2.3"
+tar = "0.4.4"
+walkdir = "0.1.5"
 
 [lib]
 name = "lal"
 path = "src/lib.rs"
 
-[[bin]]
-name = "lal"
-path = "src/main.rs"
-doc = false
-
 [[test]]
-name = "testmain"
 harness = false
-
-[dependencies]
-clap = "2.1.2"
-curl = "0.2.18"
-rustc-serialize = "0.3.18"
-regex = "0.1.55"
-tar = "0.4.4"
-flate2 = "0.2"
-log = "0.3.5"
-loggerv = "0.1.0"
-ansi_term = "0.7.2"
-walkdir = "0.1.5"
-semver = "0.2.3"
-chrono = "0.2"
-filetime = "0.1"
+name = "testmain"

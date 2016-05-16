@@ -37,7 +37,7 @@ extern crate filetime;
 // re-exports
 pub use util::lockfile::Lockfile;
 pub use errors::{LalResult, CliError};
-pub use build::build;
+pub use build::{build, build_list};
 // pub use multibuild::multibuild;
 pub use configure::{configure, Config};
 pub use init::{init, Manifest};

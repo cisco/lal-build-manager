@@ -56,6 +56,13 @@ fn ensure_dir_exists_fresh(subdir: &str) -> io::Result<()> {
     Ok(())
 }
 
+/// Helper to print the buildable components from the `Manifest`
+pub fn build_list(manifest: &Manifest) -> LalResult<()> {
+    for k in manifest.components.keys() {
+        println!("{}", k);
+    }
+    Ok(())
+}
 
 /// Runs the `./BUILD` script in a container and packages artifacts.
 ///

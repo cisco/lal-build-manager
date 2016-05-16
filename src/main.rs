@@ -28,6 +28,7 @@ fn main() {
         .version(crate_version!())
         .setting(AppSettings::VersionlessSubcommands)
         .setting(AppSettings::SubcommandRequiredElseHelp)
+        .setting(AppSettings::ColoredHelp)
         .about("lal dependency manager")
         .arg(Arg::with_name("verbose")
             .short("v")
@@ -110,12 +111,14 @@ fn main() {
         //        .help("Specific components to be built")
         //        .required(true)
         //        .multiple(true)))
+        .subcommand(SubCommand::with_name("list-components")
+            .about("list components that can be used with lal build"))
         .subcommand(SubCommand::with_name("stash")
             .about("Stashes current build OUTPUT in cache for later reuse")
             .arg(Arg::with_name("name")
                 .required(true)
                 .help("Name used for current build")))
-        .subcommand(SubCommand::with_name("verify").about("runs verify script"))
+        .subcommand(SubCommand::with_name("verify").about("verify consistency of INPUT"))
         .subcommand(SubCommand::with_name("configure")
             .about("configures lal")
             .arg(Arg::with_name("yes")
@@ -225,6 +228,8 @@ fn main() {
                              a.value_of("with-version"),
                              a.is_present("strict"));
         result_exit("build", res);
+    } else if let Some(_) = args.subcommand_matches("list-components") {
+        result_exit("list-components", lal::build_list(&manifest))
     } else if let Some(_) = args.subcommand_matches("shell") {
         result_exit("shell", lal::shell(&config));
     } else if let Some(_) = args.subcommand_matches("verify") {

@@ -122,6 +122,21 @@ Before committing:
 cargo fmt # requires `cargo install rustfmt` and $HOME/.cargo/bin on $PATH
 ```
 
+## Autocomplete
+Source the completion file in your `~/.bashrc` or `~/.bash_completion`:
+
+```sh
+echo "source /usr/local/share/lal/lal.complete.sh" >> ~/.bash_completion
+```
+
+If you are installing to a different path, or compiling yourself, set the path to where you have this file. E.g., if compiling:
+
+```sh
+echo "source $PWD/lal.complete.sh" >> ~/.bash_completion
+```
+
+from source directory.
+
 ## Logging
 Configurable via flags before the subcommand:
 
