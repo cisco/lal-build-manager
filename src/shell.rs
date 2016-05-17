@@ -17,11 +17,14 @@ pub fn docker_run(cfg: &configure::Config,
                   command: Vec<String>,
                   interactive: bool)
                   -> LalResult<()> {
-
+    trace!("Finding home and cwd");
     let home = env::home_dir().unwrap(); // crash if no $HOME
     let git_cfg = Path::new(&home).join(".gitconfig");
     let pwd = env::current_dir().unwrap();
 
+    trace!("docker run");
+    trace!(" - mounting {}", git_cfg.display());
+    trace!(" - mounting {}", pwd.display());
     let s = try!(Command::new("docker")
         .arg("run")
         .arg("-v")
@@ -40,6 +43,7 @@ pub fn docker_run(cfg: &configure::Config,
         .stderr(Stdio::inherit())
         .status());
 
+    trace!("Exited docker");
     if !s.success() {
         return Err(CliError::SubprocessFailure(s.code().unwrap_or(1001)));
     }
