@@ -1,4 +1,4 @@
-use std::process::{Command, Stdio};
+use std::process::Command;
 use std::env;
 use std::path::Path;
 use std::vec::Vec;
@@ -25,7 +25,7 @@ pub fn docker_run(cfg: &configure::Config,
     trace!("docker run");
     trace!(" - mounting {}", git_cfg.display());
     trace!(" - mounting {}", pwd.display());
-    let s = try!(Command::new("docker")
+    let s = Command::new("docker")
         .arg("run")
         .arg("-v")
         .arg(format!("{}:/home/lal/.gitconfig", git_cfg.display()))
@@ -38,10 +38,8 @@ pub fn docker_run(cfg: &configure::Config,
         .arg(if interactive { "-it" } else { "-t" })
         .arg(&cfg.container)
         .args(&command)
-        .stdout(Stdio::inherit())
-        .stdin(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .status());
+        .status()
+        .unwrap_or_else(|e| { panic!("failed to execute docker process: {}", e) });
 
     trace!("Exited docker");
     if !s.success() {
