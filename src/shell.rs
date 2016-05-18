@@ -35,6 +35,7 @@ pub fn docker_run(cfg: &Config,
     trace!(" - mounting {}", pwd.display());
     let s = Command::new("docker")
         .arg("run")
+        .arg("--rm")
         .arg("-v")
         .arg(format!("{}:/home/lal/.gitconfig:ro", git_cfg.display()))
         .arg("-v")
