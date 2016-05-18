@@ -3,6 +3,7 @@ use chrono::{Duration, UTC, DateTime};
 use std::path::{Path, PathBuf};
 use std::fs;
 use std::env;
+use std::vec::Vec;
 use std::io::prelude::*;
 use errors::{CliError, LalResult};
 
@@ -18,6 +19,8 @@ pub struct Config {
     pub container: String,
     /// Time of last upgrade_check
     pub upgradeCheck: String,
+    /// Extra volume mounts to be set for the container
+    pub mounts: Vec<String>,
 }
 
 impl Config {
@@ -36,6 +39,7 @@ impl Config {
             cache: cachedir.to_string(),
             container: "edonusdevelopers/centos_build:latest".to_string(),
             upgradeCheck: time.to_rfc3339(),
+            mounts: vec![],
         })
     }
     /// Read and deserialize a Config from ~/.lal/lalrc

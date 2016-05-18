@@ -3,8 +3,7 @@ use std::env;
 use std::path::Path;
 use std::vec::Vec;
 
-use configure;
-use errors::{CliError, LalResult};
+use {Config, CliError, LalResult};
 
 
 /// Runs an arbitrary command in the configured docker environment
@@ -13,7 +12,7 @@ use errors::{CliError, LalResult};
 /// and absorb the `Stdio` supplied by this `Command`.
 ///
 /// This is the most general function, used by both `lal build` and `lal shell`.
-pub fn docker_run(cfg: &configure::Config,
+pub fn docker_run(cfg: &Config,
                   command: Vec<String>,
                   interactive: bool)
                   -> LalResult<()> {
@@ -23,6 +22,19 @@ pub fn docker_run(cfg: &configure::Config,
     let pwd = env::current_dir().unwrap();
 
     trace!("docker run");
+
+    let mut extra_mounts : Vec<String> = vec![];
+    for mount in cfg.mounts.clone() {
+        {
+          // sanity
+          let split : Vec<_> = mount.split(":").collect();
+          assert!(split.len() == 2, "need source:dest as mount type");
+          trace!(" - mounting {}", split[0]);
+        }
+        extra_mounts.push("-v".to_string());
+        extra_mounts.push(mount);
+    }
+
     trace!(" - mounting {}", git_cfg.display());
     trace!(" - mounting {}", pwd.display());
     let s = Command::new("docker")
@@ -31,6 +43,7 @@ pub fn docker_run(cfg: &configure::Config,
         .arg(format!("{}:/home/lal/.gitconfig", git_cfg.display()))
         .arg("-v")
         .arg(format!("{}:/home/lal/volume", pwd.display()))
+        .args(&extra_mounts)
         .args(&vec!["-w", "/home/lal/volume"])
         .args(&vec!["--net", "host"])
         .args(&vec!["--cap-add", "SYS_NICE"])
@@ -49,7 +62,7 @@ pub fn docker_run(cfg: &configure::Config,
 }
 
 /// Mounts and enters `.` in an interactive bash shell using the configured container.
-pub fn shell(cfg: &configure::Config) -> LalResult<()> {
+pub fn shell(cfg: &Config) -> LalResult<()> {
     info!("Entering docker container");
     docker_run(&cfg, vec!["/bin/bash".to_string()], true)
 }
