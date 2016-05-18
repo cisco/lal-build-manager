@@ -79,7 +79,8 @@ pub fn build(cfg: &Config,
              configuration: Option<&str>,
              release: bool,
              version: Option<&str>,
-             strict: bool)
+             strict: bool,
+             printonly: bool)
              -> LalResult<()> {
     try!(ensure_dir_exists_fresh("OUTPUT"));
 
@@ -90,7 +91,9 @@ pub fn build(cfg: &Config,
         if version.is_some() || strict {
             return Err(e);
         }
-        warn!("Verify failed - build will fail on jenkins, but continuing");
+        if !printonly {
+            warn!("Verify failed - build will fail on jenkins, but continuing");
+        }
     }
 
     let component = name.unwrap_or(&manifest.name);
@@ -121,10 +124,13 @@ pub fn build(cfg: &Config,
     let cmd = vec!["./BUILD".to_string(), component.to_string(), configuration_name];
 
     debug!("Build script is {:?}", cmd);
-    info!("Running build script in docker container");
-    try!(shell::docker_run(&cfg, cmd, false));
+    if !printonly {
+        info!("Running build script in docker container");
+    }
 
-    if release {
+    try!(shell::docker_run(&cfg, cmd, false, printonly));
+
+    if release && !printonly {
         trace!("Create ARTIFACT dir");
         try!(ensure_dir_exists_fresh("ARTIFACT"));
         trace!("Copy lockfile to ARTIFACT dir");

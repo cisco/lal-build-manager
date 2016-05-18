@@ -104,7 +104,11 @@ fn main() {
                 .long("with-version")
                 .takes_value(true)
                 .requires("release")
-                .help("Configure lockfiles for a release with an explicit new version")))
+                .help("Configure lockfiles for a release with an explicit new version"))
+            .arg(Arg::with_name("print")
+                .long("print-only")
+                .conflicts_with("release")
+                .help("Only print the docker run command and exit")))
         //.subcommand(SubCommand::with_name("multibuild")
         //    .about("Runs multiple builds sequentially on subdirectories with manifests")
         //    .arg(Arg::with_name("components")
@@ -133,7 +137,10 @@ fn main() {
                 .short("f")
                 .help("overwrites manifest if necessary")))
         .subcommand(SubCommand::with_name("shell")
-            .about("Enters the configured container mounting the current directory"))
+            .about("Enters the configured container mounting the current directory")
+            .arg(Arg::with_name("print")
+                .long("print-only")
+                .help("Only print the docker run command and exit")))
         .subcommand(SubCommand::with_name("upgrade")
             .about("Checks for a new version of lal manually"))
         .subcommand(SubCommand::with_name("clean")
@@ -226,12 +233,13 @@ fn main() {
                              a.value_of("configuration"),
                              a.is_present("release"),
                              a.value_of("with-version"),
-                             a.is_present("strict"));
+                             a.is_present("strict"),
+                             a.is_present("print"));
         result_exit("build", res);
     } else if let Some(_) = args.subcommand_matches("list-components") {
         result_exit("list-components", lal::build_list(&manifest))
-    } else if let Some(_) = args.subcommand_matches("shell") {
-        result_exit("shell", lal::shell(&config));
+    } else if let Some(a) = args.subcommand_matches("shell") {
+        result_exit("shell", lal::shell(&config, a.is_present("print")));
     } else if let Some(_) = args.subcommand_matches("verify") {
         result_exit("verify", lal::verify(&manifest));
     } else if let Some(_) = args.subcommand_matches("status") {

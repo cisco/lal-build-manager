@@ -224,12 +224,12 @@ fn verify_checks() {
 // Shell tests
 fn shell_echo() {
     let cfg = Config::read().unwrap();
-    let r = lal::docker_run(&cfg, vec!["echo".to_string(), "# echo from docker".to_string()], false);
+    let r = lal::docker_run(&cfg, vec!["echo".to_string(), "# echo from docker".to_string()], false, false);
     assert!(r.is_ok(), "shell echoed");
 }
 fn shell_permissions() {
     let cfg = Config::read().unwrap();
-    let r = lal::docker_run(&cfg, vec!["touch".to_string(), "README.md".to_string()], false);
+    let r = lal::docker_run(&cfg, vec!["touch".to_string(), "README.md".to_string()], false, false);
     assert!(r.is_ok(), "could touch files in container");
 }
 
@@ -243,7 +243,7 @@ fn build_stash_and_update_from_stash() {
         Command::new("chmod").arg("+x").arg("BUILD").output().unwrap();
     } // scope ensures file is not busy before lal::build
 
-    let r = lal::build(&cfg, &mf, None, None, true, None, true);
+    let r = lal::build(&cfg, &mf, None, None, true, None, true, false);
     assert!(r.is_ok(), "could run lal build and could make tarball");
 
     // lal stash testmain
