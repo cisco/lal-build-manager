@@ -3,7 +3,7 @@
 A dependency manager built around artifactory and docker. See the [spec](./SPEC.md) for background information.
 
 ## Prerequisites
-You need [docker](https://docs.docker.com/linux/step_one/) (minimum version 1.10), register an account with your username, then get someone to add the necessary credentials to your account. You will need access to the [edonusdevelopers group](https://hub.docker.com/r/edonusdevelopers/).
+You need [docker](https://docs.docker.com/linux/step_one/) (minimum version 1.10), register an account with your username, then get someone to add the necessary credentials to your account. You will need access to the [edonusdevelopers group](https://hub.docker.com/r/edonusdevelopers/), and you need to have called `docker login` on the command line as well.
 
 ## Installation
 Two ways to install, depending on whether you can be bothered to run the rust install script:

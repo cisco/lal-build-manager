@@ -25,14 +25,10 @@ pub fn docker_run(cfg: &Config,
 
     let mut extra_mounts : Vec<String> = vec![];
     for mount in cfg.mounts.clone() {
-        {
-          // sanity
-          let split : Vec<_> = mount.split(":").collect();
-          assert!(split.len() == 2, "need source:dest as mount type");
-          trace!(" - mounting {}", split[0]);
-        }
+        trace!(" - mounting {}", mount.src);
         extra_mounts.push("-v".to_string());
-        extra_mounts.push(mount);
+        let mnt = format!("{}:{}{}", mount.src, mount.dest, if mount.readonly { ":ro" } else { "" });
+        extra_mounts.push(mnt);
     }
 
     trace!(" - mounting {}", git_cfg.display());
@@ -40,7 +36,7 @@ pub fn docker_run(cfg: &Config,
     let s = Command::new("docker")
         .arg("run")
         .arg("-v")
-        .arg(format!("{}:/home/lal/.gitconfig", git_cfg.display()))
+        .arg(format!("{}:/home/lal/.gitconfig:ro", git_cfg.display()))
         .arg("-v")
         .arg(format!("{}:/home/lal/volume", pwd.display()))
         .args(&extra_mounts)

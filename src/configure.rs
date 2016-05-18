@@ -7,6 +7,19 @@ use std::vec::Vec;
 use std::io::prelude::*;
 use errors::{CliError, LalResult};
 
+
+/// Representation of a docker volume mount for `.lalrc`
+#[allow(non_snake_case)]
+#[derive(RustcDecodable, RustcEncodable, Clone)]
+pub struct Mount {
+    /// File or folder to mount
+    pub src: String,
+    /// Location inside the container to mount it at
+    pub dest: String,
+    /// Whether or not to write protect the mount inside the container
+    pub readonly: bool,
+}
+
 /// Representation of `.lalrc`
 #[allow(non_snake_case)]
 #[derive(RustcDecodable, RustcEncodable, Clone)]
@@ -20,7 +33,7 @@ pub struct Config {
     /// Time of last upgrade_check
     pub upgradeCheck: String,
     /// Extra volume mounts to be set for the container
-    pub mounts: Vec<String>,
+    pub mounts: Vec<Mount>,
 }
 
 impl Config {
