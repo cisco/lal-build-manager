@@ -39,7 +39,7 @@ pub use util::lockfile::Lockfile;
 pub use errors::{LalResult, CliError};
 pub use build::{build, build_list};
 // pub use multibuild::multibuild;
-pub use configure::{configure, Config};
+pub use configure::{configure, Config, Mount};
 pub use init::{init, Manifest};
 pub use shell::{shell, docker_run};
 pub use install::{fetch, update, remove, export};
