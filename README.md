@@ -26,6 +26,7 @@ Get [stable rust](https://www.rust-lang.org/downloads.html) (inlined below), clo
 ```sh
 curl -sSf https://static.rust-lang.org/rustup.sh | sh
 git clone git@sqbu-github.cisco.com:Edonus/lal.git && cd lal
+# install libssl-dev and curl (or distro equivalent) BEFORE you compile
 cargo build --release
 ln -sf $PWD/target/release/lal /usr/local/bin/lal
 lal configure
