@@ -111,12 +111,6 @@ fn main() {
                 .long("print-only")
                 .conflicts_with("release")
                 .help("Only print the docker run command and exit")))
-        //.subcommand(SubCommand::with_name("multibuild")
-        //    .about("Runs multiple builds sequentially on subdirectories with manifests")
-        //    .arg(Arg::with_name("components")
-        //        .help("Specific components to be built")
-        //        .required(true)
-        //        .multiple(true)))
         .subcommand(SubCommand::with_name("list-components")
             .about("list components that can be used with lal build"))
         .subcommand(SubCommand::with_name("stash")
@@ -195,16 +189,13 @@ fn main() {
         debug!("Upgrade check done - continuing to requested operation\n");
     }
 
-    // Allow lal init / clean / multibuild without manifest existing in PWD
+    // Allow lal init / clean without manifest existing in PWD
     if let Some(a) = args.subcommand_matches("init") {
         result_exit("init", lal::init(a.is_present("force")));
     } else if let Some(a) = args.subcommand_matches("clean") {
         let days = a.value_of("days").unwrap().parse().unwrap();
         result_exit("clean", lal::clean(&config, days));
-    } // else if let Some(a) = args.subcommand_matches("multibuild") {
-    //    let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
-    //    result_exit("multibuild", lal::multibuild(&config, xs));
-    //}
+    }
 
     // Force manifest to exist before allowing remaining actions
     let manifest = Manifest::read()
