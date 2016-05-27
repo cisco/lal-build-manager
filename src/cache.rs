@@ -77,7 +77,10 @@ pub fn stash(cfg: &Config, mf: &Manifest, name: &str) -> LalResult<()> {
 }
 
 // helper for install::export
-pub fn get_path_to_stashed_component(cfg: &Config, component: &str, stashname: &str) -> LalResult<PathBuf> {
+pub fn get_path_to_stashed_component(cfg: &Config,
+                                     component: &str,
+                                     stashname: &str)
+                                     -> LalResult<PathBuf> {
     let stashdir = Path::new(&cfg.cache).join("stash").join(component).join(stashname);
     if !stashdir.is_dir() {
         return Err(CliError::MissingStashArtifact(format!("{}/{}", component, stashname)));

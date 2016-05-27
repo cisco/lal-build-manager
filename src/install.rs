@@ -54,27 +54,35 @@ pub fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<
 }
 
 // export a component from artifactory to stash
-fn fetch_via_artifactory(cfg: &Config, name: &str, version: Option<u32>) -> LalResult<(PathBuf, Component)> {
+fn fetch_via_artifactory(cfg: &Config,
+                         name: &str,
+                         version: Option<u32>)
+                         -> LalResult<(PathBuf, Component)> {
     use cache;
 
     trace!("Locate component {}", name);
     let component = try!(get_tarball_uri(name, version));
 
-    if ! cache::is_cached(&cfg, &component.name, component.version) {
+    if !cache::is_cached(&cfg, &component.name, component.version) {
         // download to PWD then move it to stash immediately
         let local_tarball = Path::new(".").join(format!("{}.tar", name));
         try!(download_to_path(&component.tarball, &local_tarball));
         try!(cache::store_tarball(&cfg, name, component.version));
     }
-    assert!(cache::is_cached(&cfg, &component.name, component.version), "cached component");
+    assert!(cache::is_cached(&cfg, &component.name, component.version),
+            "cached component");
 
     trace!("Fetching {} from cache", name);
-    let tarname = cache::get_cache_dir(&cfg, &component.name, component.version).join(format!("{}.tar", name));
+    let tarname = cache::get_cache_dir(&cfg, &component.name, component.version)
+        .join(format!("{}.tar", name));
     Ok((tarname, component))
 }
 
 // import a component from stash to artifactory
-fn fetch_and_unpack_component(cfg: &Config, name: &str, version: Option<u32>) -> LalResult<Component> {
+fn fetch_and_unpack_component(cfg: &Config,
+                              name: &str,
+                              version: Option<u32>)
+                              -> LalResult<Component> {
     let (tarname, component) = try!(fetch_via_artifactory(cfg, name, version));
 
     debug!("Unpacking tarball {} for {}",

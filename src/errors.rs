@@ -54,6 +54,8 @@ pub enum CliError {
 
     /// Shell errors from docker subprocess
     SubprocessFailure(i32),
+    /// Docker permission gate
+    DockerPermissionSafety(String),
 
     // fetch/update failures
     /// Unspecified install failure
@@ -99,6 +101,9 @@ impl fmt::Display for CliError {
                 write!(f, "No stashed artifact '{}' found in ~/.lal/cache/stash", s)
             }
             CliError::SubprocessFailure(n) => write!(f, "Process exited with {}", n),
+            CliError::DockerPermissionSafety(ref s) => {
+                write!(f, "ID mismatch inside and outside docker - {}", s)
+            }
             CliError::InstallFailure => write!(f, "Install failed"),
             CliError::GlobalRootFailure(ref s) => write!(f, "Globalroot - {}", s),
             CliError::ArtifactoryFailure(ref s) => write!(f, "Artifactory - {}", s),

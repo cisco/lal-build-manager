@@ -91,9 +91,7 @@ pub fn build(cfg: &Config,
         if version.is_some() || strict {
             return Err(e);
         }
-        if !printonly {
-            warn!("Verify failed - build will fail on jenkins, but continuing");
-        }
+        warn!("Verify failed - build will fail on jenkins, but continuing");
     }
 
     let component = name.unwrap_or(&manifest.name);

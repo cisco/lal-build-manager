@@ -18,8 +18,8 @@ pub fn upgrade_check(silent: bool) -> LalResult<bool> {
         info!("If your version is compiled from source:");
         info!(" - `git pull && cargo build --release` in the source checkout");
         info!("If your version is prebuilt:");
-        info!(" - `curl https://engci-maven.cisco.com/artifactory/CME-release/lal/{}/lal.tar | tar \
-               xz -C /usr/local`",
+        info!(" - `curl https://engci-maven.cisco.com/artifactory/CME-release/lal/{}/lal.tar | \
+               tar xz -C /usr/local`",
               latest);
     } else {
         // No new version

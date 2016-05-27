@@ -20,7 +20,9 @@ fn result_exit<T>(name: &str, x: LalResult<T>) {
 }
 
 fn is_integer(v: String) -> Result<(), String> {
-    if v.parse::<u32>().is_ok() { return Ok(()); }
+    if v.parse::<u32>().is_ok() {
+        return Ok(());
+    }
     Err(format!("{} is not an integer", v))
 }
 fn main() {
@@ -159,7 +161,8 @@ fn main() {
 
     // Allow lal configure without assumptions
     if let Some(a) = args.subcommand_matches("configure") {
-        result_exit("configure", lal::configure(!a.is_present("yes"), true, None));
+        result_exit("configure",
+                    lal::configure(!a.is_present("yes"), true, None));
     }
 
     // Force config to exists before allowing remaining actions
@@ -248,9 +251,10 @@ fn main() {
         result_exit("stash",
                     lal::stash(&config, &manifest, a.value_of("name").unwrap()));
     } else if let Some(a) = args.subcommand_matches("export") {
-        result_exit("export", lal::export(&config,
-                                          a.value_of("component").unwrap(),
-                                          a.value_of("output")));
+        result_exit("export",
+                    lal::export(&config,
+                                a.value_of("component").unwrap(),
+                                a.value_of("output")));
     }
 
     unreachable!("Subcommand valid, but not implemented");
