@@ -93,9 +93,15 @@ pub fn docker_run(cfg: &Config,
 }
 
 /// Mounts and enters `.` in an interactive bash shell using the configured container.
-pub fn shell(cfg: &Config, printonly: bool) -> LalResult<()> {
+pub fn shell(cfg: &Config, printonly: bool, cmd: Option<&str>) -> LalResult<()> {
     if !printonly {
         info!("Entering docker container");
     }
-    docker_run(&cfg, vec!["/bin/bash".to_string()], true, printonly)
+    let mut bash = vec!["/bin/bash".into()];
+    if cmd.is_some() {
+        bash.push("-c".into());
+        // Need to double quote apparently
+        bash.push(format!("\"\"{}\"\"", cmd.unwrap()));
+    }
+    docker_run(&cfg, bash, true, printonly)
 }
