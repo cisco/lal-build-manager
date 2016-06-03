@@ -126,7 +126,7 @@ pub fn build(cfg: &Config,
         info!("Running build script in docker container");
     }
 
-    try!(shell::docker_run(&cfg, cmd, false, printonly));
+    try!(shell::docker_run(&cfg, cmd, false, printonly, false));
 
     if release && !printonly {
         trace!("Create ARTIFACT dir");

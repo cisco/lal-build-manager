@@ -38,7 +38,8 @@ fn permission_sanity_check() -> LalResult<()> {
 pub fn docker_run(cfg: &Config,
                   command: Vec<String>,
                   interactive: bool,
-                  printonly: bool)
+                  printonly: bool,
+                  privileged: bool)
                   -> LalResult<()> {
     trace!("Finding home and cwd");
     let home = env::home_dir().unwrap(); // crash if no $HOME
@@ -62,6 +63,10 @@ pub fn docker_run(cfg: &Config,
     args.push(format!("{}:/home/lal/.gitconfig:ro", git_cfg.display()));
     args.push("-v".into());
     args.push(format!("{}:/home/lal/volume", pwd.display()));
+
+    if privileged {
+        args.push("--privileged".into())
+    }
 
     args.push("-w".into());
     args.push("/home/lal/volume".into());
@@ -93,7 +98,7 @@ pub fn docker_run(cfg: &Config,
 }
 
 /// Mounts and enters `.` in an interactive bash shell using the configured container.
-pub fn shell(cfg: &Config, printonly: bool, cmd: Option<&str>) -> LalResult<()> {
+pub fn shell(cfg: &Config, printonly: bool, cmd: Option<&str>, privileged: bool) -> LalResult<()> {
     if !printonly {
         info!("Entering docker container");
     }
@@ -103,5 +108,5 @@ pub fn shell(cfg: &Config, printonly: bool, cmd: Option<&str>) -> LalResult<()> 
         // Need to double quote apparently
         bash.push(format!("\"\"{}\"\"", cmd.unwrap()));
     }
-    docker_run(&cfg, bash, true, printonly)
+    docker_run(&cfg, bash, true, printonly, privileged)
 }

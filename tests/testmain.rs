@@ -13,7 +13,7 @@ use std::io::prelude::*;
 use walkdir::WalkDir;
 
 //use loggerv::init_with_verbosity;
-use lal::{Config, Manifest, LalResult};
+use lal::{Config, Manifest};
 
 // TODO: macroify this stuff
 
@@ -224,12 +224,12 @@ fn verify_checks() {
 // Shell tests
 fn shell_echo() {
     let cfg = Config::read().unwrap();
-    let r = lal::docker_run(&cfg, vec!["echo".to_string(), "# echo from docker".to_string()], false, false);
+    let r = lal::docker_run(&cfg, vec!["echo".to_string(), "# echo from docker".to_string()], false, false, false);
     assert!(r.is_ok(), "shell echoed");
 }
 fn shell_permissions() {
     let cfg = Config::read().unwrap();
-    let r = lal::docker_run(&cfg, vec!["touch".to_string(), "README.md".to_string()], false, false);
+    let r = lal::docker_run(&cfg, vec!["touch".to_string(), "README.md".to_string()], false, false, false);
     assert!(r.is_ok(), "could touch files in container");
 }
 

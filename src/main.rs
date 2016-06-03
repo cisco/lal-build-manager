@@ -134,8 +134,11 @@ fn main() {
                 .help("overwrites manifest if necessary")))
         .subcommand(SubCommand::with_name("shell")
             .about("Enters the configured container mounting the current directory")
-            .arg(Arg::with_name("command")
-                .help("Quoted command to use instead of /bin/bash"))
+            .arg(Arg::with_name("command").help("Quoted command to use instead of /bin/bash"))
+            .arg(Arg::with_name("privileged")
+                .short("p")
+                .long("privileged")
+                .help("Run docker in privileged mode"))
             .arg(Arg::with_name("print")
                 .long("print-only")
                 .help("Only print the docker run command and exit")))
@@ -236,7 +239,10 @@ fn main() {
         result_exit("list-components", lal::build_list(&manifest))
     } else if let Some(a) = args.subcommand_matches("shell") {
         result_exit("shell",
-                    lal::shell(&config, a.is_present("print"), a.value_of("command")));
+                    lal::shell(&config,
+                               a.is_present("print"),
+                               a.value_of("command"),
+                               a.is_present("privileged")));
     } else if let Some(_) = args.subcommand_matches("verify") {
         result_exit("verify", lal::verify(&manifest));
     } else if let Some(_) = args.subcommand_matches("status") {
