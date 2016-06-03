@@ -41,4 +41,6 @@ else
   rm -rf ARTIFACT
   mkdir "ARTIFACT/${lalversion}" -p
   cp lal.tar "ARTIFACT/${lalversion}/"
-fi
+  # Update the latest package
+  cp "ARTIFACT/${lalversion}" "ARTIFACT/latest" -R
+#fi
