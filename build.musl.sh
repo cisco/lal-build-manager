@@ -43,4 +43,4 @@ else
   cp lal.tar "ARTIFACT/${lalversion}/"
   # Update the latest package
   cp "ARTIFACT/${lalversion}" "ARTIFACT/latest" -R
-#fi
+fi
