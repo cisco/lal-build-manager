@@ -33,6 +33,7 @@ extern crate walkdir;
 extern crate semver;
 extern crate chrono;
 extern crate filetime;
+extern crate rand;
 
 // re-exports
 pub use util::lockfile::Lockfile;

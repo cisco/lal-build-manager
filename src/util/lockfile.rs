@@ -9,6 +9,8 @@ use std::collections::BTreeSet;
 use errors::{CliError, LalResult};
 use util::input;
 
+use rand;
+
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Container {
     name: String,
@@ -37,14 +39,16 @@ impl Lockfile {
     ///
     /// This will split the container on : to actually fetch the tag, and if no tag
     /// was present, it will assume tag is latest as per docker conventions.
-    /// If no version is given, the version is EXPERIMENTAL for buildlib compat.
+    /// If no version is given, the version is EXPERIMENTAL+{randhex} for Colony.
     pub fn new(name: &str, container: &str, v: Option<&str>, build_cfg: Option<&str>) -> Lockfile {
         let split: Vec<&str> = container.split(":").collect();
         let tag = if split.len() == 2 { split[1] } else { "latest" };
         let cname = if split.len() == 2 { split[0] } else { container };
+
+        let def_version = format!("EXPERIMENTAL+{:x}", rand::random::<u64>());
         Lockfile {
             name: name.to_string(),
-            version: v.unwrap_or("EXPERIMENTAL").to_string(),
+            version: v.unwrap_or(&def_version).to_string(),
             config: build_cfg.unwrap_or("release").to_string(),
             container: Container {
                 name: cname.to_string(),

@@ -1,7 +1,7 @@
 [package]
 authors = ["Eirik Albrigtsen <ealbrigt@cisco.com>"]
 name = "lal"
-version = "0.22.2"
+version = "0.22.3"
 
 [[bin]]
 doc = false
@@ -22,6 +22,7 @@ rustc-serialize = "0.3.18"
 semver = "0.2.3"
 tar = "0.4.4"
 walkdir = "0.1.5"
+rand = "0.3.14"
 
 [lib]
 name = "lal"
