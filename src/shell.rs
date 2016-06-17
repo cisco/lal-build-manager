@@ -98,15 +98,22 @@ pub fn docker_run(cfg: &Config,
 }
 
 /// Mounts and enters `.` in an interactive bash shell using the configured container.
-pub fn shell(cfg: &Config, printonly: bool, cmd: Option<&str>, privileged: bool) -> LalResult<()> {
+///
+/// If a command vector is given, this is called non-interactively instead of /bin/bash
+/// You can thus do `lal shell ./BUILD target` or ``lal shell bash -c "cmd1; cmd2"`
+pub fn shell(cfg: &Config, printonly: bool, cmd: Option<Vec<&str>>, privileged: bool) -> LalResult<()> {
     if !printonly {
         info!("Entering docker container");
     }
-    let mut bash = vec!["/bin/bash".into()];
+    let mut bash = vec![];
+    let interactive = cmd.is_none();
     if cmd.is_some() {
-        bash.push("-c".into());
-        // Need to double quote apparently
-        bash.push(format!("\"\"{}\"\"", cmd.unwrap()));
+        for c in cmd.unwrap() {
+            bash.push(c.to_string())
+        }
     }
-    docker_run(&cfg, bash, true, printonly, privileged)
+    else {
+        bash.push("/bin/bash".into())
+    }
+    docker_run(&cfg, bash, interactive, printonly, privileged)
 }

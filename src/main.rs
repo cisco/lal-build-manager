@@ -93,7 +93,8 @@ fn main() {
             .about("Prints current dependencies and their status"))
         .subcommand(SubCommand::with_name("shell")
             .about("Enters the configured container mounting the current directory")
-            .arg(Arg::with_name("command").help("Quoted command to use instead of /bin/bash"))
+            .setting(AppSettings::TrailingVarArg)
+            .arg(Arg::with_name("cmd").multiple(true))
             .arg(Arg::with_name("privileged")
                 .short("p")
                 .long("privileged")
@@ -242,10 +243,13 @@ fn main() {
     } else if let Some(_) = args.subcommand_matches("list-components") {
         result_exit("list-components", lal::build_list(&manifest))
     } else if let Some(a) = args.subcommand_matches("shell") {
+        let xs = if a.is_present("cmd") {
+            Some(a.values_of("cmd").unwrap().collect::<Vec<_>>())
+        } else { None };
         result_exit("shell",
                     lal::shell(&config,
                                a.is_present("print"),
-                               a.value_of("command"),
+                               xs,
                                a.is_present("privileged")));
     } else if let Some(_) = args.subcommand_matches("verify") {
         result_exit("verify", lal::verify(&manifest));
