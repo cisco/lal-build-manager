@@ -96,15 +96,29 @@ fn main() {
         .subcommand(SubCommand::with_name("shell")
             .about("Enters the configured container mounting the current directory")
             .alias("sh")
-            .setting(AppSettings::TrailingVarArg)
-            .arg(Arg::with_name("cmd").multiple(true))
             .arg(Arg::with_name("privileged")
                 .short("p")
                 .long("privileged")
                 .help("Run docker in privileged mode"))
             .arg(Arg::with_name("print")
                 .long("print-only")
-                .help("Only print the docker run command and exit")))
+                .help("Only print the docker run command and exit"))
+            .setting(AppSettings::TrailingVarArg)
+            .arg(Arg::with_name("cmd").multiple(true)))
+        .subcommand(SubCommand::with_name("script")
+            .about("Runs scripts from .lal/scripts in the configured container")
+            .alias("run")
+            .arg(Arg::with_name("script")
+                .help("Name of the script file to be run")
+                .required(true))
+            .arg(Arg::with_name("privileged")
+                .short("p")
+                .long("privileged")
+                .help("Run docker in privileged mode"))
+            .setting(AppSettings::TrailingVarArg)
+            .arg(Arg::with_name("parameters")
+                .multiple(true)
+                .help("Parameters to pass on to the script")))
         .subcommand(SubCommand::with_name("init")
             .about("Create a manifest file in the current directory")
             .arg(Arg::with_name("force")
@@ -254,6 +268,15 @@ fn main() {
                                a.is_present("print"),
                                xs,
                                a.is_present("privileged")));
+    } else if let Some(a) = args.subcommand_matches("script") {
+        let xs = if a.is_present("parameters") {
+            a.values_of("parameters").unwrap().collect::<Vec<_>>()
+        } else { vec![] };
+        result_exit("script",
+                    lal::script(&config,
+                                a.value_of("script").unwrap(),
+                                xs,
+                                a.is_present("privileged")));
     } else if let Some(_) = args.subcommand_matches("verify") {
         result_exit("verify", lal::verify(&manifest));
     } else if let Some(_) = args.subcommand_matches("status") {

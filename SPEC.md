@@ -7,9 +7,10 @@
 - [`lal verify`](#lal-verify) - verify manifest validity + verify flat lockfile dependency tree
 - [`lal build [name]`](#lal-build-name-flags) - run canonical build in docker with current directory mounted
 - [`lal shell`](#lal-shell) - enter container environment mounting current directory
+- [`lal script`](#lal-script-name) - runs a non-build script through lal shell
 - [`lal configure`](#lal-configure) - generate configuration file
 - [`lal init`](#lal-init) - generate manifest file
-- [`lal stash name`](#lal-stash-name) - copies current `OUTPUT` to cache
+- [`lal stash`](#lal-stash-name) - copies current `OUTPUT` to cache
 - [`lal upgrade`](#lal-upgrade) - performs an upgrade check
 - [`lal clean`](#lal-clean) - cleans up cache directory
 - [`lal export`](#lal-export-component) - obtain a raw tarball from artifactory
@@ -191,6 +192,25 @@ docker run \
 ```
 
 You may just have your own wrapper for this anyway, but this is the canonical one. You can not use `lal` inside the container anyway.
+
+lal shell should allow passing in trailing arguments to run arbitrary commands:
+
+- `lal shell ./BUILD something` # runs this command rather than `/bin/bash` and removes `-i`
+- `lal shell -p ./BUILD something` # same, but adds --privileged to `docker`
+- `lal shell bash -c "cmd1; cmd2"` # multiple commands in one go
+- `lal shell --print-only` prints above command
+- `lal shell --print-only ./BUILD something` # prints what would have been done
+
+#### lal script [name]
+Runs scripts in the local `.lal/scripts/` folder via `lal shell`. Because `lal shell` mounts `$PWD`, the scripts folder can contain parametrised scripts such as:
+
+```sh
+#!/bin/bash
+# contents of .lal/scripts/subroutine
+echo "hi $1 $2"
+```
+
+Which could be invoked with `lal script subroutine there mr`, which would `echo hi there mr` in the container.
 
 #### lal stash [name]
 Stashes the current `OUTPUT` folder to in `~/.lal/cache/stash/${component}/${NAME}` for future reuse. This can be put into another repository with `lal update component=name`

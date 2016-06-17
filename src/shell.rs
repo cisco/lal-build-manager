@@ -117,3 +117,23 @@ pub fn shell(cfg: &Config, printonly: bool, cmd: Option<Vec<&str>>, privileged: 
     }
     docker_run(&cfg, bash, interactive, printonly, privileged)
 }
+
+/// Runs a script in ./.lal/scripts/ with supplied arguments in a shell
+///
+/// This is a convenience helper for running things that aren't builds.
+/// E.g. `lal run my-large-test RUNONLY=foo`
+pub fn script(cfg: &Config, name: &str, args: Vec<&str>, privileged: bool) -> LalResult<()> {
+    let pth = Path::new(".").join(".lal").join("scripts").join(&name);
+    if !pth.exists() {
+        return Err(CliError::MissingScript(name.into()))
+    }
+    // TODO: could verify if they are executable and start with a shebang
+    // Assume for now, it will fail reasonably anyway.
+
+    // Simply run the script by adding on the arguments
+    let mut cmd = vec![format!("{}", pth.display())];
+    for a in args {
+        cmd.push(a.to_string())
+    }
+    Ok(try!(docker_run(cfg, cmd, false, false, privileged)))
+}

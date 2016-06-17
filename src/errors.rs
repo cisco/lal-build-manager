@@ -40,6 +40,10 @@ pub enum CliError {
     /// Build configurations does not match manifest or user input
     InvalidBuildConfiguration(String),
 
+    // script errors
+    /// Script not found in local .lal/scripts/ directory
+    MissingScript(String),
+
     // cache errors
     /// Failed to find a tarball after fetching from artifactory
     MissingTarball,
@@ -89,6 +93,9 @@ impl fmt::Display for CliError {
             }
             CliError::InvalidBuildConfiguration(ref s) => {
                 write!(f, "Invalid build configuration - {}", s)
+            }
+            CliError::MissingScript(ref s) => {
+                write!(f, "Missing script '{}' in local folder .lal/scripts/", s)
             }
             CliError::MissingTarball => write!(f, "Tarball missing in PWD"),
             CliError::MissingBuild => write!(f, "No build found in OUTPUT"),

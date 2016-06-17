@@ -38,7 +38,7 @@ mod chk {
 fn main() {
     //init_with_verbosity(0).unwrap();
     let has_docker = true;
-    let num_tests = if has_docker { 14 } else { 10 };
+    let num_tests = if has_docker { 15 } else { 11 };
 
     println!("# lal tests");
     println!("1..{}", num_tests);
@@ -89,6 +89,10 @@ fn main() {
         i += 1;
         build_stash_and_update_from_stash();
         println!("ok {} build_stash_and_update_from_stash", i);
+
+        i += 1;
+        run_scripts();
+        println!("ok {} run_scripts", i);
 
         i += 1;
         status_on_experimentals();
@@ -253,6 +257,18 @@ fn build_stash_and_update_from_stash() {
     // lal update lal=testmain
     let ri = lal::update(mf.clone(), &cfg, vec!["lal=testmain"], false, false);
     chk::is_ok(ri, "could update lal from stash");
+}
+
+fn run_scripts() {
+    {
+        Command::new("mkdir").arg("-p").arg(".lal/scripts").output().unwrap();
+        let mut f = File::create("./.lal/scripts/subroutine").unwrap();
+        write!(f, "#!/bin/bash\necho hi $1 $2\n").unwrap();
+        Command::new("chmod").arg("+x").arg(".lal/scripts/subroutine").output().unwrap();
+    }
+    let cfg = Config::read().unwrap();
+    let r = lal::script(&cfg, "subroutine", vec!["hi", "there"], false);
+    assert!(r.is_ok(), "could run subroutine script");
 }
 
 fn status_on_experimentals() {
