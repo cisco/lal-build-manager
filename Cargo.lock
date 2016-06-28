@@ -1,6 +1,6 @@
 [root]
 name = "lal"
-version = "0.24.0"
+version = "0.25.0"
 dependencies = [
  "ansi_term 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.2.22 (registry+https://github.com/rust-lang/crates.io-index)",
