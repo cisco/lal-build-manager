@@ -71,7 +71,7 @@ pub fn docker_run(cfg: &Config,
     args.push("-w".into());
     args.push("/home/lal/volume".into());
     args.push("--user".into());
-    args.push("lal".into());
+    args.push("1000".into());
     args.push(format!("{}", if interactive { "-it" } else { "-t" }));
     args.push(cfg.container.clone());
     for c in command {

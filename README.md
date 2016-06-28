@@ -105,6 +105,14 @@ The last changeset will be tagged by jenkins if it succeeds. These have been don
 
 Note that to set up jenkins jobs and commit hooks you need to follow usage instructions on [github-config](https://sqbu-github.cisco.com/Edonus/github-config#usage), and then [jenkins-config](https://sqbu-github.cisco.com/Edonus/jenkins-config#usage).
 
+## Docker Image
+The `build` and `shell` commands will use `docker run` on a configured image. For this to work without messing with permissions, two conditions must be met:
+
+- configured docker image must have a user with uid 1000
+- linux user using `lal` must be have uid 1000
+
+We have found this to be true for most linux machines, and it is unfortunately a way easier thing to get working than docker usernamespaces (which is currently incompatible with features like host networking).
+
 ## Developing
 To hack on `lal`, follow normal install procedure, but build non-release builds iteratively.
 When developing we do not do `--release`. Thus you should for convenience link `lal` via `ln -sf $PWD/target/debug/lal /usr/local/bin/lal`.
