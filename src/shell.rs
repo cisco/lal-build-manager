@@ -72,6 +72,13 @@ pub fn docker_run(cfg: &Config,
     args.push("/home/lal/volume".into());
     args.push("--user".into());
     args.push("1000".into());
+
+    // If no command, then override entrypoint to /bin/bash
+    // This happens when we use `lal shell` without args
+    if command.is_empty() {
+        args.push("--entrypoint".into());
+        args.push("/bin/bash".into());
+    }
     args.push(format!("{}", if interactive { "-it" } else { "-t" }));
     args.push(cfg.container.clone());
     for c in command {
@@ -111,9 +118,6 @@ pub fn shell(cfg: &Config, printonly: bool, cmd: Option<Vec<&str>>, privileged: 
         for c in cmd.unwrap() {
             bash.push(c.to_string())
         }
-    }
-    else {
-        bash.push("/bin/bash".into())
     }
     docker_run(&cfg, bash, interactive, printonly, privileged)
 }
