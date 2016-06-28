@@ -108,8 +108,8 @@ Note that to set up jenkins jobs and commit hooks you need to follow usage instr
 ## Docker Image
 The `build` and `shell` commands will use `docker run` on a configured image. For this to work without messing with permissions, two conditions must be met:
 
-- configured docker image must have a user with uid 1000
-- linux user using `lal` must be have uid 1000
+- configured docker image must have a `lal` user with uid `1000`
+- linux user outside docker must be have uid `1000`
 
 We have found this to be true for most linux machines, and it is unfortunately a way easier thing to get working than docker usernamespaces (which is currently incompatible with features like host networking).
 

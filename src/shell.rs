@@ -71,7 +71,7 @@ pub fn docker_run(cfg: &Config,
     args.push("-w".into());
     args.push("/home/lal/volume".into());
     args.push("--user".into());
-    args.push("1000".into());
+    args.push("lal".into());
 
     // If no command, then override entrypoint to /bin/bash
     // This happens when we use `lal shell` without args
