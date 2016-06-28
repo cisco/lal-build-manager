@@ -101,11 +101,14 @@ A per-machine configuration file from `lal configure`.
 {
   "container": "edonusdevelopers/centos_build",
   "cache": "~/.lal/cache",
-  "registry": "http://engci-maven.cisco.com/artifactory/CME-group"
+  "registry": "http://engci-maven.cisco.com/artifactory/CME-group",
+  "mounts": [
+    { "src": "/mnt/tools", "dest": "/tools", "readonly": true }
+  ]
 }
 ```
 
-A specialized per-repo configuration file (`$PWD/.lalrc`) with the same format can override specific keys from the machine configuration.
+A specialized per-repo configuration file (`$PWD/.lalrc`) with the same format can override the `mounts` and `container` keys from the machine configuration.
 
 ## Caching
 The local cache is populated when doing fetches from the registry, when building locally, stashing them, or when linking them directly.

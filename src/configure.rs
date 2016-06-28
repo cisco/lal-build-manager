@@ -20,7 +20,7 @@ pub struct Mount {
     pub readonly: bool,
 }
 
-/// Representation of `.lalrc`
+/// Representation of `lalrc`
 #[allow(non_snake_case)]
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
@@ -34,6 +34,28 @@ pub struct Config {
     pub upgradeCheck: String,
     /// Extra volume mounts to be set for the container
     pub mounts: Vec<Mount>,
+}
+
+// Representation of a repo-wide overriding .lalrc
+#[derive(RustcDecodable, Clone)]
+struct PartialConfig {
+    /// Overridden container to use for this repo
+    container: Option<String>,
+    /// Overridden mounts to use for this repo
+    mounts: Option<Vec<Mount>>
+}
+impl PartialConfig {
+    fn read() -> LalResult<Option<PartialConfig>> {
+        let cfg_path = Path::new(".lalrc");
+        if !cfg_path.exists() {
+            return Ok(None);
+        }
+        let mut f = try!(fs::File::open(&cfg_path));
+        let mut cfg_str = String::new();
+        try!(f.read_to_string(&mut cfg_str));
+        let res : PartialConfig = try!(json::decode(&cfg_str));
+        Ok(Some(res))
+    }
 }
 
 impl Config {
@@ -65,7 +87,17 @@ impl Config {
         let mut f = try!(fs::File::open(&cfg_path));
         let mut cfg_str = String::new();
         try!(f.read_to_string(&mut cfg_str));
-        let res = try!(json::decode(&cfg_str));
+        let mut res : Config = try!(json::decode(&cfg_str));
+        let overrides = try!(PartialConfig::read());
+        if overrides.is_some() {
+            let partial = overrides.unwrap();
+            if partial.container.is_some() {
+                res.container = partial.container.unwrap();
+            }
+            if partial.mounts.is_some() {
+                res.mounts = partial.mounts.unwrap();
+            }
+        }
         Ok(res)
     }
     /// Checks if it is time to perform an upgrade check
