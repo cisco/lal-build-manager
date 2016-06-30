@@ -1,7 +1,7 @@
 use std::io::prelude::*;
 use std::fs::File;
 use std::path::Path;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use rustc_serialize::json;
 
 use walkdir::WalkDir;
@@ -24,10 +24,10 @@ fn read_partial_lockfile(component: &str) -> LalResult<PartialLock> {
     Ok(res)
 }
 
-pub fn analyze() -> LalResult<HashMap<String, String>> {
+pub fn analyze() -> LalResult<BTreeMap<String, String>> {
     let input = Path::new("./INPUT");
 
-    let mut deps = HashMap::new();
+    let mut deps = BTreeMap::new();
     if !input.is_dir() {
         return Ok(deps);
     }
@@ -56,7 +56,7 @@ pub struct InputDependency {
     pub requirement: Option<String>, // from manifest
 }
 
-pub type InputMap = HashMap<String, InputDependency>;
+pub type InputMap = BTreeMap<String, InputDependency>;
 
 
 pub fn analyze_full(manifest: &Manifest) -> LalResult<InputMap> {
