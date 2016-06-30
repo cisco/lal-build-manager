@@ -88,8 +88,7 @@ fn main() {
                 .long("save-dev")
                 .conflicts_with("save")
                 .help("Save updated versions in devDependencies in the manifest")))
-        .subcommand(SubCommand::with_name("verify")
-            .about("verify consistency of INPUT"))
+        .subcommand(SubCommand::with_name("verify").about("verify consistency of INPUT"))
         .subcommand(SubCommand::with_name("status")
             .alias("ls")
             .about("Prints current dependencies and their status"))
@@ -197,13 +196,13 @@ fn main() {
 
     // Allow lal upgrade without manifest
     if let Some(_) = args.subcommand_matches("upgrade") {
-        result_exit("upgrade", lal::upgrade_check(false)); // explicit, verbose check
+        result_exit("upgrade", lal::upgrade_check(&config, false)); // explicit, verbose check
     }
     // Timed daily, silent upgrade check (if not using upgrade)
     if args.subcommand_name() != Some("upgrade") && config.upgrade_check_time() {
         debug!("Performing daily upgrade check");
         // silent dry-run
-        let _ = lal::upgrade_check(false).map_err(|e| {
+        let _ = lal::upgrade_check(&config, false).map_err(|e| {
             error!("Daily upgrade check failed: {}", e);
             // don't halt here if this ever happens as it could break it for users
         });
@@ -262,7 +261,9 @@ fn main() {
     } else if let Some(a) = args.subcommand_matches("shell") {
         let xs = if a.is_present("cmd") {
             Some(a.values_of("cmd").unwrap().collect::<Vec<_>>())
-        } else { None };
+        } else {
+            None
+        };
         result_exit("shell",
                     lal::shell(&config,
                                a.is_present("print"),
@@ -271,7 +272,9 @@ fn main() {
     } else if let Some(a) = args.subcommand_matches("script") {
         let xs = if a.is_present("parameters") {
             a.values_of("parameters").unwrap().collect::<Vec<_>>()
-        } else { vec![] };
+        } else {
+            vec![]
+        };
         result_exit("script",
                     lal::script(&config,
                                 a.value_of("script").unwrap(),

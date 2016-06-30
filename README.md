@@ -1,18 +1,20 @@
-# Edonus dependency manager [![build Status](https://engci-jenkins-gpk.cisco.com/jenkins/buildStatus/icon?job=team_CME/lal)](https://engci-jenkins-gpk.cisco.com/jenkins/job/team_CME/job/lal/)
+# lal dependency manager [![build Status](https://engci-jenkins-gpk.cisco.com/jenkins/buildStatus/icon?job=team_CME/lal)](https://engci-jenkins-gpk.cisco.com/jenkins/job/team_CME/job/lal/)
 
 A dependency manager built around artifactory and docker. See the [spec](./SPEC.md) for background information.
 
 ## Prerequisites
-You need [docker](https://docs.docker.com/linux/step_one/) (minimum version 1.10), register an account with your username, then get someone to add the necessary credentials to your account. You will need access to the [edonusdevelopers group](https://hub.docker.com/r/edonusdevelopers/), and you need to have called `docker login` on the command line as well.
+You need [docker](https://docs.docker.com/linux/step_one/) (minimum version 1.10), register an account with your username, then get someone to add the necessary credentials to your account.
+
+You will need access to the [edonusdevelopers group](https://hub.docker.com/r/edonusdevelopers/), and you need to have called `docker login` on the command line as well.
 
 ## Installation
 Two ways to install, depending on whether you can be bothered to run the rust install script:
 
 ### Precompiled releases (instant)
-Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) directly from [artifactory](https://engci-maven.cisco.com/artifactory/CME-release/lal/):
+Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) directly from [artifactory](https://engci-maven-master.cisco.com/artifactory/CME-release/lal/):
 
 ```sh
-curl https://engci-maven.cisco.com/artifactory/CME-release/lal/latest/lal.tar | tar xz -C /usr/local
+curl https://engci-maven-master.cisco.com/artifactory/CME-release/lal/latest/lal.tar | tar xz -C /usr/local
 lal configure
 ```
 
@@ -70,7 +72,7 @@ cd ciscossl
 # edit
 lal build
 lal stash asan
-cd ../monolith
+cd ../media-engine
 lal update ciscossl=asan # update named version (always from stash)
 lal build
 ```

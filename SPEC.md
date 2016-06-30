@@ -99,16 +99,26 @@ A per-machine configuration file from `lal configure`.
 
 ```json
 {
-  "container": "edonusdevelopers/centos_build",
-  "cache": "~/.lal/cache",
-  "registry": "http://engci-maven.cisco.com/artifactory/CME-group",
+  "artifactory": {
+    "server": "https://engci-maven-master.cisco.com/artifactory",
+    "group": "CME-release"
+  },
+  "cache": "/home/devuser/.lal/cache",
+  "container": "edonusdevelopers/centos_build:latest",
+  "upgradeCheck": "2016-06-30T12:20:10.126707483+00:00",
   "mounts": [
-    { "src": "/mnt/tools", "dest": "/tools", "readonly": true }
+    {
+      "src": "/mnt/tools",
+      "dest": "/tools",
+      "readonly": true
+    }
   ]
 }
 ```
 
 A specialized per-repo configuration file (`$PWD/.lalrc`) with the same format can override the `mounts` and `container` keys from the machine configuration.
+
+The `upgradeCheck` value is updated automatically by `lal upgrade`.
 
 ## Caching
 The local cache is populated when doing fetches from the registry, when building locally, stashing them, or when linking them directly.
@@ -133,6 +143,8 @@ Sources:
 - `globals` are unpacked straight from the registry
 - `stash` are tarballs of OUTPUT of builds when doing `lal stash <name>`
 
+## Versioning
+As implied by the structure of the Manifest, Lockfile, and cache directories, the *only* versioning scheme supported by `lal` is a monotonically increasing integer sequence.
 
 ### Common Command Specification
 #### lal status
@@ -230,7 +242,8 @@ Verifies that:
 Interactively configures:
 
 - docker container to use for `build` (default: edonusdevelopers/centos_build)
-- registry to use (default: http://engci-maven.cisco.com/artifactory/CME-group)
+- artifactory server (default: https://engci-maven-master.cisco.com/artifactory)
+- artifactory group (default: CME-release)
 - cache directory to use (default: ~/.lal/cache)
 - cache size warning (default: 5G)
 

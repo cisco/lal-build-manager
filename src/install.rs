@@ -2,7 +2,6 @@ use std::io::{self, Error, ErrorKind};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-// use util::globalroot::get_tarball_uri;
 use util::artifactory::get_tarball_uri;
 use Manifest;
 use configure::Config;
@@ -61,7 +60,7 @@ fn fetch_via_artifactory(cfg: &Config,
     use cache;
 
     trace!("Locate component {}", name);
-    let component = try!(get_tarball_uri(name, version));
+    let component = try!(get_tarball_uri(&cfg.artifactory, name, version));
 
     if !cache::is_cached(&cfg, &component.name, component.version) {
         // download to PWD then move it to stash immediately

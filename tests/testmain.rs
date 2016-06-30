@@ -278,7 +278,8 @@ fn status_on_experimentals() {
 }
 
 fn upgrade_does_not_fail() {
-    let uc = lal::upgrade_check(true);
+    let cfg = Config::read().unwrap();
+    let uc = lal::upgrade_check(&cfg, true);
     assert!(uc.is_ok(), "could perform upgrade check");
     let upgraded = uc.unwrap();
     assert!(!upgraded, "we never have upgrades in the tip source tree");

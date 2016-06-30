@@ -108,7 +108,11 @@ pub fn docker_run(cfg: &Config,
 ///
 /// If a command vector is given, this is called non-interactively instead of /bin/bash
 /// You can thus do `lal shell ./BUILD target` or ``lal shell bash -c "cmd1; cmd2"`
-pub fn shell(cfg: &Config, printonly: bool, cmd: Option<Vec<&str>>, privileged: bool) -> LalResult<()> {
+pub fn shell(cfg: &Config,
+             printonly: bool,
+             cmd: Option<Vec<&str>>,
+             privileged: bool)
+             -> LalResult<()> {
     if !printonly {
         info!("Entering docker container");
     }
@@ -129,7 +133,7 @@ pub fn shell(cfg: &Config, printonly: bool, cmd: Option<Vec<&str>>, privileged: 
 pub fn script(cfg: &Config, name: &str, args: Vec<&str>, privileged: bool) -> LalResult<()> {
     let pth = Path::new(".").join(".lal").join("scripts").join(&name);
     if !pth.exists() {
-        return Err(CliError::MissingScript(name.into()))
+        return Err(CliError::MissingScript(name.into()));
     }
     // TODO: could verify if they are executable and start with a shebang
     // Assume for now, it will fail reasonably anyway.

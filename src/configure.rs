@@ -9,7 +9,6 @@ use errors::{CliError, LalResult};
 
 
 /// Representation of a docker volume mount for `.lalrc`
-#[allow(non_snake_case)]
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Mount {
     /// File or folder to mount
@@ -20,12 +19,21 @@ pub struct Mount {
     pub readonly: bool,
 }
 
+/// Static Artifactory locations to use
+#[derive(RustcDecodable, RustcEncodable, Clone)]
+pub struct ArtifactoryConfig {
+    /// Location of artifactory server
+    pub server: String,
+    /// Group to fetch artifacts from in artifactory
+    pub group: String,
+}
+
 /// Representation of `lalrc`
 #[allow(non_snake_case)]
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
-    /// Location of artifactory root
-    pub artifactory: String, // TODO: use! hardcoded in artifactory.rs
+    /// Configuration settings for Artifactory
+    pub artifactory: ArtifactoryConfig,
     /// Cache directory for global and stashed builds
     pub cache: String,
     /// Docker container (potentially with tag) to use
@@ -42,7 +50,7 @@ struct PartialConfig {
     /// Overridden container to use for this repo
     container: Option<String>,
     /// Overridden mounts to use for this repo
-    mounts: Option<Vec<Mount>>
+    mounts: Option<Vec<Mount>>,
 }
 impl PartialConfig {
     fn read() -> LalResult<Option<PartialConfig>> {
@@ -53,7 +61,7 @@ impl PartialConfig {
         let mut f = try!(fs::File::open(&cfg_path));
         let mut cfg_str = String::new();
         try!(f.read_to_string(&mut cfg_str));
-        let res : PartialConfig = try!(json::decode(&cfg_str));
+        let res: PartialConfig = try!(json::decode(&cfg_str));
         Ok(Some(res))
     }
 }
@@ -69,8 +77,12 @@ impl Config {
         let cachepath = Path::new(&home).join(".lal").join("cache");
         let cachedir = cachepath.as_path().to_str().unwrap();
         let time = UTC::now() - Duration::days(2);
+        let artf = ArtifactoryConfig {
+            server: "https://engci-maven-master.cisco.com/artifactory".to_string(),
+            group: "CME-release".to_string(),
+        };
         Ok(Config {
-            artifactory: "http://engci-maven.cisco.com/artifactory/CME-group".to_string(),
+            artifactory: artf,
             cache: cachedir.to_string(),
             container: "edonusdevelopers/centos_build:latest".to_string(),
             upgradeCheck: time.to_rfc3339(),
@@ -87,7 +99,7 @@ impl Config {
         let mut f = try!(fs::File::open(&cfg_path));
         let mut cfg_str = String::new();
         try!(f.read_to_string(&mut cfg_str));
-        let mut res : Config = try!(json::decode(&cfg_str));
+        let mut res: Config = try!(json::decode(&cfg_str));
         let overrides = try!(PartialConfig::read());
         if overrides.is_some() {
             let partial = overrides.unwrap();
@@ -169,8 +181,9 @@ pub fn configure(term_prompt: bool, save: bool, container: Option<&str>) -> LalR
 
     if term_prompt {
         // Prompt for values:
-        cfg.artifactory = prompt("artifactory", cfg.artifactory);
-        cfg.cache = prompt("cache", cfg.cache);
+        cfg.artifactory.server = prompt("artifactory server", cfg.artifactory.server);
+        cfg.artifactory.group = prompt("artifactory group", cfg.artifactory.group);
+        cfg.cache = prompt("cache directory", cfg.cache);
         cfg.container = prompt("container", cfg.container);
     }
     // Tests to avoid depending on other containers

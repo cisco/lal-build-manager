@@ -4,6 +4,7 @@ use rustc_serialize::json;
 use semver::Version;
 
 use install::Component;
+use configure::ArtifactoryConfig;
 use errors::{CliError, LalResult};
 
 // Need these to query for stored artifacts:
@@ -18,7 +19,11 @@ struct ArtifactoryStorageResponse {
     children: Vec<ArtifactoryVersion>,
 }
 
-fn get_latest(uri: &str) -> LalResult<u32> {
+/// Query the Artifactory storage api
+///
+/// This will get, then parse all results as u32s, then get the largest one.
+/// This assumes versoning is done via a single integer.
+fn get_storage_as_u32(uri: &str) -> LalResult<u32> {
     use curl::http;
 
     debug!("GET {}", uri);
@@ -48,26 +53,25 @@ fn get_latest(uri: &str) -> LalResult<u32> {
     Err(CliError::ArtifactoryFailure("No version information found on API"))
 }
 
-fn get_dependency_url(name: &str, version: u32) -> String {
-    let artifactory = "https://engci-maven-master.cisco.com/artifactory/CME-release";
-    let tar_url = [artifactory,
-                   name,
-                   version.to_string().as_str(),
-                   format!("{}.tar.gz", name).as_str()]
-        .join("/");
+fn get_dependency_url(art_cfg: &ArtifactoryConfig, name: &str, version: u32) -> String {
+    let tar_url = format!("{}/{}/{}/{}/{}.tar.gz",
+                          art_cfg.server,
+                          art_cfg.group,
+                          name,
+                          version.to_string(),
+                          name);
+
     trace!("Inferring tarball location as {}", tar_url);
     tar_url
 }
 
-fn get_dependency_url_latest(name: &str) -> LalResult<Component> {
-    let artifactory = "https://engci-maven-master.cisco.com/artifactory/api/storage/CME-release/";
-    let url = [artifactory, name].concat();
-
-    let v = try!(get_latest(&url));
+fn get_dependency_url_latest(art_cfg: &ArtifactoryConfig, name: &str) -> LalResult<Component> {
+    let url = format!("{}/api/storage/{}/{}", art_cfg.server, art_cfg.group, name);
+    let v = try!(get_storage_as_u32(&url));
 
     debug!("Found latest version as {}", v);
     Ok(Component {
-        tarball: get_dependency_url(name, v),
+        tarball: get_dependency_url(art_cfg, name, v),
         version: v,
         name: name.to_string(),
     })
@@ -75,24 +79,31 @@ fn get_dependency_url_latest(name: &str) -> LalResult<Component> {
 
 
 /// Main entry point for install
-pub fn get_tarball_uri(name: &str, version: Option<u32>) -> LalResult<Component> {
+pub fn get_tarball_uri(art_cfg: &ArtifactoryConfig,
+                       name: &str,
+                       version: Option<u32>)
+                       -> LalResult<Component> {
     if let Some(v) = version {
         Ok(Component {
-            tarball: get_dependency_url(name, v),
+            tarball: get_dependency_url(art_cfg, name, v),
             version: v,
             name: name.to_string(),
         })
     } else {
-        get_dependency_url_latest(name)
+        get_dependency_url_latest(art_cfg, name)
     }
 }
 
-pub fn find_latest_lal_version() -> LalResult<Version> {
+/// Entry point for lal::upgrade
+///
+/// This mostly duplicates the behaviour in `get_storage_as_u32`, however,
+/// it is parsing the version as a semver::Version struct rather than a u32.
+pub fn find_latest_lal_version(art_cfg: &ArtifactoryConfig) -> LalResult<Version> {
     use curl::http;
-    let uri = "https://engci-maven-master.cisco.com/artifactory/api/storage/CME-release/lal";
+    let uri = format!("{}/api/storage/{}/lal", art_cfg.server, art_cfg.group);
 
     debug!("GET {}", uri);
-    let resp = try!(http::handle().get(uri).exec().map_err(|e| {
+    let resp = try!(http::handle().get(uri.as_str()).exec().map_err(|e| {
         warn!("Failed to GET {}: {}", uri, e);
         CliError::ArtifactoryFailure("Storage request failed")
     }));
