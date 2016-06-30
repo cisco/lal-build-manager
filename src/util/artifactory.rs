@@ -5,17 +5,17 @@ use semver::Version;
 
 use install::Component;
 use errors::{CliError, LalResult};
-// Need these to query for the latest build
 
-#[allow(non_snake_case)]
+// Need these to query for stored artifacts:
+// This query has tons of info, but we only care about the version
+// And the version is encoded in children.uri with leading slash
 #[derive(RustcDecodable)]
-struct ArtifactoryBuild {
-    uri: String, // started: String,
+struct ArtifactoryVersion {
+    uri: String, // folder: bool,
 }
-#[allow(non_snake_case)]
 #[derive(RustcDecodable)]
-struct ArtifactoryBuildResponse {
-    buildsNumbers: Vec<ArtifactoryBuild>, // uri: String,
+struct ArtifactoryStorageResponse {
+    children: Vec<ArtifactoryVersion>,
 }
 
 fn get_latest(uri: &str) -> LalResult<u32> {
@@ -32,8 +32,8 @@ fn get_latest(uri: &str) -> LalResult<u32> {
         let body = String::from_utf8_lossy(resp.get_body());
         trace!("Got body {}", body);
 
-        let res: ArtifactoryBuildResponse = try!(json::decode(&body));
-        let build: Option<u32> = res.buildsNumbers
+        let res: ArtifactoryStorageResponse = try!(json::decode(&body));
+        let build: Option<u32> = res.children
                                     .iter()
                                     .map(|r| r.uri.as_str())
                                     .map(|r| r.trim_matches('/'))
@@ -49,7 +49,7 @@ fn get_latest(uri: &str) -> LalResult<u32> {
 }
 
 fn get_dependency_url(name: &str, version: u32) -> String {
-    let artifactory = "https://engci-maven.cisco.com/artifactory/CME-release";
+    let artifactory = "https://engci-maven-master.cisco.com/artifactory/CME-release";
     let tar_url = [artifactory,
                    name,
                    version.to_string().as_str(),
@@ -60,7 +60,7 @@ fn get_dependency_url(name: &str, version: u32) -> String {
 }
 
 fn get_dependency_url_latest(name: &str) -> LalResult<Component> {
-    let artifactory = "https://engci-maven.cisco.com/artifactory/api/build/team_CME%20::%20";
+    let artifactory = "https://engci-maven-master.cisco.com/artifactory/api/storage/CME-release/";
     let url = [artifactory, name].concat();
 
     let v = try!(get_latest(&url));
@@ -87,21 +87,9 @@ pub fn get_tarball_uri(name: &str, version: Option<u32>) -> LalResult<Component>
     }
 }
 
-// Need these to query for stored artifacts:
-// This query has tons of info, but we only care about the version
-// And the version is encoded in children.uri with leading slash
-#[derive(RustcDecodable)]
-struct ArtifactoryVersion {
-    uri: String, // folder: bool,
-}
-#[derive(RustcDecodable)]
-struct ArtifactoryStorageResponse {
-    children: Vec<ArtifactoryVersion>,
-}
-
 pub fn find_latest_lal_version() -> LalResult<Version> {
     use curl::http;
-    let uri = "https://engci-maven.cisco.com/artifactory/api/storage/CME-release/lal";
+    let uri = "https://engci-maven-master.cisco.com/artifactory/api/storage/CME-release/lal";
 
     debug!("GET {}", uri);
     let resp = try!(http::handle().get(uri).exec().map_err(|e| {
