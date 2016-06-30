@@ -11,14 +11,14 @@ use util::input;
 
 use rand;
 
-#[derive(RustcDecodable, RustcEncodable, Clone)]
+#[derive(RustcDecodable, RustcEncodable, Debug)]
 pub struct Container {
     name: String,
     tag: String,
 }
 
 /// Representation of `lockfile.json`
-#[derive(RustcDecodable, RustcEncodable, Clone)]
+#[derive(RustcDecodable, RustcEncodable, Debug)]
 pub struct Lockfile {
     /// Name of the component built
     pub name: String,

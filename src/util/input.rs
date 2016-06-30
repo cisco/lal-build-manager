@@ -47,6 +47,7 @@ pub fn analyze() -> LalResult<BTreeMap<String, String>> {
     Ok(deps)
 }
 
+#[derive(Debug)]
 pub struct InputDependency {
     pub name: String,
     pub missing: bool,

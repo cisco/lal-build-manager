@@ -91,6 +91,10 @@ fn main() {
         .subcommand(SubCommand::with_name("verify").about("verify consistency of INPUT"))
         .subcommand(SubCommand::with_name("status")
             .alias("ls")
+            .arg(Arg::with_name("full")
+                .short("f")
+                .long("full")
+                .help("Print the full dependency tree"))
             .about("Prints current dependencies and their status"))
         .subcommand(SubCommand::with_name("shell")
             .about("Enters the configured container mounting the current directory")
@@ -282,8 +286,8 @@ fn main() {
                                 a.is_present("privileged")));
     } else if let Some(_) = args.subcommand_matches("verify") {
         result_exit("verify", lal::verify(&manifest));
-    } else if let Some(_) = args.subcommand_matches("status") {
-        result_exit("status", lal::status(manifest));
+    } else if let Some(a) = args.subcommand_matches("status") {
+        result_exit("status", lal::status(&manifest, a.is_present("full")));
     } else if let Some(a) = args.subcommand_matches("stash") {
         result_exit("stash",
                     lal::stash(&config, &manifest, a.value_of("name").unwrap()));
