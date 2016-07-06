@@ -81,13 +81,19 @@ fn main() {
 
     // Remaining actions - assume Manifest and Config
     if let Some(a) = args.subcommand_matches("update") {
-        let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
+        let xs = a.values_of("components").unwrap().map(|s| s.to_string()).collect::<Vec<_>>();
         let res = lal::update(manifest,
                               &config,
                               xs,
                               a.is_present("save"),
                               a.is_present("savedev"));
         result_exit("update", res);
+    } else if let Some(a) = args.subcommand_matches("update-all") {
+        let res = lal::update_all(manifest,
+                                  &config,
+                                  a.is_present("save"),
+                                  a.is_present("dev"));
+        result_exit("update-all", res);
     } else if let Some(a) = args.subcommand_matches("fetch") {
         let res = lal::fetch(&manifest, config, a.is_present("core"));
         result_exit("fetch", res);

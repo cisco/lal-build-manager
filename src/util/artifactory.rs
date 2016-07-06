@@ -89,8 +89,6 @@ pub fn get_latest_versions(art_cfg: &ArtifactoryConfig, name: &str) -> LalResult
     get_storage_versions(&url)
 }
 
-
-
 /// Main entry point for install
 pub fn get_tarball_uri(art_cfg: &ArtifactoryConfig,
                        name: &str,

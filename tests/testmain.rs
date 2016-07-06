@@ -190,13 +190,24 @@ fn update_save() {
     let cfg = Config::read().unwrap();
 
     // gtest savedev
-    let ri = lal::update(mf1, &cfg, vec!["gtest"], false, true);
+    let ri = lal::update(mf1, &cfg, vec!["gtest".to_string()], false, true);
     chk::is_ok(ri, "could update gtest and save as dev");
 
     // three main deps (and re-read manifest to avoid overwriting devedps)
     let mf2 = Manifest::read().unwrap();
-    let ri = lal::update(mf2, &cfg, vec!["libyaml", "yajl", "libwebsockets"], true, false);
+    let updates = vec!["libyaml".to_string(), "yajl".to_string(), "libwebsockets".to_string()];
+    let ri = lal::update(mf2, &cfg, updates, true, false);
     chk::is_ok(ri, "could update libyaml and save");
+
+    // verify update-all --save
+    let mf3 = Manifest::read().unwrap();
+    let ri = lal::update_all(mf3, &cfg, true, false);
+    chk::is_ok(ri, "could update all and --save");
+
+    // verify update-all --save --dev
+    let mf4 = Manifest::read().unwrap();
+    let ri = lal::update_all(mf4, &cfg, false, true);
+    chk::is_ok(ri, "could update all and --save --dev");
 }
 
 fn verify_checks() {
@@ -255,7 +266,7 @@ fn build_stash_and_update_from_stash() {
     assert!(r2.is_ok(), "could stash lal build artifact");
 
     // lal update lal=testmain
-    let ri = lal::update(mf.clone(), &cfg, vec!["lal=testmain"], false, false);
+    let ri = lal::update(mf.clone(), &cfg, vec!["lal=testmain".to_string()], false, false);
     chk::is_ok(ri, "could update lal from stash");
 }
 

@@ -109,7 +109,7 @@ fn clean_input() {
 /// manifest. This provides an easy way to not have to deal with strict JSON manually.
 pub fn update(manifest: Manifest,
               cfg: &Config,
-              components: Vec<&str>,
+              components: Vec<String>,
               save: bool,
               savedev: bool)
               -> LalResult<()> {
@@ -175,6 +175,24 @@ pub fn update(manifest: Manifest,
         try!(mf.write());
     }
     Ok(())
+}
+
+/// Wrapper around update that updates all components
+///
+/// This will pass all dependencies or devDependencies to update.
+/// If the save flag is set, then the manifest will be updated correctly.
+/// I.e. dev updates will update only the dev portions of the manifest.
+pub fn update_all(manifest: Manifest,
+              cfg: &Config,
+              save: bool,
+              dev: bool)
+              -> LalResult<()> {
+    let deps : Vec<String> = if dev {
+        manifest.devDependencies.keys().cloned().collect()
+    } else {
+        manifest.dependencies.keys().cloned().collect()
+    };
+    update(manifest, cfg, deps, save && !dev, save && dev)
 }
 
 /// Export a specific component from artifactory
