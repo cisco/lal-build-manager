@@ -81,12 +81,22 @@ impl Config {
             server: "https://engci-maven-master.cisco.com/artifactory".to_string(),
             group: "CME-release".to_string(),
         };
+        let mut mounts = vec![];
+        // add default tools mount for media people if it exists on their machine
+        let tools_mount = Path::new("/mnt/tools");
+        if tools_mount.exists() {
+            mounts.push(Mount {
+                src: "/mnt/tools".into(),
+                dest: "/tools".into(),
+                readonly: true,
+            })
+        }
         Ok(Config {
             artifactory: artf,
             cache: cachedir.to_string(),
             container: "edonusdevelopers/centos_build:latest".to_string(),
             upgradeCheck: time.to_rfc3339(),
-            mounts: vec![],
+            mounts: mounts,
         })
     }
     /// Read and deserialize a Config from ~/.lal/lalrc
