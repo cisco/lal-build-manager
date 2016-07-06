@@ -2,6 +2,10 @@
 authors = ["Eirik Albrigtsen <ealbrigt@cisco.com>"]
 name = "lal"
 version = "0.26.0"
+build = "build.rs"
+
+[build-dependencies]
+clap = "*"
 
 [[bin]]
 doc = false
