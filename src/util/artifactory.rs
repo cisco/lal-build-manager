@@ -21,9 +21,9 @@ struct ArtifactoryStorageResponse {
 
 /// Query the Artifactory storage api
 ///
-/// This will get, then parse all results as u32s, then get the largest one.
+/// This will get, then parse all results as u32s, and return this list.
 /// This assumes versoning is done via a single integer.
-fn get_storage_as_u32(uri: &str) -> LalResult<u32> {
+fn get_storage_versions(uri: &str) -> LalResult<Vec<u32>> {
     use curl::http;
 
     debug!("GET {}", uri);
@@ -38,19 +38,26 @@ fn get_storage_as_u32(uri: &str) -> LalResult<u32> {
         trace!("Got body {}", body);
 
         let res: ArtifactoryStorageResponse = try!(json::decode(&body));
-        let build: Option<u32> = res.children
-                                    .iter()
-                                    .map(|r| r.uri.as_str())
-                                    .map(|r| r.trim_matches('/'))
-                                    .filter_map(|b| b.parse().ok())
-                                    .max();
+        let builds: Vec<u32> = res.children
+                                  .iter()
+                                  .map(|r| r.uri.as_str())
+                                  .map(|r| r.trim_matches('/'))
+                                  .filter_map(|b| b.parse().ok())
+                                  .collect();
 
-        if let Some(nr) = build {
-            return Ok(nr);
-        }
+        return Ok(builds);
     }
     // TODO: handle other error codes better
     Err(CliError::ArtifactoryFailure("No version information found on API"))
+}
+
+/// Get the maximal version number from the storage api
+fn get_storage_as_u32(uri: &str) -> LalResult<u32> {
+    if let Some(&latest) = try!(get_storage_versions(uri)).iter().max() {
+        Ok(latest)
+    } else {
+        Err(CliError::ArtifactoryFailure("No version information found on API"))
+    }
 }
 
 fn get_dependency_url(art_cfg: &ArtifactoryConfig, name: &str, version: u32) -> String {
@@ -76,6 +83,12 @@ fn get_dependency_url_latest(art_cfg: &ArtifactoryConfig, name: &str) -> LalResu
         name: name.to_string(),
     })
 }
+
+pub fn get_latest_versions(art_cfg: &ArtifactoryConfig, name: &str) -> LalResult<Vec<u32>> {
+    let url = format!("{}/api/storage/{}/{}", art_cfg.server, art_cfg.group, name);
+    get_storage_versions(&url)
+}
+
 
 
 /// Main entry point for install

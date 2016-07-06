@@ -136,6 +136,8 @@ fn main() {
     } else if let Some(a) = args.subcommand_matches("stash") {
         result_exit("stash",
                     lal::stash(&config, &manifest, a.value_of("name").unwrap()));
+    } else if let Some(a) = args.subcommand_matches("query") {
+        result_exit("query", lal::query(&config, a.value_of("component").unwrap()));
     } else if let Some(a) = args.subcommand_matches("export") {
         result_exit("export",
                     lal::export(&config,

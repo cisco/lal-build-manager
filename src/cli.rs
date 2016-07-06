@@ -159,6 +159,11 @@ fn application() -> App<'static, 'static> {
                 .default_value("14")
                 .validator(is_integer)
                 .help("Number of days to serve as cutoff")))
+        .subcommand(SubCommand::with_name("query")
+            .about("Query for available versions on artifactory")
+            .arg(Arg::with_name("component")
+                .required(true)
+                .help("Component name to search for")))
         .subcommand(SubCommand::with_name("list-components")
             //.hidden(true) want this
             .about("list components that can be used with lal build"))
