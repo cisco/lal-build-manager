@@ -22,10 +22,12 @@ pub struct Mount {
 /// Static Artifactory locations to use
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct ArtifactoryConfig {
-    /// Location of artifactory server
+    /// Location of artifactory API querying server
     pub server: String,
-    /// Group to fetch artifacts from in artifactory
+    /// Group parameter to use for API queries
     pub group: String,
+    /// Location of artifactory virtual group for downloads
+    pub vgroup: String,
 }
 
 /// Representation of `lalrc`
@@ -78,8 +80,9 @@ impl Config {
         let cachedir = cachepath.as_path().to_str().unwrap();
         let time = UTC::now() - Duration::days(2);
         let artf = ArtifactoryConfig {
-            server: "https://engci-maven-master.cisco.com/artifactory".to_string(),
-            group: "CME-release".to_string(),
+            server: "https://engci-maven-master.cisco.com/artifactory".into(),
+            group: "CME-release".into(),
+            vgroup: "https://engci-maven.cisco.com/artifactory/CME-group".into()
         };
         let mut mounts = vec![];
         // add default tools mount for media people if it exists on their machine

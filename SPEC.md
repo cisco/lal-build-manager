@@ -101,7 +101,8 @@ A per-machine configuration file from `lal configure`.
 {
   "artifactory": {
     "server": "https://engci-maven-master.cisco.com/artifactory",
-    "group": "CME-release"
+    "group": "CME-release",
+    "vgroup": "https://engci-maven.cisco.com/artifactory/CME-group"
   },
   "cache": "/home/devuser/.lal/cache",
   "container": "edonusdevelopers/centos_build:latest",

@@ -61,9 +61,8 @@ fn get_storage_as_u32(uri: &str) -> LalResult<u32> {
 }
 
 fn get_dependency_url(art_cfg: &ArtifactoryConfig, name: &str, version: u32) -> String {
-    let tar_url = format!("{}/{}/{}/{}/{}.tar.gz",
-                          art_cfg.server,
-                          art_cfg.group,
+    let tar_url = format!("{}/{}/{}/{}.tar.gz",
+                          art_cfg.vgroup,
                           name,
                           version.to_string(),
                           name);
