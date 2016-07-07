@@ -14,10 +14,26 @@ use rand;
 /// Representation of a docker container image
 #[derive(RustcDecodable, RustcEncodable, Debug)]
 pub struct Container {
-    /// The full qualified name of the docker image
+    /// The fully qualified image name
     pub name: String,
-    /// The tag to use - set via Lockfile::new
+    /// The tag to use
     pub tag: String,
+}
+
+impl Container {
+    /// Initialize a container struct
+    ///
+    /// This will split the container on `:` to actually fetch the tag, and if no tag
+    /// was present, it will assume tag is latest as per docker conventions.
+    pub fn new(container: &str) -> Container {
+        let split: Vec<&str> = container.split(":").collect();
+        let tag = if split.len() == 2 { split[1] } else { "latest" };
+        let cname = if split.len() == 2 { split[0] } else { container };
+        Container {
+            name: cname.into(),
+            tag: tag.into(),
+        }
+    }
 }
 
 /// Representation of `lockfile.json`
@@ -40,23 +56,14 @@ pub struct Lockfile {
 impl Lockfile {
     /// Initialize an empty Lockfile with defaults
     ///
-    /// This will split the container on : to actually fetch the tag, and if no tag
-    /// was present, it will assume tag is latest as per docker conventions.
     /// If no version is given, the version is EXPERIMENTAL+{randhex} for Colony.
     pub fn new(name: &str, container: &str, v: Option<&str>, build_cfg: Option<&str>) -> Lockfile {
-        let split: Vec<&str> = container.split(":").collect();
-        let tag = if split.len() == 2 { split[1] } else { "latest" };
-        let cname = if split.len() == 2 { split[0] } else { container };
-
         let def_version = format!("EXPERIMENTAL+{:x}", rand::random::<u64>());
         Lockfile {
             name: name.to_string(),
             version: v.unwrap_or(&def_version).to_string(),
             config: build_cfg.unwrap_or("release").to_string(),
-            container: Container {
-                name: cname.to_string(),
-                tag: tag.to_string(),
-            },
+            container: Container::new(container),
             tool: env!("CARGO_PKG_VERSION").to_string(),
             dependencies: HashMap::new(),
         }
@@ -91,7 +98,7 @@ impl Lockfile {
 // name of component -> (ver, other_ver, ..)
 pub type DependencyUsage = HashMap<String, BTreeSet<String>>;
 
-// Recursive function used by `verify` to check for multiple version use
+/// Recursive function used by `verify` to check for multiple version use
 pub fn find_all_dependencies(lock: &Lockfile) -> DependencyUsage {
     let mut acc = HashMap::new();
     // for each entry in dependencies

@@ -12,13 +12,14 @@ use errors::{CliError, LalResult};
 #[allow(non_snake_case)]
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct ComponentConfiguration {
-    /// The default config to use if not passed in
+    /// The default config to use if not passed in - default is "release"
     pub defaultConfig: String,
     /// List of allowed configurations (must contain defaultConfig)
     pub configurations: Vec<String>,
 }
-impl ComponentConfiguration {
-    pub fn new() -> ComponentConfiguration {
+
+impl Default for ComponentConfiguration {
+    fn default() -> ComponentConfiguration {
         ComponentConfiguration {
             configurations: vec!["release".to_string()],
             defaultConfig: "release".to_string(),
@@ -28,7 +29,7 @@ impl ComponentConfiguration {
 
 /// Representation of `manifest.json`
 #[allow(non_snake_case)]
-#[derive(RustcDecodable, RustcEncodable, Clone)]
+#[derive(RustcDecodable, RustcEncodable, Clone, Default)]
 pub struct Manifest {
     /// Name of the main component
     pub name: String,
@@ -47,12 +48,11 @@ impl Manifest {
     /// component configuration for it with its default values.
     pub fn new(name: &str) -> Manifest {
         let mut comps = BTreeMap::new();
-        comps.insert(name.to_string(), ComponentConfiguration::new());
+        comps.insert(name.to_string(), ComponentConfiguration::default());
         Manifest {
             name: name.to_string(),
             components: comps,
-            dependencies: BTreeMap::new(),
-            devDependencies: BTreeMap::new(),
+            ..Default::default()
         }
     }
     /// Merge dependencies and devDependencies into one convenience map
