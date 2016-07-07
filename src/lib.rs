@@ -39,7 +39,7 @@ extern crate rand;
 pub use util::lockfile::Lockfile;
 pub use errors::{LalResult, CliError};
 pub use build::{build, build_list};
-pub use configure::{configure, Config, Mount};
+pub use configure::{configure, Config, Mount, ArtifactoryConfig};
 pub use init::{init, Manifest};
 pub use shell::{shell, docker_run, script};
 pub use install::{fetch, update, update_all, remove, export};
