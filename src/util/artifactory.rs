@@ -4,7 +4,7 @@ use rustc_serialize::json;
 use semver::Version;
 
 use install::Component;
-use configure::ArtifactoryConfig;
+use configure::Artifactory;
 use errors::{CliError, LalResult};
 
 // Need these to query for stored artifacts:
@@ -60,7 +60,7 @@ fn get_storage_as_u32(uri: &str) -> LalResult<u32> {
     }
 }
 
-fn get_dependency_url(art_cfg: &ArtifactoryConfig, name: &str, version: u32) -> String {
+fn get_dependency_url(art_cfg: &Artifactory, name: &str, version: u32) -> String {
     let tar_url = format!("{}/{}/{}/{}.tar.gz",
                           art_cfg.vgroup,
                           name,
@@ -71,7 +71,7 @@ fn get_dependency_url(art_cfg: &ArtifactoryConfig, name: &str, version: u32) -> 
     tar_url
 }
 
-fn get_dependency_url_latest(art_cfg: &ArtifactoryConfig, name: &str) -> LalResult<Component> {
+fn get_dependency_url_latest(art_cfg: &Artifactory, name: &str) -> LalResult<Component> {
     let url = format!("{}/api/storage/{}/{}", art_cfg.server, art_cfg.group, name);
     let v = try!(get_storage_as_u32(&url));
 
@@ -83,13 +83,13 @@ fn get_dependency_url_latest(art_cfg: &ArtifactoryConfig, name: &str) -> LalResu
     })
 }
 
-pub fn get_latest_versions(art_cfg: &ArtifactoryConfig, name: &str) -> LalResult<Vec<u32>> {
+pub fn get_latest_versions(art_cfg: &Artifactory, name: &str) -> LalResult<Vec<u32>> {
     let url = format!("{}/api/storage/{}/{}", art_cfg.server, art_cfg.group, name);
     get_storage_versions(&url)
 }
 
 /// Main entry point for install
-pub fn get_tarball_uri(art_cfg: &ArtifactoryConfig,
+pub fn get_tarball_uri(art_cfg: &Artifactory,
                        name: &str,
                        version: Option<u32>)
                        -> LalResult<Component> {
@@ -108,7 +108,7 @@ pub fn get_tarball_uri(art_cfg: &ArtifactoryConfig,
 ///
 /// This mostly duplicates the behaviour in `get_storage_as_u32`, however,
 /// it is parsing the version as a semver::Version struct rather than a u32.
-pub fn find_latest_lal_version(art_cfg: &ArtifactoryConfig) -> LalResult<Version> {
+pub fn find_latest_lal_version(art_cfg: &Artifactory) -> LalResult<Version> {
     use curl::http;
     let uri = format!("{}/api/storage/{}/lal", art_cfg.server, art_cfg.group);
 

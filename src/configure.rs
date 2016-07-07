@@ -21,7 +21,7 @@ pub struct Mount {
 
 /// Static Artifactory locations to use
 #[derive(RustcDecodable, RustcEncodable, Clone)]
-pub struct ArtifactoryConfig {
+pub struct Artifactory {
     /// Location of artifactory API querying server
     pub server: String,
     /// Group parameter to use for API queries
@@ -35,7 +35,7 @@ pub struct ArtifactoryConfig {
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
     /// Configuration settings for Artifactory
-    pub artifactory: ArtifactoryConfig,
+    pub artifactory: Artifactory,
     /// Cache directory for global and stashed builds
     pub cache: String,
     /// Docker container (potentially with tag) to use
@@ -79,7 +79,7 @@ impl Config {
         let cachepath = Path::new(&home).join(".lal").join("cache");
         let cachedir = cachepath.as_path().to_str().unwrap();
         let time = UTC::now() - Duration::days(2);
-        let artf = ArtifactoryConfig {
+        let artf = Artifactory {
             server: "https://engci-maven-master.cisco.com/artifactory".into(),
             group: "CME-release".into(),
             vgroup: "https://engci-maven.cisco.com/artifactory/CME-group".into()
