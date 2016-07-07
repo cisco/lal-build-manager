@@ -14,7 +14,9 @@ use rand;
 /// Representation of a docker container image
 #[derive(RustcDecodable, RustcEncodable, Debug)]
 pub struct Container {
+    /// The full qualified name of the docker image
     pub name: String,
+    /// The tag to use - set via Lockfile::new
     pub tag: String,
 }
 
