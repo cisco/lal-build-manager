@@ -8,10 +8,13 @@ use rustc_serialize::json;
 
 use errors::{CliError, LalResult};
 
+/// Representation of a value of the manifest.components hash
 #[allow(non_snake_case)]
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct ComponentConfiguration {
+    /// The default config to use if not passed in
     pub defaultConfig: String,
+    /// List of allowed configurations (must contain defaultConfig)
     pub configurations: Vec<String>,
 }
 impl ComponentConfiguration {
