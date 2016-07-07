@@ -14,8 +14,8 @@ use rand;
 /// Representation of a docker container image
 #[derive(RustcDecodable, RustcEncodable, Debug)]
 pub struct Container {
-    name: String,
-    tag: String,
+    pub name: String,
+    pub tag: String,
 }
 
 /// Representation of `lockfile.json`
