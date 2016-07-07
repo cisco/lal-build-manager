@@ -11,6 +11,7 @@ use util::input;
 
 use rand;
 
+/// Representation of a docker container image
 #[derive(RustcDecodable, RustcEncodable, Debug)]
 pub struct Container {
     name: String,
