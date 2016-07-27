@@ -1,6 +1,6 @@
 #!/bin/bash
 set -ex
-container="edonusdevelopers/muslrust:1.8.0-2016-04-15"
+container="edonusdevelopers/muslrust:1.10.0-2016-07-25"
 
 docker_run() {
   # shellcheck disable=SC2068
