@@ -82,7 +82,7 @@ impl Config {
         let artf = Artifactory {
             server: "https://engci-maven-master.cisco.com/artifactory".into(),
             group: "CME-release".into(),
-            vgroup: "https://engci-maven.cisco.com/artifactory/CME-group".into()
+            vgroup: "https://engci-maven.cisco.com/artifactory/CME-group".into(),
         };
         let mut mounts = vec![];
         // add default tools mount for media people if it exists on their machine

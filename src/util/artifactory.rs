@@ -39,11 +39,11 @@ fn get_storage_versions(uri: &str) -> LalResult<Vec<u32>> {
 
         let res: ArtifactoryStorageResponse = try!(json::decode(&body));
         let builds: Vec<u32> = res.children
-                                  .iter()
-                                  .map(|r| r.uri.as_str())
-                                  .map(|r| r.trim_matches('/'))
-                                  .filter_map(|b| b.parse().ok())
-                                  .collect();
+            .iter()
+            .map(|r| r.uri.as_str())
+            .map(|r| r.trim_matches('/'))
+            .filter_map(|b| b.parse().ok())
+            .collect();
 
         return Ok(builds);
     }
@@ -125,11 +125,11 @@ pub fn find_latest_lal_version(art_cfg: &Artifactory) -> LalResult<Version> {
 
         let res: ArtifactoryStorageResponse = try!(json::decode(&body));
         let latest: Option<Version> = res.children
-                                         .iter()
-                                         .map(|r| r.uri.trim_matches('/').to_string())
-                                         .inspect(|v| trace!("Found lal version {}", v))
-                                         .filter_map(|v| Version::parse(&v).ok())
-                                         .max(); // Semver::Version implements an order
+            .iter()
+            .map(|r| r.uri.trim_matches('/').to_string())
+            .inspect(|v| trace!("Found lal version {}", v))
+            .filter_map(|v| Version::parse(&v).ok())
+            .max(); // Semver::Version implements an order
 
         if latest.is_some() {
             return Ok(latest.unwrap());

@@ -196,7 +196,7 @@ fn main() {
         .subcommand(SubCommand::with_name("list-components")
             //.hidden(true) want this
             .about("list components that can be used with lal build"))
-            .get_matches();
+        .get_matches();
 
     // by default, always show INFO messages for now (+1)
     loggerv::init_with_verbosity(args.occurrences_of("verbose") + 1).unwrap();
@@ -262,10 +262,7 @@ fn main() {
                               a.is_present("savedev"));
         result_exit("update", res);
     } else if let Some(a) = args.subcommand_matches("update-all") {
-        let res = lal::update_all(manifest,
-                                  &config,
-                                  a.is_present("save"),
-                                  a.is_present("dev"));
+        let res = lal::update_all(manifest, &config, a.is_present("save"), a.is_present("dev"));
         result_exit("update-all", res);
     } else if let Some(a) = args.subcommand_matches("fetch") {
         let res = lal::fetch(&manifest, config, a.is_present("core"));
@@ -316,7 +313,8 @@ fn main() {
         result_exit("stash",
                     lal::stash(&config, &manifest, a.value_of("name").unwrap()));
     } else if let Some(a) = args.subcommand_matches("query") {
-        result_exit("query", lal::query(&config, a.value_of("component").unwrap()));
+        result_exit("query",
+                    lal::query(&config, a.value_of("component").unwrap()));
     } else if let Some(a) = args.subcommand_matches("export") {
         result_exit("export",
                     lal::export(&config,

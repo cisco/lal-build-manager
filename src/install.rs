@@ -182,12 +182,8 @@ pub fn update(manifest: Manifest,
 /// This will pass all dependencies or devDependencies to update.
 /// If the save flag is set, then the manifest will be updated correctly.
 /// I.e. dev updates will update only the dev portions of the manifest.
-pub fn update_all(manifest: Manifest,
-              cfg: &Config,
-              save: bool,
-              dev: bool)
-              -> LalResult<()> {
-    let deps : Vec<String> = if dev {
+pub fn update_all(manifest: Manifest, cfg: &Config, save: bool, dev: bool) -> LalResult<()> {
+    let deps: Vec<String> = if dev {
         manifest.devDependencies.keys().cloned().collect()
     } else {
         manifest.dependencies.keys().cloned().collect()

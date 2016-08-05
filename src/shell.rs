@@ -137,10 +137,8 @@ pub fn script(cfg: &Config, name: &str, args: Vec<&str>, privileged: bool) -> La
     }
 
     // Simply run the script by adding on the arguments
-    let cmd = vec![
-        "bash".into(),
-        "-c".into(),
-        format!("source {}; main {}", pth.display(), args.join(" "))
-    ];
+    let cmd = vec!["bash".into(),
+                   "-c".into(),
+                   format!("source {}; main {}", pth.display(), args.join(" "))];
     Ok(try!(docker_run(cfg, cmd, false, false, privileged)))
 }
