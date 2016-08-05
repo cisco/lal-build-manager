@@ -5,12 +5,12 @@ _lal()
     local cur prev words cword
     _init_completion || return
 
-    local -r subcommands="build clean configure export fetch help init script
-                list-components remove shell stash status update upgrade verify"
+    local -r subcommands="build clean configure export fetch help init script run ls
+                          query remove shell stash status update update-all upgrade verify"
 
     local has_sub
     for (( i=0; i < ${#words[@]}-1; i++ )); do
-        if [[ ${words[i]} == @(build|clean|configure|export|script|fetch|help|init|list-components|remove|shell|stash|status|update|upgrade|verify) ]]; then
+        if [[ ${words[i]} == @(build|clean|configure|export|script|fetch|help|init|remove|rm|script|run|query|shell|stash|status|ls|update|update-all|upgrade|verify) ]]; then
             has_sub=1
         fi
     done
@@ -29,7 +29,7 @@ _lal()
     # special subcommand completions
     local special i
     for (( i=0; i < ${#words[@]}-1; i++ )); do
-        if [[ ${words[i]} == @(build|remove|update|script) ]]; then
+        if [[ ${words[i]} == @(build|remove|rm|update|script|run|query|shell) ]]; then
             special=${words[i]}
         fi
     done
@@ -39,23 +39,49 @@ _lal()
             build)
                 # lal can get the keys from manifest.components
                 local -r components=$(lal list-components)
-                COMPREPLY=($(compgen -W "$components" -- "$cur"))
+                if [[ $prev = "build" ]]; then
+                    COMPREPLY=($(compgen -W "$components" -- "$cur"))
+                else
+                    # suggest flags
+                    local -r build_flags="-r --release -s --strict -c --config -h --help --print-only"
+                    COMPREPLY=($(compgen -W "$build_flags" -- "$cur"))
+                fi
                 ;;
-            update)
+            update|query)
                 # Looking in local cache for allowed component names
                 # Means this won't work first time, but will be quick
-                local -r globals=$(find $HOME/.lal/cache/globals/ -maxdepth 1 -mindepth 1 -type d -printf "%f " 2> /dev/null)
+                local -r globals=$(find "$HOME/.lal/cache/globals/" -maxdepth 1 -mindepth 1 -type d -printf "%f " 2> /dev/null)
                 COMPREPLY=($(compgen -W "$globals" -- "$cur"))
                 ;;
-            remove)
+            remove|rm)
                 # look in INPUT here, nothing else makes sense
-                local -r installed=$(find $PWD/INPUT/ -maxdepth 1 -mindepth 1 -type d -printf "%f " 2> /dev/null)
+                local -r installed=$(find "$PWD/INPUT/" -maxdepth 1 -mindepth 1 -type d -printf "%f " 2> /dev/null)
                 COMPREPLY=($(compgen -W "$installed" -- "$cur"))
                 ;;
-            script)
-                # look in INPUT here, nothing else makes sense
-                local -r scripts=$(find $PWD/.lal/scripts/ -type f -printf "%f " 2> /dev/null)
-                COMPREPLY=($(compgen -W "$scripts" -- "$cur"))
+            shell)
+                # suggest flags
+                local -r sh_flags="-p --privileged -h --help --print-only"
+                if [[ $prev = "shell" ]]; then
+                    COMPREPLY=($(compgen -W "$sh_flags" -- "$cur"))
+                fi
+                ;;
+            script|run)
+                # locate the scripts in .lal/scripts
+                local -r scripts=$(find "$PWD/.lal/scripts/" -type f -printf "%f " 2> /dev/null)
+                if [[ $prev == @(script|run) ]]; then
+                    COMPREPLY=($(compgen -W "$scripts" -- "$cur"))
+                else
+                    # Identify which script we used (arg after run)
+                    local run_script i
+                    for (( i=2; i < ${#words[@]}-1; i++ )); do
+                        if echo "$scripts" | grep -q "${words[i]}"; then
+                            run_script=${words[i]}
+                        fi
+                    done
+                    source "$PWD/.lal/scripts/$run_script"
+                    local -r comps=$(completer)
+                    COMPREPLY=($(compgen -W "$comps" -- "$cur"))
+                fi
                 ;;
         esac
     fi

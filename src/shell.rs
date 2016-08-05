@@ -135,13 +135,12 @@ pub fn script(cfg: &Config, name: &str, args: Vec<&str>, privileged: bool) -> La
     if !pth.exists() {
         return Err(CliError::MissingScript(name.into()));
     }
-    // TODO: could verify if they are executable and start with a shebang
-    // Assume for now, it will fail reasonably anyway.
 
     // Simply run the script by adding on the arguments
-    let mut cmd = vec![format!("{}", pth.display())];
-    for a in args {
-        cmd.push(a.to_string())
-    }
+    let cmd = vec![
+        "bash".into(),
+        "-c".into(),
+        format!("source {}; main {}", pth.display(), args.join(" "))
+    ];
     Ok(try!(docker_run(cfg, cmd, false, false, privileged)))
 }
