@@ -274,11 +274,11 @@ fn run_scripts() {
     {
         Command::new("mkdir").arg("-p").arg(".lal/scripts").output().unwrap();
         let mut f = File::create("./.lal/scripts/subroutine").unwrap();
-        write!(f, "#!/bin/bash\necho hi $1 $2\n").unwrap();
+        write!(f, "#!/bin/bash\nmain() { echo hi $1 $2 }\n").unwrap();
         Command::new("chmod").arg("+x").arg(".lal/scripts/subroutine").output().unwrap();
     }
     let cfg = Config::read().unwrap();
-    let r = lal::script(&cfg, "subroutine", vec!["hi", "there"], false);
+    let r = lal::script(&cfg, "subroutine", vec!["there", "mr"], false);
     assert!(r.is_ok(), "could run subroutine script");
 }
 
