@@ -274,7 +274,7 @@ fn run_scripts() {
     {
         Command::new("mkdir").arg("-p").arg(".lal/scripts").output().unwrap();
         let mut f = File::create("./.lal/scripts/subroutine").unwrap();
-        write!(f, "#!/bin/bash\nmain() { echo hi $1 $2 }\n").unwrap();
+        write!(f, "main() {{ echo hi $1 $2 ;}}\n").unwrap();
         Command::new("chmod").arg("+x").arg(".lal/scripts/subroutine").output().unwrap();
     }
     let cfg = Config::read().unwrap();
