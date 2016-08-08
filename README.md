@@ -18,9 +18,9 @@ curl https://engci-maven-master.cisco.com/artifactory/CME-release/lal/latest/lal
 lal configure
 ```
 
-Note that you will need to `sudo chown -R "$USER" /usr/local` to avoid using sudo on the tar side. Alternatively, chose your own install prefix (`-C`) and manage `$PATH` yourself.
+Note that you will need to `sudo chown -R "$USER" /usr/local` to avoid using sudo on the tar side. Alternatively, install to another location and manage `$PATH` yourself.
 
-When new versions are released, you will be told to run a similar command (but with different version numbers).
+When new versions are released, you will be told to re-run this command.
 
 ### From source (<10 minutes)
 Get [stable rust](https://www.rust-lang.org/downloads.html) (inlined below), clone, build, install, and make it available:
@@ -44,13 +44,13 @@ Installing pinned versions and building:
 
 ```sh
 git clone git@sqbu-github.cisco.com:Edonus/media-engine
-cd edonus
+cd media-engine
 lal fetch
 # for canonical build
 lal build
 # for experimental
 lal shell
-docker> ./bcm shared_tests -t
+docker> ./local_script
 ```
 
 Updating dependencies:
@@ -77,10 +77,10 @@ lal update ciscossl=asan # update named version (always from stash)
 lal build
 ```
 
-This workflow replaces listing multiple components to `./build`, and `lal status` replaces the output for the build plan.
+This workflow allows building multiple components simultaneously, and `lal status` provides safeguards and information on what dependencies you are using. Note that while doing this, you will receive warnings that you are using non-canonical dependencies.
 
 ### Creating a new version
-Done automatically on validated merge. Jenkins will create a tag for each successful build and that tag should be fetchable from artifactory.
+Designed to be handled by jenkins on each push to master (ideally through validated merge). Jenkins should create your numeric tag and upload the build output to artifactory. This behaviour is handled in [jenkins-config]((https://sqbu-github.cisco.com/Edonus/jenkins-config).
 
 ### Creating a new component
 Create a git repo, `lal init` it, then update deps and verify it builds.
@@ -96,7 +96,7 @@ git commit -m "init newcomponent"
 # add some dependencies to manifest
 lal update gtest --save-dev
 lal update libwebsockets --save
-# create source and iterate until `lal build`
+# create source and iterate until `lal build` passes
 
 # later..
 git commit -a -m "inital working version"
@@ -113,7 +113,7 @@ The `build` and `shell` commands will use `docker run` on a configured image. Fo
 - configured docker image must have a `lal` user with uid `1000`
 - linux user outside docker must be have uid `1000`
 
-We have found this to be true for most linux machines, and it is unfortunately a way easier thing to get working than docker usernamespaces (which is currently incompatible with features like host networking).
+We have found this can be satisfied for most linux users and owned containers. The linux user restriction is unfortunately easier than to get docker usernamespaces working (which is currently incompatible with features like host networking).
 
 ## Developing
 To hack on `lal`, follow normal install procedure, but build non-release builds iteratively.
@@ -159,5 +159,3 @@ lal -vv fetch # all output
 
 ### Influences
 Terms used herein reference [so you want to write a package manager](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#.rlvjqxc4r) (long read).
-
-Original [buildroot notes](https://hg.lal.cisco.com/root/files/tip/NOTES).

@@ -86,6 +86,7 @@ impl Config {
         };
         let mut mounts = vec![];
         // add default tools mount for media people if it exists on their machine
+        // technically not part of the spec - but saves people some time locally
         let tools_mount = Path::new("/mnt/tools");
         if tools_mount.exists() {
             mounts.push(Mount {

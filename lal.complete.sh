@@ -6,11 +6,11 @@ _lal()
     _init_completion || return
 
     local -r subcommands="build clean configure export fetch help init script run ls
-                          query remove shell stash status update update-all upgrade verify"
+                          query remove shell stash save status update update-all upgrade verify"
 
     local has_sub
     for (( i=0; i < ${#words[@]}-1; i++ )); do
-        if [[ ${words[i]} == @(build|clean|configure|export|script|fetch|help|init|remove|rm|script|run|query|shell|stash|status|ls|update|update-all|upgrade|verify) ]]; then
+        if [[ ${words[i]} == @(build|clean|configure|export|script|fetch|help|init|remove|rm|script|run|query|shell|stash|save|status|ls|update|update-all|upgrade|verify) ]]; then
             has_sub=1
         fi
     done

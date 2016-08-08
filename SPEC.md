@@ -14,6 +14,8 @@
 - [`lal upgrade`](#lal-upgrade) - performs an upgrade check
 - [`lal clean`](#lal-clean) - cleans up cache directory
 - [`lal export`](#lal-export-component) - obtain a raw tarball from artifactory
+- [`lal query`](#lal-query-component) - list versions of a component on artifactory
+- [`lal remove`](#lal-remove-components) - remove components from `INPUT` and `manifest.json`
 
 ## Manifest
 A per-repo file. Format looks like this (here annotated with illegal comments):
@@ -122,7 +124,7 @@ A specialized per-repo configuration file (`$PWD/.lalrc`) with the same format c
 The `upgradeCheck` value is updated automatically by `lal upgrade`.
 
 ## Caching
-The local cache is populated when doing fetches from the registry, when building locally, stashing them, or when linking them directly.
+The local cache is populated by fetches from the registry, or calls to `stash` them.
 
 ```sh
 ~/.lal/cache $ tree .
@@ -153,12 +155,18 @@ Provides list of dependencies currently in `INPUT`.
 If they are not in the manifest they will be listed as _extraneous_.
 If they are modified (not a global fetch) they will be listed as _modified_.
 
+Extra flags:
+
+- `--full` or `-f`: show the full dependency tree
+
+Alias: `lal ls`
+
 #### lal build [name] [flags]
 Runs the `BUILD` script in the current directory in the container.
 
-If no arguments are suppplied it will run `./BUILD $name` where `name` is the value of `name` in the manifest.
+If no arguments are suppplied it will run `./BUILD $name $config` where `name` is the value of `name` in the manifest, and `config` is the name of the component's `defaultConfig`.
 
-E.g. `lal build` in monolith will `./BUILD dme` in the container.
+E.g. `lal build` in media-engine will `./BUILD media-engine release` in the container.
 
 `lal build` will run `lal verify` and warn if this fails, but proceed anyway. The warning is a developer notice that the build will not be identical on jenkins due to local modifications and should not be ignored indefinitely.
 
@@ -173,7 +181,7 @@ Passing configuration flags:
 
 - *--config=name*: Passes a named config to `BUILD` as `$2`.
 
-This allows multiple blessed configurations of the same component, i.e. `lal build dme-unit-tests --config=asan` and `lal build dme-uni-tests --config=debug`. Both are valid provided `dme-unit-tests` provides those `configurations` in the `components` part of the manifest.
+This allows multiple blessed configurations of the same component, i.e. `lal build dme-unit-tests --config=asan` and `lal build dme-unit-tests --config=debug`. Both are valid provided `dme-unit-tests` provides those `configurations` in the `components` part of the manifest.
 
 #### lal update [components..]
 
@@ -186,14 +194,13 @@ Many `component` or `component=version` arguments can be used in one invocation.
 #### lal fetch
  - *lal fetch [--core]*: fetches all versions corresponding to the manifest from the registry and puts them into `INPUT`. The optional `--core` flag will disregard any `devDependencies`.
 
-### Uncommon/Advanced/Internal Command Specification
 #### lal shell
 Enters an interactive shell in the container listed in `.lalrc` mounting the current directory.
 
-Useful for experimental builds with stuff like `bcm` and `opts`.
+Useful for experimental builds using internal scripts in a repo.
 Assumes you have run `lal fetch` or equivalent so that `INPUT` is ready for this.
 
-Should run:
+lal shell should simply run:
 
 ```sh
 docker run \
@@ -201,13 +208,12 @@ docker run \
   -v $PWD:/home/lal/volume \
   -w /home/lal/volume \
   --net host \
-  --cap-add SYS_NICE \
   --user lal \
   -it $LALCONTAINER \
   /bin/bash
 ```
 
-You may just have your own wrapper for this anyway, but this is the canonical one. You can not use `lal` inside the container anyway.
+Note that `.lalrc` can be configured to pass in extra mounts.
 
 lal shell should allow passing in trailing arguments to run arbitrary commands:
 
@@ -217,49 +223,62 @@ lal shell should allow passing in trailing arguments to run arbitrary commands:
 - `lal shell --print-only` prints above command
 - `lal shell --print-only ./BUILD something` # prints what would have been done
 
+Alias: `lal sh`
+
 #### lal script [name]
 Runs scripts in the local `.lal/scripts/` folder via `lal shell`. Because `lal shell` mounts `$PWD`, the scripts folder can contain parametrised scripts such as:
 
 ```sh
 #!/bin/bash
 # contents of .lal/scripts/subroutine
-echo "hi $1 $2"
+main() {
+  echo "hi $1 $2"
+}
+
+completer() {
+  echo "foo bar"
+}
 ```
 
-Which could be invoked with `lal script subroutine there mr`, which would `echo hi there mr` in the container.
+Which could be invoked with `lal script subroutine there mr`, which would `echo hi there mr` in the container. An optional `completer` function can be supplied for autocomplete of values.
+
+Alias: `lal run`
 
 #### lal stash [name]
 Stashes the current `OUTPUT` folder to in `~/.lal/cache/stash/${component}/${NAME}` for future reuse. This can be put into another repository with `lal update component=name`
+
+Alias: `lal save`
 
 #### lal verify
 Verifies that:
 
 - `manifest.json` exists in `$PWD` and is valid JSON
-- dependencies in `INPUT` match `manifest.json`.
-- the dependency tree is flat.
-- `INPUT` contains only global dependencies.
+- dependencies in `INPUT` match `manifest.json`
+- the dependency tree is flat
+- `INPUT` contains only global dependencies
 
 #### lal configure
 Interactively configures:
 
-- docker container to use for `build` (default: edonusdevelopers/centos_build)
-- artifactory server (default: https://engci-maven-master.cisco.com/artifactory)
-- artifactory group (default: CME-release)
-- cache directory to use (default: ~/.lal/cache)
-- cache size warning (default: 5G)
+- docker container to use for `build` (default: `edonusdevelopers/centos_build`)
+- artifactory server (default: `https://engci-maven-master.cisco.com/artifactory`)
+- artifactory group (default: `CME-release`)
+- cache directory to use (default: `~/.lal/cache`)
 
 To get defaults use `lal configure -y`.
 
 #### lal init
 Creates a basic `manifest.json` in the current directory, assuming directory name as the name of the main component.
 
+A `-f` flag can be supplied to force overwrite the manifest.
+
 #### lal upgrade
-Performs an upgrade check of `lal`. If new versions are found, it reports how to upgrade your lal tool. This is normally only done implicitly (daily). But can be done explicitly with this command.
+Performs an upgrade check of `lal`. If new versions are found, it reports how to upgrade your lal tool. This is normally checked daily. But it can be done manually with this command.
 
 #### lal clean
 Deletes artifacts in the cache directory older than 14 days. The day is configurable with `-d <days>`.
 
-#### lal export <component>
+#### lal export [component]
 Exports a build artifact from artifactory for a component into `$PWD` or directory of choice. The component can be either the name of the component for latest version, or suffixed with `=version` for a specific version:
 
 ```sh
@@ -270,6 +289,34 @@ lal export liblzma=6
 test -f ./liblzma.tar.gz
 ```
 
+#### lal query [component]
+Lists the availble version on artifactory for a given component.
+
+```sh
+lal query libwebsockets
+```
+
+#### lal remove [components..]
+Removes and optionally saves a removal of a component from `INPUT` and the manifest.
+
+```sh
+lal remove libwebsockets --save
+lal remove gtest --save-dev
+```
+
+Note you can only use one of save or save-dev at a time. Without either save flag, this subcommand simply deletes the corresponding subdirectory of `INPUT`.
+
+Alias: `lal rm`
+
 ### Universal Options
 
 - `--help` or `-h`
+- `-v`
+
+Note that `-v` is a global option that gradually increases verbosity (allows multiple uses), and goes before subcommands.
+
+```sh
+lal update zlib # update with only standard logging (info!, warn!, and error!)
+lal -v fetch # fetch with debug! messages
+lal -vv build # build with debug! and trace! messages
+```
