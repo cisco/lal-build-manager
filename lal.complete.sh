@@ -78,8 +78,7 @@ _lal()
                             run_script=${words[i]}
                         fi
                     done
-                    source "$PWD/.lal/scripts/$run_script"
-                    local -r comps=$(completer)
+                    local -r comps=$(source "$PWD/.lal/scripts/$run_script"; completer)
                     COMPREPLY=($(compgen -W "$comps" -- "$cur"))
                 fi
                 ;;
