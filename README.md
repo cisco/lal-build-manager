@@ -14,7 +14,7 @@ Two ways to install, depending on whether you can be bothered to run the rust in
 Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) directly from [artifactory](https://engci-maven-master.cisco.com/artifactory/CME-release/lal/):
 
 ```sh
-curl https://engci-maven-master.cisco.com/artifactory/CME-release/lal/latest/lal.tar | tar xz -C /usr/local
+curl http://engci-maven.cisco.com/artifactory/CME-release/lal/latest/lal.tar | tar xz -C /usr/local
 lal configure
 ```
 

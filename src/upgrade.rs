@@ -20,9 +20,8 @@ pub fn upgrade_check(cfg: &Config, silent: bool) -> LalResult<bool> {
         info!("If your version is compiled from source:");
         info!(" - `git pull && cargo build --release` in the source checkout");
         info!("If your version is prebuilt:");
-        info!(" - `curl {}/{}/lal/latest/lal.tar | tar xz -C /usr/local`",
-              cfg.artifactory.server,
-              cfg.artifactory.group);
+        info!(" - `curl {}/lal/latest/lal.tar | tar xz -C /usr/local`",
+              cfg.artifactory.vgroup);
     } else {
         // No new version
         if silent {
