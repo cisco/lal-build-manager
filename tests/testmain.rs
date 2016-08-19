@@ -140,12 +140,12 @@ fn kill_manifest() {
     assert_eq!(manifest.is_file(), false);
 }
 
-// Create lalrc
+// Create config
 fn configure_yes() {
     let config = Config::read();
-    assert!(config.is_err(), "no lalrc at this point");
+    assert!(config.is_err(), "no config at this point");
 
-    let r = lal::configure(false, true, Some("edonusdevelopers/muslrust:1.8.0-2016-04-15"));
+    let r = lal::configure(true);
     assert!(r.is_ok(), "configure succeeded");
 
     let cfg = Config::read();
@@ -154,21 +154,26 @@ fn configure_yes() {
 
 // Create manifest
 fn init_force() {
+    let cfg = Config::read().unwrap();
+
     let m1 = Manifest::read();
     assert!(m1.is_err(), "no manifest at this point");
 
-    let m2 = lal::init(false);
+    let m2 = lal::init(&cfg, false, "rust");
     assert!(m2.is_ok(), "could init without force param");
 
-    let m3 = lal::init(true);
+    let m3 = lal::init(&cfg, true, "rust");
     assert!(m3.is_ok(), "could re-init with force param");
 
-    let m4 = lal::init(false);
+    let m4 = lal::init(&cfg, false, "rust");
     assert!(m4.is_err(), "could not re-init without force ");
+
+    let m5 = lal::init(&cfg, true, "blah");
+    assert!(m4.is_err(), "could not init without valid environment");
 }
 
 // Tests need to be run in a directory with a manifest
-// and ~/.lal + lalrc must exist
+// and ~/.lal + config must exist
 fn has_config_and_manifest() {
     let ldir = lal_dir();
     assert!(ldir.is_dir(), "have laldir");
@@ -239,12 +244,14 @@ fn verify_checks() {
 // Shell tests
 fn shell_echo() {
     let cfg = Config::read().unwrap();
-    let r = lal::docker_run(&cfg, vec!["echo".to_string(), "# echo from docker".to_string()], false, false, false);
+    let container = cfg.get_container("rust").unwrap();
+    let r = lal::docker_run(&cfg, &container, vec!["echo".to_string(), "# echo from docker".to_string()], false, false, false);
     assert!(r.is_ok(), "shell echoed");
 }
 fn shell_permissions() {
     let cfg = Config::read().unwrap();
-    let r = lal::docker_run(&cfg, vec!["touch".to_string(), "README.md".to_string()], false, false, false);
+    let container = cfg.get_container("rust").unwrap();
+    let r = lal::docker_run(&cfg, &container, vec!["touch".to_string(), "README.md".to_string()], false, false, false);
     assert!(r.is_ok(), "could touch files in container");
 }
 
@@ -278,7 +285,7 @@ fn run_scripts() {
         Command::new("chmod").arg("+x").arg(".lal/scripts/subroutine").output().unwrap();
     }
     let cfg = Config::read().unwrap();
-    let r = lal::script(&cfg, "subroutine", vec!["there", "mr"], false);
+    let r = lal::script(&cfg, "rust", "subroutine", vec!["there", "mr"], false);
     assert!(r.is_ok(), "could run subroutine script");
 }
 

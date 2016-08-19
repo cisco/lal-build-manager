@@ -84,6 +84,14 @@ impl Default for Config {
             name: "edonusdevelopers/build_xenial".into(),
             tag: "latest".into(),
         });
+        envs.insert("rust".into(), Container {
+            name: "edonusdevelopers/muslrust".into(),
+            tag: "latest".into(),
+        });
+        envs.insert("transcoder".into(), Container {
+            name: "edonusdevelopers/mygdon-transcoder".into(),
+            tag: "latest".into(),
+        });
         // last update time
         let time = UTC::now() - Duration::days(2);
         // common edonusdevelopers mounts
