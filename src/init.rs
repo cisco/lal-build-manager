@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 use std::vec::Vec;
 use rustc_serialize::json;
 
-use errors::{CliError, LalResult};
+use super::{Config, CliError, LalResult};
 
 /// Representation of a value of the manifest.components hash
 #[allow(non_snake_case)]
@@ -33,6 +33,8 @@ impl Default for ComponentConfiguration {
 pub struct Manifest {
     /// Name of the main component
     pub name: String,
+    /// Default environment to build in
+    pub environment: String,
     /// Components and their available configurations that are buildable
     pub components: BTreeMap<String, ComponentConfiguration>,
     /// Dependencies that are always needed
@@ -46,12 +48,13 @@ impl Manifest {
     ///
     /// The name is assumed to be the default component and will create a
     /// component configuration for it with its default values.
-    pub fn new(name: &str) -> Manifest {
+    pub fn new(name: &str, env: &str) -> Manifest {
         let mut comps = BTreeMap::new();
-        comps.insert(name.to_string(), ComponentConfiguration::default());
+        comps.insert(name.into(), ComponentConfiguration::default());
         Manifest {
-            name: name.to_string(),
+            name: name.into(),
             components: comps,
+            environment: env.into(),
             ..Default::default()
         }
     }
@@ -100,16 +103,18 @@ impl Manifest {
 ///
 /// The function will not overwrite an existing `manifest.json`,
 /// unless the `force` bool is set.
-pub fn init(force: bool) -> LalResult<()> {
+pub fn init(cfg: &Config, force: bool, env: &str) -> LalResult<()> {
+    try!(cfg.get_container(env));
+
     let pwd = try!(env::current_dir());
     let last_comp = pwd.components().last().unwrap(); // std::path::Component
     let dirname = last_comp.as_os_str().to_str().unwrap();
 
-    let manifest_path = Path::new("./manifest.json");
+    let manifest_path = Path::new("manifest.json");
     if !force && manifest_path.exists() {
         return Err(CliError::ManifestExists);
     }
 
-    try!(Manifest::new(dirname).write());
+    try!(Manifest::new(dirname, env).write());
     Ok(())
 }

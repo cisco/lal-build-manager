@@ -17,7 +17,7 @@ pub enum CliError {
     // main errors
     /// Manifest file not found in working directory
     MissingManifest,
-    /// Config (lalrc) not found in ~/.lal
+    /// Config not found in ~/.lal
     MissingConfig,
     /// Component not found in manifest
     MissingComponent(String),
@@ -35,6 +35,10 @@ pub enum CliError {
     MultipleVersions(String),
     /// Custom versions are stashed in INPUT which will not fly on Jenkins
     NonGlobalDependencies(String),
+
+    // env related errors
+    /// Specified environment is not present in the main config
+    InvalidEnvironment(String),
 
     // build errors
     /// Build configurations does not match manifest or user input
@@ -77,7 +81,7 @@ impl fmt::Display for CliError {
             CliError::Io(ref err) => err.fmt(f),
             CliError::Parse(ref err) => err.fmt(f),
             CliError::MissingManifest => write!(f, "No manifest.json found"),
-            CliError::MissingConfig => write!(f, "No ~/.lal/lalrc found"),
+            CliError::MissingConfig => write!(f, "No ~/.lal/config found"),
             CliError::MissingComponent(ref s) => {
                 write!(f, "Component '{}' not found in manifest", s)
             }
@@ -91,6 +95,9 @@ impl fmt::Display for CliError {
             CliError::NonGlobalDependencies(ref s) => {
                 write!(f, "Depending on a custom version of {}", s)
             }
+            CliError::InvalidEnvironment(ref s) => {
+                write!(f, "Environment '{}' not found in ~/.lal/config", s)
+            },
             CliError::InvalidBuildConfiguration(ref s) => {
                 write!(f, "Invalid build configuration - {}", s)
             }

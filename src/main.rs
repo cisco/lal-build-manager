@@ -124,15 +124,14 @@ fn main() {
                 .help("Parameters to pass on to the script")))
         .subcommand(SubCommand::with_name("init")
             .about("Create a manifest file in the current directory")
+            .arg(Arg::with_name("environment")
+                .required(true)
+                .help("Environment to build this component in"))
             .arg(Arg::with_name("force")
                 .short("f")
                 .help("overwrites manifest if necessary")))
         .subcommand(SubCommand::with_name("configure")
-            .about("configures lal")
-            .arg(Arg::with_name("yes")
-                .short("y")
-                .long("yes")
-                .help("Assume default without prompting")))
+            .about("Creates a default lal config ~/.lal/"))
         .subcommand(SubCommand::with_name("export")
             .about("Fetch a raw tarball from artifactory")
             .arg(Arg::with_name("component")
@@ -201,16 +200,15 @@ fn main() {
     loggerv::init_with_verbosity(args.occurrences_of("verbose") + 1).unwrap();
 
     // Allow lal configure without assumptions
-    if let Some(a) = args.subcommand_matches("configure") {
-        result_exit("configure",
-                    lal::configure(!a.is_present("yes"), true, None));
+    if let Some(_) = args.subcommand_matches("configure") {
+        result_exit("configure", lal::configure(true));
     }
 
     // Force config to exists before allowing remaining actions
     let config = Config::read()
         .map_err(|e| {
             error!("Configuration error: {}", e);
-            println!("Ensure you have run `lal configure` and that ~/.lal/lalrc is valid json");
+            println!("Ensure you have run `lal configure` and that ~/.lal/config is valid json");
             process::exit(1);
         })
         .unwrap();
@@ -236,7 +234,7 @@ fn main() {
 
     // Allow lal init / clean without manifest existing in PWD
     if let Some(a) = args.subcommand_matches("init") {
-        result_exit("init", lal::init(a.is_present("force")));
+        result_exit("init", lal::init(&config, a.is_present("force"), a.value_of("environment").unwrap()));
     } else if let Some(a) = args.subcommand_matches("clean") {
         let days = a.value_of("days").unwrap().parse().unwrap();
         result_exit("clean", lal::clean(&config, days));
@@ -290,6 +288,7 @@ fn main() {
         };
         result_exit("shell",
                     lal::shell(&config,
+                               &manifest.environment,
                                a.is_present("print"),
                                xs,
                                a.is_present("privileged")));
@@ -301,6 +300,7 @@ fn main() {
         };
         result_exit("script",
                     lal::script(&config,
+                                &manifest.environment,
                                 a.value_of("script").unwrap(),
                                 xs,
                                 a.is_present("privileged")));

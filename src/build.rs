@@ -111,8 +111,10 @@ pub fn build(cfg: &Config,
         let ename = format!("{} not found in configurations list", configuration_name);
         return Err(CliError::InvalidBuildConfiguration(ename));
     }
+
+    let container = try!(cfg.get_container(&manifest.environment));
     let lockfile = try!(Lockfile::new(&manifest.name,
-                                      &cfg.container,
+                                      &format!("{}:{}", container.name, container.tag),
                                       version,
                                       Some(&configuration_name))
         .populate_from_input());
@@ -126,7 +128,7 @@ pub fn build(cfg: &Config,
         info!("Running build script in docker container");
     }
 
-    try!(shell::docker_run(&cfg, cmd, false, printonly, false));
+    try!(shell::docker_run(cfg, &container, cmd, false, printonly, false));
 
     if release && !printonly {
         trace!("Create ARTIFACT dir");

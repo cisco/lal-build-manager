@@ -12,7 +12,7 @@ use util::input;
 use rand;
 
 /// Representation of a docker container image
-#[derive(RustcDecodable, RustcEncodable, Debug)]
+#[derive(RustcDecodable, RustcEncodable, Debug, Clone)]
 pub struct Container {
     /// The fully qualified image name
     pub name: String,

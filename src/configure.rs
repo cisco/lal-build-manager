@@ -5,10 +5,19 @@ use std::fs;
 use std::env;
 use std::vec::Vec;
 use std::io::prelude::*;
+use std::collections::BTreeMap;
 use errors::{CliError, LalResult};
+use super::Container;
+
+// helper
+fn lal_dir() -> PathBuf {
+    // unwrapping things that really must succeed here
+    let home = env::home_dir().unwrap();
+    Path::new(&home).join(".lal")
+}
 
 
-/// Representation of a docker volume mount for `.lalrc`
+/// Docker volume mount representation
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Mount {
     /// File or folder to mount
@@ -19,7 +28,7 @@ pub struct Mount {
     pub readonly: bool,
 }
 
-/// Static Artifactory locations to use
+/// Static Artifactory locations
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Artifactory {
     /// Location of artifactory API querying server
@@ -30,7 +39,7 @@ pub struct Artifactory {
     pub vgroup: String,
 }
 
-/// Representation of `lalrc`
+/// Representation of `~/.lal/config`
 #[allow(non_snake_case)]
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
@@ -38,55 +47,47 @@ pub struct Config {
     pub artifactory: Artifactory,
     /// Cache directory for global and stashed builds
     pub cache: String,
-    /// Docker container (potentially with tag) to use
-    pub container: String,
+    /// Environments shorthands that are allowed and their full meaning
+    pub environments: BTreeMap<String, Container>,
     /// Time of last upgrade_check
     pub upgradeCheck: String,
     /// Extra volume mounts to be set for the container
     pub mounts: Vec<Mount>,
 }
 
-// Representation of a repo-wide overriding .lalrc
-#[derive(RustcDecodable, Clone)]
-struct PartialConfig {
-    /// Overridden container to use for this repo
-    container: Option<String>,
-    /// Overridden mounts to use for this repo
-    mounts: Option<Vec<Mount>>,
-}
-impl PartialConfig {
-    fn read() -> LalResult<Option<PartialConfig>> {
-        let cfg_path = Path::new(".lalrc");
-        if !cfg_path.exists() {
-            return Ok(None);
-        }
-        let mut f = try!(fs::File::open(&cfg_path));
-        let mut cfg_str = String::new();
-        try!(f.read_to_string(&mut cfg_str));
-        let res: PartialConfig = try!(json::decode(&cfg_str));
-        Ok(Some(res))
-    }
-}
-
-impl Config {
-    /// Initialize a Config with defaults
-    ///
-    /// This will locate you homedir, and set last update check 2 days in the past.
-    /// Thus, with a blank default config, you will always trigger an upgrade check.
-    pub fn new() -> LalResult<Config> {
-        // unwrapping things that really must succeed here
-        let home = env::home_dir().unwrap();
-        let cachepath = Path::new(&home).join(".lal").join("cache");
-        let cachedir = cachepath.as_path().to_str().unwrap();
-        let time = UTC::now() - Duration::days(2);
-        let artf = Artifactory {
+/// Edonusdevelopers default artifactory server
+impl Default for Artifactory {
+    fn default() -> Self {
+        Artifactory {
             server: "https://engci-maven-master.cisco.com/artifactory".into(),
             group: "CME-release".into(),
             vgroup: "https://engci-maven.cisco.com/artifactory/CME-group".into(),
-        };
+        }
+    }
+}
+
+/// Edonusdevelopers default Config
+///
+/// This will locate you homedir, and set last update check 2 days in the past.
+/// Thus, with a blank default config, you will always trigger an upgrade check.
+impl Default for Config {
+    fn default() -> Self {
+        let cachepath = lal_dir().join("cache");
+        let cachedir = cachepath.as_path().to_str().unwrap();
+        // edonusdevelopers default C++ containers
+        let mut envs = BTreeMap::new();
+        envs.insert("centos".into(), Container {
+            name: "edonusdevelopers/centos_build".into(),
+            tag: "latest".into(),
+        });
+        envs.insert("xenial".into(), Container {
+            name: "edonusdevelopers/build_xenial".into(),
+            tag: "latest".into(),
+        });
+        // last update time
+        let time = UTC::now() - Duration::days(2);
+        // common edonusdevelopers mounts
         let mut mounts = vec![];
-        // add default tools mount for media people if it exists on their machine
-        // technically not part of the spec - but saves people some time locally
         let tools_mount = Path::new("/mnt/tools");
         if tools_mount.exists() {
             mounts.push(Mount {
@@ -95,36 +96,31 @@ impl Config {
                 readonly: true,
             })
         }
-        Ok(Config {
-            artifactory: artf,
-            cache: cachedir.to_string(),
-            container: "edonusdevelopers/centos_build:latest".to_string(),
-            upgradeCheck: time.to_rfc3339(),
+        Config {
+            cache: cachedir.into(),
             mounts: mounts,
-        })
+            upgradeCheck: time.to_rfc3339(),
+            environments: envs,
+            artifactory: Artifactory::default(),
+        }
     }
-    /// Read and deserialize a Config from ~/.lal/lalrc
+}
+
+impl Config {
+    /// Initialize a Config with defaults
+    pub fn new() -> Config {
+        Default::default()
+    }
+    /// Read and deserialize a Config from ~/.lal/config
     pub fn read() -> LalResult<Config> {
-        let home = env::home_dir().unwrap(); // crash if no $HOME
-        let cfg_path = Path::new(&home).join(".lal/lalrc");
+        let cfg_path = lal_dir().join("config");
         if !cfg_path.exists() {
             return Err(CliError::MissingConfig);
         }
         let mut f = try!(fs::File::open(&cfg_path));
         let mut cfg_str = String::new();
         try!(f.read_to_string(&mut cfg_str));
-        let mut res: Config = try!(json::decode(&cfg_str));
-        let overrides = try!(PartialConfig::read());
-        if overrides.is_some() {
-            let partial = overrides.unwrap();
-            if partial.container.is_some() {
-                res.container = partial.container.unwrap();
-            }
-            if partial.mounts.is_some() {
-                res.mounts = partial.mounts.unwrap();
-            }
-        }
-        Ok(res)
+        Ok(try!(json::decode(&cfg_str)))
     }
     /// Checks if it is time to perform an upgrade check
     pub fn upgrade_check_time(&self) -> bool {
@@ -137,10 +133,9 @@ impl Config {
         self.upgradeCheck = UTC::now().to_rfc3339();
         Ok(try!(self.write(true)))
     }
-    /// Overwrite `~/.lal/lalrc` with serialized data from this struct
+    /// Overwrite `~/.lal/config` with serialized data from this struct
     pub fn write(&self, silent: bool) -> LalResult<()> {
-        let home = env::home_dir().unwrap();
-        let cfg_path = Path::new(&home).join(".lal").join("lalrc");
+        let cfg_path = lal_dir().join("config");
 
         let encoded = json::as_pretty_json(self);
 
@@ -153,25 +148,14 @@ impl Config {
         }
         Ok(())
     }
-}
 
-
-fn prompt(name: &str, default: String) -> String {
-    use std::io::{self, Write};
-    print!("Default {}: ({}) ", name, &default);
-    io::stdout().flush().unwrap();
-
-    let mut input = String::new();
-    match io::stdin().read_line(&mut input) {
-        Ok(n) => {
-            if n > 1 {
-                // more than just a newline character (which we strip)
-                return (&input[0..n - 1]).to_string();
-            }
+    /// Resolve an arbitrary container shorthand
+    pub fn get_container(&self, env: &str) -> LalResult<Container> {
+        if let Some(container) = self.environments.get(env) {
+            return Ok(container.clone());
         }
-        Err(error) => println!("error: {}", error),
+        Err(CliError::InvalidEnvironment(env.into()))
     }
-    default
 }
 
 fn create_lal_dir() -> LalResult<PathBuf> {
@@ -183,31 +167,14 @@ fn create_lal_dir() -> LalResult<PathBuf> {
     Ok(laldir)
 }
 
-/// Create  `~/.lal/lalrc` interactively
+/// Create  `~/.lal/config` with defaults
 ///
-/// This will prompt you interactively when setting `term_prompt`
-/// Otherwise will just use the defaults.
-///
-/// A second boolean option to discard the output is supplied for tests.
-pub fn configure(term_prompt: bool, save: bool, container: Option<&str>) -> LalResult<Config> {
+/// A boolean option to discard the output is supplied for tests.
+pub fn configure(save: bool) -> LalResult<Config> {
     let _ = try!(create_lal_dir());
-    let mut cfg = try!(Config::new());
-
-    if term_prompt {
-        // Prompt for values:
-        cfg.artifactory.server = prompt("artifactory server", cfg.artifactory.server);
-        cfg.artifactory.group = prompt("artifactory group", cfg.artifactory.group);
-        cfg.cache = prompt("cache directory", cfg.cache);
-        cfg.container = prompt("container", cfg.container);
-    }
-    // Tests to avoid depending on other containers
-    if container.is_some() {
-        cfg.container = container.unwrap().to_string();
-    }
-
+    let cfg = Config::new();
     if save {
         try!(cfg.write(false));
     }
-
-    Ok(cfg.clone())
+    Ok(cfg)
 }
