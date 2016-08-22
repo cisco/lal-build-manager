@@ -63,7 +63,7 @@ pub fn verify(m: &Manifest, env: String) -> LalResult<()> {
         debug!("Found version(s) for {} as {:?}", name, vers);
         if vers.len() != 1 {
             error = Some(CliError::MultipleVersions(name.clone()));
-            warn!("Multiple requirements on {} found in lockfile", name.clone());
+            warn!("Multiple verion requirements on {} found in lockfile", name.clone());
         }
         assert!(vers.len() > 0, "found versions");
         // if version cannot be parsed as an int, it's not a global dependency
