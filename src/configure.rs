@@ -158,11 +158,12 @@ impl Config {
     }
 
     /// Resolve an arbitrary container shorthand
-    pub fn get_container(&self, env: &str) -> LalResult<Container> {
-        if let Some(container) = self.environments.get(env) {
+    pub fn get_container(&self, env: Option<String>) -> LalResult<Container> {
+        let env_ = if env.is_none() { "centos".into() } else { env.unwrap() };
+        if let Some(container) = self.environments.get(&env_) {
             return Ok(container.clone());
         }
-        Err(CliError::InvalidEnvironment(env.into()))
+        Err(CliError::InvalidEnvironment(env_))
     }
 }
 

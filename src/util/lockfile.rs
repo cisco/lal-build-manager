@@ -5,6 +5,7 @@ use std::io::prelude::*;
 
 use std::collections::HashMap;
 use std::collections::BTreeSet;
+use std::fmt;
 
 use errors::{CliError, LalResult};
 use util::input;
@@ -18,6 +19,23 @@ pub struct Container {
     pub name: String,
     /// The tag to use
     pub tag: String,
+}
+
+impl fmt::Display for Container {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}:{}", self.name, self.tag)
+    }
+}
+
+/// Convenience default for functions that require Lockfile inspection
+/// Intentionally kept distinct from normal build images
+impl Default for Container {
+    fn default() -> Self {
+        Container {
+            name: "ubuntu".into(),
+            tag: "xenial".into(),
+        }
+    }
 }
 
 impl Container {
@@ -57,13 +75,13 @@ impl Lockfile {
     /// Initialize an empty Lockfile with defaults
     ///
     /// If no version is given, the version is EXPERIMENTAL+{randhex} for Colony.
-    pub fn new(name: &str, container: &str, v: Option<&str>, build_cfg: Option<&str>) -> Lockfile {
+    pub fn new(name: &str, container: &Container, v: Option<&str>, build_cfg: Option<&str>) -> Lockfile {
         let def_version = format!("EXPERIMENTAL+{:x}", rand::random::<u64>());
         Lockfile {
             name: name.to_string(),
             version: v.unwrap_or(&def_version).to_string(),
             config: build_cfg.unwrap_or("release").to_string(),
-            container: Container::new(container),
+            container: container.clone(),
             tool: env!("CARGO_PKG_VERSION").to_string(),
             dependencies: HashMap::new(),
         }

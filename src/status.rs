@@ -2,7 +2,7 @@ use ansi_term::Colour;
 use Manifest;
 use errors::{CliError, LalResult};
 use util::input;
-use Lockfile;
+use super::{Container, Lockfile};
 
 fn status_recurse(dep: &String, lf: &Lockfile, n: usize, parent_indent: Vec<bool>) {
     assert_eq!(dep, &lf.name);
@@ -42,9 +42,9 @@ pub fn status(manifest: &Manifest, full: bool) -> LalResult<()> {
     let mut error = None;
 
     let lf = if full {
-        try!(Lockfile::new("templock", "no", None, None).populate_from_input())
+        try!(Lockfile::new("templock", &Container::default(), None, None).populate_from_input())
     } else {
-        Lockfile::new("templock", "no", None, None)
+        Lockfile::new("templock", &Container::default(), None, None)
     };
 
     println!("{}", manifest.name);

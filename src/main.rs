@@ -35,6 +35,10 @@ fn main() {
         .setting(AppSettings::DeriveDisplayOrder)
         .global_settings(&[AppSettings::ColoredHelp])
         .about("lal dependency manager")
+        .arg(Arg::with_name("env")
+            .short("e")
+            .long("env")
+            .help("Override the default environment for this command"))
         .arg(Arg::with_name("verbose")
             .short("v")
             .multiple(true)
@@ -248,6 +252,15 @@ fn main() {
             process::exit(1);
         })
         .unwrap();
+    let container = (if args.is_present("env") {
+        config.get_container(Some(args.value_of("env").unwrap().into()))
+    } else {
+        config.get_container(manifest.environment.clone())
+    }).map_err(|e| {
+        error!("Environment error: {}", e);
+        println!("Ensure that manifest.environment has a corresponding in ~/.lal/config");
+        process::exit(1);
+    }).unwrap();
 
     // Remaining actions - assume Manifest and Config
     if let Some(a) = args.subcommand_matches("update") {
@@ -276,6 +289,7 @@ fn main() {
                              a.is_present("release"),
                              a.value_of("with-version"),
                              a.is_present("strict"),
+                             &container,
                              a.is_present("print"));
         result_exit("build", res);
     } else if let Some(_) = args.subcommand_matches("list-components") {
@@ -288,7 +302,7 @@ fn main() {
         };
         result_exit("shell",
                     lal::shell(&config,
-                               &manifest.environment,
+                               &container,
                                a.is_present("print"),
                                xs,
                                a.is_present("privileged")));
@@ -300,7 +314,7 @@ fn main() {
         };
         result_exit("script",
                     lal::script(&config,
-                                &manifest.environment,
+                                &container,
                                 a.value_of("script").unwrap(),
                                 xs,
                                 a.is_present("privileged")));

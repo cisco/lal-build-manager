@@ -8,7 +8,7 @@ use walkdir::WalkDir;
 
 use shell;
 use verify::verify;
-use {Lockfile, Manifest, Config, LalResult, CliError};
+use {Lockfile, Manifest, Container, Config, LalResult, CliError};
 
 pub fn tar_output(tarball: &Path) -> LalResult<()> {
     use tar;
@@ -80,6 +80,7 @@ pub fn build(cfg: &Config,
              release: bool,
              version: Option<&str>,
              strict: bool,
+             container: &Container,
              printonly: bool)
              -> LalResult<()> {
     try!(ensure_dir_exists_fresh("OUTPUT"));
@@ -112,16 +113,15 @@ pub fn build(cfg: &Config,
         return Err(CliError::InvalidBuildConfiguration(ename));
     }
 
-    let container = try!(cfg.get_container(&manifest.environment));
     let lockfile = try!(Lockfile::new(&manifest.name,
-                                      &format!("{}:{}", container.name, container.tag),
+                                      container,
                                       version,
                                       Some(&configuration_name))
         .populate_from_input());
     let lockpth = Path::new("./OUTPUT/lockfile.json");
     try!(lockfile.write(&lockpth, true)); // always put a lockfile in OUTPUT at the start of a build
 
-    let cmd = vec!["./BUILD".to_string(), component.to_string(), configuration_name];
+    let cmd = vec!["./BUILD".into(), component.into(), configuration_name];
 
     debug!("Build script is {:?}", cmd);
     if !printonly {

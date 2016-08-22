@@ -34,7 +34,7 @@ pub struct Manifest {
     /// Name of the main component
     pub name: String,
     /// Default environment to build in
-    pub environment: String,
+    pub environment: Option<String>,
     /// Components and their available configurations that are buildable
     pub components: BTreeMap<String, ComponentConfiguration>,
     /// Dependencies that are always needed
@@ -54,7 +54,7 @@ impl Manifest {
         Manifest {
             name: name.into(),
             components: comps,
-            environment: env.into(),
+            environment: Some(env.into()),
             ..Default::default()
         }
     }
@@ -104,7 +104,7 @@ impl Manifest {
 /// The function will not overwrite an existing `manifest.json`,
 /// unless the `force` bool is set.
 pub fn init(cfg: &Config, force: bool, env: &str) -> LalResult<()> {
-    try!(cfg.get_container(env));
+    try!(cfg.get_container(Some(env.into())));
 
     let pwd = try!(env::current_dir());
     let last_comp = pwd.components().last().unwrap(); // std::path::Component

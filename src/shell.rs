@@ -111,13 +111,13 @@ pub fn docker_run(cfg: &Config,
 /// If a command vector is given, this is called non-interactively instead of /bin/bash
 /// You can thus do `lal shell ./BUILD target` or ``lal shell bash -c "cmd1; cmd2"`
 pub fn shell(cfg: &Config,
-             env: &str,
+             container: &Container,
              printonly: bool,
              cmd: Option<Vec<&str>>,
              privileged: bool)
              -> LalResult<()> {
     if !printonly {
-        info!("Entering docker container");
+        info!("Entering docker container: {}", container);
     }
     let mut bash = vec![];
     let interactive = cmd.is_none();
@@ -126,7 +126,6 @@ pub fn shell(cfg: &Config,
             bash.push(c.to_string())
         }
     }
-    let container = try!(cfg.get_container(env));
     docker_run(cfg, &container, bash, interactive, printonly, privileged)
 }
 
@@ -134,7 +133,7 @@ pub fn shell(cfg: &Config,
 ///
 /// This is a convenience helper for running things that aren't builds.
 /// E.g. `lal run my-large-test RUNONLY=foo`
-pub fn script(cfg: &Config, env: &str, name: &str, args: Vec<&str>, privileged: bool) -> LalResult<()> {
+pub fn script(cfg: &Config, container: &Container, name: &str, args: Vec<&str>, privileged: bool) -> LalResult<()> {
     let pth = Path::new(".").join(".lal").join("scripts").join(&name);
     if !pth.exists() {
         return Err(CliError::MissingScript(name.into()));
@@ -144,6 +143,5 @@ pub fn script(cfg: &Config, env: &str, name: &str, args: Vec<&str>, privileged: 
     let cmd = vec!["bash".into(),
                    "-c".into(),
                    format!("source {}; main {}", pth.display(), args.join(" "))];
-    let container = try!(cfg.get_container(env));
     Ok(try!(docker_run(cfg, &container, cmd, false, false, privileged)))
 }

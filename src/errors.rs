@@ -27,6 +27,8 @@ pub enum CliError {
     // status/verify errors
     /// Core dependencies missing in INPUT
     MissingDependencies,
+    /// Dependency present at wrong version
+    InvalidVersion(String),
     /// Extraneous dependencies in INPUT
     ExtraneousDependencies,
     /// No lockfile found for a component in INPUT
@@ -87,6 +89,7 @@ impl fmt::Display for CliError {
             }
             CliError::ManifestExists => write!(f, "Manifest already exists (use -f to force)"),
             CliError::MissingDependencies => write!(f, "Core dependencies missing in INPUT"),
+            CliError::InvalidVersion(ref s) => write!(f, "Dependency {} using incorrect version", s),
             CliError::ExtraneousDependencies => write!(f, "Extraneous dependencies in INPUT"),
             CliError::MissingLockfile(ref s) => write!(f, "No lockfile found in INPUT/{}", s),
             CliError::MultipleVersions(ref s) => {
