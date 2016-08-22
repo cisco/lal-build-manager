@@ -38,6 +38,7 @@ fn main() {
         .arg(Arg::with_name("env")
             .short("e")
             .long("env")
+            .takes_value(true)
             .help("Override the default environment for this command"))
         .arg(Arg::with_name("verbose")
             .short("v")
@@ -327,7 +328,7 @@ fn main() {
                                 xs,
                                 a.is_present("privileged")));
     } else if let Some(_) = args.subcommand_matches("verify") {
-        result_exit("verify", lal::verify(&manifest));
+        result_exit("verify", lal::verify(&manifest, env));
     } else if let Some(a) = args.subcommand_matches("status") {
         result_exit("status", lal::status(&manifest, a.is_present("full")));
     } else if let Some(a) = args.subcommand_matches("stash") {

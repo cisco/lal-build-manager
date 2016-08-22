@@ -35,6 +35,10 @@ pub enum CliError {
     MissingLockfile(String),
     /// Multiple versions of a component was involved in this build
     MultipleVersions(String),
+    /// Multiple environments was used to build a component
+    MultipleEnvironments(String),
+    /// Environment for a component did not match our expected environment
+    EnvironmentMismatch(String, String),
     /// Custom versions are stashed in INPUT which will not fly on Jenkins
     NonGlobalDependencies(String),
 
@@ -94,6 +98,12 @@ impl fmt::Display for CliError {
             CliError::MissingLockfile(ref s) => write!(f, "No lockfile found in INPUT/{}", s),
             CliError::MultipleVersions(ref s) => {
                 write!(f, "Depending on multiple versions of {}", s)
+            }
+            CliError::MultipleEnvironments(ref s) => {
+                write!(f, "Depending on multiple environments to build {}", s)
+            }
+            CliError::EnvironmentMismatch(ref dep, ref env) => {
+                write!(f, "Environment mismatch for {} - built in {}", dep, env)
             }
             CliError::NonGlobalDependencies(ref s) => {
                 write!(f, "Depending on a custom version of {}", s)

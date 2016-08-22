@@ -14,7 +14,7 @@ use {Lockfile, Manifest, CliError, LalResult};
 /// This function is meant to be a helper for when we want official builds, but also
 /// a way to tell developers that they are using things that differ from what jenkins
 /// would use.
-pub fn verify(m: &Manifest) -> LalResult<()> {
+pub fn verify(m: &Manifest, env: String) -> LalResult<()> {
     // 1. Verify that the manifest is sane
     for (name, conf) in &m.components {
         // Verify ComponentSettings (manifest.components[x])
@@ -58,8 +58,8 @@ pub fn verify(m: &Manifest) -> LalResult<()> {
 
     // 3. the dependency tree is flat and only global dependencies found
     debug!("Reading all lockfiles");
-    let dep_usage = try!(Lockfile::default().populate_from_input()).find_all_dependencies();
-    for (name, vers) in dep_usage {
+    let lf = try!(Lockfile::default().populate_from_input());
+    for (name, vers) in lf.find_all_dependencies() {
         debug!("Found version(s) for {} as {:?}", name, vers);
         if vers.len() != 1 {
             error = Some(CliError::MultipleVersions(name.clone()));
@@ -83,6 +83,21 @@ pub fn verify(m: &Manifest) -> LalResult<()> {
                         error = Some(CliError::InvalidVersion(name.clone()));
                     }
                 }
+            }
+        }
+    }
+
+    // 4. verify all components are built in the same environment
+    for (name, envs) in lf.find_all_environments() {
+        debug!("Found environment(s) for {} as {:?}", name, envs);
+        if envs.len() != 1 {
+            error = Some(CliError::MultipleEnvironments(name.clone()));
+            warn!("Multiple environments used to build {}", name.clone());
+        }
+        else {
+            let used_env = envs.iter().next().unwrap();
+            if used_env != &env {
+                error = Some(CliError::EnvironmentMismatch(name.clone(), used_env.clone()))
             }
         }
     }

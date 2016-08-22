@@ -138,13 +138,27 @@ impl Lockfile {
 }
 
 
-// name of component -> (ver, other_ver, ..)
-pub type DependencyUsage = HashMap<String, BTreeSet<String>>;
+// name of component -> (value1, value2, ..)
+pub type ValueUsage = HashMap<String, BTreeSet<String>>;
 
 // The hardcore dependency analysis parts
 impl Lockfile {
-    /// Recursive function used by `verify` to check for multiple version use
-    pub fn find_all_dependencies(&self) -> DependencyUsage {
+    // helper to extract specific keys out of a struct
+    fn get_value(&self, key: &str) -> String {
+        if key == "version" {
+            self.version.clone()
+        }
+        else if key == "environment" {
+            // old components were built for centos only - keeping this default
+            self.environment.clone().unwrap_or("centos".into())
+        }
+        else {
+            unreachable!("Only using get_value internally");
+        }
+    }
+
+    /// Recursive function to check for multiple version/environment (key) use
+    fn find_all_values(&self, key: &str) -> ValueUsage {
         let mut acc = HashMap::new();
         // for each entry in dependencies
         for (main_name, dep) in &self.dependencies {
@@ -154,28 +168,35 @@ impl Lockfile {
             }
             {
                 // Only borrow as mutable once - so creating a temporary scope
-                let first_version_set = acc.get_mut(main_name).unwrap();
-                first_version_set.insert(dep.version.clone());
+                let first_value_set = acc.get_mut(main_name).unwrap();
+                first_value_set.insert(dep.get_value(key));
             }
 
             // Recurse into its dependencies
             trace!("Recursing into deps for {}, acc is {:?}", main_name, acc);
-            for (name, version_set) in dep.find_all_dependencies() {
+            for (name, value_set) in dep.find_all_values(key) {
                 trace!("Found versions for for {} under {} as {:?}",
                        name,
                        main_name,
-                       version_set);
+                       value_set);
                 // ensure each entry from above exists in current accumulator
                 if !acc.contains_key(&name) {
                     acc.insert(name.clone(), BTreeSet::new());
                 }
-                // union the entry of versions for the current name
-                let full_version_set = acc.get_mut(&name).unwrap(); // know this exists now
-                for version in version_set {
-                    full_version_set.insert(version);
+                // union the entry of value for the current name
+                let full_value_set = acc.get_mut(&name).unwrap(); // know this exists now
+                for value in value_set {
+                    full_value_set.insert(value);
                 }
             }
         }
         acc
+    }
+
+    pub fn find_all_dependencies(&self) -> ValueUsage {
+        self.find_all_values("version")
+    }
+    pub fn find_all_environments(&self) -> ValueUsage {
+        self.find_all_values("environment")
     }
 }
