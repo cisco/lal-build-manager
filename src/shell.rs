@@ -117,7 +117,7 @@ pub fn shell(cfg: &Config,
              privileged: bool)
              -> LalResult<()> {
     if !printonly {
-        info!("Entering docker container: {}", container);
+        info!("Entering {}", container);
     }
     let mut bash = vec![];
     let interactive = cmd.is_none();

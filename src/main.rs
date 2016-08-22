@@ -252,17 +252,24 @@ fn main() {
             process::exit(1);
         })
         .unwrap();
-    let container = (if args.is_present("env") {
-        config.get_container(Some(args.value_of("env").unwrap().into()))
+
+    // Force a valid container key configured in manifest and corr. value in config
+    let env = if args.is_present("env") {
+        args.value_of("env").unwrap().into()
+    } else if let Some(ref menv) = manifest.environment {
+        menv.clone()
     } else {
-        config.get_container(manifest.environment.clone())
-    }).map_err(|e| {
+        // temporary arm while manifest.environment is not mandatory
+        "centos".into()
+    };
+    // lookup associated container
+    let container = config.get_container(Some(env.clone())).map_err(|e| {
         error!("Environment error: {}", e);
         println!("Ensure that manifest.environment has a corresponding in ~/.lal/config");
         process::exit(1);
     }).unwrap();
 
-    // Remaining actions - assume Manifest and Config
+    // Remaining actions - assume Manifest, Config, and Container
     if let Some(a) = args.subcommand_matches("update") {
         let xs = a.values_of("components").unwrap().map(|s| s.to_string()).collect::<Vec<_>>();
         let res = lal::update(manifest,
@@ -290,6 +297,7 @@ fn main() {
                              a.value_of("with-version"),
                              a.is_present("strict"),
                              &container,
+                             env,
                              a.is_present("print"));
         result_exit("build", res);
     } else if let Some(_) = args.subcommand_matches("list-components") {

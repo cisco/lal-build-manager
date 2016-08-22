@@ -81,6 +81,7 @@ pub fn build(cfg: &Config,
              version: Option<&str>,
              strict: bool,
              container: &Container,
+             envname: String,
              printonly: bool)
              -> LalResult<()> {
     try!(ensure_dir_exists_fresh("OUTPUT"));
@@ -112,9 +113,9 @@ pub fn build(cfg: &Config,
         let ename = format!("{} not found in configurations list", configuration_name);
         return Err(CliError::InvalidBuildConfiguration(ename));
     }
-
     let lockfile = try!(Lockfile::new(&manifest.name,
                                       container,
+                                      &envname,
                                       version,
                                       Some(&configuration_name))
         .populate_from_input());

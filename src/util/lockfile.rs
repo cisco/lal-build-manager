@@ -63,6 +63,8 @@ pub struct Lockfile {
     pub config: String,
     /// Container and tag used to build
     pub container: Container,
+    /// Name of the environment for the container at the time
+    pub environment: Option<String>,
     /// Version of the component built
     pub version: String,
     /// Version of the lal tool
@@ -71,11 +73,18 @@ pub struct Lockfile {
     pub dependencies: HashMap<String, Lockfile>,
 }
 
+/// Generates a temporary empty lockfile for internal analysis
+impl Default for Lockfile {
+    fn default() -> Self {
+        Lockfile::new("templock", &Container::default(), "none", None, None)
+    }
+}
+
 impl Lockfile {
     /// Initialize an empty Lockfile with defaults
     ///
     /// If no version is given, the version is EXPERIMENTAL+{randhex} for Colony.
-    pub fn new(name: &str, container: &Container, v: Option<&str>, build_cfg: Option<&str>) -> Lockfile {
+    pub fn new(name: &str, container: &Container, env: &str, v: Option<&str>, build_cfg: Option<&str>) -> Self {
         let def_version = format!("EXPERIMENTAL+{:x}", rand::random::<u64>());
         Lockfile {
             name: name.to_string(),
@@ -83,9 +92,11 @@ impl Lockfile {
             config: build_cfg.unwrap_or("release").to_string(),
             container: container.clone(),
             tool: env!("CARGO_PKG_VERSION").to_string(),
+            environment: Some(env.into()),
             dependencies: HashMap::new(),
         }
     }
+
     /// Read all the lockfiles in INPUT to generate the full lockfile
     ///
     /// NB: This currently reads all the lockfiles partially in `analyze`,
