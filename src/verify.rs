@@ -63,8 +63,7 @@ pub fn verify(m: &Manifest) -> LalResult<()> {
         debug!("Found version(s) for {} as {:?}", name, vers);
         if vers.len() != 1 {
             error = Some(CliError::MultipleVersions(name.clone()));
-            // This error isn't super helpful even with debug on, but one can investigate
-            // where the versions came from by grepping `lal status --full`
+            warn!("Multiple requirements on {} found in lockfile", name.clone());
         }
         assert!(vers.len() > 0, "found versions");
         // if version cannot be parsed as an int, it's not a global dependency
@@ -77,7 +76,7 @@ pub fn verify(m: &Manifest) -> LalResult<()> {
                 // also ensure it matches the version in the manifest
                 let mver = all_deps.get(&name);
                 // NB: name could be a dependency leaf and not in the manifest
-                if mver.is_some() {
+                if mver.is_some() && error.is_none() {
                     let vreq = *mver.unwrap();
                     if vreq != v {
                         warn!("Dependency {} has version {}, but manifest requires {}", name, v, vreq);
@@ -86,8 +85,6 @@ pub fn verify(m: &Manifest) -> LalResult<()> {
                 }
             }
         }
-
-
     }
 
     // Return one of the errors as the main one (no need to vectorize these..)
