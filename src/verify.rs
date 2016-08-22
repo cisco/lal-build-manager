@@ -47,13 +47,14 @@ pub fn verify(m: &Manifest) -> LalResult<()> {
         deps.push(component.to_string());
     }
     debug!("Found the following deps in INPUT: {:?}", deps);
-    for (d, _) in &m.dependencies {
-        trace!("Verifying dependency from manifest: {}", d);
+    for (d, v) in &m.dependencies {
+        trace!("Verifying dependency from manifest: {}@{}", d,v);
         if !deps.contains(&d) {
             warn!("Dependency {} not found in INPUT", d);
             error = Some(CliError::MissingDependencies);
         }
     }
+    let all_deps = m.all_dependencies();
 
     // 3. the dependency tree is flat and only global dependencies found
     debug!("Reading all lockfiles");
@@ -67,10 +68,25 @@ pub fn verify(m: &Manifest) -> LalResult<()> {
         }
         assert!(vers.len() > 0, "found versions");
         // if version cannot be parsed as an int, it's not a global dependency
-        if let Err(e) = vers.iter().next().unwrap().parse::<u32>() {
-            debug!("Failed to parse first version of {} as int ({:?})", name, e);
-            error = Some(CliError::NonGlobalDependencies(name.clone()));
+        match vers.iter().next().unwrap().parse::<u32>() {
+            Err(e) => {
+                debug!("Failed to parse first version of {} as int ({:?})", name, e);
+                error = Some(CliError::NonGlobalDependencies(name.clone()));
+            },
+            Ok(v) => {
+                // also ensure it matches the version in the manifest
+                let mver = all_deps.get(&name);
+                // NB: name could be a dependency leaf and not in the manifest
+                if mver.is_some() {
+                    let vreq = *mver.unwrap();
+                    if vreq != v {
+                        warn!("Dependency {} has version {}, but manifest requires {}", name, v, vreq);
+                        error = Some(CliError::InvalidVersion(name.clone()));
+                    }
+                }
+            }
         }
+
 
     }
 
