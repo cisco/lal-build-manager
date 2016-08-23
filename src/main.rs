@@ -315,6 +315,11 @@ fn main() {
         }
     }
 
+    // Firstly, warn users who are overriding the default:
+    if manifest.environment.is_some() && manifest.environment.clone().unwrap() != env {
+        warn!("Running command in non-default environment: '{}'", env);
+    }
+
     // Remaining actions - assume Manifest, Config, and Container
     if let Some(a) = args.subcommand_matches("update") {
         let xs = a.values_of("components").unwrap().map(|s| s.to_string()).collect::<Vec<_>>();

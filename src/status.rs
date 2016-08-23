@@ -1,8 +1,19 @@
-use ansi_term::Colour;
+use ansi_term::{Colour, ANSIString};
 use Manifest;
 use errors::{CliError, LalResult};
 use util::input;
 use super::Lockfile;
+
+fn version_string(lf: Option<&Lockfile>) -> ANSIString<'static> {
+    if lf.is_some() {
+        Colour::Fixed(8).paint(format!("({}-{})",
+            lf.unwrap().version,
+            lf.unwrap().environment.clone().unwrap_or("centos".into()))
+        )
+    } else {
+        Colour::Fixed(8).paint("")
+    }
+}
 
 fn status_recurse(dep: &String, lf: &Lockfile, n: usize, parent_indent: Vec<bool>) {
     assert_eq!(dep, &lf.name);
@@ -18,7 +29,7 @@ fn status_recurse(dep: &String, lf: &Lockfile, n: usize, parent_indent: Vec<bool
             res + &format!("{}", if ws_only { "  " } else { "│ " })
         });
 
-        println!("│ {}{}─{} {}", ws, turn_char, fork_char, k);
+        println!("│ {}{}─{} {} {}", ws, turn_char, fork_char, k, version_string(Some(sublock)));
 
         let mut next_indent = parent_indent.clone();
         next_indent.push(is_last);
@@ -74,8 +85,9 @@ pub fn status(manifest: &Manifest, full: bool) -> LalResult<()> {
         let turn_char = if is_last { "└" } else { "├" };
 
         // first level deps are formatted with more metadata
-        let level1 = format!("{}@{} {}", d, dep.version, notes);
-        println!("{}─{} {}", turn_char, fork_char, level1);
+        let level1 = format!("{} {}", d, notes);
+        let ver_str = version_string(lf.dependencies.get(&dep.name));
+        println!("{}─{} {} {}", turn_char, fork_char, level1, ver_str);
 
         if has_children {
             trace!("Attempting to get {} out of lockfile deps {:?}",
