@@ -315,12 +315,29 @@ fn main() {
         }
     }
 
-    // Firstly, warn users who are overriding the default:
-    if manifest.environment.is_some() && manifest.environment.clone().unwrap() != env {
-        warn!("Running command in non-default environment: '{}'", env);
+    // Remaining actions - assume Manifest, Config, and Container
+
+    // Subcommands that are environment agnostic
+    if let Some(a) = args.subcommand_matches("status") {
+        result_exit("status", lal::status(&manifest, a.is_present("full")));
+    } else if let Some(_) = args.subcommand_matches("list-components") {
+        result_exit("list-components", lal::build_list(&manifest))
+    } else if let Some(a) = args.subcommand_matches("remove") {
+        let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
+        let res = lal::remove(&manifest, xs, a.is_present("save"), a.is_present("savedev"));
+        result_exit("remove", res);
+    } else if let Some(a) = args.subcommand_matches("stash") {
+        result_exit("stash",
+                    lal::stash(&config, &manifest, a.value_of("name").unwrap()));
     }
 
-    // Remaining actions - assume Manifest, Config, and Container
+    // Warn users who are overriding the default for the main commands
+    if manifest.environment.is_some() && manifest.environment.clone().unwrap() != env {
+        let sub = args.subcommand_name().unwrap();
+        warn!("Running {} command for {} environment", sub, env);
+    }
+
+    // Main subcommands
     if let Some(a) = args.subcommand_matches("update") {
         let xs = a.values_of("components").unwrap().map(|s| s.to_string()).collect::<Vec<_>>();
         let res = lal::update(manifest,
@@ -335,10 +352,6 @@ fn main() {
     } else if let Some(a) = args.subcommand_matches("fetch") {
         let res = lal::fetch(&manifest, config, a.is_present("core"));
         result_exit("fetch", res);
-    } else if let Some(a) = args.subcommand_matches("remove") {
-        let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
-        let res = lal::remove(manifest, xs, a.is_present("save"), a.is_present("savedev"));
-        result_exit("remove", res);
     } else if let Some(a) = args.subcommand_matches("build") {
         let res = lal::build(&config,
                              &manifest,
@@ -351,8 +364,6 @@ fn main() {
                              env,
                              a.is_present("print"));
         result_exit("build", res);
-    } else if let Some(_) = args.subcommand_matches("list-components") {
-        result_exit("list-components", lal::build_list(&manifest))
     } else if let Some(a) = args.subcommand_matches("shell") {
         let xs = if a.is_present("cmd") {
             Some(a.values_of("cmd").unwrap().collect::<Vec<_>>())
@@ -379,11 +390,6 @@ fn main() {
                                 a.is_present("privileged")));
     } else if let Some(_) = args.subcommand_matches("verify") {
         result_exit("verify", lal::verify(&manifest, env));
-    } else if let Some(a) = args.subcommand_matches("status") {
-        result_exit("status", lal::status(&manifest, a.is_present("full")));
-    } else if let Some(a) = args.subcommand_matches("stash") {
-        result_exit("stash",
-                    lal::stash(&config, &manifest, a.value_of("name").unwrap()));
     } else if let Some(a) = args.subcommand_matches("query") {
         result_exit("query",
                     lal::query(&config, a.value_of("component").unwrap()));
