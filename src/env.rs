@@ -5,7 +5,7 @@ use std::path::Path;
 use std::vec::Vec;
 use rustc_serialize::json;
 
-use {Container, CliError, LalResult};
+use {Container, Config, CliError, LalResult};
 
 /// Representation of .lalopts
 ///
@@ -67,7 +67,10 @@ pub fn update(container: &Container, env: &str) -> LalResult<()> {
     Ok(())
 }
 
-pub fn set(opts_: &StickyOptions, env: &str) -> LalResult<()> {
+pub fn set(opts_: &StickyOptions, cfg: &Config, env: &str) -> LalResult<()> {
+    if !cfg.environments.contains_key(env) {
+        return Err(CliError::MissingEnvironment(env.into()))
+    }
     // mutate a temporary copy - lal binary is done after this function anyway
     let mut opts = opts_.clone();
     opts.env = Some(env.into());

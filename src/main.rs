@@ -149,15 +149,12 @@ fn main() {
                 .help("Output directory to save to")))
         .subcommand(SubCommand::with_name("env")
             .about("Manages environment configurations")
+            .arg(Arg::with_name("environment")
+                .required(false)
+                .help("Name of the environment to use"))
             .subcommand(SubCommand::with_name("update")
                 .about("Update the current environment"))
-            .subcommand(SubCommand::with_name("override")
-                .about("Override the default environment in this directory")
-                .arg(Arg::with_name("environment")
-                    .required(true)
-                    .help("Name of the environment to use")))
-            .subcommand(SubCommand::with_name("default")
-                .alias("clear")
+            .subcommand(SubCommand::with_name("reset")
                 .about("Return to the default environment")))
         .subcommand(SubCommand::with_name("stash")
             .about("Stashes current build OUTPUT in cache for later reuse")
@@ -291,7 +288,7 @@ fn main() {
     // lookup associated container
     let container = config.get_container(Some(env.clone())).map_err(|e| {
         error!("Environment error: {}", e);
-        println!("Ensure that manifest.environment has a corresponding in ~/.lal/config");
+        println!("Ensure that manifest.environment has a corresponding entry in ~/.lal/config");
         process::exit(1);
     }).unwrap();
 
@@ -302,12 +299,13 @@ fn main() {
             // `lal env update` and get the one from resolution above
             // `lal --env xenial env update` for a specific one
             result_exit("env update", lal::env::update(&container, &env))
-        } else if let Some(_) = a.subcommand_matches("default") {
+        } else if let Some(_) = a.subcommand_matches("reset") {
             result_exit("env clear", lal::env::clear())
-        } else if let Some(oa) = a.subcommand_matches("override") {
+        } else if a.is_present("environment") {
             result_exit("env override", lal::env::set(
                 &stickies,
-                oa.value_of("environment").unwrap()))
+                &config,
+                a.value_of("environment").unwrap()))
         } else {
             // just print current environment
             println!("{}", env);
