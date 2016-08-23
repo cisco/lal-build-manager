@@ -126,7 +126,7 @@ pub fn build(cfg: &Config,
 
     debug!("Build script is {:?}", cmd);
     if !printonly {
-        info!("Running build script in docker container");
+        info!("Running build script in {} container", envname);
     }
 
     try!(shell::docker_run(cfg, &container, cmd, false, printonly, false));

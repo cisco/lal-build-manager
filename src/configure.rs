@@ -128,7 +128,11 @@ impl Config {
         let mut f = try!(fs::File::open(&cfg_path));
         let mut cfg_str = String::new();
         try!(f.read_to_string(&mut cfg_str));
-        Ok(try!(json::decode(&cfg_str)))
+        let res : Config = try!(json::decode(&cfg_str));
+        if res.environments.contains_key("default") {
+            return Err(CliError::InvalidEnvironment)
+        }
+        Ok(res)
     }
     /// Checks if it is time to perform an upgrade check
     pub fn upgrade_check_time(&self) -> bool {
@@ -163,7 +167,7 @@ impl Config {
         if let Some(container) = self.environments.get(&env_) {
             return Ok(container.clone());
         }
-        Err(CliError::InvalidEnvironment(env_))
+        Err(CliError::MissingEnvironment(env_))
     }
 }
 
