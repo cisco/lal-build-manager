@@ -48,6 +48,7 @@ pub use verify::verify;
 pub use cache::{stash, clean};
 pub use upgrade::upgrade_check;
 pub use query::query;
+pub use env::StickyOptions;
 
 mod util;
 mod errors;
@@ -61,3 +62,4 @@ mod verify;
 mod cache;
 mod status;
 mod upgrade;
+pub mod env;

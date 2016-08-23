@@ -5,7 +5,7 @@ extern crate log;
 extern crate loggerv;
 
 extern crate lal;
-use lal::{LalResult, Config, Manifest};
+use lal::{LalResult, Config, Manifest, StickyOptions};
 use clap::{Arg, App, AppSettings, SubCommand};
 use std::process;
 
@@ -35,7 +35,7 @@ fn main() {
         .setting(AppSettings::DeriveDisplayOrder)
         .global_settings(&[AppSettings::ColoredHelp])
         .about("lal dependency manager")
-        .arg(Arg::with_name("env")
+        .arg(Arg::with_name("environment")
             .short("e")
             .long("env")
             .takes_value(true)
@@ -147,6 +147,18 @@ fn main() {
                 .long("output")
                 .takes_value(true)
                 .help("Output directory to save to")))
+        .subcommand(SubCommand::with_name("env")
+            .about("Manages environment configurations")
+            .subcommand(SubCommand::with_name("update")
+                .about("Update the current environment"))
+            .subcommand(SubCommand::with_name("override")
+                .about("Override the default environment in this directory")
+                .arg(Arg::with_name("environment")
+                    .required(true)
+                    .help("Name of the environment to use")))
+            .subcommand(SubCommand::with_name("default")
+                .alias("clear")
+                .about("Return to the default environment")))
         .subcommand(SubCommand::with_name("stash")
             .about("Stashes current build OUTPUT in cache for later reuse")
             .alias("save")
@@ -254,21 +266,54 @@ fn main() {
         })
         .unwrap();
 
+    // Read .lalopts if it exists
+    let stickies = StickyOptions::read()
+        .map_err(|e| {
+            // Should not happen unless people are mucking with it manually
+            error!("Options error: {}", e);
+            println!(".lalopts must be valid json");
+            process::exit(1);
+        }).unwrap(); // we get a default empty options here otherwise
+
     // Force a valid container key configured in manifest and corr. value in config
-    let env = if args.is_present("env") {
-        args.value_of("env").unwrap().into()
+    // NB: --env overrides sticky env overrides manifest.env overrides centos
+    let env = if args.is_present("environment") {
+        args.value_of("environment").unwrap().into() }
+    else if stickies.env.is_some() {
+        stickies.env.clone().unwrap()
     } else if let Some(ref menv) = manifest.environment {
         menv.clone()
     } else {
         // temporary arm while manifest.environment is not mandatory
         "centos".into()
     };
+
     // lookup associated container
     let container = config.get_container(Some(env.clone())).map_err(|e| {
         error!("Environment error: {}", e);
         println!("Ensure that manifest.environment has a corresponding in ~/.lal/config");
         process::exit(1);
     }).unwrap();
+
+    // resolve env updates and sticky options before main subcommands
+    if let Some(a) = args.subcommand_matches("env") {
+        if let Some(_) = a.subcommand_matches("update") {
+            // this one is a bit awkward, either:
+            // `lal env update` and get the one from resolution above
+            // `lal --env xenial env update` for a specific one
+            result_exit("env update", lal::env::update(&container, &env))
+        } else if let Some(_) = a.subcommand_matches("default") {
+            result_exit("env clear", lal::env::clear())
+        } else if let Some(oa) = a.subcommand_matches("override") {
+            result_exit("env override", lal::env::set(
+                &stickies,
+                oa.value_of("environment").unwrap()))
+        } else {
+            // just print current environment
+            println!("{}", env);
+            process::exit(0);
+        }
+    }
 
     // Remaining actions - assume Manifest, Config, and Container
     if let Some(a) = args.subcommand_matches("update") {
