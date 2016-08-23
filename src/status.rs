@@ -11,7 +11,7 @@ fn version_string(lf: Option<&Lockfile>) -> ANSIString<'static> {
             lf.unwrap().environment.clone().unwrap_or("centos".into()))
         )
     } else {
-        Colour::Fixed(8).paint("")
+        ANSIString::from("")
     }
 }
 
