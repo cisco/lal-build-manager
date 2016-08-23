@@ -295,11 +295,12 @@ fn main() {
     // resolve env updates and sticky options before main subcommands
     if let Some(a) = args.subcommand_matches("env") {
         if let Some(_) = a.subcommand_matches("update") {
-            // this one is a bit awkward, either:
-            // `lal env update` and get the one from resolution above
-            // `lal --env xenial env update` for a specific one
             result_exit("env update", lal::env::update(&container, &env))
         } else if let Some(_) = a.subcommand_matches("reset") {
+            // NB: if .lalopts.env points at an environment not in config
+            // reset will fail.. possible to fix, but complects this file too much
+            // .lalopts writes are checked in lal::env::set anyway so this
+            // would be purely the users fault for editing it manually
             result_exit("env clear", lal::env::clear())
         } else if a.is_present("environment") {
             result_exit("env override", lal::env::set(
