@@ -149,9 +149,11 @@ fn main() {
                 .help("Output directory to save to")))
         .subcommand(SubCommand::with_name("env")
             .about("Manages environment configurations")
-            .arg(Arg::with_name("environment")
-                .required(false)
-                .help("Name of the environment to use"))
+            .subcommand(SubCommand::with_name("set")
+                .about("Override the default environment for this folder")
+                .arg(Arg::with_name("environment")
+                    .required(true)
+                    .help("Name of the environment to use")))
             .subcommand(SubCommand::with_name("update")
                 .about("Update the current environment"))
             .subcommand(SubCommand::with_name("reset")
@@ -302,11 +304,11 @@ fn main() {
             // .lalopts writes are checked in lal::env::set anyway so this
             // would be purely the users fault for editing it manually
             result_exit("env clear", lal::env::clear())
-        } else if a.is_present("environment") {
+        } else if let Some(sa) = a.subcommand_matches("set") {
             result_exit("env override", lal::env::set(
                 &stickies,
                 &config,
-                a.value_of("environment").unwrap()))
+                sa.value_of("environment").unwrap()))
         } else {
             // just print current environment
             println!("{}", env);
