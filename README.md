@@ -80,7 +80,7 @@ lal build
 This workflow allows building multiple components simultaneously, and `lal status` provides safeguards and information on what dependencies you are using. Note that while doing this, you will receive warnings that you are using non-canonical dependencies.
 
 ### Creating a new version
-Designed to be handled by jenkins on each push to master (ideally through validated merge). Jenkins should create your numeric tag and upload the build output to artifactory. This behaviour is handled in [jenkins-config]((https://sqbu-github.cisco.com/Edonus/jenkins-config).
+Designed to be handled by jenkins on each push to master (ideally through validated merge). Jenkins should create your numeric tag and upload the build output to artifactory. This behaviour is handled in [jenkins-config](https://sqbu-github.cisco.com/Edonus/jenkins-config).
 
 ### Creating a new component
 Create a git repo, `lal init` it, then update deps and verify it builds.
