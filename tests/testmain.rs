@@ -169,7 +169,7 @@ fn init_force() {
     assert!(m4.is_err(), "could not re-init without force ");
 
     let m5 = lal::init(&cfg, true, "blah");
-    assert!(m4.is_err(), "could not init without valid environment");
+    assert!(m5.is_err(), "could not init without valid environment");
 }
 
 // Tests need to be run in a directory with a manifest
@@ -185,7 +185,7 @@ fn has_config_and_manifest() {
     chk::is_ok(Manifest::read(), "could read manifest");
 
     // There is no INPUT yet, but we have no dependencies, so this should work:
-    let r = lal::verify(&manifest.unwrap());
+    let r = lal::verify(&manifest.unwrap(), "centos".into());
     chk::is_ok(r, "could verify after install");
 }
 
@@ -219,7 +219,7 @@ fn verify_checks() {
     let cfg = Config::read().unwrap();
     let mf = Manifest::read().unwrap();
 
-    let r = lal::verify(&mf);
+    let r = lal::verify(&mf, "centos".into());
     assert!(r.is_ok(), "could verify after install");
 
     let gtest = Path::new(&env::current_dir().unwrap()).join("INPUT").join("gtest");
@@ -227,7 +227,7 @@ fn verify_checks() {
     let yajl = Path::new(&env::current_dir().unwrap()).join("INPUT").join("yajl");
     fs::remove_dir_all(&yajl).unwrap();
 
-    let r2 = lal::verify(&mf);
+    let r2 = lal::verify(&mf, "centos".into());
     assert!(r2.is_err(), "verify failed after fiddling");
 
     // re-install everything
@@ -237,20 +237,20 @@ fn verify_checks() {
     assert!(!gtest.is_dir(), "gtest was not reinstalled from manifest with core");
 
 
-    let r3 = lal::verify(&mf);
+    let r3 = lal::verify(&mf, "centos".into());
     assert!(r3.is_ok(), "verify ok again");
 }
 
 // Shell tests
 fn shell_echo() {
     let cfg = Config::read().unwrap();
-    let container = cfg.get_container("rust").unwrap();
+    let container = cfg.get_container(Some("rust".into())).unwrap();
     let r = lal::docker_run(&cfg, &container, vec!["echo".to_string(), "# echo from docker".to_string()], false, false, false);
     assert!(r.is_ok(), "shell echoed");
 }
 fn shell_permissions() {
     let cfg = Config::read().unwrap();
-    let container = cfg.get_container("rust").unwrap();
+    let container = cfg.get_container(Some("rust".into())).unwrap();
     let r = lal::docker_run(&cfg, &container, vec!["touch".to_string(), "README.md".to_string()], false, false, false);
     assert!(r.is_ok(), "could touch files in container");
 }
@@ -258,14 +258,20 @@ fn shell_permissions() {
 fn build_stash_and_update_from_stash() {
     let mf = Manifest::read().unwrap();
     let cfg = Config::read().unwrap();
+    let container = cfg.get_container(Some("rust".into())).unwrap();
 
     {
         let mut f = File::create("./BUILD").unwrap();
-        write!(f, "#!/bin/bash\necho hi > OUTPUT/test.txt\n").unwrap();
+        // Rust check in there to verify we can build in a rust container
+        write!(f, "#!/bin/bash\nset -e\nwhich rustc\necho hi > OUTPUT/test.txt\n").unwrap();
         Command::new("chmod").arg("+x").arg("BUILD").output().unwrap();
     } // scope ensures file is not busy before lal::build
 
-    let r = lal::build(&cfg, &mf, None, None, true, None, true, false);
+    // hacky build test: using rust container but verify with centos
+    // this avoids verify failing, but keeps build running in correct container
+    // sorry to whoever reads this, this is a very strange test
+    // because lal::build is definitely never being called in this way
+    let r = lal::build(&cfg, &mf, None, None, true, None, true, &container, "centos".into(), false);
     assert!(r.is_ok(), "could run lal build and could make tarball");
 
     // lal stash testmain
@@ -285,7 +291,8 @@ fn run_scripts() {
         Command::new("chmod").arg("+x").arg(".lal/scripts/subroutine").output().unwrap();
     }
     let cfg = Config::read().unwrap();
-    let r = lal::script(&cfg, "rust", "subroutine", vec!["there", "mr"], false);
+    let container = cfg.get_container(Some("rust".into())).unwrap();
+    let r = lal::script(&cfg, &container, "subroutine", vec!["there", "mr"], false);
     assert!(r.is_ok(), "could run subroutine script");
 }
 

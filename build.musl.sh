@@ -1,10 +1,11 @@
 #!/bin/bash
 set -ex
-container="edonusdevelopers/muslrust:1.10.0-2016-07-25"
+# build in the currently available muslrust container
+container="$(docker images edonusdevelopers/muslrust -q)"
 
 docker_run() {
   # shellcheck disable=SC2068
-  docker run -u lal -v "$PWD:/volume" -w /volume -t ${container} $@
+  docker run -u lal -v "$PWD:/volume" -w /volume -t "${container}" $@
 }
 
 # compile test executable
