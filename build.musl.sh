@@ -10,13 +10,13 @@ docker_run() {
 # compile test executable
 docker_run cargo build --test testmain
 
-# ensure we don't overwrite a buildmachines lalrc
+# ensure we don't overwrite a buildmachines config
 # back it up, then restore on EXIT
-[ -f ~/.lal/lalrc ] && cp ~/.lal/lalrc ./buplalrc
-restore_lalrc() {
-  [ -f buplalrc ] && mv buplalrc ~/.lal/lalrc
+[ -f ~/.lal/config ] && cp ~/.lal/config ./bupconfig
+restore_config() {
+  [ -f bupconfig ] && mv bupconfig ~/.lal/config
 }
-trap restore_lalrc EXIT
+trap restore_config EXIT
 
 # run tests
 ./target/x86_64-unknown-linux-musl/debug/testmain-*

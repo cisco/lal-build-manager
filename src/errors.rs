@@ -17,7 +17,7 @@ pub enum CliError {
     // main errors
     /// Manifest file not found in working directory
     MissingManifest,
-    /// Config (lalrc) not found in ~/.lal
+    /// Config not found in ~/.lal
     MissingConfig,
     /// Component not found in manifest
     MissingComponent(String),
@@ -27,14 +27,26 @@ pub enum CliError {
     // status/verify errors
     /// Core dependencies missing in INPUT
     MissingDependencies,
+    /// Dependency present at wrong version
+    InvalidVersion(String),
     /// Extraneous dependencies in INPUT
     ExtraneousDependencies,
     /// No lockfile found for a component in INPUT
     MissingLockfile(String),
     /// Multiple versions of a component was involved in this build
     MultipleVersions(String),
+    /// Multiple environments was used to build a component
+    MultipleEnvironments(String),
+    /// Environment for a component did not match our expected environment
+    EnvironmentMismatch(String, String),
     /// Custom versions are stashed in INPUT which will not fly on Jenkins
     NonGlobalDependencies(String),
+
+    // env related errors
+    /// Specified environment is not present in the main config
+    MissingEnvironment(String),
+    /// Default environment explicitly specified
+    InvalidEnvironment,
 
     // build errors
     /// Build configurations does not match manifest or user input
@@ -77,19 +89,32 @@ impl fmt::Display for CliError {
             CliError::Io(ref err) => err.fmt(f),
             CliError::Parse(ref err) => err.fmt(f),
             CliError::MissingManifest => write!(f, "No manifest.json found"),
-            CliError::MissingConfig => write!(f, "No ~/.lal/lalrc found"),
+            CliError::MissingConfig => write!(f, "No ~/.lal/config found"),
             CliError::MissingComponent(ref s) => {
                 write!(f, "Component '{}' not found in manifest", s)
             }
             CliError::ManifestExists => write!(f, "Manifest already exists (use -f to force)"),
             CliError::MissingDependencies => write!(f, "Core dependencies missing in INPUT"),
+            CliError::InvalidVersion(ref s) => write!(f, "Dependency {} using incorrect version", s),
             CliError::ExtraneousDependencies => write!(f, "Extraneous dependencies in INPUT"),
             CliError::MissingLockfile(ref s) => write!(f, "No lockfile found in INPUT/{}", s),
             CliError::MultipleVersions(ref s) => {
                 write!(f, "Depending on multiple versions of {}", s)
             }
+            CliError::MultipleEnvironments(ref s) => {
+                write!(f, "Depending on multiple environments to build {}", s)
+            }
+            CliError::EnvironmentMismatch(ref dep, ref env) => {
+                write!(f, "Environment mismatch for {} - built in {}", dep, env)
+            }
             CliError::NonGlobalDependencies(ref s) => {
                 write!(f, "Depending on a custom version of {}", s)
+            }
+            CliError::MissingEnvironment(ref s) => {
+                write!(f, "Environment '{}' not found in ~/.lal/config", s)
+            },
+            CliError::InvalidEnvironment => {
+                write!(f, "Environment 'default' is reserved for internal use")
             }
             CliError::InvalidBuildConfiguration(ref s) => {
                 write!(f, "Invalid build configuration - {}", s)

@@ -8,7 +8,7 @@ use walkdir::WalkDir;
 
 use shell;
 use verify::verify;
-use {Lockfile, Manifest, Config, LalResult, CliError};
+use {Lockfile, Manifest, Container, Config, LalResult, CliError};
 
 pub fn tar_output(tarball: &Path) -> LalResult<()> {
     use tar;
@@ -80,6 +80,8 @@ pub fn build(cfg: &Config,
              release: bool,
              version: Option<&str>,
              strict: bool,
+             container: &Container,
+             envname: String,
              printonly: bool)
              -> LalResult<()> {
     try!(ensure_dir_exists_fresh("OUTPUT"));
@@ -87,7 +89,7 @@ pub fn build(cfg: &Config,
     debug!("Version flag is {}", version.unwrap_or("unset"));
 
     // Verify INPUT
-    if let Some(e) = verify(&manifest).err() {
+    if let Some(e) = verify(&manifest, envname.clone()).err() {
         if version.is_some() || strict {
             return Err(e);
         }
@@ -112,21 +114,22 @@ pub fn build(cfg: &Config,
         return Err(CliError::InvalidBuildConfiguration(ename));
     }
     let lockfile = try!(Lockfile::new(&manifest.name,
-                                      &cfg.container,
+                                      container,
+                                      &envname,
                                       version,
                                       Some(&configuration_name))
         .populate_from_input());
     let lockpth = Path::new("./OUTPUT/lockfile.json");
     try!(lockfile.write(&lockpth, true)); // always put a lockfile in OUTPUT at the start of a build
 
-    let cmd = vec!["./BUILD".to_string(), component.to_string(), configuration_name];
+    let cmd = vec!["./BUILD".into(), component.into(), configuration_name];
 
     debug!("Build script is {:?}", cmd);
     if !printonly {
-        info!("Running build script in docker container");
+        info!("Running build script in {} container", envname);
     }
 
-    try!(shell::docker_run(&cfg, cmd, false, printonly, false));
+    try!(shell::docker_run(cfg, &container, cmd, false, printonly, false));
 
     if release && !printonly {
         trace!("Create ARTIFACT dir");

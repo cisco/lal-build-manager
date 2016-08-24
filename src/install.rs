@@ -228,7 +228,7 @@ pub fn export(cfg: &Config, comp: &str, output: Option<&str>) -> LalResult<()> {
 ///
 /// If one of `save` or `savedev` was set, `manifest.json` is also updated to remove
 /// the specified components from the corresponding dictionary.
-pub fn remove(manifest: Manifest, xs: Vec<&str>, save: bool, savedev: bool) -> LalResult<()> {
+pub fn remove(manifest: &Manifest, xs: Vec<&str>, save: bool, savedev: bool) -> LalResult<()> {
     debug!("Removing dependencies {:?}", xs);
 
     // remove entries in xs from manifest.

@@ -5,7 +5,7 @@ extern crate log;
 extern crate loggerv;
 
 extern crate lal;
-use lal::{LalResult, Config, Manifest};
+use lal::{LalResult, Config, Manifest, StickyOptions};
 use clap::{Arg, App, AppSettings, SubCommand};
 use std::process;
 
@@ -35,6 +35,11 @@ fn main() {
         .setting(AppSettings::DeriveDisplayOrder)
         .global_settings(&[AppSettings::ColoredHelp])
         .about("lal dependency manager")
+        .arg(Arg::with_name("environment")
+            .short("e")
+            .long("env")
+            .takes_value(true)
+            .help("Override the default environment for this command"))
         .arg(Arg::with_name("verbose")
             .short("v")
             .multiple(true)
@@ -124,15 +129,14 @@ fn main() {
                 .help("Parameters to pass on to the script")))
         .subcommand(SubCommand::with_name("init")
             .about("Create a manifest file in the current directory")
+            .arg(Arg::with_name("environment")
+                .required(true)
+                .help("Environment to build this component in"))
             .arg(Arg::with_name("force")
                 .short("f")
                 .help("overwrites manifest if necessary")))
         .subcommand(SubCommand::with_name("configure")
-            .about("configures lal")
-            .arg(Arg::with_name("yes")
-                .short("y")
-                .long("yes")
-                .help("Assume default without prompting")))
+            .about("Creates a default lal config ~/.lal/"))
         .subcommand(SubCommand::with_name("export")
             .about("Fetch a raw tarball from artifactory")
             .arg(Arg::with_name("component")
@@ -143,6 +147,17 @@ fn main() {
                 .long("output")
                 .takes_value(true)
                 .help("Output directory to save to")))
+        .subcommand(SubCommand::with_name("env")
+            .about("Manages environment configurations")
+            .subcommand(SubCommand::with_name("set")
+                .about("Override the default environment for this folder")
+                .arg(Arg::with_name("environment")
+                    .required(true)
+                    .help("Name of the environment to use")))
+            .subcommand(SubCommand::with_name("update")
+                .about("Update the current environment"))
+            .subcommand(SubCommand::with_name("reset")
+                .about("Return to the default environment")))
         .subcommand(SubCommand::with_name("stash")
             .about("Stashes current build OUTPUT in cache for later reuse")
             .alias("save")
@@ -201,16 +216,15 @@ fn main() {
     loggerv::init_with_verbosity(args.occurrences_of("verbose") + 1).unwrap();
 
     // Allow lal configure without assumptions
-    if let Some(a) = args.subcommand_matches("configure") {
-        result_exit("configure",
-                    lal::configure(!a.is_present("yes"), true, None));
+    if let Some(_) = args.subcommand_matches("configure") {
+        result_exit("configure", lal::configure(true));
     }
 
     // Force config to exists before allowing remaining actions
     let config = Config::read()
         .map_err(|e| {
             error!("Configuration error: {}", e);
-            println!("Ensure you have run `lal configure` and that ~/.lal/lalrc is valid json");
+            println!("Ensure you have run `lal configure` and that ~/.lal/config is valid json");
             process::exit(1);
         })
         .unwrap();
@@ -236,7 +250,7 @@ fn main() {
 
     // Allow lal init / clean without manifest existing in PWD
     if let Some(a) = args.subcommand_matches("init") {
-        result_exit("init", lal::init(a.is_present("force")));
+        result_exit("init", lal::init(&config, a.is_present("force"), a.value_of("environment").unwrap()));
     } else if let Some(a) = args.subcommand_matches("clean") {
         let days = a.value_of("days").unwrap().parse().unwrap();
         result_exit("clean", lal::clean(&config, days));
@@ -251,7 +265,80 @@ fn main() {
         })
         .unwrap();
 
-    // Remaining actions - assume Manifest and Config
+    // Read .lalopts if it exists
+    let stickies = StickyOptions::read()
+        .map_err(|e| {
+            // Should not happen unless people are mucking with it manually
+            error!("Options error: {}", e);
+            println!(".lalopts must be valid json");
+            process::exit(1);
+        }).unwrap(); // we get a default empty options here otherwise
+
+    // Force a valid container key configured in manifest and corr. value in config
+    // NB: --env overrides sticky env overrides manifest.env overrides centos
+    let env = if args.is_present("environment") {
+        args.value_of("environment").unwrap().into() }
+    else if stickies.env.is_some() {
+        stickies.env.clone().unwrap()
+    } else if let Some(ref menv) = manifest.environment {
+        menv.clone()
+    } else {
+        // temporary arm while manifest.environment is not mandatory
+        "centos".into()
+    };
+
+    // lookup associated container
+    let container = config.get_container(Some(env.clone())).map_err(|e| {
+        error!("Environment error: {}", e);
+        println!("Ensure that manifest.environment has a corresponding entry in ~/.lal/config");
+        process::exit(1);
+    }).unwrap();
+
+    // resolve env updates and sticky options before main subcommands
+    if let Some(a) = args.subcommand_matches("env") {
+        if let Some(_) = a.subcommand_matches("update") {
+            result_exit("env update", lal::env::update(&container, &env))
+        } else if let Some(_) = a.subcommand_matches("reset") {
+            // NB: if .lalopts.env points at an environment not in config
+            // reset will fail.. possible to fix, but complects this file too much
+            // .lalopts writes are checked in lal::env::set anyway so this
+            // would be purely the users fault for editing it manually
+            result_exit("env clear", lal::env::clear())
+        } else if let Some(sa) = a.subcommand_matches("set") {
+            result_exit("env override", lal::env::set(
+                &stickies,
+                &config,
+                sa.value_of("environment").unwrap()))
+        } else {
+            // just print current environment
+            println!("{}", env);
+            process::exit(0);
+        }
+    }
+
+    // Remaining actions - assume Manifest, Config, and Container
+
+    // Subcommands that are environment agnostic
+    if let Some(a) = args.subcommand_matches("status") {
+        result_exit("status", lal::status(&manifest, a.is_present("full")));
+    } else if let Some(_) = args.subcommand_matches("list-components") {
+        result_exit("list-components", lal::build_list(&manifest))
+    } else if let Some(a) = args.subcommand_matches("remove") {
+        let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
+        let res = lal::remove(&manifest, xs, a.is_present("save"), a.is_present("savedev"));
+        result_exit("remove", res);
+    } else if let Some(a) = args.subcommand_matches("stash") {
+        result_exit("stash",
+                    lal::stash(&config, &manifest, a.value_of("name").unwrap()));
+    }
+
+    // Warn users who are overriding the default for the main commands
+    if manifest.environment.is_some() && manifest.environment.clone().unwrap() != env {
+        let sub = args.subcommand_name().unwrap();
+        warn!("Running {} command for {} environment", sub, env);
+    }
+
+    // Main subcommands
     if let Some(a) = args.subcommand_matches("update") {
         let xs = a.values_of("components").unwrap().map(|s| s.to_string()).collect::<Vec<_>>();
         let res = lal::update(manifest,
@@ -266,10 +353,6 @@ fn main() {
     } else if let Some(a) = args.subcommand_matches("fetch") {
         let res = lal::fetch(&manifest, config, a.is_present("core"));
         result_exit("fetch", res);
-    } else if let Some(a) = args.subcommand_matches("remove") {
-        let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
-        let res = lal::remove(manifest, xs, a.is_present("save"), a.is_present("savedev"));
-        result_exit("remove", res);
     } else if let Some(a) = args.subcommand_matches("build") {
         let res = lal::build(&config,
                              &manifest,
@@ -278,10 +361,10 @@ fn main() {
                              a.is_present("release"),
                              a.value_of("with-version"),
                              a.is_present("strict"),
+                             &container,
+                             env,
                              a.is_present("print"));
         result_exit("build", res);
-    } else if let Some(_) = args.subcommand_matches("list-components") {
-        result_exit("list-components", lal::build_list(&manifest))
     } else if let Some(a) = args.subcommand_matches("shell") {
         let xs = if a.is_present("cmd") {
             Some(a.values_of("cmd").unwrap().collect::<Vec<_>>())
@@ -290,6 +373,7 @@ fn main() {
         };
         result_exit("shell",
                     lal::shell(&config,
+                               &container,
                                a.is_present("print"),
                                xs,
                                a.is_present("privileged")));
@@ -301,16 +385,12 @@ fn main() {
         };
         result_exit("script",
                     lal::script(&config,
+                                &container,
                                 a.value_of("script").unwrap(),
                                 xs,
                                 a.is_present("privileged")));
     } else if let Some(_) = args.subcommand_matches("verify") {
-        result_exit("verify", lal::verify(&manifest));
-    } else if let Some(a) = args.subcommand_matches("status") {
-        result_exit("status", lal::status(&manifest, a.is_present("full")));
-    } else if let Some(a) = args.subcommand_matches("stash") {
-        result_exit("stash",
-                    lal::stash(&config, &manifest, a.value_of("name").unwrap()));
+        result_exit("verify", lal::verify(&manifest, env));
     } else if let Some(a) = args.subcommand_matches("query") {
         result_exit("query",
                     lal::query(&config, a.value_of("component").unwrap()));
