@@ -1,7 +1,7 @@
 #!/bin/bash
-set -ex
+set -exo pipefail
 # build in the currently available muslrust container
-container="$(docker images edonusdevelopers/muslrust -q)"
+container="$(docker images -q edonusdevelopers/muslrust | head -n 1)"
 
 docker_run() {
   # shellcheck disable=SC2068
