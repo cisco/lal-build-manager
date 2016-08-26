@@ -44,7 +44,7 @@ impl Container {
     /// This will split the container on `:` to actually fetch the tag, and if no tag
     /// was present, it will assume tag is latest as per docker conventions.
     pub fn new(container: &str) -> Container {
-        let split: Vec<&str> = container.split(":").collect();
+        let split: Vec<&str> = container.split(':').collect();
         let tag = if split.len() == 2 { split[1] } else { "latest" };
         let cname = if split.len() == 2 { split[0] } else { container };
         Container {
@@ -116,7 +116,7 @@ impl Lockfile {
     /// the re-reads them fully in `read_lockfile_from_component` so can be sped up.
     pub fn populate_from_input(mut self) -> LalResult<Self> {
         let deps = try!(input::analyze());
-        for (name, _) in deps {
+        for name in deps.keys() {
             trace!("Populating lockfile with {}", name);
             let deplock = try!(Lockfile::from_input_component(&name));
             self.dependencies.insert(name.clone(), deplock);

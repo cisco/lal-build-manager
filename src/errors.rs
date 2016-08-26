@@ -76,8 +76,6 @@ pub enum CliError {
     // fetch/update failures
     /// Unspecified install failure
     InstallFailure,
-    /// Fetch failure related to globalroot (unmaintained)
-    GlobalRootFailure(&'static str),
     /// Fetch failure related to artifactory
     ArtifactoryFailure(&'static str),
 }
@@ -137,13 +135,12 @@ impl fmt::Display for CliError {
                 write!(f, "ID mismatch inside and outside docker - {}", s)
             }
             CliError::InstallFailure => write!(f, "Install failed"),
-            CliError::GlobalRootFailure(ref s) => write!(f, "Globalroot - {}", s),
-            CliError::ArtifactoryFailure(ref s) => write!(f, "Artifactory - {}", s),
+            CliError::ArtifactoryFailure(s) => write!(f, "Artifactory - {}", s),
         }
     }
 }
 
-// Allow io and json errors to be converted to CliError in a try! without map_err
+// Allow io and json errors to be converted to `CliError` in a try! without map_err
 impl From<io::Error> for CliError {
     fn from(err: io::Error) -> CliError {
         CliError::Io(err)
@@ -156,7 +153,7 @@ impl From<json::DecoderError> for CliError {
     }
 }
 
-/// Type alias to stop having to type out CliError everywhere.
+/// Type alias to stop having to type out `CliError` everywhere.
 ///
 /// Most functions can simply add the return type `LalResult<T>` for some `T`,
 /// and enjoy the benefit of using `try!` or `?` without having to worry about

@@ -62,7 +62,7 @@ impl Manifest {
     pub fn all_dependencies(&self) -> BTreeMap<String, u32> {
         let mut deps = self.dependencies.clone();
         for (k, v) in &self.devDependencies {
-            deps.insert(k.clone(), v.clone());
+            deps.insert(k.clone(), *v);
         }
         deps
     }

@@ -62,17 +62,17 @@ fn fetch_via_artifactory(cfg: &Config,
     trace!("Locate component {}", name);
     let component = try!(get_tarball_uri(&cfg.artifactory, name, version));
 
-    if !cache::is_cached(&cfg, &component.name, component.version) {
+    if !cache::is_cached(cfg, &component.name, component.version) {
         // download to PWD then move it to stash immediately
         let local_tarball = Path::new(".").join(format!("{}.tar", name));
         try!(download_to_path(&component.tarball, &local_tarball));
         try!(cache::store_tarball(&cfg, name, component.version));
     }
-    assert!(cache::is_cached(&cfg, &component.name, component.version),
+    assert!(cache::is_cached(cfg, &component.name, component.version),
             "cached component");
 
     trace!("Fetching {} from cache", name);
-    let tarname = cache::get_cache_dir(&cfg, &component.name, component.version)
+    let tarname = cache::get_cache_dir(cfg, &component.name, component.version)
         .join(format!("{}.tar", name));
     Ok((tarname, component))
 }
@@ -95,7 +95,7 @@ fn fetch_and_unpack_component(cfg: &Config,
 fn clean_input() {
     let input = Path::new("./INPUT");
     if input.is_dir() {
-        let _ = fs::remove_dir_all(&input).unwrap();
+        fs::remove_dir_all(&input).unwrap();
     }
 }
 
@@ -120,11 +120,11 @@ pub fn update(manifest: Manifest,
     let mut updated = Vec::with_capacity(components.len());
     for comp in &components {
         info!("Fetch {}", comp);
-        if comp.contains("=") {
-            let pair: Vec<&str> = comp.split("=").collect();
+        if comp.contains('=') {
+            let pair: Vec<&str> = comp.split('=').collect();
             if let Ok(n) = pair[1].parse::<u32>() {
                 // standard fetch with an integer version
-                match fetch_and_unpack_component(&cfg, pair[0], Some(n)) {
+                match fetch_and_unpack_component(cfg, pair[0], Some(n)) {
                     Ok(c) => updated.push(c),
                     Err(e) => {
                         warn!("Failed to update {} ({})", pair[0], e);
@@ -134,14 +134,14 @@ pub fn update(manifest: Manifest,
             } else {
                 // fetch from stash - this does not go into `updated` it it succeeds
                 // because we wont and cannot save stashed versions in the manifest
-                let _ = cache::fetch_from_stash(&cfg, pair[0], pair[1]).map_err(|e| {
+                let _ = cache::fetch_from_stash(cfg, pair[0], pair[1]).map_err(|e| {
                     warn!("Failed to update {} from stash ({})", pair[0], e);
                     error = Some(e);
                 });
             }
         } else {
             // fetch without a specific version (latest)
-            match fetch_and_unpack_component(&cfg, &comp, None) {
+            match fetch_and_unpack_component(cfg, comp, None) {
                 Ok(c) => updated.push(c),
                 Err(e) => {
                     warn!("Failed to update {} ({})", &comp, e);
@@ -198,8 +198,8 @@ pub fn export(cfg: &Config, comp: &str, output: Option<&str>) -> LalResult<()> {
     info!("Export {} to {}", comp, dir);
 
     let mut component_name = comp; // this is only correct if no =version suffix
-    let tarname = if comp.contains("=") {
-        let pair: Vec<&str> = comp.split("=").collect();
+    let tarname = if comp.contains('=') {
+        let pair: Vec<&str> = comp.split('=').collect();
         if let Ok(n) = pair[1].parse::<u32>() {
             // standard fetch with an integer version
             component_name = pair[0]; // save so we have sensible tarball names
@@ -286,7 +286,7 @@ pub fn fetch(manifest: &Manifest, cfg: Config, core: bool) -> LalResult<()> {
     let mut deps = manifest.dependencies.clone();
     if !core {
         for (k, v) in &manifest.devDependencies {
-            deps.insert(k.clone(), v.clone());
+            deps.insert(k.clone(), *v);
         }
     }
     let mut err = None;

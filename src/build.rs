@@ -89,7 +89,7 @@ pub fn build(cfg: &Config,
     debug!("Version flag is {}", version.unwrap_or("unset"));
 
     // Verify INPUT
-    if let Some(e) = verify(&manifest, envname.clone()).err() {
+    if let Some(e) = verify(manifest, envname.clone()).err() {
         if version.is_some() || strict {
             return Err(e);
         }
@@ -129,7 +129,7 @@ pub fn build(cfg: &Config,
         info!("Running build script in {} container", envname);
     }
 
-    try!(shell::docker_run(cfg, &container, cmd, false, printonly, false));
+    try!(shell::docker_run(cfg, container, cmd, false, printonly, false));
 
     if release && !printonly {
         trace!("Create ARTIFACT dir");

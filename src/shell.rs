@@ -80,7 +80,7 @@ pub fn docker_run(cfg: &Config,
         args.push("--entrypoint".into());
         args.push("/bin/bash".into());
     }
-    args.push(format!("{}", if interactive { "-it" } else { "-t" }));
+    args.push((if interactive { "-it" } else { "-t" }).into());
 
     args.push(format!("{}:{}", container.name, container.tag));
     for c in command {
@@ -126,7 +126,7 @@ pub fn shell(cfg: &Config,
             bash.push(c.to_string())
         }
     }
-    docker_run(cfg, &container, bash, interactive, printonly, privileged)
+    docker_run(cfg, container, bash, interactive, printonly, privileged)
 }
 
 /// Runs a script in ./.lal/scripts/ with supplied arguments in a shell

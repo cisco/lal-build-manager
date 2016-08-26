@@ -104,10 +104,10 @@ pub fn get_tarball_uri(art_cfg: &Artifactory,
     }
 }
 
-/// Entry point for lal::upgrade
+/// Entry point for `lal::upgrade`
 ///
 /// This mostly duplicates the behaviour in `get_storage_as_u32`, however,
-/// it is parsing the version as a semver::Version struct rather than a u32.
+/// it is parsing the version as a `semver::Version` struct rather than a u32.
 pub fn find_latest_lal_version(art_cfg: &Artifactory) -> LalResult<Version> {
     use curl::http;
     let uri = format!("{}/api/storage/{}/lal", art_cfg.server, art_cfg.group);

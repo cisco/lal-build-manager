@@ -27,7 +27,7 @@ pub fn verify(m: &Manifest, env: String) -> LalResult<()> {
     }
 
     // 2. dependencies in `INPUT` match `manifest.json`.
-    if m.dependencies.len() == 0 {
+    if m.dependencies.is_empty() {
         return Ok(()); // nothing to verify - so accept a missing directory
     }
 
@@ -49,7 +49,7 @@ pub fn verify(m: &Manifest, env: String) -> LalResult<()> {
     debug!("Found the following deps in INPUT: {:?}", deps);
     for (d, v) in &m.dependencies {
         trace!("Verifying dependency from manifest: {}@{}", d,v);
-        if !deps.contains(&d) {
+        if !deps.contains(d) {
             warn!("Dependency {} not found in INPUT", d);
             error = Some(CliError::MissingDependencies);
         }

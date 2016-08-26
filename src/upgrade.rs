@@ -22,13 +22,10 @@ pub fn upgrade_check(cfg: &Config, silent: bool) -> LalResult<bool> {
         info!("If your version is prebuilt:");
         info!(" - `curl {}/lal/latest/lal.tar | tar xz -C /usr/local`",
               cfg.artifactory.vgroup);
+    } else if silent {
+        debug!("You are running the latest version of lal");
     } else {
-        // No new version
-        if silent {
-            debug!("You are running the latest version of lal");
-        } else {
-            info!("You are running the latest version of lal");
-        }
+        info!("You are running the latest version of lal");
     }
     Ok(latest > current)
 }
