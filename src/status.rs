@@ -7,9 +7,8 @@ use super::Lockfile;
 fn version_string(lf: Option<&Lockfile>) -> ANSIString<'static> {
     if lf.is_some() {
         Colour::Fixed(8).paint(format!("({}-{})",
-            lf.unwrap().version,
-            lf.unwrap().environment.clone().unwrap_or("centos".into()))
-        )
+                                       lf.unwrap().version,
+                                       lf.unwrap().environment.clone().unwrap_or("centos".into())))
     } else {
         ANSIString::from("")
     }
@@ -28,7 +27,12 @@ fn status_recurse(dep: &str, lf: &Lockfile, n: usize, parent_indent: Vec<bool>) 
             res + (if ws_only { "  " } else { "│ " })
         });
 
-        println!("│ {}{}─{} {} {}", ws, turn_char, fork_char, k, version_string(Some(sublock)));
+        println!("│ {}{}─{} {} {}",
+                 ws,
+                 turn_char,
+                 fork_char,
+                 k,
+                 version_string(Some(sublock)));
 
         let mut next_indent = parent_indent.clone();
         next_indent.push(is_last);
@@ -50,11 +54,8 @@ fn status_recurse(dep: &str, lf: &Lockfile, n: usize, parent_indent: Vec<bool>) 
 pub fn status(manifest: &Manifest, full: bool) -> LalResult<()> {
     let mut error = None;
 
-    let lf = if full {
-        try!(Lockfile::default().populate_from_input())
-    } else {
-        Lockfile::default()
-    };
+    let lf =
+        if full { try!(Lockfile::default().populate_from_input()) } else { Lockfile::default() };
 
     println!("{}", manifest.name);
     let deps = try!(input::analyze_full(&manifest));

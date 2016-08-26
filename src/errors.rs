@@ -93,7 +93,9 @@ impl fmt::Display for CliError {
             }
             CliError::ManifestExists => write!(f, "Manifest already exists (use -f to force)"),
             CliError::MissingDependencies => write!(f, "Core dependencies missing in INPUT"),
-            CliError::InvalidVersion(ref s) => write!(f, "Dependency {} using incorrect version", s),
+            CliError::InvalidVersion(ref s) => {
+                write!(f, "Dependency {} using incorrect version", s)
+            }
             CliError::ExtraneousDependencies => write!(f, "Extraneous dependencies in INPUT"),
             CliError::MissingLockfile(ref s) => write!(f, "No lockfile found in INPUT/{}", s),
             CliError::MultipleVersions(ref s) => {
@@ -110,7 +112,7 @@ impl fmt::Display for CliError {
             }
             CliError::MissingEnvironment(ref s) => {
                 write!(f, "Environment '{}' not found in ~/.lal/config", s)
-            },
+            }
             CliError::InvalidEnvironment => {
                 write!(f, "Environment 'default' is reserved for internal use")
             }

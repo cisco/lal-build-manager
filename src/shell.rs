@@ -133,7 +133,12 @@ pub fn shell(cfg: &Config,
 ///
 /// This is a convenience helper for running things that aren't builds.
 /// E.g. `lal run my-large-test RUNONLY=foo`
-pub fn script(cfg: &Config, container: &Container, name: &str, args: Vec<&str>, privileged: bool) -> LalResult<()> {
+pub fn script(cfg: &Config,
+              container: &Container,
+              name: &str,
+              args: Vec<&str>,
+              privileged: bool)
+              -> LalResult<()> {
     let pth = Path::new(".").join(".lal").join("scripts").join(&name);
     if !pth.exists() {
         return Err(CliError::MissingScript(name.into()));

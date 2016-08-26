@@ -84,7 +84,12 @@ impl Lockfile {
     /// Initialize an empty Lockfile with defaults
     ///
     /// If no version is given, the version is EXPERIMENTAL+{randhex} for Colony.
-    pub fn new(name: &str, container: &Container, env: &str, v: Option<&str>, build_cfg: Option<&str>) -> Self {
+    pub fn new(name: &str,
+               container: &Container,
+               env: &str,
+               v: Option<&str>,
+               build_cfg: Option<&str>)
+               -> Self {
         let def_version = format!("EXPERIMENTAL+{:x}", rand::random::<u64>());
         Lockfile {
             name: name.to_string(),
@@ -147,12 +152,10 @@ impl Lockfile {
     fn get_value(&self, key: &str) -> String {
         if key == "version" {
             self.version.clone()
-        }
-        else if key == "environment" {
+        } else if key == "environment" {
             // old components were built for centos only - keeping this default
             self.environment.clone().unwrap_or("centos".into())
-        }
-        else {
+        } else {
             unreachable!("Only using get_value internally");
         }
     }

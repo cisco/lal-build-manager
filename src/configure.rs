@@ -76,22 +76,26 @@ impl Default for Config {
         let cachedir = cachepath.as_path().to_str().unwrap();
         // edonusdevelopers default C++ containers
         let mut envs = BTreeMap::new();
-        envs.insert("centos".into(), Container {
-            name: "edonusdevelopers/centos_build".into(),
-            tag: "latest".into(),
-        });
-        envs.insert("xenial".into(), Container {
-            name: "edonusdevelopers/build_xenial".into(),
-            tag: "latest".into(),
-        });
-        envs.insert("rust".into(), Container {
-            name: "edonusdevelopers/muslrust".into(),
-            tag: "latest".into(),
-        });
-        envs.insert("transcoder".into(), Container {
-            name: "edonusdevelopers/mygdon-transcoder".into(),
-            tag: "latest".into(),
-        });
+        envs.insert("centos".into(),
+                    Container {
+                        name: "edonusdevelopers/centos_build".into(),
+                        tag: "latest".into(),
+                    });
+        envs.insert("xenial".into(),
+                    Container {
+                        name: "edonusdevelopers/build_xenial".into(),
+                        tag: "latest".into(),
+                    });
+        envs.insert("rust".into(),
+                    Container {
+                        name: "edonusdevelopers/muslrust".into(),
+                        tag: "latest".into(),
+                    });
+        envs.insert("transcoder".into(),
+                    Container {
+                        name: "edonusdevelopers/mygdon-transcoder".into(),
+                        tag: "latest".into(),
+                    });
         // last update time
         let time = UTC::now() - Duration::days(2);
         // common edonusdevelopers mounts
@@ -128,9 +132,9 @@ impl Config {
         let mut f = try!(fs::File::open(&cfg_path));
         let mut cfg_str = String::new();
         try!(f.read_to_string(&mut cfg_str));
-        let res : Config = try!(json::decode(&cfg_str));
+        let res: Config = try!(json::decode(&cfg_str));
         if res.environments.contains_key("default") {
-            return Err(CliError::InvalidEnvironment)
+            return Err(CliError::InvalidEnvironment);
         }
         Ok(res)
     }

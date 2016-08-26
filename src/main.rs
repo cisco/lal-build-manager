@@ -154,10 +154,8 @@ fn main() {
                 .arg(Arg::with_name("environment")
                     .required(true)
                     .help("Name of the environment to use")))
-            .subcommand(SubCommand::with_name("update")
-                .about("Update the current environment"))
-            .subcommand(SubCommand::with_name("reset")
-                .about("Return to the default environment")))
+            .subcommand(SubCommand::with_name("update").about("Update the current environment"))
+            .subcommand(SubCommand::with_name("reset").about("Return to the default environment")))
         .subcommand(SubCommand::with_name("stash")
             .about("Stashes current build OUTPUT in cache for later reuse")
             .alias("save")
@@ -250,7 +248,10 @@ fn main() {
 
     // Allow lal init / clean without manifest existing in PWD
     if let Some(a) = args.subcommand_matches("init") {
-        result_exit("init", lal::init(&config, a.is_present("force"), a.value_of("environment").unwrap()));
+        result_exit("init",
+                    lal::init(&config,
+                              a.is_present("force"),
+                              a.value_of("environment").unwrap()));
     } else if let Some(a) = args.subcommand_matches("clean") {
         let days = a.value_of("days").unwrap().parse().unwrap();
         result_exit("clean", lal::clean(&config, days));
@@ -272,13 +273,14 @@ fn main() {
             error!("Options error: {}", e);
             println!(".lalopts must be valid json");
             process::exit(1);
-        }).unwrap(); // we get a default empty options here otherwise
+        })
+        .unwrap(); // we get a default empty options here otherwise
 
     // Force a valid container key configured in manifest and corr. value in config
     // NB: --env overrides sticky env overrides manifest.env overrides centos
     let env = if args.is_present("environment") {
-        args.value_of("environment").unwrap().into() }
-    else if stickies.env.is_some() {
+        args.value_of("environment").unwrap().into()
+    } else if stickies.env.is_some() {
         stickies.env.clone().unwrap()
     } else if let Some(ref menv) = manifest.environment {
         menv.clone()
@@ -288,11 +290,13 @@ fn main() {
     };
 
     // lookup associated container
-    let container = config.get_container(Some(env.clone())).map_err(|e| {
-        error!("Environment error: {}", e);
-        println!("Ensure that manifest.environment has a corresponding entry in ~/.lal/config");
-        process::exit(1);
-    }).unwrap();
+    let container = config.get_container(Some(env.clone()))
+        .map_err(|e| {
+            error!("Environment error: {}", e);
+            println!("Ensure that manifest.environment has a corresponding entry in ~/.lal/config");
+            process::exit(1);
+        })
+        .unwrap();
 
     // resolve env updates and sticky options before main subcommands
     if let Some(a) = args.subcommand_matches("env") {
@@ -305,10 +309,8 @@ fn main() {
             // would be purely the users fault for editing it manually
             result_exit("env clear", lal::env::clear())
         } else if let Some(sa) = a.subcommand_matches("set") {
-            result_exit("env override", lal::env::set(
-                &stickies,
-                &config,
-                sa.value_of("environment").unwrap()))
+            result_exit("env override",
+                        lal::env::set(&stickies, &config, sa.value_of("environment").unwrap()))
         } else {
             // just print current environment
             println!("{}", env);

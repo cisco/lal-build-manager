@@ -127,10 +127,11 @@ lal subcommand ..args # check that your thing is good
 cargo test # write tests
 ```
 
-Before committing:
+Good practices before comitting (not mandatory):
 
 ```sh
 cargo fmt # requires `cargo install rustfmt` and $HOME/.cargo/bin on $PATH
+rustup run nighthly cargo clippy # requires rustup.rs install of rust + nightly install of clippy
 ```
 
 ## Autocomplete

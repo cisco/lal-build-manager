@@ -1,6 +1,6 @@
 use std::process::Command;
 use std::fs;
-use std::io::prelude::{Read,Write};
+use std::io::prelude::{Read, Write};
 use std::path::Path;
 use std::vec::Vec;
 use rustc_serialize::json;
@@ -25,7 +25,7 @@ impl StickyOptions {
     pub fn read() -> LalResult<StickyOptions> {
         let opts_path = Path::new(".lalopts");
         if !opts_path.exists() {
-            return Ok(StickyOptions::default()) // everything off
+            return Ok(StickyOptions::default()); // everything off
         }
         let mut opts_data = String::new();
         try!(try!(fs::File::open(&opts_path)).read_to_string(&mut opts_data));
@@ -69,7 +69,7 @@ pub fn update(container: &Container, env: &str) -> LalResult<()> {
 
 pub fn set(opts_: &StickyOptions, cfg: &Config, env: &str) -> LalResult<()> {
     if !cfg.environments.contains_key(env) {
-        return Err(CliError::MissingEnvironment(env.into()))
+        return Err(CliError::MissingEnvironment(env.into()));
     }
     // mutate a temporary copy - lal binary is done after this function anyway
     let mut opts = opts_.clone();

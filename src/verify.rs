@@ -48,7 +48,7 @@ pub fn verify(m: &Manifest, env: String) -> LalResult<()> {
     }
     debug!("Found the following deps in INPUT: {:?}", deps);
     for (d, v) in &m.dependencies {
-        trace!("Verifying dependency from manifest: {}@{}", d,v);
+        trace!("Verifying dependency from manifest: {}@{}", d, v);
         if !deps.contains(d) {
             warn!("Dependency {} not found in INPUT", d);
             error = Some(CliError::MissingDependencies);
@@ -63,7 +63,8 @@ pub fn verify(m: &Manifest, env: String) -> LalResult<()> {
         debug!("Found version(s) for {} as {:?}", name, vers);
         if vers.len() != 1 {
             error = Some(CliError::MultipleVersions(name.clone()));
-            warn!("Multiple version requirements on {} found in lockfile", name.clone());
+            warn!("Multiple version requirements on {} found in lockfile",
+                  name.clone());
         }
         assert!(vers.len() > 0, "found versions");
         // if version cannot be parsed as an int, it's not a global dependency
@@ -71,7 +72,7 @@ pub fn verify(m: &Manifest, env: String) -> LalResult<()> {
             Err(e) => {
                 debug!("Failed to parse first version of {} as int ({:?})", name, e);
                 error = Some(CliError::NonGlobalDependencies(name.clone()));
-            },
+            }
             Ok(v) => {
                 // also ensure it matches the version in the manifest
                 let mver = all_deps.get(&name);
@@ -79,7 +80,10 @@ pub fn verify(m: &Manifest, env: String) -> LalResult<()> {
                 if mver.is_some() && error.is_none() {
                     let vreq = *mver.unwrap();
                     if vreq != v {
-                        warn!("Dependency {} has version {}, but manifest requires {}", name, v, vreq);
+                        warn!("Dependency {} has version {}, but manifest requires {}",
+                              name,
+                              v,
+                              vreq);
                         error = Some(CliError::InvalidVersion(name.clone()));
                     }
                 }
@@ -93,8 +97,7 @@ pub fn verify(m: &Manifest, env: String) -> LalResult<()> {
         if envs.len() != 1 {
             error = Some(CliError::MultipleEnvironments(name.clone()));
             warn!("Multiple environments used to build {}", name.clone());
-        }
-        else {
+        } else {
             let used_env = envs.iter().next().unwrap();
             if used_env != &env {
                 error = Some(CliError::EnvironmentMismatch(name.clone(), used_env.clone()))
