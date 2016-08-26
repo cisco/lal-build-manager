@@ -77,7 +77,7 @@ pub enum CliError {
     /// Unspecified install failure
     InstallFailure,
     /// Fetch failure related to artifactory
-    ArtifactoryFailure(&'static str),
+    ArtifactoryFailure(String),
 }
 
 // Format implementation used when printing an error
@@ -137,7 +137,7 @@ impl fmt::Display for CliError {
                 write!(f, "ID mismatch inside and outside docker - {}", s)
             }
             CliError::InstallFailure => write!(f, "Install failed"),
-            CliError::ArtifactoryFailure(s) => write!(f, "Artifactory - {}", s),
+            CliError::ArtifactoryFailure(ref s) => write!(f, "Artifactory - {}", s),
         }
     }
 }

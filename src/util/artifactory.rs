@@ -29,7 +29,7 @@ fn get_storage_versions(uri: &str) -> LalResult<Vec<u32>> {
     debug!("GET {}", uri);
     let resp = try!(http::handle().get(uri).exec().map_err(|e| {
         warn!("Failed to GET {}: {}", uri, e);
-        CliError::ArtifactoryFailure("GET build request failed")
+        CliError::ArtifactoryFailure("GET build request failed".into())
     }));
 
 
@@ -47,8 +47,7 @@ fn get_storage_versions(uri: &str) -> LalResult<Vec<u32>> {
 
         return Ok(builds);
     }
-    // TODO: handle other error codes better
-    Err(CliError::ArtifactoryFailure("No version information found on API"))
+    Err(CliError::ArtifactoryFailure("No version information found on API".into()))
 }
 
 /// Get the maximal version number from the storage api
@@ -56,7 +55,7 @@ fn get_storage_as_u32(uri: &str) -> LalResult<u32> {
     if let Some(&latest) = try!(get_storage_versions(uri)).iter().max() {
         Ok(latest)
     } else {
-        Err(CliError::ArtifactoryFailure("No version information found on API"))
+        Err(CliError::ArtifactoryFailure("No version information found on API".into()))
     }
 }
 
@@ -115,7 +114,7 @@ pub fn find_latest_lal_version(art_cfg: &Artifactory) -> LalResult<Version> {
     debug!("GET {}", uri);
     let resp = try!(http::handle().get(uri.as_str()).exec().map_err(|e| {
         warn!("Failed to GET {}: {}", uri, e);
-        CliError::ArtifactoryFailure("Storage request failed")
+        CliError::ArtifactoryFailure("Storage request failed".into())
     }));
 
 
@@ -137,5 +136,5 @@ pub fn find_latest_lal_version(art_cfg: &Artifactory) -> LalResult<Version> {
             warn!("Failed to parse version information from artifactory storage api for lal");
         }
     }
-    Err(CliError::ArtifactoryFailure("No version information found on API"))
+    Err(CliError::ArtifactoryFailure("No version information found on API".into()))
 }

@@ -1,4 +1,3 @@
-use std::io::{self, Error, ErrorKind};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -13,19 +12,16 @@ pub struct Component {
     pub tarball: String,
 }
 
-pub fn download_to_path(uri: &str, save: &PathBuf) -> io::Result<()> {
+pub fn download_to_path(uri: &str, save: &PathBuf) -> LalResult<()> {
     use curl::http;
-    use std::io::prelude::*;
+    use std::io::prelude::Write;
 
     debug!("GET {}", uri);
-    // unwrapping has seen this error:
-    // "Problem with the SSL CA cert (path? access rights?)""
-    let resp = match http::handle().get(uri).exec() {
-        Ok(r) => r,
-        Err(e) => {
-            return Err(Error::new(ErrorKind::Other, format!("Failed to download file {}", e)))
-        }
-    };
+    // We don't absorb curl errors atm, map it to a CliError
+    let resp = try!(http::handle().get(uri).exec().map_err(|e| {
+        warn!("Failed to GET {}: {}", uri, e);
+        CliError::ArtifactoryFailure(format!("Failed to download file {}", e))
+    }));
 
     if resp.get_code() == 200 {
         let r = resp.get_body();
@@ -33,7 +29,7 @@ pub fn download_to_path(uri: &str, save: &PathBuf) -> io::Result<()> {
         try!(f.write_all(r));
         Ok(())
     } else {
-        Err(Error::new(ErrorKind::Other, format!("Failed to download file {}", uri)))
+        Err(CliError::ArtifactoryFailure(format!("Failed to download file {}", uri)))
     }
 }
 
