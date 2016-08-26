@@ -108,6 +108,14 @@ impl Default for Config {
                 readonly: true,
             })
         }
+        let files_mount = Path::new("/mnt/build-files");
+        if files_mount.exists() {
+            mounts.push(Mount {
+                src: "/mnt/build-files".into(),
+                dest: "/build-files".into(),
+                readonly: true,
+            })
+        }
         Config {
             cache: cachedir.into(),
             mounts: mounts,
