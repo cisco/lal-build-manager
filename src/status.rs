@@ -5,10 +5,10 @@ use util::input;
 use super::Lockfile;
 
 fn version_string(lf: Option<&Lockfile>) -> ANSIString<'static> {
-    if lf.is_some() {
+    if let Some(lock) = lf {
         Colour::Fixed(8).paint(format!("({}-{})",
-                                       lf.unwrap().version,
-                                       lf.unwrap().environment.clone().unwrap_or("centos".into())))
+                                       lock.version,
+                                       lock.environment.clone().unwrap_or("centos".into())))
     } else {
         ANSIString::from("")
     }
@@ -98,8 +98,8 @@ pub fn status(manifest: &Manifest, full: bool) -> LalResult<()> {
     }
 
     // Return one of the errors as the main one (no need to vectorize these..)
-    if error.is_some() {
-        return Err(error.unwrap());
+    if let Some(e) = error {
+        return Err(e);
     }
     Ok(())
 }
