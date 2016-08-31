@@ -59,7 +59,8 @@ fn get_storage_as_u32(uri: &str) -> LalResult<u32> {
     }
 }
 
-fn get_dependency_url(art_cfg: &Artifactory, name: &str, version: u32) -> String {
+// The URL for a component tarball stored in the default artifactory location
+fn get_dependency_url_default(art_cfg: &Artifactory, name: &str, version: u32) -> String {
     let tar_url = format!("{}/{}/{}/{}.tar.gz",
                           art_cfg.vgroup,
                           name,
@@ -70,18 +71,41 @@ fn get_dependency_url(art_cfg: &Artifactory, name: &str, version: u32) -> String
     tar_url
 }
 
-fn get_dependency_url_latest(art_cfg: &Artifactory, name: &str) -> LalResult<Component> {
+// The URL for a component tarball under the one of the environment trees
+fn get_dependency_env_url(art_cfg: &Artifactory, name: &str, version: u32, env: &str) -> String {
+    let tar_url = format!("{}/env/{}/{}/{}/{}.tar.gz",
+                          art_cfg.vgroup,
+                          env,
+                          name,
+                          version.to_string(),
+                          name);
+
+    trace!("Inferring tarball location as {}", tar_url);
+    tar_url
+}
+
+fn get_dependency_url(art_cfg: &Artifactory, name: &str, version: u32, env: &str) -> String {
+    if env == "default" {
+        get_dependency_url_default(art_cfg, name, version)
+    } else {
+        get_dependency_env_url(art_cfg, name, version, env)
+    }
+}
+
+fn get_dependency_url_latest(art_cfg: &Artifactory, name: &str, env: &str) -> LalResult<Component> {
     let url = format!("{}/api/storage/{}/{}", art_cfg.server, art_cfg.group, name);
     let v = try!(get_storage_as_u32(&url));
 
     debug!("Found latest version as {}", v);
     Ok(Component {
-        tarball: get_dependency_url(art_cfg, name, v),
+        tarball: get_dependency_url(art_cfg, name, v, env),
         version: v,
         name: name.to_string(),
     })
 }
 
+// This queries the API for the default location
+// if a default exists, then all our current multi-builds must exist
 pub fn get_latest_versions(art_cfg: &Artifactory, name: &str) -> LalResult<Vec<u32>> {
     let url = format!("{}/api/storage/{}/{}", art_cfg.server, art_cfg.group, name);
     get_storage_versions(&url)
@@ -90,16 +114,17 @@ pub fn get_latest_versions(art_cfg: &Artifactory, name: &str) -> LalResult<Vec<u
 /// Main entry point for install
 pub fn get_tarball_uri(art_cfg: &Artifactory,
                        name: &str,
-                       version: Option<u32>)
+                       version: Option<u32>,
+                       env: &str)
                        -> LalResult<Component> {
     if let Some(v) = version {
         Ok(Component {
-            tarball: get_dependency_url(art_cfg, name, v),
+            tarball: get_dependency_url(art_cfg, name, v, env),
             version: v,
             name: name.to_string(),
         })
     } else {
-        get_dependency_url_latest(art_cfg, name)
+        get_dependency_url_latest(art_cfg, name, env)
     }
 }
 

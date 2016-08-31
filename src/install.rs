@@ -51,24 +51,25 @@ pub fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<
 // export a component from artifactory to stash
 fn fetch_via_artifactory(cfg: &Config,
                          name: &str,
-                         version: Option<u32>)
+                         version: Option<u32>,
+                         env: &str)
                          -> LalResult<(PathBuf, Component)> {
     use cache;
 
     trace!("Locate component {}", name);
-    let component = try!(get_tarball_uri(&cfg.artifactory, name, version));
+    let component = try!(get_tarball_uri(&cfg.artifactory, name, version, env));
 
-    if !cache::is_cached(cfg, &component.name, component.version) {
+    if !cache::is_cached(cfg, &component.name, component.version, env) {
         // download to PWD then move it to stash immediately
         let local_tarball = Path::new(".").join(format!("{}.tar", name));
         try!(download_to_path(&component.tarball, &local_tarball));
-        try!(cache::store_tarball(&cfg, name, component.version));
+        try!(cache::store_tarball(&cfg, name, component.version, env));
     }
-    assert!(cache::is_cached(cfg, &component.name, component.version),
+    assert!(cache::is_cached(cfg, &component.name, component.version, env),
             "cached component");
 
     trace!("Fetching {} from cache", name);
-    let tarname = cache::get_cache_dir(cfg, &component.name, component.version)
+    let tarname = cache::get_cache_dir(cfg, &component.name, component.version, env)
         .join(format!("{}.tar", name));
     Ok((tarname, component))
 }
@@ -76,9 +77,10 @@ fn fetch_via_artifactory(cfg: &Config,
 // import a component from stash to artifactory
 fn fetch_and_unpack_component(cfg: &Config,
                               name: &str,
-                              version: Option<u32>)
+                              version: Option<u32>,
+                              env: &str)
                               -> LalResult<Component> {
-    let (tarname, component) = try!(fetch_via_artifactory(cfg, name, version));
+    let (tarname, component) = try!(fetch_via_artifactory(cfg, name, version, env));
 
     debug!("Unpacking tarball {} for {}",
            tarname.to_str().unwrap(),
@@ -103,11 +105,12 @@ fn clean_input() {
 /// If installation was successful, the fetched tarballs are unpacked into `./INPUT`.
 /// If one `save` or `savedev` was set, the fetched versions are also updated in the
 /// manifest. This provides an easy way to not have to deal with strict JSON manually.
-pub fn update(manifest: Manifest,
+pub fn update(manifest: &Manifest,
               cfg: &Config,
               components: Vec<String>,
               save: bool,
-              savedev: bool)
+              savedev: bool,
+              env: &str)
               -> LalResult<()> {
     use cache;
     debug!("Update specific deps: {:?}", components);
@@ -115,12 +118,12 @@ pub fn update(manifest: Manifest,
     let mut error = None;
     let mut updated = Vec::with_capacity(components.len());
     for comp in &components {
-        info!("Fetch {}", comp);
+        info!("Fetch {} {}", env, comp);
         if comp.contains('=') {
             let pair: Vec<&str> = comp.split('=').collect();
             if let Ok(n) = pair[1].parse::<u32>() {
                 // standard fetch with an integer version
-                match fetch_and_unpack_component(cfg, pair[0], Some(n)) {
+                match fetch_and_unpack_component(cfg, pair[0], Some(n), env) {
                     Ok(c) => updated.push(c),
                     Err(e) => {
                         warn!("Failed to update {} ({})", pair[0], e);
@@ -137,7 +140,7 @@ pub fn update(manifest: Manifest,
             }
         } else {
             // fetch without a specific version (latest)
-            match fetch_and_unpack_component(cfg, comp, None) {
+            match fetch_and_unpack_component(cfg, comp, None, env) {
                 Ok(c) => updated.push(c),
                 Err(e) => {
                     warn!("Failed to update {} ({})", &comp, e);
@@ -178,17 +181,17 @@ pub fn update(manifest: Manifest,
 /// This will pass all dependencies or devDependencies to update.
 /// If the save flag is set, then the manifest will be updated correctly.
 /// I.e. dev updates will update only the dev portions of the manifest.
-pub fn update_all(manifest: Manifest, cfg: &Config, save: bool, dev: bool) -> LalResult<()> {
+pub fn update_all(manifest: &Manifest, cfg: &Config, save: bool, dev: bool, env: &str) -> LalResult<()> {
     let deps: Vec<String> = if dev {
         manifest.devDependencies.keys().cloned().collect()
     } else {
         manifest.dependencies.keys().cloned().collect()
     };
-    update(manifest, cfg, deps, save && !dev, save && dev)
+    update(manifest, cfg, deps, save && !dev, save && dev, env)
 }
 
 /// Export a specific component from artifactory
-pub fn export(cfg: &Config, comp: &str, output: Option<&str>) -> LalResult<()> {
+pub fn export(cfg: &Config, comp: &str, output: Option<&str>, env: &str) -> LalResult<()> {
     use cache;
     let dir = output.unwrap_or(".");
     info!("Export {} to {}", comp, dir);
@@ -199,7 +202,7 @@ pub fn export(cfg: &Config, comp: &str, output: Option<&str>) -> LalResult<()> {
         if let Ok(n) = pair[1].parse::<u32>() {
             // standard fetch with an integer version
             component_name = pair[0]; // save so we have sensible tarball names
-            try!(fetch_via_artifactory(cfg, pair[0], Some(n))).0
+            try!(fetch_via_artifactory(cfg, pair[0], Some(n), env)).0
         } else {
             // string version -> stash
             component_name = pair[0]; // save so we have sensible tarball names
@@ -207,7 +210,7 @@ pub fn export(cfg: &Config, comp: &str, output: Option<&str>) -> LalResult<()> {
         }
     } else {
         // fetch without a specific version (latest)
-        try!(fetch_via_artifactory(cfg, &comp, None)).0
+        try!(fetch_via_artifactory(cfg, &comp, None, env)).0
     };
 
     let dest = Path::new(dir).join(format!("{}.tar.gz", component_name));
@@ -273,7 +276,7 @@ pub fn remove(manifest: &Manifest, xs: Vec<&str>, save: bool, savedev: bool) -> 
 ///
 /// This will read, and HTTP GET all the dependencies at the specified versions.
 /// If the `core` bool is set, then `devDependencies` are not installed.
-pub fn fetch(manifest: &Manifest, cfg: Config, core: bool) -> LalResult<()> {
+pub fn fetch(manifest: &Manifest, cfg: &Config, core: bool, env: &str) -> LalResult<()> {
     debug!("Installing dependencies{}",
            if !core { " and devDependencies" } else { "" });
     clean_input();
@@ -287,8 +290,8 @@ pub fn fetch(manifest: &Manifest, cfg: Config, core: bool) -> LalResult<()> {
     }
     let mut err = None;
     for (k, v) in deps {
-        info!("Fetch {} {}", k, v);
-        let _ = fetch_and_unpack_component(&cfg, &k, Some(v)).map_err(|e| {
+        info!("Fetch {} {} {}", env, k, v);
+        let _ = fetch_and_unpack_component(&cfg, &k, Some(v), env).map_err(|e| {
             warn!("Failed to completely install {} ({})", k, e);
             // likely symlinks inside tarball that are being dodgy
             // this is why we clean_input

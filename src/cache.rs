@@ -8,20 +8,25 @@ use build::tar_output;
 use install;
 use errors::{CliError, LalResult};
 
-pub fn is_cached(cfg: &Config, name: &str, version: u32) -> bool {
-    get_cache_dir(cfg, name, version).is_dir()
+pub fn is_cached(cfg: &Config, name: &str, version: u32, env: &str) -> bool {
+    get_cache_dir(cfg, name, version, env).is_dir()
 }
 
-pub fn get_cache_dir(cfg: &Config, name: &str, version: u32) -> PathBuf {
-    Path::new(&cfg.cache)
-        .join("globals")
-        .join(name)
-        .join(version.to_string())
+pub fn get_cache_dir(cfg: &Config, name: &str, version: u32, env: &str) -> PathBuf {
+    let leading_pth = if env == "default" {
+        Path::new(&cfg.cache)
+            .join("globals")
+    } else {
+        Path::new(&cfg.cache)
+            .join("environments")
+            .join(env)
+    };
+    leading_pth.join(name).join(version.to_string())
 }
 
-pub fn store_tarball(cfg: &Config, name: &str, version: u32) -> Result<(), CliError> {
+pub fn store_tarball(cfg: &Config, name: &str, version: u32, env: &str) -> Result<(), CliError> {
     // 1. mkdir -p cfg.cacheDir/$name/$version
-    let destdir = get_cache_dir(cfg, name, version);
+    let destdir = get_cache_dir(cfg, name, version, env);
     if !destdir.is_dir() {
         try!(fs::create_dir_all(&destdir));
     }
@@ -36,9 +41,6 @@ pub fn store_tarball(cfg: &Config, name: &str, version: u32) -> Result<(), CliEr
     try!(fs::copy(&src, &dest));
     try!(fs::remove_file(&src));
 
-    // NB: in the lockfile is in the tarball - okay for now
-
-    // Done
     Ok(())
 }
 
@@ -99,24 +101,16 @@ pub fn fetch_from_stash(cfg: &Config, component: &str, stashname: &str) -> LalRe
     Ok(())
 }
 
-/// Clean old artifacts in `cfg.cache` cache directory
-///
-/// This does the equivalent of find CACHEDIR -mindepth 3 -maxdepth 3 -type d
-/// With the correct mtime flags, then -exec deletes these folders.
-pub fn clean(cfg: &Config, days: i64) -> LalResult<()> {
-    use filetime::FileTime;
-    use chrono::*;
+use chrono::{DateTime, UTC, Duration, TimeZone};
+use filetime::FileTime;
 
-    let dirs = WalkDir::new(&cfg.cache)
-        .min_depth(3)
-        .max_depth(3)
-        .into_iter()
+// helper for `lal::clean`
+fn clean_in_dir(cutoff: DateTime<UTC>, dirs: WalkDir) -> LalResult<()> {
+    let drs = dirs.into_iter()
         .filter_map(|e| e.ok())
         .filter(|e| e.path().is_dir());
 
-    let cutoff = UTC::now() - Duration::days(days);
-    debug!("Cleaning all artifacts from before {}", cutoff);
-    for d in dirs {
+    for d in drs {
         let pth = d.path();
         trace!("Checking {}", pth.to_str().unwrap());
         let mtime = FileTime::from_last_modification_time(&d.metadata().unwrap());
@@ -129,5 +123,25 @@ pub fn clean(cfg: &Config, days: i64) -> LalResult<()> {
             try!(fs::remove_dir_all(pth));
         }
     }
+    Ok(())
+}
+
+/// Clean old artifacts in `cfg.cache` cache directory
+///
+/// This does the equivalent of find CACHEDIR -mindepth 3 -maxdepth 3 -type d
+/// With the correct mtime flags, then -exec deletes these folders.
+pub fn clean(cfg: &Config, days: i64) -> LalResult<()> {
+    let cutoff = UTC::now() - Duration::days(days);
+    debug!("Cleaning all artifacts from before {}", cutoff);
+
+    // clean out environment subdirectories
+    let edir = Path::new(&cfg.cache).join("environments");
+    let edirs = WalkDir::new(&edir).min_depth(3).max_depth(3);
+    try!(clean_in_dir(cutoff, edirs));
+
+    // clean out stash + globals
+    let dirs = WalkDir::new(&cfg.cache).min_depth(3).max_depth(3);
+    try!(clean_in_dir(cutoff, dirs));
+
     Ok(())
 }

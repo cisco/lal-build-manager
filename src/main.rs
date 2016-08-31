@@ -6,7 +6,7 @@ extern crate loggerv;
 
 extern crate lal;
 use lal::{LalResult, Config, Manifest, StickyOptions};
-use clap::{Arg, App, AppSettings, SubCommand};
+use clap::{Arg, App, AppSettings, SubCommand, ArgMatches};
 use std::process;
 
 
@@ -24,6 +24,126 @@ fn result_exit<T>(name: &str, x: LalResult<T>) {
         process::exit(1);
     });
     process::exit(0);
+}
+
+fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Config) {
+    let res = if let Some(a) = args.subcommand_matches("status") {
+        lal::status(mf, a.is_present("full"))
+    } else if let Some(_) = args.subcommand_matches("list-components") {
+        lal::build_list(mf)
+    } else if let Some(a) = args.subcommand_matches("remove") {
+        let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
+        lal::remove(mf, xs, a.is_present("save"), a.is_present("savedev"))
+    } else if let Some(a) = args.subcommand_matches("stash") {
+        lal::stash(cfg, mf, a.value_of("name").unwrap())
+    } else {
+        return ();
+    };
+    result_exit(args.subcommand_name().unwrap(), res);
+}
+
+fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Config, env: &str) {
+    // these should mostly query the default location
+    // TODO: how to handle overrides here?
+    let res = if let Some(a) = args.subcommand_matches("update") {
+        let xs = a.values_of("components").unwrap().map(|s| s.to_string()).collect::<Vec<_>>();
+        lal::update(mf,
+                    cfg,
+                    xs,
+                    a.is_present("save"),
+                    a.is_present("savedev"),
+                    &env)
+    } else if let Some(a) = args.subcommand_matches("update-all") {
+        lal::update_all(mf, cfg, a.is_present("save"), a.is_present("dev"), &env)
+    } else if let Some(a) = args.subcommand_matches("fetch") {
+        lal::fetch(mf, cfg, a.is_present("core"), &env)
+    } else if let Some(a) = args.subcommand_matches("query") {
+        lal::query(cfg, a.value_of("component").unwrap())
+    } else if let Some(a) = args.subcommand_matches("export") {
+        lal::export(cfg,
+                    a.value_of("component").unwrap(),
+                    a.value_of("output"),
+                    &env)
+    } else {
+        return (); // not a network cmnd
+    };
+    result_exit(args.subcommand_name().unwrap(), res)
+}
+
+fn handle_docker_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Config, env_: &str, stickies: &StickyOptions) {
+    // TODO: if env is default, override to centos
+    let env = if env_ == "default" { "centos".to_string() } else { env_.to_string() };
+
+    // lookup associated container from
+    let container = cfg.get_container(Some(env.clone()))
+        .map_err(|e| {
+            error!("Environment error: {}", e);
+            println!("Ensure that manifest.environment has a corresponding entry in ~/.lal/config");
+            process::exit(1);
+        })
+        .unwrap();
+
+    // resolve env updates and sticky options before main subcommands
+    if let Some(a) = args.subcommand_matches("env") {
+        if let Some(_) = a.subcommand_matches("update") {
+            result_exit("env update", lal::env::update(&container, &env))
+        } else if let Some(_) = a.subcommand_matches("reset") {
+            // NB: if .lalopts.env points at an environment not in config
+            // reset will fail.. possible to fix, but complects this file too much
+            // .lalopts writes are checked in lal::env::set anyway so this
+            // would be purely the users fault for editing it manually
+            result_exit("env clear", lal::env::clear())
+        } else if let Some(sa) = a.subcommand_matches("set") {
+            result_exit("env override",
+                        lal::env::set(stickies, cfg, sa.value_of("environment").unwrap()))
+        } else {
+            // just print current environment
+            println!("{}", env);
+            process::exit(0);
+        }
+    }
+
+    let res = if let Some(_) = args.subcommand_matches("verify") {
+        // not really a docker related command, but it needs
+        // the resolved env to verify consistent dependency usage
+        lal::verify(mf, env)
+    } else if let Some(a) = args.subcommand_matches("build") {
+        lal::build(cfg,
+                   mf,
+                   a.value_of("component"),
+                   a.value_of("configuration"),
+                   a.is_present("release"),
+                   a.value_of("with-version"),
+                   a.is_present("strict"),
+                   &container,
+                   env,
+                   a.is_present("print"))
+    } else if let Some(a) = args.subcommand_matches("shell") {
+        let xs = if a.is_present("cmd") {
+            Some(a.values_of("cmd").unwrap().collect::<Vec<_>>())
+        } else {
+            None
+        };
+        lal::shell(cfg,
+                   &container,
+                   a.is_present("print"),
+                   xs,
+                   a.is_present("privileged"))
+    } else if let Some(a) = args.subcommand_matches("script") {
+        let xs = if a.is_present("parameters") {
+            a.values_of("parameters").unwrap().collect::<Vec<_>>()
+        } else {
+            vec![]
+        };
+        lal::script(cfg,
+                    &container,
+                    a.value_of("script").unwrap(),
+                    xs,
+                    a.is_present("privileged"))
+    } else {
+        return (); // no valid docker related command found
+    };
+    result_exit(args.subcommand_name().unwrap(), res);
 }
 
 fn main() {
@@ -206,7 +326,7 @@ fn main() {
                 .long("save")
                 .help("Save updated versions in the right object in the manifest")))
         .subcommand(SubCommand::with_name("list-components")
-            //.hidden(true) want this
+            .setting(AppSettings::Hidden)
             .about("list components that can be used with lal build"))
         .get_matches();
 
@@ -266,6 +386,9 @@ fn main() {
         })
         .unwrap();
 
+    // Subcommands that are environment agnostic
+    handle_environment_agnostic_cmds(&args, &manifest, &config);
+
     // Read .lalopts if it exists
     let stickies = StickyOptions::read()
         .map_err(|e| {
@@ -278,130 +401,30 @@ fn main() {
 
     // Force a valid container key configured in manifest and corr. value in config
     // NB: --env overrides sticky env overrides manifest.env overrides centos
-    let env = if args.is_present("environment") {
-        args.value_of("environment").unwrap().into()
-    } else if stickies.env.is_some() {
-        stickies.env.clone().unwrap()
+    let env = if let Some(eflag) = args.value_of("environment") {
+        eflag.into()
+    } else if let Some(ref stickenv) = stickies.env {
+        stickenv.clone()
     } else if let Some(ref menv) = manifest.environment {
         menv.clone()
     } else {
-        // temporary arm while manifest.environment is not mandatory
-        "centos".into()
+        // nothing specified - defaults inferred differently later on:
+        // - docker commands translate this to "centos"
+        // - network ones translate it to the default artifactory location
+        "default".into()
     };
 
-    // lookup associated container
-    let container = config.get_container(Some(env.clone()))
-        .map_err(|e| {
-            error!("Environment error: {}", e);
-            println!("Ensure that manifest.environment has a corresponding entry in ~/.lal/config");
-            process::exit(1);
-        })
-        .unwrap();
-
-    // resolve env updates and sticky options before main subcommands
-    if let Some(a) = args.subcommand_matches("env") {
-        if let Some(_) = a.subcommand_matches("update") {
-            result_exit("env update", lal::env::update(&container, &env))
-        } else if let Some(_) = a.subcommand_matches("reset") {
-            // NB: if .lalopts.env points at an environment not in config
-            // reset will fail.. possible to fix, but complects this file too much
-            // .lalopts writes are checked in lal::env::set anyway so this
-            // would be purely the users fault for editing it manually
-            result_exit("env clear", lal::env::clear())
-        } else if let Some(sa) = a.subcommand_matches("set") {
-            result_exit("env override",
-                        lal::env::set(&stickies, &config, sa.value_of("environment").unwrap()))
-        } else {
-            // just print current environment
-            println!("{}", env);
-            process::exit(0);
+    // Warn users who are overriding the default for the main commands
+    if let Some(ref menv) = manifest.environment {
+        if *menv != env {
+            let sub = args.subcommand_name().unwrap();
+            warn!("Running {} command in non-default {} environment", sub, env);
         }
     }
 
-    // Remaining actions - assume Manifest, Config, and Container
-
-    // Subcommands that are environment agnostic
-    if let Some(a) = args.subcommand_matches("status") {
-        result_exit("status", lal::status(&manifest, a.is_present("full")));
-    } else if let Some(_) = args.subcommand_matches("list-components") {
-        result_exit("list-components", lal::build_list(&manifest))
-    } else if let Some(a) = args.subcommand_matches("remove") {
-        let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
-        let res = lal::remove(&manifest, xs, a.is_present("save"), a.is_present("savedev"));
-        result_exit("remove", res);
-    } else if let Some(a) = args.subcommand_matches("stash") {
-        result_exit("stash",
-                    lal::stash(&config, &manifest, a.value_of("name").unwrap()));
-    }
-
-    // Warn users who are overriding the default for the main commands
-    if manifest.environment.is_some() && manifest.environment.clone().unwrap() != env {
-        let sub = args.subcommand_name().unwrap();
-        warn!("Running {} command for {} environment", sub, env);
-    }
-
     // Main subcommands
-    if let Some(a) = args.subcommand_matches("update") {
-        let xs = a.values_of("components").unwrap().map(|s| s.to_string()).collect::<Vec<_>>();
-        let res = lal::update(manifest,
-                              &config,
-                              xs,
-                              a.is_present("save"),
-                              a.is_present("savedev"));
-        result_exit("update", res);
-    } else if let Some(a) = args.subcommand_matches("update-all") {
-        let res = lal::update_all(manifest, &config, a.is_present("save"), a.is_present("dev"));
-        result_exit("update-all", res);
-    } else if let Some(a) = args.subcommand_matches("fetch") {
-        let res = lal::fetch(&manifest, config, a.is_present("core"));
-        result_exit("fetch", res);
-    } else if let Some(a) = args.subcommand_matches("build") {
-        let res = lal::build(&config,
-                             &manifest,
-                             a.value_of("component"),
-                             a.value_of("configuration"),
-                             a.is_present("release"),
-                             a.value_of("with-version"),
-                             a.is_present("strict"),
-                             &container,
-                             env,
-                             a.is_present("print"));
-        result_exit("build", res);
-    } else if let Some(a) = args.subcommand_matches("shell") {
-        let xs = if a.is_present("cmd") {
-            Some(a.values_of("cmd").unwrap().collect::<Vec<_>>())
-        } else {
-            None
-        };
-        result_exit("shell",
-                    lal::shell(&config,
-                               &container,
-                               a.is_present("print"),
-                               xs,
-                               a.is_present("privileged")));
-    } else if let Some(a) = args.subcommand_matches("script") {
-        let xs = if a.is_present("parameters") {
-            a.values_of("parameters").unwrap().collect::<Vec<_>>()
-        } else {
-            vec![]
-        };
-        result_exit("script",
-                    lal::script(&config,
-                                &container,
-                                a.value_of("script").unwrap(),
-                                xs,
-                                a.is_present("privileged")));
-    } else if let Some(_) = args.subcommand_matches("verify") {
-        result_exit("verify", lal::verify(&manifest, env));
-    } else if let Some(a) = args.subcommand_matches("query") {
-        result_exit("query",
-                    lal::query(&config, a.value_of("component").unwrap()));
-    } else if let Some(a) = args.subcommand_matches("export") {
-        result_exit("export",
-                    lal::export(&config,
-                                a.value_of("component").unwrap(),
-                                a.value_of("output")));
-    }
+    handle_network_cmds(&args, &manifest, &config, &env);
+    handle_docker_cmds(&args, &manifest, &config, &env, &stickies);
 
     unreachable!("Subcommand valid, but not implemented");
 }
