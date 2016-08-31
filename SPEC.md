@@ -17,6 +17,7 @@
 - [`lal export`](#lal-export-component) - obtain a raw tarball from artifactory
 - [`lal query`](#lal-query-component) - list versions of a component on artifactory
 - [`lal remove`](#lal-remove-components) - remove components from `INPUT` and `manifest.json`
+- [`lal publish`](#lal-publish) - publish release builds to artifactory
 
 ## Manifest
 A per-repo file. Format looks like this (here annotated with illegal comments):
@@ -369,6 +370,20 @@ lal remove gtest --save-dev
 Note you can only use one of save or save-dev at a time. Without either save flag, this subcommand simply deletes the corresponding subdirectory of `INPUT`.
 
 Alias: `lal rm`
+
+#### lal publish
+Publishes a release build in the local `ARTIFACT` subdirectory provided it is built with a correct version and proper credentials are presented.
+
+```sh
+lal env set xenial
+lal fetch
+lal build libldns --release --with-version=20
+lal publish
+```
+
+The publish command will verify that `./ARTIFACT/lockfile.json` is built in xenial and that the version is not experimental.
+
+The uploaded artifact will in this case end up in `https://artifactory.host/artifactory/CME-group/libldns/20/xenial/`. Note that if the artifact already exists, this will fail unless `--force` is passed to `lal publish`.
 
 ### Universal Options
 
