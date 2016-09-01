@@ -6,11 +6,12 @@ _lal()
     _init_completion || return
 
     local -r subcommands="build clean configure export fetch help init script run ls
-                          query remove shell stash save status update update-all upgrade verify"
+                          query remove shell stash save status update update-all upgrade verify
+                          publish env list-components list-dependencies list-environments"
 
     local has_sub
     for (( i=0; i < ${#words[@]}-1; i++ )); do
-        if [[ ${words[i]} == @(build|clean|configure|export|script|fetch|help|init|remove|rm|script|run|query|shell|stash|save|status|ls|update|update-all|upgrade|verify) ]]; then
+        if [[ ${words[i]} == @(build|clean|configure|export|script|fetch|help|init|remove|rm|script|run|query|shell|stash|save|status|ls|update|update-all|upgrade|verify|publish|env) ]]; then
             has_sub=1
         fi
     done
@@ -29,7 +30,7 @@ _lal()
     # special subcommand completions
     local special i
     for (( i=0; i < ${#words[@]}-1; i++ )); do
-        if [[ ${words[i]} == @(build|remove|rm|update|script|run|query|shell) ]]; then
+        if [[ ${words[i]} == @(build|remove|rm|update|script|run|query|shell|publish|env) ]]; then
             special=${words[i]}
         fi
     done
@@ -45,6 +46,22 @@ _lal()
                     # suggest flags
                     local -r build_flags="-r --release -s --strict -c --config -h --help --print-only"
                     COMPREPLY=($(compgen -W "$build_flags" -- "$cur"))
+                fi
+                ;;
+            publish)
+                # lal can get the keys from manifest.components
+                local -r components=$(lal list-components)
+                if [[ $prev = "publish" ]]; then
+                    COMPREPLY=($(compgen -W "$components" -- "$cur"))
+                fi
+                ;;
+            env)
+                local -r env_subs="set reset update help -h --help"
+                if [[ $prev = "set" ]]; then
+                    local -r envs="$(lal list-environments)"
+                    COMPREPLY=($(compgen -W "$envs" -- "$cur"))
+                else
+                    COMPREPLY=($(compgen -W "$env_subs" -- "$cur"))
                 fi
                 ;;
             update|query)

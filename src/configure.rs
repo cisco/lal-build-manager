@@ -183,6 +183,14 @@ impl Config {
     }
 }
 
+/// Helper to print the configured environments from the config
+pub fn env_list(cfg: &Config) -> LalResult<()> {
+    for k in cfg.environments.keys() {
+        println!("{}", k);
+    }
+    Ok(())
+}
+
 fn create_lal_dir() -> LalResult<PathBuf> {
     let home = env::home_dir().unwrap();
     let laldir = Path::new(&home).join(".lal");

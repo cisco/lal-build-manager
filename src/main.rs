@@ -5,7 +5,7 @@ extern crate log;
 extern crate loggerv;
 
 extern crate lal;
-use lal::{LalResult, Config, Manifest, StickyOptions};
+use lal::{LalResult, Config, Manifest, StickyOptions, Container};
 use clap::{Arg, App, AppSettings, SubCommand, ArgMatches};
 use std::process;
 
@@ -32,6 +32,10 @@ fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Conf
         lal::status(mf, a.is_present("full"))
     } else if let Some(_) = args.subcommand_matches("list-components") {
         lal::build_list(mf)
+    } else if let Some(_) = args.subcommand_matches("list-environments") {
+        lal::env_list(cfg)
+    } else if let Some(a) = args.subcommand_matches("list-dependencies") {
+        lal::dep_list(mf, a.is_present("core"))
     } else if let Some(a) = args.subcommand_matches("remove") {
         let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
         lal::remove(mf, xs, a.is_present("save"), a.is_present("savedev"))
@@ -44,8 +48,6 @@ fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Conf
 }
 
 fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Config, env: &str) {
-    // these should mostly query the default location
-    // TODO: how to handle overrides here?
     let res = if let Some(a) = args.subcommand_matches("update") {
         let xs = a.values_of("components").unwrap().map(|s| s.to_string()).collect::<Vec<_>>();
         lal::update(mf,
@@ -73,12 +75,7 @@ fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Config, env: &str
     result_exit(args.subcommand_name().unwrap(), res)
 }
 
-fn handle_docker_cmds(args: &ArgMatches,
-                      mf: &Manifest,
-                      cfg: &Config,
-                      env_: &str,
-                      stickies: &StickyOptions) {
-    // TODO: if env is default, override to centos
+fn handle_env_command(args: &ArgMatches, cfg: &Config, env_: &str, stickies: &StickyOptions) -> Container {
     let env = if env_ == "default" { "centos".to_string() } else { env_.to_string() };
 
     // lookup associated container from
@@ -109,7 +106,17 @@ fn handle_docker_cmds(args: &ArgMatches,
             process::exit(0);
         }
     }
+    // if we didn't handle an env subcommand here return the container
+    // needs to be resolved later on for docker cmds anyway
+    container
+}
 
+fn handle_docker_cmds(args: &ArgMatches,
+                      mf: &Manifest,
+                      cfg: &Config,
+                      env_: &str,
+                      container: &Container) {
+    let env = if env_ == "default" { "centos".to_string() } else { env_.to_string() };
     let res = if let Some(_) = args.subcommand_matches("verify") {
         // not really a docker related command, but it needs
         // the resolved env to verify consistent dependency usage
@@ -341,6 +348,16 @@ fn main() {
         .subcommand(SubCommand::with_name("list-components")
             .setting(AppSettings::Hidden)
             .about("list components that can be used with lal build"))
+        .subcommand(SubCommand::with_name("list-environments")
+            .setting(AppSettings::Hidden)
+            .about("list environments that can be used with lal build"))
+        .subcommand(SubCommand::with_name("list-dependencies")
+            .setting(AppSettings::Hidden)
+            .arg(Arg::with_name("core")
+                .short("c")
+                .long("core")
+                .help("Only list core dependencies"))
+            .about("list dependencies from the manifest"))
         .get_matches();
 
     // by default, always show INFO messages for now (+1)
@@ -426,6 +443,7 @@ fn main() {
         // - network ones translate it to the default artifactory location
         "default".into()
     };
+    let container = handle_env_command(&args, &config, &env, &stickies);
 
     // Warn users who are overriding the default for the main commands
     if let Some(ref menv) = manifest.environment {
@@ -437,7 +455,7 @@ fn main() {
 
     // Main subcommands
     handle_network_cmds(&args, &manifest, &config, &env);
-    handle_docker_cmds(&args, &manifest, &config, &env, &stickies);
+    handle_docker_cmds(&args, &manifest, &config, &env, &container);
 
     unreachable!("Subcommand valid, but not implemented");
 }

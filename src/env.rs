@@ -79,6 +79,6 @@ pub fn set(opts_: &StickyOptions, cfg: &Config, env: &str) -> LalResult<()> {
 }
 
 pub fn clear() -> LalResult<()> {
-    try!(StickyOptions::delete_local());
+    let _ = StickyOptions::delete_local();
     Ok(())
 }
