@@ -53,25 +53,29 @@ fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Config, env: &str
                     xs,
                     a.is_present("save"),
                     a.is_present("savedev"),
-                    &env)
+                    env)
     } else if let Some(a) = args.subcommand_matches("update-all") {
-        lal::update_all(mf, cfg, a.is_present("save"), a.is_present("dev"), &env)
+        lal::update_all(mf, cfg, a.is_present("save"), a.is_present("dev"), env)
     } else if let Some(a) = args.subcommand_matches("fetch") {
-        lal::fetch(mf, cfg, a.is_present("core"), &env)
+        lal::fetch(mf, cfg, a.is_present("core"), env)
     } else if let Some(a) = args.subcommand_matches("query") {
         lal::query(cfg, a.value_of("component").unwrap())
     } else if let Some(a) = args.subcommand_matches("export") {
         lal::export(cfg,
                     a.value_of("component").unwrap(),
                     a.value_of("output"),
-                    &env)
+                    env)
     } else {
         return (); // not a network cmnd
     };
     result_exit(args.subcommand_name().unwrap(), res)
 }
 
-fn handle_docker_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Config, env_: &str, stickies: &StickyOptions) {
+fn handle_docker_cmds(args: &ArgMatches,
+                      mf: &Manifest,
+                      cfg: &Config,
+                      env_: &str,
+                      stickies: &StickyOptions) {
     // TODO: if env is default, override to centos
     let env = if env_ == "default" { "centos".to_string() } else { env_.to_string() };
 

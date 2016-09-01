@@ -69,7 +69,7 @@ pub fn status(manifest: &Manifest, full: bool) -> LalResult<()> {
         } else if dep.development {
             "(dev)".to_string()
         } else if dep.extraneous {
-            error = Some(CliError::ExtraneousDependencies);
+            error = Some(CliError::ExtraneousDependencies(dep.name.clone()));
             Colour::Green.paint("(extraneous)").to_string()
         } else {
             "".to_string()

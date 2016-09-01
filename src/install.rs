@@ -181,7 +181,12 @@ pub fn update(manifest: &Manifest,
 /// This will pass all dependencies or devDependencies to update.
 /// If the save flag is set, then the manifest will be updated correctly.
 /// I.e. dev updates will update only the dev portions of the manifest.
-pub fn update_all(manifest: &Manifest, cfg: &Config, save: bool, dev: bool, env: &str) -> LalResult<()> {
+pub fn update_all(manifest: &Manifest,
+                  cfg: &Config,
+                  save: bool,
+                  dev: bool,
+                  env: &str)
+                  -> LalResult<()> {
     let deps: Vec<String> = if dev {
         manifest.devDependencies.keys().cloned().collect()
     } else {
@@ -291,7 +296,7 @@ pub fn fetch(manifest: &Manifest, cfg: &Config, core: bool, env: &str) -> LalRes
     let mut err = None;
     for (k, v) in deps {
         info!("Fetch {} {} {}", env, k, v);
-        let _ = fetch_and_unpack_component(&cfg, &k, Some(v), env).map_err(|e| {
+        let _ = fetch_and_unpack_component(cfg, &k, Some(v), env).map_err(|e| {
             warn!("Failed to completely install {} ({})", k, e);
             // likely symlinks inside tarball that are being dodgy
             // this is why we clean_input

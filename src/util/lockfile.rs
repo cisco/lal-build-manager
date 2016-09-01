@@ -120,6 +120,7 @@ impl Lockfile {
     /// NB: This currently reads all the lockfiles partially in `analyze`,
     /// the re-reads them fully in `read_lockfile_from_component` so can be sped up.
     pub fn populate_from_input(mut self) -> LalResult<Self> {
+        debug!("Reading all lockfiles");
         let deps = try!(input::analyze());
         for name in deps.keys() {
             trace!("Populating lockfile with {}", name);

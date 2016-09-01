@@ -1,21 +1,10 @@
 use walkdir::WalkDir;
+use std::collections::BTreeMap;
 
 use {Lockfile, Manifest, CliError, LalResult};
 
-/// Verifies that `./INPUT` satisfies all strictness conditions.
-///
-/// This first verifies that there are no key mismatches between `defaultConfig` and
-/// `configurations` in the manifest.
-///
-/// Once this is done, `INPUT` is analysed thoroughly via each components lockfiles.
-/// Missing dependencies, or multiple versions dependend on implicitly are both
-/// considered errors for verify, as are having custom versions in `./INPUT`.
-///
-/// This function is meant to be a helper for when we want official builds, but also
-/// a way to tell developers that they are using things that differ from what jenkins
-/// would use.
-pub fn verify(m: &Manifest, env: String) -> LalResult<()> {
-    // 1. Verify that the manifest is sane
+
+fn verify_sane_manifest(m: &Manifest) -> LalResult<()> {
     for (name, conf) in &m.components {
         // Verify ComponentSettings (manifest.components[x])
         debug!("Verifying component {}", name);
@@ -25,12 +14,10 @@ pub fn verify(m: &Manifest, env: String) -> LalResult<()> {
             return Err(CliError::InvalidBuildConfiguration(ename));
         }
     }
+    Ok(())
+}
 
-    // 2. dependencies in `INPUT` match `manifest.json`.
-    if m.dependencies.is_empty() {
-        return Ok(()); // nothing to verify - so accept a missing directory
-    }
-
+fn verify_sane_input(m: &Manifest) -> LalResult<()> {
     let mut error = None;
     let mut deps = vec![];
     let dirs = WalkDir::new("INPUT")
@@ -47,6 +34,8 @@ pub fn verify(m: &Manifest, env: String) -> LalResult<()> {
         deps.push(component.to_string());
     }
     debug!("Found the following deps in INPUT: {:?}", deps);
+    // NB: deliberately not returning Err early because we want a large warning list
+    // if INPUT folders are missing at the start of a build (forgot to fetch)
     for (d, v) in &m.dependencies {
         trace!("Verifying dependency from manifest: {}@{}", d, v);
         if !deps.contains(d) {
@@ -54,61 +43,97 @@ pub fn verify(m: &Manifest, env: String) -> LalResult<()> {
             error = Some(CliError::MissingDependencies);
         }
     }
-    let all_deps = m.all_dependencies();
+    if let Some(e) = error { Err(e) } else { Ok(()) }
+}
 
-    // 3. the dependency tree is flat and only global dependencies found
-    debug!("Reading all lockfiles");
-    let lf = try!(Lockfile::default().populate_from_input());
-    for (name, vers) in lf.find_all_dependencies() {
-        debug!("Found version(s) for {} as {:?}", name, vers);
-        if vers.len() != 1 {
-            error = Some(CliError::MultipleVersions(name.clone()));
-            warn!("Multiple version requirements on {} found in lockfile",
-                  name.clone());
-        }
-        assert!(vers.len() > 0, "found versions");
-        // if version cannot be parsed as an int, it's not a global dependency
-        match vers.iter().next().unwrap().parse::<u32>() {
-            Err(e) => {
-                debug!("Failed to parse first version of {} as int ({:?})", name, e);
-                error = Some(CliError::NonGlobalDependencies(name.clone()));
-            }
-            Ok(v) => {
-                // also ensure it matches the version in the manifest
-                let mver = all_deps.get(&name);
-                // NB: name could be a dependency leaf and not in the manifest
-                if mver.is_some() && error.is_none() {
-                    let vreq = *mver.unwrap();
-                    if vreq != v {
-                        warn!("Dependency {} has version {}, but manifest requires {}",
-                              name,
-                              v,
-                              vreq);
-                        error = Some(CliError::InvalidVersion(name.clone()));
-                    }
-                }
-            }
+fn verify_global_versions(lf: &Lockfile, all_deps: &BTreeMap<String, u32>) -> LalResult<()> {
+    for (name, dep) in &lf.dependencies {
+        let v = try!(dep.version.parse::<u32>().map_err(|e| {
+            debug!("Failed to parse first version of {} as int ({:?})", name, e);
+            CliError::NonGlobalDependencies(name.clone())
+        }));
+        // also ensure it matches the version in the manifest
+        let vreq = *try!(all_deps.get(name).ok_or_else(|| {
+            // This is a first level dependency - it should be in the manifest
+            CliError::ExtraneousDependencies(name.clone())
+        }));
+        if v != vreq {
+            warn!("Dependency {} has version {}, but manifest requires {}",
+                  name,
+                  v,
+                  vreq);
+            return Err(CliError::InvalidVersion(name.clone()));
         }
     }
+    Ok(())
+}
 
-    // 4. verify all components are built in the same environment
+fn verify_consistent_dependency_versions(lf: &Lockfile) -> LalResult<()> {
+    for (name, vers) in lf.find_all_dependencies() {
+        debug!("Found version(s) for {} as {:?}", name, vers);
+        assert!(vers.len() > 0, "found versions");
+        if vers.len() != 1 {
+            warn!("Multiple version requirements on {} found in lockfile",
+                  name.clone());
+            return Err(CliError::MultipleVersions(name.clone()));
+        }
+    }
+    Ok(())
+}
+
+fn verify_environment_consistency(lf: &Lockfile, env: &str) -> LalResult<()> {
     for (name, envs) in lf.find_all_environments() {
         debug!("Found environment(s) for {} as {:?}", name, envs);
         if envs.len() != 1 {
-            error = Some(CliError::MultipleEnvironments(name.clone()));
             warn!("Multiple environments used to build {}", name.clone());
+            return Err(CliError::MultipleEnvironments(name.clone()));
         } else {
             let used_env = envs.iter().next().unwrap();
-            if used_env != &env {
-                error = Some(CliError::EnvironmentMismatch(name.clone(), used_env.clone()))
+            if used_env != env {
+                return Err(CliError::EnvironmentMismatch(name.clone(), used_env.clone()));
             }
         }
     }
+    Ok(())
+}
 
-    // Return one of the errors as the main one (no need to vectorize these..)
-    if error.is_some() {
-        return Err(error.unwrap());
+/// Verifies that `./INPUT` satisfies all strictness conditions.
+///
+/// This first verifies that there are no key mismatches between `defaultConfig` and
+/// `configurations` in the manifest.
+///
+/// Once this is done, `INPUT` is analysed thoroughly via each components lockfiles.
+/// Missing dependencies, or multiple versions dependend on implicitly are both
+/// considered errors for verify, as are having custom versions in `./INPUT`.
+///
+/// This function is meant to be a helper for when we want official builds, but also
+/// a way to tell developers that they are using things that differ from what jenkins
+/// would use.
+pub fn verify(m: &Manifest, env: String) -> LalResult<()> {
+    // 1. Verify that the manifest is sane
+    try!(verify_sane_manifest(&m));
+
+    // 2. dependencies in `INPUT` match `manifest.json`.
+    if m.dependencies.is_empty() {
+        // special case where lal fetch is not required and so INPUT may not exist
+        // nothing needs to be verified in this case, so allow missing INPUT
+        return Ok(());
     }
+    try!(verify_sane_input(&m));
+
+    // get data for big verify steps
+    let all_deps = m.all_dependencies();
+    let lf = try!(Lockfile::default().populate_from_input());
+
+    // 3. verify the root level dependencies match the manifest
+    try!(verify_global_versions(&lf, &all_deps));
+
+    // 4. the dependency tree is flat, and deps use only global deps
+    try!(verify_consistent_dependency_versions(&lf));
+
+    // 5. verify all components are built in the same environment
+    try!(verify_environment_consistency(&lf, &env));
+
     info!("Dependencies fully verified");
     Ok(())
 }

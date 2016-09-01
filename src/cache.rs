@@ -14,12 +14,9 @@ pub fn is_cached(cfg: &Config, name: &str, version: u32, env: &str) -> bool {
 
 pub fn get_cache_dir(cfg: &Config, name: &str, version: u32, env: &str) -> PathBuf {
     let leading_pth = if env == "default" {
-        Path::new(&cfg.cache)
-            .join("globals")
+        Path::new(&cfg.cache).join("globals")
     } else {
-        Path::new(&cfg.cache)
-            .join("environments")
-            .join(env)
+        Path::new(&cfg.cache).join("environments").join(env)
     };
     leading_pth.join(name).join(version.to_string())
 }

@@ -30,7 +30,7 @@ pub enum CliError {
     /// Dependency present at wrong version
     InvalidVersion(String),
     /// Extraneous dependencies in INPUT
-    ExtraneousDependencies,
+    ExtraneousDependencies(String),
     /// No lockfile found for a component in INPUT
     MissingLockfile(String),
     /// Multiple versions of a component was involved in this build
@@ -96,7 +96,9 @@ impl fmt::Display for CliError {
             CliError::InvalidVersion(ref s) => {
                 write!(f, "Dependency {} using incorrect version", s)
             }
-            CliError::ExtraneousDependencies => write!(f, "Extraneous dependencies in INPUT"),
+            CliError::ExtraneousDependencies(ref s) => {
+                write!(f, "Extraneous dependencies in INPUT ({})", s)
+            }
             CliError::MissingLockfile(ref s) => write!(f, "No lockfile found in INPUT/{}", s),
             CliError::MultipleVersions(ref s) => {
                 write!(f, "Depending on multiple versions of {}", s)
