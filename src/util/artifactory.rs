@@ -2,6 +2,8 @@
 use std::vec::Vec;
 use rustc_serialize::json;
 use semver::Version;
+use std::io::Read;
+use hyper::{self, Client};
 
 use install::Component;
 use configure::Artifactory;
@@ -19,35 +21,40 @@ struct ArtifactoryStorageResponse {
     children: Vec<ArtifactoryVersion>,
 }
 
+// simple request body fetcher
+fn hyper_req(url: &str) -> LalResult<String> {
+    let client = Client::new();
+    let mut res = try!(client.get(url).send());
+    if res.status != hyper::Ok {
+        return Err(CliError::ArtifactoryFailure(format!("GET request with {}", res.status)));
+    }
+    let mut body = String::new();
+    try!(res.read_to_string(&mut body));
+    Ok(body)
+}
+
 /// Query the Artifactory storage api
 ///
 /// This will get, then parse all results as u32s, and return this list.
 /// This assumes versoning is done via a single integer.
 fn get_storage_versions(uri: &str) -> LalResult<Vec<u32>> {
-    use curl::http;
-
     debug!("GET {}", uri);
-    let resp = try!(http::handle().get(uri).exec().map_err(|e| {
+
+    let resp = try!(hyper_req(uri).map_err(|e| {
         warn!("Failed to GET {}: {}", uri, e);
-        CliError::ArtifactoryFailure("GET build request failed".into())
+        CliError::ArtifactoryFailure("No version information found on API".into())
     }));
 
+    trace!("Got body {}", resp);
 
-    if resp.get_code() == 200 {
-        let body = String::from_utf8_lossy(resp.get_body());
-        trace!("Got body {}", body);
-
-        let res: ArtifactoryStorageResponse = try!(json::decode(&body));
-        let builds: Vec<u32> = res.children
-            .iter()
-            .map(|r| r.uri.as_str())
-            .map(|r| r.trim_matches('/'))
-            .filter_map(|b| b.parse().ok())
-            .collect();
-
-        return Ok(builds);
-    }
-    Err(CliError::ArtifactoryFailure("No version information found on API".into()))
+    let res: ArtifactoryStorageResponse = try!(json::decode(&resp));
+    let builds: Vec<u32> = res.children
+        .iter()
+        .map(|r| r.uri.as_str())
+        .map(|r| r.trim_matches('/'))
+        .filter_map(|b| b.parse().ok())
+        .collect();
+    Ok(builds)
 }
 
 /// Upload a tarball to artifactory
@@ -142,33 +149,26 @@ pub fn get_tarball_uri(art_cfg: &Artifactory,
 /// This mostly duplicates the behaviour in `get_storage_as_u32`, however,
 /// it is parsing the version as a `semver::Version` struct rather than a u32.
 pub fn find_latest_lal_version(art_cfg: &Artifactory) -> LalResult<Version> {
-    use curl::http;
     let uri = format!("{}/api/storage/{}/lal", art_cfg.server, art_cfg.group);
-
     debug!("GET {}", uri);
-    let resp = try!(http::handle().get(uri.as_str()).exec().map_err(|e| {
+    let resp = try!(hyper_req(&uri).map_err(|e| {
         warn!("Failed to GET {}: {}", uri, e);
-        CliError::ArtifactoryFailure("Storage request failed".into())
+        CliError::ArtifactoryFailure("No version information found on API".into())
     }));
+    trace!("Got body {}", resp);
 
+    let res: ArtifactoryStorageResponse = try!(json::decode(&resp));
+    let latest: Option<Version> = res.children
+        .iter()
+        .map(|r| r.uri.trim_matches('/').to_string())
+        .inspect(|v| trace!("Found lal version {}", v))
+        .filter_map(|v| Version::parse(&v).ok())
+        .max(); // Semver::Version implements an order
 
-    if resp.get_code() == 200 {
-        let body = String::from_utf8_lossy(resp.get_body());
-        trace!("Got body {}", body);
-
-        let res: ArtifactoryStorageResponse = try!(json::decode(&body));
-        let latest: Option<Version> = res.children
-            .iter()
-            .map(|r| r.uri.trim_matches('/').to_string())
-            .inspect(|v| trace!("Found lal version {}", v))
-            .filter_map(|v| Version::parse(&v).ok())
-            .max(); // Semver::Version implements an order
-
-        if latest.is_some() {
-            return Ok(latest.unwrap());
-        } else {
-            warn!("Failed to parse version information from artifactory storage api for lal");
-        }
+    if let Some(l) = latest {
+        Ok(l)
+    } else {
+        warn!("Failed to parse version information from artifactory storage api for lal");
+        Err(CliError::ArtifactoryFailure("No version information found on API".into()))
     }
-    Err(CliError::ArtifactoryFailure("No version information found on API".into()))
 }

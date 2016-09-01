@@ -1,5 +1,6 @@
 use std::fmt;
 use std::io;
+use hyper;
 use rustc_serialize::json;
 
 /// The one and only error type for the lal library
@@ -9,10 +10,12 @@ use rustc_serialize::json;
 /// that every single advanced call goes through to avoid `panic!`
 #[derive(Debug)]
 pub enum CliError {
-    /// Errors propagated from `std::fs` and `curl`
+    /// Errors propagated from `std::fs`
     Io(io::Error),
     /// Errors propagated from `rustc_serialize`
     Parse(json::DecoderError),
+    /// Errors propagated from `hyper`
+    Hype(hyper::Error),
 
     // main errors
     /// Manifest file not found in working directory
@@ -92,6 +95,7 @@ impl fmt::Display for CliError {
         match *self {
             CliError::Io(ref err) => err.fmt(f),
             CliError::Parse(ref err) => err.fmt(f),
+            CliError::Hype(ref err) => err.fmt(f),
             CliError::MissingManifest => write!(f, "No manifest.json found"),
             CliError::MissingConfig => write!(f, "No ~/.lal/config found"),
             CliError::MissingComponent(ref s) => {
@@ -156,6 +160,12 @@ impl fmt::Display for CliError {
 impl From<io::Error> for CliError {
     fn from(err: io::Error) -> CliError {
         CliError::Io(err)
+    }
+}
+
+impl From<hyper::Error> for CliError {
+    fn from(err: hyper::Error) -> CliError {
+        CliError::Hype(err)
     }
 }
 

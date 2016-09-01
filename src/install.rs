@@ -12,25 +12,22 @@ pub struct Component {
     pub tarball: String,
 }
 
-pub fn download_to_path(uri: &str, save: &PathBuf) -> LalResult<()> {
-    use curl::http;
-    use std::io::prelude::Write;
+pub fn download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
+    use hyper::{self, Client};
+    use std::io::prelude::{Write, Read};
 
-    debug!("GET {}", uri);
-    // We don't absorb curl errors atm, map it to a CliError
-    let resp = try!(http::handle().get(uri).exec().map_err(|e| {
-        warn!("Failed to GET {}: {}", uri, e);
-        CliError::ArtifactoryFailure(format!("Failed to download file {}", e))
-    }));
-
-    if resp.get_code() == 200 {
-        let r = resp.get_body();
-        let mut f = try!(fs::File::create(save));
-        try!(f.write_all(r));
-        Ok(())
-    } else {
-        Err(CliError::ArtifactoryFailure(format!("Failed to download file {}", uri)))
+    debug!("GET {}", url);
+    let client = Client::new();
+    let mut res = try!(client.get(url).send());
+    if res.status != hyper::Ok {
+        return Err(CliError::ArtifactoryFailure(format!("GET request with {}", res.status)));
     }
+
+    let mut buffer: Vec<u8> = Vec::new();
+    try!(res.read_to_end(&mut buffer));
+    let mut f = try!(fs::File::create(save));
+    try!(f.write(&buffer));
+    Ok(())
 }
 
 // helper for fetch_and_unpack_component and stash::fetch_from_stash

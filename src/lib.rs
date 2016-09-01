@@ -21,7 +21,7 @@
 //! This tool depends on the rust ecosystem and their crates. Dependencies referenced
 //! explicitly or implicitly is listed on the left of this page.
 
-extern crate curl;
+extern crate hyper;
 extern crate rustc_serialize;
 extern crate regex;
 extern crate tar;
