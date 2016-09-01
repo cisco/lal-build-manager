@@ -84,7 +84,12 @@ pub fn build(cfg: &Config,
              envname: String,
              printonly: bool)
              -> LalResult<()> {
-    try!(ensure_dir_exists_fresh("OUTPUT"));
+    // have a better warning on first file-io operation
+    // if nfs mounts and stuff cause issues this usually catches it
+    try!(ensure_dir_exists_fresh("OUTPUT").map_err(|e| {
+        error!("Failed to clean out OUTPUT dir: {}", e);
+        e
+    }));
 
     debug!("Version flag is {}", version.unwrap_or("unset"));
 

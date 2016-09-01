@@ -9,9 +9,9 @@ use rustc_serialize::json;
 /// that every single advanced call goes through to avoid `panic!`
 #[derive(Debug)]
 pub enum CliError {
-    /// Errors propagated from the `fs` module
+    /// Errors propagated from `std::fs` and `curl`
     Io(io::Error),
-    /// Errors propagated from rustc_serialize
+    /// Errors propagated from `rustc_serialize`
     Parse(json::DecoderError),
 
     // main errors
