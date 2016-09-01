@@ -65,6 +65,8 @@ fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Config, env: &str
                     a.value_of("component").unwrap(),
                     a.value_of("output"),
                     env)
+    } else if let Some(a) = args.subcommand_matches("publish") {
+        lal::publish(a.value_of("component").unwrap(), mf, env)
     } else {
         return (); // not a network cmnd
     };
@@ -111,7 +113,7 @@ fn handle_docker_cmds(args: &ArgMatches,
     let res = if let Some(_) = args.subcommand_matches("verify") {
         // not really a docker related command, but it needs
         // the resolved env to verify consistent dependency usage
-        lal::verify(mf, env)
+        lal::verify(mf, &env)
     } else if let Some(a) = args.subcommand_matches("build") {
         lal::build(cfg,
                    mf,
@@ -330,6 +332,12 @@ fn main() {
                 .short("S")
                 .long("save")
                 .help("Save updated versions in the right object in the manifest")))
+        .subcommand(SubCommand::with_name("publish")
+            .setting(AppSettings::Hidden)
+            .arg(Arg::with_name("component")
+                .required(true)
+                .help("Component name to publish"))
+            .about("Publish a release build to the default artifactory location"))
         .subcommand(SubCommand::with_name("list-components")
             .setting(AppSettings::Hidden)
             .about("list components that can be used with lal build"))

@@ -109,7 +109,7 @@ fn verify_environment_consistency(lf: &Lockfile, env: &str) -> LalResult<()> {
 /// This function is meant to be a helper for when we want official builds, but also
 /// a way to tell developers that they are using things that differ from what jenkins
 /// would use.
-pub fn verify(m: &Manifest, env: String) -> LalResult<()> {
+pub fn verify(m: &Manifest, env: &str) -> LalResult<()> {
     // 1. Verify that the manifest is sane
     try!(verify_sane_manifest(&m));
 
@@ -131,7 +131,7 @@ pub fn verify(m: &Manifest, env: String) -> LalResult<()> {
     try!(verify_consistent_dependency_versions(&lf));
 
     // 5. verify all components are built in the same environment
-    try!(verify_environment_consistency(&lf, &env));
+    try!(verify_environment_consistency(&lf, env));
 
     info!("Dependencies fully verified");
     Ok(())

@@ -195,23 +195,23 @@ fn update_save() {
     let cfg = Config::read().unwrap();
 
     // gtest savedev
-    let ri = lal::update(mf1, &cfg, vec!["gtest".to_string()], false, true);
+    let ri = lal::update(&mf1, &cfg, vec!["gtest".to_string()], false, true, "default");
     chk::is_ok(ri, "could update gtest and save as dev");
 
     // three main deps (and re-read manifest to avoid overwriting devedps)
     let mf2 = Manifest::read().unwrap();
     let updates = vec!["libyaml".to_string(), "yajl".to_string(), "libwebsockets".to_string()];
-    let ri = lal::update(mf2, &cfg, updates, true, false);
+    let ri = lal::update(&mf2, &cfg, updates, true, false, "default");
     chk::is_ok(ri, "could update libyaml and save");
 
     // verify update-all --save
     let mf3 = Manifest::read().unwrap();
-    let ri = lal::update_all(mf3, &cfg, true, false);
+    let ri = lal::update_all(&mf3, &cfg, true, false, "default");
     chk::is_ok(ri, "could update all and --save");
 
     // verify update-all --save --dev
     let mf4 = Manifest::read().unwrap();
-    let ri = lal::update_all(mf4, &cfg, false, true);
+    let ri = lal::update_all(&mf4, &cfg, false, true, "default");
     chk::is_ok(ri, "could update all and --save --dev");
 }
 
@@ -231,13 +231,13 @@ fn verify_checks() {
     assert!(r2.is_err(), "verify failed after fiddling");
 
     // re-install everything
-    let rall = lal::fetch(&mf, cfg, true);
+    let rall = lal::fetch(&mf, &cfg, true, "default");
     assert!(rall.is_ok(), "install all succeeded");
     assert!(yajl.is_dir(), "yajl was reinstalled from manifest");
     assert!(!gtest.is_dir(), "gtest was not reinstalled from manifest with core");
 
 
-    let r3 = lal::verify(&mf, "centos".into());
+    let r3 = lal::verify(&mf, "centos");
     assert!(r3.is_ok(), "verify ok again");
 }
 
@@ -279,7 +279,7 @@ fn build_stash_and_update_from_stash() {
     assert!(r2.is_ok(), "could stash lal build artifact");
 
     // lal update lal=testmain
-    let ri = lal::update(mf.clone(), &cfg, vec!["lal=testmain".to_string()], false, false);
+    let ri = lal::update(&mf, &cfg, vec!["lal=testmain".to_string()], false, false, "default");
     chk::is_ok(ri, "could update lal from stash");
 }
 
@@ -348,10 +348,10 @@ fn clean_check() {
 fn export_check() {
     let cfg = Config::read().unwrap();
 
-    let r = lal::export(&cfg, "gtest=6", Some("tests"));
+    let r = lal::export(&cfg, "gtest=6", Some("tests"), "default");
     assert!(r.is_ok(), "could export gtest=6 into subdir");
 
-    let r2 = lal::export(&cfg, "libcurl", None);
+    let r2 = lal::export(&cfg, "libcurl", None, "default");
     assert!(r2.is_ok(), "could export latest libcurl into PWD");
 
     let gtest = Path::new(&env::current_dir().unwrap()).join("tests").join("gtest.tar.gz");

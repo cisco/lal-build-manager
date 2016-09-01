@@ -378,10 +378,10 @@ Publishes a release build in the local `ARTIFACT` subdirectory provided it is bu
 lal env set xenial
 lal fetch
 lal build libldns --release --with-version=20
-lal publish
+lal publish libldns
 ```
 
-The publish command will verify that `./ARTIFACT/lockfile.json` is built in xenial and that the version is not experimental.
+The publish command will verify that `./ARTIFACT/lockfile.json` is built in xenial and that the version is not experimental. It will additionally guard on `lal verify` internally.
 
 The uploaded artifact will in this case end up in `https://artifactory.host/artifactory/CME-group/libldns/20/xenial/`. Note that if the artifact already exists, this will fail unless `--force` is passed to `lal publish`.
 

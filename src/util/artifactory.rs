@@ -50,6 +50,11 @@ fn get_storage_versions(uri: &str) -> LalResult<Vec<u32>> {
     Err(CliError::ArtifactoryFailure("No version information found on API".into()))
 }
 
+/// Upload a tarball to artifactory
+pub fn upload_tarball() -> LalResult<()> {
+    unimplemented!();
+}
+
 /// Get the maximal version number from the storage api
 fn get_storage_as_u32(uri: &str) -> LalResult<u32> {
     if let Some(&latest) = try!(get_storage_versions(uri)).iter().max() {

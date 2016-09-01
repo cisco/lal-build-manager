@@ -78,6 +78,10 @@ pub enum CliError {
     InstallFailure,
     /// Fetch failure related to artifactory
     ArtifactoryFailure(String),
+
+    // publish errors
+    /// Missing release build
+    MissingReleaseBuild,
 }
 
 // Format implementation used when printing an error
@@ -140,6 +144,7 @@ impl fmt::Display for CliError {
             }
             CliError::InstallFailure => write!(f, "Install failed"),
             CliError::ArtifactoryFailure(ref s) => write!(f, "Artifactory - {}", s),
+            CliError::MissingReleaseBuild => write!(f, "Missing release build"),
         }
     }
 }

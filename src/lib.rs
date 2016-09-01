@@ -49,6 +49,7 @@ pub use cache::{stash, clean};
 pub use upgrade::upgrade_check;
 pub use query::query;
 pub use env::StickyOptions;
+pub use publish::publish;
 
 mod util;
 mod errors;
@@ -63,3 +64,4 @@ mod cache;
 mod status;
 mod upgrade;
 pub mod env;
+mod publish;

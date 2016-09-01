@@ -94,7 +94,7 @@ pub fn build(cfg: &Config,
     debug!("Version flag is {}", version.unwrap_or("unset"));
 
     // Verify INPUT
-    if let Some(e) = verify(manifest, envname.clone()).err() {
+    if let Some(e) = verify(manifest, &envname).err() {
         if version.is_some() || strict {
             return Err(e);
         }
