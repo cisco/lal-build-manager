@@ -82,6 +82,8 @@ pub enum CliError {
     // publish errors
     /// Missing release build
     MissingReleaseBuild,
+    /// Config missing artifactory credentials
+    MissingArtifactoryCredentials,
 }
 
 // Format implementation used when printing an error
@@ -145,6 +147,7 @@ impl fmt::Display for CliError {
             CliError::InstallFailure => write!(f, "Install failed"),
             CliError::ArtifactoryFailure(ref s) => write!(f, "Artifactory - {}", s),
             CliError::MissingReleaseBuild => write!(f, "Missing release build"),
+            CliError::MissingArtifactoryCredentials => write!(f, "Missing artifactory credentials in ~/.lal/config"),
         }
     }
 }

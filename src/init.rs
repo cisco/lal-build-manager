@@ -98,9 +98,7 @@ impl Manifest {
 
 /// Helper to print the dependencies from the manifest
 pub fn dep_list(mf: &Manifest, core: bool) -> LalResult<()> {
-    let deps = if core { mf.dependencies.clone() } else {
-        mf.all_dependencies()
-    };
+    let deps = if core { mf.dependencies.clone() } else { mf.all_dependencies() };
     for k in deps.keys() {
         println!("{}", k);
     }

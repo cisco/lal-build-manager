@@ -37,6 +37,10 @@ pub struct Artifactory {
     pub group: String,
     /// Location of artifactory virtual group for downloads
     pub vgroup: String,
+    /// Optional upload username
+    pub username: Option<String>,
+    /// Optional upload password
+    pub password: Option<String>,
 }
 
 /// Representation of `~/.lal/config`
@@ -62,6 +66,8 @@ impl Default for Artifactory {
             server: "https://engci-maven-master.cisco.com/artifactory".into(),
             group: "CME-release".into(),
             vgroup: "https://engci-maven.cisco.com/artifactory/CME-group".into(),
+            username: None,
+            password: None,
         }
     }
 }
@@ -77,25 +83,13 @@ impl Default for Config {
         // edonusdevelopers default C++ containers
         let mut envs = BTreeMap::new();
         envs.insert("centos".into(),
-                    Container {
-                        name: "edonusdevelopers/centos_build".into(),
-                        tag: "latest".into(),
-                    });
+                    Container::latest("edonusdevelopers/centos_build"));
         envs.insert("xenial".into(),
-                    Container {
-                        name: "edonusdevelopers/build_xenial".into(),
-                        tag: "latest".into(),
-                    });
+                    Container::latest("edonusdevelopers/build_xenial"));
         envs.insert("rust".into(),
-                    Container {
-                        name: "edonusdevelopers/muslrust".into(),
-                        tag: "latest".into(),
-                    });
+                    Container::latest("edonusdevelopers/muslrust"));
         envs.insert("transcoder".into(),
-                    Container {
-                        name: "edonusdevelopers/mygdon-transcoder".into(),
-                        tag: "latest".into(),
-                    });
+                    Container::latest("edonusdevelopers/mygdon-transcoder"));
         // last update time
         let time = UTC::now() - Duration::days(2);
         // common edonusdevelopers mounts

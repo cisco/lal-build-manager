@@ -21,6 +21,15 @@ pub struct Container {
     pub tag: String,
 }
 
+impl Container {
+    pub fn latest(name: &str) -> Self {
+        Container {
+            name: name.into(),
+            tag: "latest".into(),
+        }
+    }
+}
+
 impl fmt::Display for Container {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}:{}", self.name, self.tag)

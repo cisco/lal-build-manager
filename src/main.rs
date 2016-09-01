@@ -67,15 +67,17 @@ fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Config, env: &str
                     a.value_of("component").unwrap(),
                     a.value_of("output"),
                     env)
-    } else if let Some(a) = args.subcommand_matches("publish") {
-        lal::publish(a.value_of("component").unwrap(), mf, env)
     } else {
         return (); // not a network cmnd
     };
     result_exit(args.subcommand_name().unwrap(), res)
 }
 
-fn handle_env_command(args: &ArgMatches, cfg: &Config, env_: &str, stickies: &StickyOptions) -> Container {
+fn handle_env_command(args: &ArgMatches,
+                      cfg: &Config,
+                      env_: &str,
+                      stickies: &StickyOptions)
+                      -> Container {
     let env = if env_ == "default" { "centos".to_string() } else { env_.to_string() };
 
     // lookup associated container from
@@ -121,6 +123,9 @@ fn handle_docker_cmds(args: &ArgMatches,
         // not really a docker related command, but it needs
         // the resolved env to verify consistent dependency usage
         lal::verify(mf, &env)
+    } else if let Some(a) = args.subcommand_matches("publish") {
+        // ditto for publish, because it needs verify
+        lal::publish(a.value_of("component").unwrap(), cfg, mf, &env)
     } else if let Some(a) = args.subcommand_matches("build") {
         lal::build(cfg,
                    mf,

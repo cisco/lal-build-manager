@@ -51,8 +51,12 @@ fn get_storage_versions(uri: &str) -> LalResult<Vec<u32>> {
 }
 
 /// Upload a tarball to artifactory
-pub fn upload_tarball() -> LalResult<()> {
-    unimplemented!();
+pub fn upload_tarball(artcfg: &Artifactory) -> LalResult<()> {
+    if let (&Some(ref user), &Some(ref pw)) = (&artcfg.username, &artcfg.password) {
+        unimplemented!();
+    } else {
+        return Err(CliError::MissingArtifactoryCredentials)
+    }
 }
 
 /// Get the maximal version number from the storage api
