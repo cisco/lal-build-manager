@@ -1,5 +1,4 @@
 use walkdir::WalkDir;
-use std::collections::BTreeMap;
 
 use {Lockfile, Manifest, CliError, LalResult};
 
@@ -46,7 +45,8 @@ fn verify_sane_input(m: &Manifest) -> LalResult<()> {
     if let Some(e) = error { Err(e) } else { Ok(()) }
 }
 
-fn verify_global_versions(lf: &Lockfile, all_deps: &BTreeMap<String, u32>) -> LalResult<()> {
+fn verify_global_versions(lf: &Lockfile, m: &Manifest) -> LalResult<()> {
+    let all_deps = m.all_dependencies();
     for (name, dep) in &lf.dependencies {
         let v = try!(dep.version.parse::<u32>().map_err(|e| {
             debug!("Failed to parse first version of {} as int ({:?})", name, e);
@@ -122,11 +122,10 @@ pub fn verify(m: &Manifest, env: String) -> LalResult<()> {
     try!(verify_sane_input(&m));
 
     // get data for big verify steps
-    let all_deps = m.all_dependencies();
     let lf = try!(Lockfile::default().populate_from_input());
 
     // 3. verify the root level dependencies match the manifest
-    try!(verify_global_versions(&lf, &all_deps));
+    try!(verify_global_versions(&lf, &m));
 
     // 4. the dependency tree is flat, and deps use only global deps
     try!(verify_consistent_dependency_versions(&lf));
