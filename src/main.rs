@@ -125,7 +125,7 @@ fn handle_docker_cmds(args: &ArgMatches,
         lal::verify(mf, &env)
     } else if let Some(a) = args.subcommand_matches("publish") {
         // ditto for publish, because it needs verify
-        lal::publish(a.value_of("component").unwrap(), cfg, mf, &env)
+        lal::publish(a.value_of("component").unwrap(), cfg, &env)
     } else if let Some(a) = args.subcommand_matches("build") {
         lal::build(cfg,
                    mf,
@@ -134,7 +134,7 @@ fn handle_docker_cmds(args: &ArgMatches,
                    a.is_present("release"),
                    a.value_of("with-version"),
                    a.is_present("strict"),
-                   &container,
+                   container,
                    env,
                    a.is_present("print"))
     } else if let Some(a) = args.subcommand_matches("shell") {
@@ -144,7 +144,7 @@ fn handle_docker_cmds(args: &ArgMatches,
             None
         };
         lal::shell(cfg,
-                   &container,
+                   container,
                    a.is_present("print"),
                    xs,
                    a.is_present("privileged"))
@@ -155,7 +155,7 @@ fn handle_docker_cmds(args: &ArgMatches,
             vec![]
         };
         lal::script(cfg,
-                    &container,
+                    container,
                     a.value_of("script").unwrap(),
                     xs,
                     a.is_present("privileged"))

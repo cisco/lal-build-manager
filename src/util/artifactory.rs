@@ -56,13 +56,35 @@ fn get_storage_versions(uri: &str) -> LalResult<Vec<u32>> {
         .collect();
     Ok(builds)
 }
-
+use std::fs::File;
 /// Upload a tarball to artifactory
-pub fn upload_tarball(artcfg: &Artifactory) -> LalResult<()> {
-    if let (&Some(ref user), &Some(ref pw)) = (&artcfg.username, &artcfg.password) {
-        unimplemented!();
+///
+/// This is using a http basic auth PUT to artifactory using config credentials.
+pub fn upload_artifact(arti: &Artifactory, uri: String, f: &mut File) -> LalResult<()> {
+    use hyper::header::{Authorization, Basic};
+    use hyper::status::StatusCode;
+    use hyper::client::Body;
+
+    if let Some(creds) = arti.credentials.clone() {
+        let client = Client::new();
+        let body = Body::ChunkedBody(f);
+
+        let full_uri = format!("{}/{}/{}", arti.slave, arti.release, uri);
+        // NB: will crash if invalid credentials or network failures atm
+        // TODO: add better error handling
+
+        // TODO: X-Checksum-Deploy + X-Checksum-Sha1 headers
+        let resp = try!(client.put(&full_uri[..])
+            .header(Authorization(Basic {
+                username: creds.username,
+                password: Some(creds.password)
+            }))
+            .body(body).send());
+        trace!("resp={:?}", resp);
+        assert_eq!(resp.status, StatusCode::Created);
+        Ok(())
     } else {
-        return Err(CliError::MissingArtifactoryCredentials)
+        Err(CliError::MissingArtifactoryCredentials)
     }
 }
 
@@ -77,11 +99,12 @@ fn get_storage_as_u32(uri: &str) -> LalResult<u32> {
 
 // The URL for a component tarball stored in the default artifactory location
 fn get_dependency_url_default(art_cfg: &Artifactory, name: &str, version: u32) -> String {
-    let tar_url = format!("{}/{}/{}/{}.tar.gz",
-                          art_cfg.vgroup,
-                          name,
-                          version.to_string(),
-                          name);
+    let tar_url = format!("{}/{}/{}/{}/{}.tar.gz",
+                         art_cfg.slave,
+                         art_cfg.vgroup,
+                         name,
+                         version.to_string(),
+                         name);
 
     trace!("Inferring tarball location as {}", tar_url);
     tar_url
@@ -89,7 +112,8 @@ fn get_dependency_url_default(art_cfg: &Artifactory, name: &str, version: u32) -
 
 // The URL for a component tarball under the one of the environment trees
 fn get_dependency_env_url(art_cfg: &Artifactory, name: &str, version: u32, env: &str) -> String {
-    let tar_url = format!("{}/env/{}/{}/{}/{}.tar.gz",
+    let tar_url = format!("{}/{}/env/{}/{}/{}/{}.tar.gz",
+                          art_cfg.slave,
                           art_cfg.vgroup,
                           env,
                           name,
@@ -109,7 +133,7 @@ fn get_dependency_url(art_cfg: &Artifactory, name: &str, version: u32, env: &str
 }
 
 fn get_dependency_url_latest(art_cfg: &Artifactory, name: &str, env: &str) -> LalResult<Component> {
-    let url = format!("{}/api/storage/{}/{}", art_cfg.server, art_cfg.group, name);
+    let url = format!("{}/api/storage/{}/{}", art_cfg.master, art_cfg.release, name);
     let v = try!(get_storage_as_u32(&url));
 
     debug!("Found latest version as {}", v);
@@ -123,7 +147,7 @@ fn get_dependency_url_latest(art_cfg: &Artifactory, name: &str, env: &str) -> La
 // This queries the API for the default location
 // if a default exists, then all our current multi-builds must exist
 pub fn get_latest_versions(art_cfg: &Artifactory, name: &str) -> LalResult<Vec<u32>> {
-    let url = format!("{}/api/storage/{}/{}", art_cfg.server, art_cfg.group, name);
+    let url = format!("{}/api/storage/{}/{}", art_cfg.master, art_cfg.release, name);
     get_storage_versions(&url)
 }
 
@@ -149,7 +173,7 @@ pub fn get_tarball_uri(art_cfg: &Artifactory,
 /// This mostly duplicates the behaviour in `get_storage_as_u32`, however,
 /// it is parsing the version as a `semver::Version` struct rather than a u32.
 pub fn find_latest_lal_version(art_cfg: &Artifactory) -> LalResult<Version> {
-    let uri = format!("{}/api/storage/{}/lal", art_cfg.server, art_cfg.group);
+    let uri = format!("{}/api/storage/{}/lal", art_cfg.master, art_cfg.release);
     debug!("GET {}", uri);
     let resp = try!(hyper_req(&uri).map_err(|e| {
         warn!("Failed to GET {}: {}", uri, e);

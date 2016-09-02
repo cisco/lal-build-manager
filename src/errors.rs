@@ -109,7 +109,7 @@ impl fmt::Display for CliError {
             CliError::ExtraneousDependencies(ref s) => {
                 write!(f, "Extraneous dependencies in INPUT ({})", s)
             }
-            CliError::MissingLockfile(ref s) => write!(f, "No lockfile found in INPUT/{}", s),
+            CliError::MissingLockfile(ref s) => write!(f, "No lockfile found for {}", s),
             CliError::MultipleVersions(ref s) => {
                 write!(f, "Depending on multiple versions of {}", s)
             }

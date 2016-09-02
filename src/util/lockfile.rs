@@ -1,5 +1,5 @@
 use rustc_serialize::json;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -111,16 +111,25 @@ impl Lockfile {
         }
     }
 
+    fn from_path(lock_path: PathBuf, name: &str) -> LalResult<Self> {
+        if !lock_path.exists() {
+            return Err(CliError::MissingLockfile(name.to_string()));
+        }
+        let mut lock_str = String::new();
+        try!(try!(File::open(lock_path)).read_to_string(&mut lock_str));
+        Ok(try!(json::decode(&lock_str)))
+    }
+
+    /// A reader from ARTIFACT directory
+    pub fn release_build() -> LalResult<Self> {
+        let lpath = Path::new("ARTIFACT").join("lockfile.json");
+        Ok(try!(Lockfile::from_path(lpath, "release build")))
+    }
+
     // Helper constructor for input populator below
     fn from_input_component(component: &str) -> LalResult<Self> {
         let lock_path = Path::new("./INPUT").join(component).join("lockfile.json");
-        if !lock_path.exists() {
-            return Err(CliError::MissingLockfile(component.to_string()));
-        }
-        let mut lock_str = String::new();
-        try!(try!(File::open(&lock_path)).read_to_string(&mut lock_str));
-        let res = try!(json::decode(&lock_str));
-        Ok(res)
+        Ok(try!(Lockfile::from_path(lock_path, component)))
     }
 
 

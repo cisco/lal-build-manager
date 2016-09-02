@@ -28,19 +28,28 @@ pub struct Mount {
     pub readonly: bool,
 }
 
+/// Artifactory credentials
+#[derive(RustcDecodable, RustcEncodable, Clone)]
+pub struct Credentials {
+    /// Upload username
+    pub username: String,
+    /// Upload password
+    pub password: String,
+}
+
 /// Static Artifactory locations
 #[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Artifactory {
-    /// Location of artifactory API querying server
-    pub server: String,
-    /// Group parameter to use for API queries
-    pub group: String,
-    /// Location of artifactory virtual group for downloads
+    /// Location of artifactory API master (for API queries)
+    pub master: String,
+    /// Location of artifactory slave (for fetching artifacts)
+    pub slave: String,
+    /// Release group name (for API queries)
+    pub release: String,
+    /// Virtual group (for downloads)
     pub vgroup: String,
-    /// Optional upload username
-    pub username: Option<String>,
-    /// Optional upload password
-    pub password: Option<String>,
+    /// Optional publish credentials
+    pub credentials: Option<Credentials>
 }
 
 /// Representation of `~/.lal/config`
@@ -63,11 +72,11 @@ pub struct Config {
 impl Default for Artifactory {
     fn default() -> Self {
         Artifactory {
-            server: "https://engci-maven-master.cisco.com/artifactory".into(),
-            group: "CME-release".into(),
-            vgroup: "https://engci-maven.cisco.com/artifactory/CME-group".into(),
-            username: None,
-            password: None,
+            master: "https://engci-maven-master.cisco.com/artifactory".into(),
+            slave: "https://engci-maven.cisco.com/artifactory".into(),
+            release: "CME-release".into(),
+            vgroup: "CME-group".into(),
+            credentials: None,
         }
     }
 }
