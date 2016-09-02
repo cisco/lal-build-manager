@@ -1,9 +1,14 @@
 /// Globalroot shim to get components from
 use std::vec::Vec;
+use std::io::Read;
+use std::fs::File;
+
 use rustc_serialize::json;
 use semver::Version;
-use std::io::Read;
+use sha1;
 use hyper::{self, Client};
+use hyper::header::{Authorization, Basic};
+use hyper::status::StatusCode;
 
 use install::Component;
 use configure::Artifactory;
@@ -56,32 +61,48 @@ fn get_storage_versions(uri: &str) -> LalResult<Vec<u32>> {
         .collect();
     Ok(builds)
 }
-use std::fs::File;
+
+// artifactory extra headers
+header! {(XCheckSumDeploy, "X-Checksum-Deploy") => [String]}
+header! {(XCheckSumSha1, "X-Checksum-Sha1") => [String]}
+
 /// Upload a tarball to artifactory
 ///
 /// This is using a http basic auth PUT to artifactory using config credentials.
 pub fn upload_artifact(arti: &Artifactory, uri: String, f: &mut File) -> LalResult<()> {
-    use hyper::header::{Authorization, Basic};
-    use hyper::status::StatusCode;
-    use hyper::client::Body;
-
     if let Some(creds) = arti.credentials.clone() {
         let client = Client::new();
-        let body = Body::ChunkedBody(f);
+
+        let mut buffer : Vec<u8> = Vec::new();
+        try!(f.read_to_end(&mut buffer));
 
         let full_uri = format!("{}/{}/{}", arti.slave, arti.release, uri);
         // NB: will crash if invalid credentials or network failures atm
         // TODO: add better error handling
 
-        // TODO: X-Checksum-Deploy + X-Checksum-Sha1 headers
+        let mut sha = sha1::Sha1::new();
+        sha.update(&buffer);
+
+        let auth = Authorization(Basic {
+            username: creds.username,
+            password: Some(creds.password)
+        });
+
+        // upload the artifact
         let resp = try!(client.put(&full_uri[..])
-            .header(Authorization(Basic {
-                username: creds.username,
-                password: Some(creds.password)
-            }))
-            .body(body).send());
+            .header(auth.clone())
+            .body(&buffer[..]).send());
         trace!("resp={:?}", resp);
         assert_eq!(resp.status, StatusCode::Created);
+
+        // do another request to get the hash on artifactory
+        let reqsha = try!(client.put(&full_uri[..])
+            .header(XCheckSumDeploy("true".into()))
+            .header(XCheckSumSha1(sha.digest().to_string()))
+            .header(auth).send());
+        trace!("resp={:?}", reqsha);
+        assert_eq!(reqsha.status, StatusCode::Created);
+
         Ok(())
     } else {
         Err(CliError::MissingArtifactoryCredentials)

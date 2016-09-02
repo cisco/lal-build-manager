@@ -21,12 +21,14 @@
 //! This tool depends on the rust ecosystem and their crates. Dependencies referenced
 //! explicitly or implicitly is listed on the left of this page.
 
+#[macro_use]
 extern crate hyper;
 extern crate rustc_serialize;
 extern crate regex;
 extern crate tar;
 extern crate flate2;
 extern crate ansi_term;
+extern crate sha1;
 #[macro_use]
 extern crate log;
 extern crate walkdir;
