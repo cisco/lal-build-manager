@@ -8,7 +8,7 @@ extern crate lal;
 use lal::{LalResult, Config, Manifest, StickyOptions, Container};
 use clap::{Arg, App, AppSettings, SubCommand, ArgMatches};
 use std::process;
-
+use std::env;
 
 fn is_integer(v: String) -> Result<(), String> {
     if v.parse::<u32>().is_ok() {
@@ -367,6 +367,9 @@ fn main() {
 
     // by default, always show INFO messages for now (+1)
     loggerv::init_with_verbosity(args.occurrences_of("verbose") + 1).unwrap();
+
+    // set ssl cert path early for hyper client
+    env::set_var("SSL_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt");
 
     // Allow lal configure without assumptions
     if let Some(_) = args.subcommand_matches("configure") {
