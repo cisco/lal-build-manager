@@ -27,6 +27,21 @@ fn result_exit<T>(name: &str, x: LalResult<T>) {
     process::exit(0);
 }
 
+// functions that work without a manifest, and thus with only partian env override ability
+fn handle_manifest_agnostic_cmds(args: &ArgMatches, cfg: &Config, env_partial: &str) {
+    let res = if let Some(a) = args.subcommand_matches("export") {
+        lal::export(cfg,
+                    a.value_of("component").unwrap(),
+                    a.value_of("output"),
+                    env_partial)
+    } else if let Some(a) = args.subcommand_matches("query") {
+        lal::query(cfg, a.value_of("component").unwrap())
+    } else {
+        return ();
+    };
+    result_exit(args.subcommand_name().unwrap(), res);
+}
+
 fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Config) {
     let res = if let Some(a) = args.subcommand_matches("status") {
         lal::status(mf, a.is_present("full"))
@@ -60,13 +75,6 @@ fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Config, env: &str
         lal::update_all(mf, cfg, a.is_present("save"), a.is_present("dev"), env)
     } else if let Some(a) = args.subcommand_matches("fetch") {
         lal::fetch(mf, cfg, a.is_present("core"), env)
-    } else if let Some(a) = args.subcommand_matches("query") {
-        lal::query(cfg, a.value_of("component").unwrap())
-    } else if let Some(a) = args.subcommand_matches("export") {
-        lal::export(cfg,
-                    a.value_of("component").unwrap(),
-                    a.value_of("output"),
-                    env)
     } else {
         return (); // not a network cmnd
     };
@@ -415,6 +423,26 @@ fn main() {
         result_exit("clean", lal::clean(&config, days));
     }
 
+    // Read .lalopts if it exists
+    let stickies = StickyOptions::read()
+        .map_err(|e| {
+            // Should not happen unless people are mucking with it manually
+            error!("Options error: {}", e);
+            println!(".lalopts must be valid json");
+            process::exit(1);
+        })
+        .unwrap(); // we get a default empty options here otherwise
+
+    // Work out a partial env for manifest agnostic commands:
+    let env_early = if let Some(eflag) = args.value_of("environment") {
+        eflag.into()
+    } else if let Some(ref stickenv) = stickies.env {
+        stickenv.clone()
+    } else {
+        "default".into()
+    };
+    handle_manifest_agnostic_cmds(&args, &config, &env_early);
+
     // Force manifest to exist before allowing remaining actions
     let manifest = Manifest::read()
         .map_err(|e| {
@@ -426,16 +454,6 @@ fn main() {
 
     // Subcommands that are environment agnostic
     handle_environment_agnostic_cmds(&args, &manifest, &config);
-
-    // Read .lalopts if it exists
-    let stickies = StickyOptions::read()
-        .map_err(|e| {
-            // Should not happen unless people are mucking with it manually
-            error!("Options error: {}", e);
-            println!(".lalopts must be valid json");
-            process::exit(1);
-        })
-        .unwrap(); // we get a default empty options here otherwise
 
     // Force a valid container key configured in manifest and corr. value in config
     // NB: --env overrides sticky env overrides manifest.env overrides centos

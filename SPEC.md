@@ -352,12 +352,16 @@ lal --env xenial export liblzma=6
 test -f ./liblzma.tar.gz
 ```
 
+NB: export does not read the manifest.json for environment overrides.
+
 #### lal query [component]
 Lists the availble version on artifactory for a given component in the current environment.
 
 ```sh
 lal query libwebsockets
 ```
+
+NB: query does not read the manifest.json for environment overrides.
 
 #### lal remove [components..]
 Removes and optionally saves a removal of a component from `INPUT` and the manifest.
