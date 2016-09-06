@@ -35,7 +35,13 @@ mod chk {
 //    });
 //}
 
+fn init_ssl() {
+    use std::env;
+    env::set_var("SSL_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt");
+}
+
 fn main() {
+    init_ssl();
     //init_with_verbosity(0).unwrap();
     let has_docker = true;
     let num_tests = if has_docker { 15 } else { 11 };
