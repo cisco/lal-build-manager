@@ -111,7 +111,7 @@ impl Lockfile {
         }
     }
 
-    fn from_path(lock_path: PathBuf, name: &str) -> LalResult<Self> {
+    pub fn from_path(lock_path: &PathBuf, name: &str) -> LalResult<Self> {
         if !lock_path.exists() {
             return Err(CliError::MissingLockfile(name.to_string()));
         }
@@ -123,13 +123,13 @@ impl Lockfile {
     /// A reader from ARTIFACT directory
     pub fn release_build() -> LalResult<Self> {
         let lpath = Path::new("ARTIFACT").join("lockfile.json");
-        Ok(try!(Lockfile::from_path(lpath, "release build")))
+        Ok(try!(Lockfile::from_path(&lpath, "release build")))
     }
 
     // Helper constructor for input populator below
     fn from_input_component(component: &str) -> LalResult<Self> {
         let lock_path = Path::new("./INPUT").join(component).join("lockfile.json");
-        Ok(try!(Lockfile::from_path(lock_path, component)))
+        Ok(try!(Lockfile::from_path(&lock_path, component)))
     }
 
 

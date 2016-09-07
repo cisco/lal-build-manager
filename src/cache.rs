@@ -2,8 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-use configure::Config;
-use init::Manifest;
+use super::{Manifest, Config, Lockfile};
 use build::tar_output;
 use install;
 use errors::{CliError, LalResult};
@@ -95,6 +94,15 @@ pub fn get_path_to_stashed_component(cfg: &Config,
 pub fn fetch_from_stash(cfg: &Config, component: &str, stashname: &str) -> LalResult<()> {
     let tarname = try!(get_path_to_stashed_component(cfg, component, stashname));
     try!(install::extract_tarball_to_input(tarname, &component));
+    // convenience edit for lal status here:
+    // we edit the lockfile's version key to have "${stashname}"
+    // rather than the ugly colony default of "EXPERIMENTAL-${hex}"
+    let lf_path = Path::new("INPUT").join(component).join("lockfile.json");
+    let mut lf = try!(Lockfile::from_path(&lf_path, component));
+    lf.version = format!("{}", stashname);
+    // would be nice to have a timestamp in here as well
+    // but that would require timestamps in the lockfile
+    try!(lf.write(&lf_path, true));
     Ok(())
 }
 
