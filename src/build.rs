@@ -94,10 +94,12 @@ pub fn build(cfg: &Config,
     debug!("Version flag is {}", version.unwrap_or("unset"));
 
     // Verify INPUT
+    let mut verify_failed = false;
     if let Some(e) = verify(manifest, &envname).err() {
         if version.is_some() || strict {
             return Err(e);
         }
+        verify_failed = true;
         warn!("Verify failed - build will fail on jenkins, but continuing");
     }
 
@@ -135,6 +137,12 @@ pub fn build(cfg: &Config,
     }
 
     try!(shell::docker_run(cfg, container, cmd, false, printonly, false));
+    if verify_failed {
+        warn!("Build succeeded - but `lal verify` failed");
+        warn!("Please make sure you are using correct dependencies before pushing")
+    } else {
+        info!("Build succeeded with verified dependencies")
+    }
 
     if release && !printonly {
         trace!("Create ARTIFACT dir");
