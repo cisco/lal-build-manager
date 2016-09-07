@@ -5,7 +5,7 @@ container="$(docker images -q edonusdevelopers/muslrust | head -n 1)"
 
 docker_run() {
   # shellcheck disable=SC2068
-  docker run -u lal -v "$PWD:/volume" -w /volume -t "${container}" $@
+  docker run --rm -u lal -v "$PWD:/volume" -w /volume -t "${container}" $@
 }
 
 # compile test executable
