@@ -73,7 +73,7 @@ pub fn upload_artifact(arti: &Artifactory, uri: String, f: &mut File) -> LalResu
     if let Some(creds) = arti.credentials.clone() {
         let client = Client::new();
 
-        let mut buffer : Vec<u8> = Vec::new();
+        let mut buffer: Vec<u8> = Vec::new();
         try!(f.read_to_end(&mut buffer));
 
         let full_uri = format!("{}/{}/{}", arti.slave, arti.release, uri);
@@ -85,13 +85,14 @@ pub fn upload_artifact(arti: &Artifactory, uri: String, f: &mut File) -> LalResu
 
         let auth = Authorization(Basic {
             username: creds.username,
-            password: Some(creds.password)
+            password: Some(creds.password),
         });
 
         // upload the artifact
         let resp = try!(client.put(&full_uri[..])
             .header(auth.clone())
-            .body(&buffer[..]).send());
+            .body(&buffer[..])
+            .send());
         trace!("resp={:?}", resp);
         assert_eq!(resp.status, StatusCode::Created);
 
@@ -99,7 +100,8 @@ pub fn upload_artifact(arti: &Artifactory, uri: String, f: &mut File) -> LalResu
         let reqsha = try!(client.put(&full_uri[..])
             .header(XCheckSumDeploy("true".into()))
             .header(XCheckSumSha1(sha.digest().to_string()))
-            .header(auth).send());
+            .header(auth)
+            .send());
         trace!("resp={:?}", reqsha);
         assert_eq!(reqsha.status, StatusCode::Created);
 
@@ -121,11 +123,11 @@ fn get_storage_as_u32(uri: &str) -> LalResult<u32> {
 // The URL for a component tarball stored in the default artifactory location
 fn get_dependency_url_default(art_cfg: &Artifactory, name: &str, version: u32) -> String {
     let tar_url = format!("{}/{}/{}/{}/{}.tar.gz",
-                         art_cfg.slave,
-                         art_cfg.vgroup,
-                         name,
-                         version.to_string(),
-                         name);
+                          art_cfg.slave,
+                          art_cfg.vgroup,
+                          name,
+                          version.to_string(),
+                          name);
 
     trace!("Inferring tarball location as {}", tar_url);
     tar_url
@@ -154,7 +156,10 @@ fn get_dependency_url(art_cfg: &Artifactory, name: &str, version: u32, env: &str
 }
 
 fn get_dependency_url_latest(art_cfg: &Artifactory, name: &str, env: &str) -> LalResult<Component> {
-    let url = format!("{}/api/storage/{}/{}", art_cfg.master, art_cfg.release, name);
+    let url = format!("{}/api/storage/{}/{}",
+                      art_cfg.master,
+                      art_cfg.release,
+                      name);
     let v = try!(get_storage_as_u32(&url));
 
     debug!("Found latest version as {}", v);
@@ -168,7 +173,10 @@ fn get_dependency_url_latest(art_cfg: &Artifactory, name: &str, env: &str) -> La
 // This queries the API for the default location
 // if a default exists, then all our current multi-builds must exist
 pub fn get_latest_versions(art_cfg: &Artifactory, name: &str) -> LalResult<Vec<u32>> {
-    let url = format!("{}/api/storage/{}/{}", art_cfg.master, art_cfg.release, name);
+    let url = format!("{}/api/storage/{}/{}",
+                      art_cfg.master,
+                      art_cfg.release,
+                      name);
     get_storage_versions(&url)
 }
 

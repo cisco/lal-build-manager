@@ -49,7 +49,7 @@ pub struct Artifactory {
     /// Virtual group (for downloads)
     pub vgroup: String,
     /// Optional publish credentials
-    pub credentials: Option<Credentials>
+    pub credentials: Option<Credentials>,
 }
 
 /// Representation of `~/.lal/config`

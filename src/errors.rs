@@ -151,7 +151,9 @@ impl fmt::Display for CliError {
             CliError::InstallFailure => write!(f, "Install failed"),
             CliError::ArtifactoryFailure(ref s) => write!(f, "Artifactory - {}", s),
             CliError::MissingReleaseBuild => write!(f, "Missing release build"),
-            CliError::MissingArtifactoryCredentials => write!(f, "Missing artifactory credentials in ~/.lal/config"),
+            CliError::MissingArtifactoryCredentials => {
+                write!(f, "Missing artifactory credentials in ~/.lal/config")
+            }
         }
     }
 }
