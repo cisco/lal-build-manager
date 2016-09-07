@@ -379,6 +379,9 @@ fn main() {
     // set ssl cert path early for hyper client
     env::set_var("SSL_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt");
 
+    // we have a subcommand because SubcommandRequiredElseHelp
+    let subname = args.subcommand_name().unwrap();
+
     // Allow lal configure without assumptions
     if let Some(_) = args.subcommand_matches("configure") {
         result_exit("configure", lal::configure(true));
@@ -398,7 +401,8 @@ fn main() {
         result_exit("upgrade", lal::upgrade_check(&config, false)); // explicit, verbose check
     }
     // Timed daily, silent upgrade check (if not using upgrade)
-    if args.subcommand_name() != Some("upgrade") && config.upgrade_check_time() {
+    // also excluding all listers because they are used in autocomplete
+    if subname != "upgrade" && !subname.contains("list-") && config.upgrade_check_time() {
         debug!("Performing daily upgrade check");
         // silent dry-run
         let _ = lal::upgrade_check(&config, false).map_err(|e| {
