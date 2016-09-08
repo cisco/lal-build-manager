@@ -1,4 +1,7 @@
 use rustc_serialize::json;
+use chrono::UTC;
+use rand;
+
 use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::io::prelude::*;
@@ -9,8 +12,6 @@ use std::fmt;
 
 use errors::{CliError, LalResult};
 use util::input;
-
-use rand;
 
 /// Representation of a docker container image
 #[derive(RustcDecodable, RustcEncodable, Debug, Clone)]
@@ -78,6 +79,8 @@ pub struct Lockfile {
     pub version: String,
     /// Version of the lal tool
     pub tool: String,
+    /// Built timestamp
+    pub built: Option<String>,
     /// Recursive map of dependencies used
     pub dependencies: HashMap<String, Lockfile>,
 }
@@ -100,12 +103,14 @@ impl Lockfile {
                build_cfg: Option<&str>)
                -> Self {
         let def_version = format!("EXPERIMENTAL+{:x}", rand::random::<u64>());
+        let time = UTC::now();
         Lockfile {
             name: name.to_string(),
             version: v.unwrap_or(&def_version).to_string(),
             config: build_cfg.unwrap_or("release").to_string(),
             container: container.clone(),
             tool: env!("CARGO_PKG_VERSION").to_string(),
+            built: Some(time.format("%Y-%m-%d %H:%M:%S").to_string()),
             environment: Some(env.into()),
             dependencies: HashMap::new(),
         }

@@ -57,6 +57,17 @@ pub fn stash(cfg: &Config, mf: &Manifest, name: &str) -> LalResult<()> {
     if !outputdir.is_dir() {
         return Err(CliError::MissingBuild);
     }
+
+    // convenience edit for lal status here:
+    // we edit the lockfile's version key to be "${stashname}"
+    // rather than the ugly colony default of "EXPERIMENTAL-${hex}"
+    // stashed builds are only used locally so this allows easier inspection
+    // full version list is available in `lal ls -f`
+    let lf_path = Path::new("OUTPUT").join("lockfile.json");
+    let mut lf = try!(Lockfile::from_path(&lf_path, &mf.name));
+    lf.version = name.to_string();
+    try!(lf.write(&lf_path, true));
+
     let destdir = Path::new(&cfg.cache)
         .join("stash")
         .join(&mf.name)
@@ -94,15 +105,6 @@ pub fn get_path_to_stashed_component(cfg: &Config,
 pub fn fetch_from_stash(cfg: &Config, component: &str, stashname: &str) -> LalResult<()> {
     let tarname = try!(get_path_to_stashed_component(cfg, component, stashname));
     try!(install::extract_tarball_to_input(tarname, &component));
-    // convenience edit for lal status here:
-    // we edit the lockfile's version key to have "${stashname}"
-    // rather than the ugly colony default of "EXPERIMENTAL-${hex}"
-    let lf_path = Path::new("INPUT").join(component).join("lockfile.json");
-    let mut lf = try!(Lockfile::from_path(&lf_path, component));
-    lf.version = format!("{}", stashname);
-    // would be nice to have a timestamp in here as well
-    // but that would require timestamps in the lockfile
-    try!(lf.write(&lf_path, true));
     Ok(())
 }
 
