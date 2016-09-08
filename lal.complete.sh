@@ -6,12 +6,12 @@ _lal()
     _init_completion || return
 
     local -r subcommands="build clean configure export fetch help init script run ls
-                          query remove shell stash save status update update-all upgrade verify
+                          query remove shell stash save status update upgrade verify
                           publish env list-components list-dependencies list-environments"
 
     local has_sub
     for (( i=0; i < ${#words[@]}-1; i++ )); do
-        if [[ ${words[i]} == @(build|clean|configure|export|script|fetch|help|init|remove|rm|script|run|query|shell|stash|save|status|ls|update|update-all|upgrade|verify|publish|env) ]]; then
+        if [[ ${words[i]} == @(build|clean|configure|export|script|fetch|help|init|remove|rm|script|run|query|shell|stash|save|status|ls|update|upgrade|verify|publish|env) ]]; then
             has_sub=1
         fi
     done
@@ -67,8 +67,15 @@ _lal()
             update|query)
                 # Looking in local cache for allowed component names
                 # Means this won't work first time, but will be quick
-                local -r globals=$(find "$HOME/.lal/cache/globals/" -maxdepth 1 -mindepth 1 -type d -printf "%f " 2> /dev/null)
-                COMPREPLY=($(compgen -W "$globals" -- "$cur"))
+                local components=""
+                components=$(find "$HOME/.lal/cache/globals/" -maxdepth 1 -mindepth 1 -type d -printf "%f " 2> /dev/null)
+                # also add stashed components to list
+                for dr in ~/.lal/cache/stash/**/**; do
+                    components="${components} $(basename "$(dirname "$dr")")=$(basename "$dr")"
+                done
+                # can't complete past the equals because = is a new word for some reason
+                # but at least you have the info in the list - #bash
+                COMPREPLY=($(compgen -W "$components" -- "$cur"))
                 ;;
             remove|rm)
                 # look in INPUT here, nothing else makes sense
