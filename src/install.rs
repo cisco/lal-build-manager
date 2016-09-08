@@ -196,7 +196,7 @@ pub fn update_all(manifest: &Manifest,
 pub fn export(cfg: &Config, comp: &str, output: Option<&str>, env: &str) -> LalResult<()> {
     use cache;
     let dir = output.unwrap_or(".");
-    info!("Export {} to {}", comp, dir);
+    info!("Export {} {} to {}", env, comp, dir);
 
     let mut component_name = comp; // this is only correct if no =version suffix
     let tarname = if comp.contains('=') {
