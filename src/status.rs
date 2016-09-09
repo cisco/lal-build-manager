@@ -4,17 +4,31 @@ use errors::{CliError, LalResult};
 use util::input;
 use super::Lockfile;
 
-fn version_string(lf: Option<&Lockfile>) -> ANSIString<'static> {
+fn version_string(lf: Option<&Lockfile>, show_ver: bool, show_time: bool) -> ANSIString<'static> {
     if let Some(lock) = lf {
-        Colour::Fixed(8).paint(format!("({}-{})",
-                                       lock.version,
-                                       lock.environment.clone().unwrap_or("centos".into())))
+        let verstr = Colour::Fixed(12).paint(format!("({}-{})",
+            lock.version,
+            lock.environment.clone().unwrap_or("default".into())));
+        let timestr = if let Some(ref time) = lock.built {
+            Colour::Fixed(14).paint(format!("({})", time))
+        } else {
+            ANSIString::from("")
+        };
+        if !show_ver && !show_time {
+            ANSIString::from("")
+        } else if show_ver && !show_time {
+            verstr
+        } else if !show_ver && show_time {
+            timestr
+        } else {
+            ANSIString::from(format!("{} {}", verstr, timestr))
+        }
     } else {
         ANSIString::from("")
     }
 }
 
-fn status_recurse(dep: &str, lf: &Lockfile, n: usize, parent_indent: Vec<bool>) {
+fn status_recurse(dep: &str, lf: &Lockfile, n: usize, parent_indent: Vec<bool>, show_ver: bool, show_time: bool) {
     assert_eq!(dep, &lf.name);
     let len = lf.dependencies.len();
     for (i, (k, sublock)) in lf.dependencies.iter().enumerate() {
@@ -32,12 +46,12 @@ fn status_recurse(dep: &str, lf: &Lockfile, n: usize, parent_indent: Vec<bool>) 
                  turn_char,
                  fork_char,
                  k,
-                 version_string(Some(sublock)));
+                 version_string(Some(sublock), show_ver, show_time));
 
         let mut next_indent = parent_indent.clone();
         next_indent.push(is_last);
 
-        status_recurse(k, sublock, n + 1, next_indent);
+        status_recurse(k, sublock, n + 1, next_indent, show_ver, show_time);
     }
 }
 
@@ -51,11 +65,10 @@ fn status_recurse(dep: &str, lf: &Lockfile, n: usize, parent_indent: Vec<bool>) 
 /// from lockfile data.
 ///
 /// It is not intended as a verifier, but will nevertheless produce a summary at the end.
-pub fn status(manifest: &Manifest, full: bool) -> LalResult<()> {
+pub fn status(manifest: &Manifest, full: bool, show_ver: bool, show_time: bool) -> LalResult<()> {
     let mut error = None;
 
-    let lf =
-        if full { try!(Lockfile::default().populate_from_input()) } else { Lockfile::default() };
+    let lf = try!(Lockfile::default().populate_from_input());
 
     println!("{}", manifest.name);
     let deps = try!(input::analyze_full(&manifest));
@@ -84,7 +97,7 @@ pub fn status(manifest: &Manifest, full: bool) -> LalResult<()> {
 
         // first level deps are formatted with more metadata
         let level1 = format!("{} {}", d, notes);
-        let ver_str = version_string(lf.dependencies.get(&dep.name));
+        let ver_str = version_string(lf.dependencies.get(&dep.name), show_ver, show_time);
         println!("{}─{} {} {}", turn_char, fork_char, level1, ver_str);
 
         if has_children {
@@ -93,7 +106,7 @@ pub fn status(manifest: &Manifest, full: bool) -> LalResult<()> {
                    lf.dependencies);
             // dep unwrap relies on populate_from_input try! reading all lockfiles earlier
             let sub_lock = lf.dependencies.get(&dep.name).unwrap();
-            status_recurse(&dep.name, sub_lock, 1, vec![]);
+            status_recurse(&dep.name, sub_lock, 1, vec![], show_ver, show_time);
         }
     }
 

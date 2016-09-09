@@ -44,7 +44,7 @@ fn handle_manifest_agnostic_cmds(args: &ArgMatches, cfg: &Config, env_partial: &
 
 fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Config) {
     let res = if let Some(a) = args.subcommand_matches("status") {
-        lal::status(mf, a.is_present("full"))
+        lal::status(mf, a.is_present("full"), a.is_present("origin"), a.is_present("time"))
     } else if let Some(_) = args.subcommand_matches("list-components") {
         lal::build_list(mf)
     } else if let Some(_) = args.subcommand_matches("list-environments") {
@@ -247,6 +247,14 @@ fn main() {
                 .short("f")
                 .long("full")
                 .help("Print the full dependency tree"))
+            .arg(Arg::with_name("time")
+                .short("t")
+                .long("time")
+                .help("Print build time of artifact"))
+            .arg(Arg::with_name("origin")
+                .short("o")
+                .long("origin")
+                .help("Print version and environment origin of artifact"))
             .about("Prints current dependencies and their status"))
         .subcommand(SubCommand::with_name("shell")
             .about("Enters the configured container mounting the current directory")
