@@ -30,7 +30,7 @@ _lal()
     # special subcommand completions
     local special i
     for (( i=0; i < ${#words[@]}-1; i++ )); do
-        if [[ ${words[i]} == @(build|remove|rm|update|script|run|query|shell|publish|env) ]]; then
+        if [[ ${words[i]} == @(build|remove|rm|export|update|script|run|status|ls|query|shell|publish|env) ]]; then
             special=${words[i]}
         fi
     done
@@ -64,14 +64,24 @@ _lal()
                     COMPREPLY=($(compgen -W "$env_subs" -- "$cur"))
                 fi
                 ;;
-            update|query)
+            status|ls)
+                local -r ls_flags="-f --full -o --origin -t --time -h --help"
+                COMPREPLY=($(compgen -W "$ls_flags" -- "$cur"))
+                ;;
+            export|query)
+                components=$(find "$HOME/.lal/cache/globals/" -maxdepth 1 -mindepth 1 -type d -printf "%f " 2> /dev/null)
+                COMPREPLY=($(compgen -W "$components" -- "$cur"))
+                ;;
+            update)
                 # Looking in local cache for allowed component names
                 # Means this won't work first time, but will be quick
                 local components=""
                 components=$(find "$HOME/.lal/cache/globals/" -maxdepth 1 -mindepth 1 -type d -printf "%f " 2> /dev/null)
                 # also add stashed components to list
                 for dr in ~/.lal/cache/stash/**/**; do
-                    components="${components} $(basename "$(dirname "$dr")")=$(basename "$dr")"
+                    if [[ "$dr" != *"**" ]]; then # ignore empty element (ends in **)
+                        components="${components} $(basename "$(dirname "$dr")")=$(basename "$dr")"
+                    fi
                 done
                 # can't complete past the equals because = is a new word for some reason
                 # but at least you have the info in the list - #bash
