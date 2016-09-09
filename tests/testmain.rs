@@ -305,7 +305,7 @@ fn run_scripts() {
 fn status_on_experimentals() {
     let mf = Manifest::read().unwrap();
     // both of these should return errors, but work
-    let r = lal::status(&mf, false, false);
+    let r = lal::status(&mf, false, false, false);
     assert!(r.is_err(), "status should complain at experimental deps");
     let r = lal::status(&mf, true, true, true);
     assert!(r.is_err(), "status should complain at experimental deps");
