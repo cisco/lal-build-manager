@@ -202,7 +202,8 @@ impl Lockfile {
             // Recurse into its dependencies
             trace!("Recursing into deps for {}, acc is {:?}", main_name, acc);
             for (name, value_set) in dep.find_all_values(key) {
-                trace!("Found versions for for {} under {} as {:?}",
+                trace!("Found {} for for {} under {} as {:?}",
+                       key,
                        name,
                        main_name,
                        value_set);
