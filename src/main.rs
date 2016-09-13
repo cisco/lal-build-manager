@@ -489,6 +489,9 @@ fn main() {
             let sub = args.subcommand_name().unwrap();
             warn!("Running {} command in non-default {} environment", sub, env);
         }
+    } else {
+        warn!("Manifest is missing an environment value");
+        warn!("Please hardcode an environment inside manifest.json with a value from ~/.lal/config");
     }
 
     // Main subcommands

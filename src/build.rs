@@ -137,11 +137,22 @@ pub fn build(cfg: &Config,
     }
 
     try!(shell::docker_run(cfg, container, cmd, false, printonly, false));
+
+    // Extra info and warnings for people who missed the leading ones (build is spammy)
     if verify_failed {
         warn!("Build succeeded - but `lal verify` failed");
         warn!("Please make sure you are using correct dependencies before pushing")
     } else {
         info!("Build succeeded with verified dependencies")
+    }
+    // environment is temporarily optional in manifest:
+    if let Some(ref mandated_env) = manifest.environment {
+        if &envname != mandated_env { // default was set, and we used not that
+            warn!("Build was using non-default {} environment", envname);
+        }
+    } else { // default was not set, impossible to tell if this was sane
+        warn!("Build was done using non-default {} environment", envname);
+        warn!("Please hardcode an environment inside manifest.json");
     }
 
     if release && !printonly {
