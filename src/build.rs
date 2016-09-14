@@ -125,7 +125,9 @@ pub fn build(cfg: &Config,
                                       &envname,
                                       version,
                                       Some(&configuration_name))
+        .set_default_env(manifest.environment.clone())
         .populate_from_input());
+
     let lockpth = Path::new("./OUTPUT/lockfile.json");
     try!(lockfile.write(&lockpth, true)); // always put a lockfile in OUTPUT at the start of a build
 

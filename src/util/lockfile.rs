@@ -65,6 +65,7 @@ impl Container {
 }
 
 /// Representation of `lockfile.json`
+#[allow(non_snake_case)]
 #[derive(RustcDecodable, RustcEncodable, Debug)]
 pub struct Lockfile {
     /// Name of the component built
@@ -75,6 +76,8 @@ pub struct Lockfile {
     pub container: Container,
     /// Name of the environment for the container at the time
     pub environment: Option<String>,
+    /// Name of the default environment set in the manifest
+    pub defaultEnv: Option<String>,
     /// Version of the component built
     pub version: String,
     /// Version of the lal tool
@@ -111,6 +114,7 @@ impl Lockfile {
             container: container.clone(),
             tool: env!("CARGO_PKG_VERSION").to_string(),
             built: Some(time.format("%Y-%m-%d %H:%M:%S").to_string()),
+            defaultEnv: None,
             environment: Some(env.into()),
             dependencies: HashMap::new(),
         }
@@ -152,6 +156,13 @@ impl Lockfile {
         }
         Ok(self)
     }
+
+    /// Attach a default environment to the lockfile
+    pub fn set_default_env(mut self, default: Option<String>) -> Self {
+        self.defaultEnv = default;
+        self
+    }
+
     /// Write the current `Lockfile` struct to a Path
     pub fn write(&self, pth: &Path, silent: bool) -> LalResult<()> {
         let encoded = json::as_pretty_json(self);
