@@ -135,13 +135,16 @@ fn handle_docker_cmds(args: &ArgMatches,
         // ditto for publish, because it needs verify
         lal::publish(a.value_of("component").unwrap(), cfg, &env)
     } else if let Some(a) = args.subcommand_matches("build") {
+        if a.is_present("strict") {
+            warn!("deprecation: build --strict is now default behaviour");
+        }
         lal::build(cfg,
                    mf,
                    a.value_of("component"),
                    a.value_of("configuration"),
                    a.is_present("release"),
                    a.value_of("with-version"),
-                   a.is_present("strict"),
+                   !a.is_present("force"),
                    container,
                    env,
                    a.is_present("print"))
@@ -206,11 +209,14 @@ fn main() {
                 .short("c")
                 .takes_value(true)
                 .help("Build using a specific configuration (else will use defaultConfig)"))
+            .arg(Arg::with_name("force")
+                .long("force")
+                .short("f")
+                .help("Ignore verify error when using custom dependencies"))
             .arg(Arg::with_name("strict")
                 .long("strict")
                 .short("s")
-                .conflicts_with("release") // release is always strict
-                .help("Fail build if verify fails"))
+                .help("DEPRECATED - block on verify (default behaviour)"))
             .arg(Arg::with_name("release")
                 .long("release")
                 .short("r")
