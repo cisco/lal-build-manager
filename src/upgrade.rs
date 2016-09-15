@@ -10,7 +10,7 @@ use super::{LalResult, Config};
 pub fn upgrade_check(cfg: &Config, silent: bool) -> LalResult<bool> {
     let latest = try!(find_latest_lal_version(&cfg.artifactory));
     let current = Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
-    if latest > current {
+    if latest > current  || true{
         // New version found - always full output now
         info!("A new version of lal is available: {}", latest);
         trace!("You are running {}", current);

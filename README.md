@@ -11,10 +11,10 @@ You will need access to the [edonusdevelopers group](https://hub.docker.com/r/ed
 Two ways to install, depending on whether you can be bothered to run the rust install script:
 
 ### Precompiled releases (instant)
-Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) directly from [artifactory](https://engci-maven-master.cisco.com/artifactory/CME-release/lal/):
+Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) directly from [artifactory](https://engci-maven.cisco.com/artifactory/CME-group/lal/):
 
 ```sh
-curl http://engci-maven.cisco.com/artifactory/CME-release/lal/latest/lal.tar | tar xz -C /usr/local
+curl https://engci-maven.cisco.com/artifactory/CME-group/lal/latest/lal.tar | tar xz -C /usr/local
 lal configure
 ```
 
