@@ -226,14 +226,14 @@ If no arguments are suppplied it will run `./BUILD $name $config` where `name` i
 
 E.g. `lal build` in media-engine will `./BUILD media-engine release` in the container.
 
-`lal build` will run `lal verify` and warn if this fails, but proceed anyway. The warning is a developer notice that the build will not be identical on jenkins due to local modifications and should not be ignored indefinitely.
+`lal build` will run `lal verify` and abort if this fails. This warning can be overridden with `-f` or `--force`. There are legit developer reasons to ignore the `lal verify` reason when building with custom dependencies, but once code gets published, it must build without these warnings.
 
 Release specific flags:
 
 - *--release*: Generate a tarball and lockfile in `./ARTIFACT` folder after building
 - *--with-version n*: Jenkins specific option which will specify lockfile version
 
-If `--with-version` is passed, `lal verify` must pass for build to pass.
+-If `--with-version` is passed, `lal verify` must pass for build to pass (regardless of `-f`).
 
 Passing configuration flags:
 
@@ -315,6 +315,8 @@ Helper command used by `lal build` exposed for convenience/sanity. Verifies that
 - the dependency tree is flat
 - dependencies in `INPUT` contains only global dependencies
 - dependencies in `INPUT` were built using the correct environment
+
+`lal build` normally guards on this command.
 
 #### lal configure
 Sets up a default config with a pre-configured defaults of:
