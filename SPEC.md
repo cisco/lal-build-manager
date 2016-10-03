@@ -233,8 +233,6 @@ Release specific flags:
 - *--release*: Generate a tarball and lockfile in `./ARTIFACT` folder after building
 - *--with-version n*: Jenkins specific option which will specify lockfile version
 
--If `--with-version` is passed, `lal verify` must pass for build to pass (regardless of `-f`).
-
 Passing configuration flags:
 
 - *--config=name*: Passes a named config to `BUILD` as `$2`.

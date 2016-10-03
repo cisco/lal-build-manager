@@ -96,7 +96,7 @@ pub fn build(cfg: &Config,
     // Verify INPUT
     let mut verify_failed = false;
     if let Some(e) = verify(manifest, &envname).err() {
-        if version.is_some() || strict {
+        if strict {
             return Err(e);
         }
         verify_failed = true;
