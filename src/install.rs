@@ -40,6 +40,7 @@ pub fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<
     let mut archive = Archive::new(decompressed); // Archive reads decoded
 
     let extract_path = Path::new("./INPUT").join(component);
+    let _ = fs::remove_dir_all(&extract_path); // remove current dir if exists
     try!(fs::create_dir_all(&extract_path));
     try!(archive.unpack(&extract_path));
     Ok(())
