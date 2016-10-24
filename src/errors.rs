@@ -102,7 +102,7 @@ impl fmt::Display for CliError {
                 write!(f, "Component '{}' not found in manifest", s)
             }
             CliError::ManifestExists => write!(f, "Manifest already exists (use -f to force)"),
-            CliError::MissingDependencies => write!(f, "Core dependencies missing in INPUT"),
+            CliError::MissingDependencies => write!(f, "Core dependencies missing in INPUT - try `lal fetch` first"),
             CliError::InvalidVersion(ref s) => {
                 write!(f, "Dependency {} using incorrect version", s)
             }
