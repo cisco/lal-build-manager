@@ -44,7 +44,10 @@ fn handle_manifest_agnostic_cmds(args: &ArgMatches, cfg: &Config, env_partial: &
 
 fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Config) {
     let res = if let Some(a) = args.subcommand_matches("status") {
-        lal::status(mf, a.is_present("full"), a.is_present("origin"), a.is_present("time"))
+        lal::status(mf,
+                    a.is_present("full"),
+                    a.is_present("origin"),
+                    a.is_present("time"))
     } else if let Some(_) = args.subcommand_matches("list-components") {
         lal::build_list(mf)
     } else if let Some(_) = args.subcommand_matches("list-environments") {
@@ -465,7 +468,7 @@ fn main() {
     let manifest = Manifest::read()
         .map_err(|e| {
             error!("Manifest error: {}", e);
-            println!("Ensure you have run `lal init` and that manifest.json is valid json");
+            println!("Ensure manifest.json is valid json or run `lal init`");
             process::exit(1);
         })
         .unwrap();
@@ -497,7 +500,8 @@ fn main() {
         }
     } else {
         warn!("Manifest is missing an environment value");
-        warn!("Please hardcode an environment inside manifest.json with a value from ~/.lal/config");
+        warn!("Please hardcode an environment inside manifest.json with a value from \
+               ~/.lal/config");
     }
 
     // Main subcommands

@@ -93,16 +93,28 @@ pub enum CliError {
 impl fmt::Display for CliError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            CliError::Io(ref err) => err.fmt(f),
+            CliError::Io(ref err) => {
+                let knd = err.kind();
+                if knd == io::ErrorKind::PermissionDenied {
+                    warn!("If you are on norman - ensure you have access to clean ./OUTPUT and ./INPUT");
+                }
+                err.fmt(f)
+            },
             CliError::Parse(ref err) => err.fmt(f),
             CliError::Hype(ref err) => err.fmt(f),
-            CliError::MissingManifest => write!(f, "No manifest.json found"),
+            CliError::MissingManifest => {
+                write!(f,
+                       "No manifest.json found - are you at repository toplevel?")
+            }
             CliError::MissingConfig => write!(f, "No ~/.lal/config found"),
             CliError::MissingComponent(ref s) => {
                 write!(f, "Component '{}' not found in manifest", s)
             }
             CliError::ManifestExists => write!(f, "Manifest already exists (use -f to force)"),
-            CliError::MissingDependencies => write!(f, "Core dependencies missing in INPUT - try `lal fetch` first"),
+            CliError::MissingDependencies => {
+                write!(f,
+                       "Core dependencies missing in INPUT - try `lal fetch` first")
+            }
             CliError::InvalidVersion(ref s) => {
                 write!(f, "Dependency {} using incorrect version", s)
             }
@@ -120,7 +132,9 @@ impl fmt::Display for CliError {
                 write!(f, "Environment mismatch for {} - built in {}", dep, env)
             }
             CliError::NonGlobalDependencies(ref s) => {
-                write!(f, "Depending on a custom version of {}", s)
+                write!(f,
+                       "Depending on a custom version of {} (build requires -f to force)",
+                       s)
             }
             CliError::MissingEnvironment(ref s) => {
                 write!(f, "Environment '{}' not found in ~/.lal/config", s)

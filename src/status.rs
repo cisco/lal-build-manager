@@ -6,9 +6,10 @@ use super::Lockfile;
 
 fn version_string(lf: Option<&Lockfile>, show_ver: bool, show_time: bool) -> ANSIString<'static> {
     if let Some(lock) = lf {
-        let verstr = Colour::Fixed(12).paint(format!("({}-{})",
-            lock.version,
-            lock.environment.clone().unwrap_or("default".into())));
+        let verstr =
+            Colour::Fixed(12).paint(format!("({}-{})",
+                                            lock.version,
+                                            lock.environment.clone().unwrap_or("default".into())));
         let timestr = if let Some(ref time) = lock.built {
             Colour::Fixed(14).paint(format!("({})", time))
         } else {
@@ -28,7 +29,12 @@ fn version_string(lf: Option<&Lockfile>, show_ver: bool, show_time: bool) -> ANS
     }
 }
 
-fn status_recurse(dep: &str, lf: &Lockfile, n: usize, parent_indent: Vec<bool>, show_ver: bool, show_time: bool) {
+fn status_recurse(dep: &str,
+                  lf: &Lockfile,
+                  n: usize,
+                  parent_indent: Vec<bool>,
+                  show_ver: bool,
+                  show_time: bool) {
     assert_eq!(dep, &lf.name);
     let len = lf.dependencies.len();
     for (i, (k, sublock)) in lf.dependencies.iter().enumerate() {
