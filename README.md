@@ -88,7 +88,7 @@ Create a git repo, `lal init` it, then update deps and verify it builds.
 ```sh
 mkdir newcomponent
 cd newcomponent
-lal init # create manifest
+lal init xenial # create manifest for a xenial component
 git init
 git remote add origin git@sqbu-github.cisco.com:Edonus/newcomponent.git
 git add manifest.json
