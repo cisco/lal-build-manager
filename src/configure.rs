@@ -99,6 +99,8 @@ impl Default for Config {
                     Container::latest("edonusdevelopers/muslrust"));
         envs.insert("transcoder".into(),
                     Container::latest("edonusdevelopers/mygdon-transcoder"));
+        envs.insert("py3".into(),
+                    Container::latest("edonusdevelopers/py3_xenial"));
         // last update time
         let time = UTC::now() - Duration::days(2);
         // common edonusdevelopers mounts
