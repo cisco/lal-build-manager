@@ -21,7 +21,7 @@ echo "source /usr/local/share/lal/lal.complete.sh" >> ~/.bash_completion
 
 Note that you will need to `sudo chown -R "$USER" /usr/local` to avoid using sudo on the tar side. Alternatively, install to another location and manage `$PATH` yourself.
 
-When new versions are released, you will be told to re-run this command.
+When new versions are released, you will be told to re-run the `curl` command.
 
 ### From source (<10 minutes)
 Get [stable rust](https://www.rust-lang.org/downloads.html) (inlined below), clone, build, install, and make it available:
