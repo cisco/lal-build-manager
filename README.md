@@ -16,6 +16,7 @@ Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) direct
 ```sh
 curl https://engci-maven.cisco.com/artifactory/CME-group/lal/latest/lal.tar | tar xz -C /usr/local
 lal configure
+echo "source /usr/local/share/lal/lal.complete.sh" >> ~/.bash_completion
 ```
 
 Note that you will need to `sudo chown -R "$USER" /usr/local` to avoid using sudo on the tar side. Alternatively, install to another location and manage `$PATH` yourself.
@@ -32,6 +33,7 @@ git clone git@sqbu-github.cisco.com:Edonus/lal.git && cd lal
 cargo build --release
 ln -sf $PWD/target/release/lal /usr/local/bin/lal
 lal configure
+echo "source $PWD/lal.complete.sh" >> ~/.bash_completion
 ```
 
 When new versions are released, you will be told to `git pull && cargo build --release`.
@@ -133,21 +135,6 @@ Good practices before comitting (not mandatory):
 cargo fmt # requires `cargo install rustfmt` and $HOME/.cargo/bin on $PATH
 rustup run nighthly cargo clippy # requires rustup.rs install of rust + nightly install of clippy
 ```
-
-## Autocomplete
-Source the completion file in your `~/.bashrc` or `~/.bash_completion`:
-
-```sh
-echo "source /usr/local/share/lal/lal.complete.sh" >> ~/.bash_completion
-```
-
-If you are installing to a different path, or compiling yourself, set the path to where you have this file. E.g., if compiling:
-
-```sh
-echo "source $PWD/lal.complete.sh" >> ~/.bash_completion
-```
-
-from source directory.
 
 ## Logging
 Configurable via flags before the subcommand:
