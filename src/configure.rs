@@ -66,6 +66,8 @@ pub struct Config {
     pub upgradeCheck: String,
     /// Extra volume mounts to be set for the container
     pub mounts: Vec<Mount>,
+    /// Force inteactive shells
+    pub interactive: bool,
 }
 
 /// Edonusdevelopers default artifactory server
@@ -127,6 +129,7 @@ impl Default for Config {
             upgradeCheck: time.to_rfc3339(),
             environments: envs,
             artifactory: Artifactory::default(),
+            interactive: true,
         }
     }
 }

@@ -120,7 +120,7 @@ pub fn shell(cfg: &Config,
         info!("Entering {}", container);
     }
     let mut bash = vec![];
-    let interactive = cmd.is_none();
+    let interactive = cmd.is_none() || cfg.interactive;
     if cmd.is_some() {
         for c in cmd.unwrap() {
             bash.push(c.to_string())
@@ -148,5 +148,5 @@ pub fn script(cfg: &Config,
     let cmd = vec!["bash".into(),
                    "-c".into(),
                    format!("source {}; main {}", pth.display(), args.join(" "))];
-    Ok(try!(docker_run(cfg, &container, cmd, false, false, privileged)))
+    Ok(try!(docker_run(cfg, &container, cmd, cfg.interactive, false, privileged)))
 }

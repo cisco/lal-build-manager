@@ -138,7 +138,7 @@ pub fn build(cfg: &Config,
         info!("Running build script in {} container", envname);
     }
 
-    try!(shell::docker_run(cfg, container, cmd, false, printonly, false));
+    try!(shell::docker_run(cfg, container, cmd, cfg.interactive, printonly, false));
 
     // Extra info and warnings for people who missed the leading ones (build is spammy)
     if verify_failed {
