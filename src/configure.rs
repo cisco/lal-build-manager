@@ -211,9 +211,10 @@ fn create_lal_dir() -> LalResult<PathBuf> {
 /// Create  `~/.lal/config` with defaults
 ///
 /// A boolean option to discard the output is supplied for tests.
-pub fn configure(save: bool) -> LalResult<Config> {
+pub fn configure(save: bool, interactive: bool) -> LalResult<Config> {
     let _ = create_lal_dir()?;
-    let cfg = Config::new();
+    let mut cfg = Config::new();
+    cfg.interactive = interactive; // need to override default for tests
     if save {
         cfg.write(false)?;
     }

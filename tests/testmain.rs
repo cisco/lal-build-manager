@@ -151,7 +151,7 @@ fn configure_yes() {
     let config = Config::read();
     assert!(config.is_err(), "no config at this point");
 
-    let r = lal::configure(true);
+    let r = lal::configure(true, false);
     assert!(r.is_ok(), "configure succeeded");
 
     let cfg = Config::read();
