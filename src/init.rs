@@ -68,7 +68,7 @@ impl Manifest {
     }
     /// Read a manifest file in PWD
     pub fn read() -> LalResult<Manifest> {
-        Ok(try!(Manifest::read_from(Path::new(".").to_path_buf())))
+        Ok(Manifest::read_from(Path::new(".").to_path_buf())?)
     }
     /// Read a manifest file in an arbitrary path
     pub fn read_from(pth: PathBuf) -> LalResult<Manifest> {
@@ -76,10 +76,10 @@ impl Manifest {
         if !mpath.exists() {
             return Err(CliError::MissingManifest);
         }
-        let mut f = try!(File::open(&mpath));
+        let mut f = File::open(&mpath)?;
         let mut data = String::new();
-        try!(f.read_to_string(&mut data));
-        let res = try!(json::decode(&data));
+        f.read_to_string(&mut data)?;
+        let res = json::decode(&data)?;
         Ok(res)
     }
 
@@ -88,8 +88,8 @@ impl Manifest {
         let pth = Path::new("./manifest.json");
         let encoded = json::as_pretty_json(self);
 
-        let mut f = try!(File::create(&pth));
-        try!(write!(f, "{}\n", encoded));
+        let mut f = File::create(&pth)?;
+        write!(f, "{}\n", encoded)?;
 
         info!("Wrote manifest {}: \n{}", pth.display(), encoded);
         Ok(())
@@ -113,9 +113,9 @@ pub fn dep_list(mf: &Manifest, core: bool) -> LalResult<()> {
 /// The function will not overwrite an existing `manifest.json`,
 /// unless the `force` bool is set.
 pub fn init(cfg: &Config, force: bool, env: &str) -> LalResult<()> {
-    try!(cfg.get_container(Some(env.into())));
+    cfg.get_container(Some(env.into()))?;
 
-    let pwd = try!(env::current_dir());
+    let pwd = env::current_dir()?;
     let last_comp = pwd.components().last().unwrap(); // std::path::Component
     let dirname = last_comp.as_os_str().to_str().unwrap();
 
@@ -124,6 +124,6 @@ pub fn init(cfg: &Config, force: bool, env: &str) -> LalResult<()> {
         return Err(CliError::ManifestExists);
     }
 
-    try!(Manifest::new(dirname, env).write());
+    Manifest::new(dirname, env).write()?;
     Ok(())
 }

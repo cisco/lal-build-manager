@@ -18,15 +18,15 @@ pub fn download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
 
     debug!("GET {}", url);
     let client = Client::new();
-    let mut res = try!(client.get(url).send());
+    let mut res = client.get(url).send()?;
     if res.status != hyper::Ok {
         return Err(CliError::ArtifactoryFailure(format!("GET request with {}", res.status)));
     }
 
     let mut buffer: Vec<u8> = Vec::new();
-    try!(res.read_to_end(&mut buffer));
-    let mut f = try!(fs::File::create(save));
-    try!(f.write(&buffer));
+    res.read_to_end(&mut buffer)?;
+    let mut f = fs::File::create(save)?;
+    f.write(&buffer)?;
     Ok(())
 }
 
@@ -35,14 +35,14 @@ pub fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<
     use tar::Archive;
     use flate2::read::GzDecoder;
 
-    let data = try!(fs::File::open(tarname));
-    let decompressed = try!(GzDecoder::new(data)); // decoder reads data
+    let data = fs::File::open(tarname)?;
+    let decompressed = GzDecoder::new(data)?; // decoder reads data
     let mut archive = Archive::new(decompressed); // Archive reads decoded
 
     let extract_path = Path::new("./INPUT").join(component);
     let _ = fs::remove_dir_all(&extract_path); // remove current dir if exists
-    try!(fs::create_dir_all(&extract_path));
-    try!(archive.unpack(&extract_path));
+    fs::create_dir_all(&extract_path)?;
+    archive.unpack(&extract_path)?;
     Ok(())
 }
 
@@ -55,13 +55,13 @@ fn fetch_via_artifactory(cfg: &Config,
     use cache;
 
     trace!("Locate component {}", name);
-    let component = try!(get_tarball_uri(&cfg.artifactory, name, version, env));
+    let component = get_tarball_uri(&cfg.artifactory, name, version, env)?;
 
     if !cache::is_cached(cfg, &component.name, component.version, env) {
         // download to PWD then move it to stash immediately
         let local_tarball = Path::new(".").join(format!("{}.tar", name));
-        try!(download_to_path(&component.tarball, &local_tarball));
-        try!(cache::store_tarball(&cfg, name, component.version, env));
+        download_to_path(&component.tarball, &local_tarball)?;
+        cache::store_tarball(&cfg, name, component.version, env)?;
     }
     assert!(cache::is_cached(cfg, &component.name, component.version, env),
             "cached component");
@@ -78,12 +78,12 @@ fn fetch_and_unpack_component(cfg: &Config,
                               version: Option<u32>,
                               env: &str)
                               -> LalResult<Component> {
-    let (tarname, component) = try!(fetch_via_artifactory(cfg, name, version, env));
+    let (tarname, component) = fetch_via_artifactory(cfg, name, version, env)?;
 
     debug!("Unpacking tarball {} for {}",
            tarname.to_str().unwrap(),
            component.name);
-    try!(extract_tarball_to_input(tarname, &name));
+    extract_tarball_to_input(tarname, &name)?;
 
     Ok(component)
 }
@@ -169,7 +169,7 @@ pub fn update(manifest: &Manifest,
         } else {
             mf.devDependencies = hmap;
         }
-        try!(mf.write());
+        mf.write()?;
     }
     Ok(())
 }
@@ -205,21 +205,21 @@ pub fn export(cfg: &Config, comp: &str, output: Option<&str>, env: &str) -> LalR
         if let Ok(n) = pair[1].parse::<u32>() {
             // standard fetch with an integer version
             component_name = pair[0]; // save so we have sensible tarball names
-            try!(fetch_via_artifactory(cfg, pair[0], Some(n), env)).0
+            fetch_via_artifactory(cfg, pair[0], Some(n), env)?.0
         } else {
             // string version -> stash
             component_name = pair[0]; // save so we have sensible tarball names
-            try!(cache::get_path_to_stashed_component(cfg, pair[0], pair[1]))
+            cache::get_path_to_stashed_component(cfg, pair[0], pair[1])?
         }
     } else {
         // fetch without a specific version (latest)
-        try!(fetch_via_artifactory(cfg, &comp, None, env)).0
+        fetch_via_artifactory(cfg, &comp, None, env)?.0
     };
 
     let dest = Path::new(dir).join(format!("{}.tar.gz", component_name));
     debug!("Copying {:?} to {:?}", tarname, dest);
 
-    try!(fs::copy(tarname, dest));
+    fs::copy(tarname, dest)?;
     Ok(())
 }
 
@@ -257,7 +257,7 @@ pub fn remove(manifest: &Manifest, xs: Vec<&str>, save: bool, savedev: bool) -> 
             mf.devDependencies = hmap;
         }
         info!("Updating manifest with removed dependencies");
-        try!(mf.write());
+        mf.write()?;
     }
 
     // delete the folder (ignore if the folder does not exist)
@@ -269,7 +269,7 @@ pub fn remove(manifest: &Manifest, xs: Vec<&str>, save: bool, savedev: bool) -> 
         let pth = Path::new(&input).join(component);
         if pth.is_dir() {
             debug!("Deleting INPUT/{}", component);
-            try!(fs::remove_dir_all(&pth));
+            fs::remove_dir_all(&pth)?;
         }
     }
     Ok(())

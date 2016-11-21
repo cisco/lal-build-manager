@@ -12,30 +12,33 @@ pub fn publish(name: &str, cfg: &Config, env: &str) -> LalResult<()> {
         return Err(CliError::MissingReleaseBuild);
     }
 
-    let lock = try!(Lockfile::release_build());
+    let lock = Lockfile::release_build()?;
 
-    let version = try!(lock.version.parse::<u32>().map_err(|e| {
-        error!("Release build not done --with-version=$BUILD_VERSION");
-        debug!("Error: {}", e);
-        CliError::MissingReleaseBuild
-    }));
+    let version = lock.version
+        .parse::<u32>()
+        .map_err(|e| {
+            error!("Release build not done --with-version=$BUILD_VERSION");
+            debug!("Error: {}", e);
+            CliError::MissingReleaseBuild
+        })?;
 
-    let build_env = try!(lock.environment.ok_or_else(|| {
-        error!("Release build has no environment");
-        CliError::MissingReleaseBuild
-    }));
+    let build_env = lock.environment
+        .ok_or_else(|| {
+            error!("Release build has no environment");
+            CliError::MissingReleaseBuild
+        })?;
     assert_eq!(env, build_env); // for now
 
 
     info!("Publishing {}={}", name, version);
 
     let tar_uri = format!("{}/{}/{}.tar.gz", name, version, name);
-    let mut tarf = try!(File::open(tarball));
-    try!(upload_artifact(&cfg.artifactory, tar_uri, &mut tarf));
+    let mut tarf = File::open(tarball)?;
+    upload_artifact(&cfg.artifactory, tar_uri, &mut tarf)?;
 
-    let mut lockf = try!(File::open(lockfile));
+    let mut lockf = File::open(lockfile)?;
     let lf_uri = format!("{}/{}/lockfile.json", name, version);
-    try!(upload_artifact(&cfg.artifactory, lf_uri, &mut lockf));
+    upload_artifact(&cfg.artifactory, lf_uri, &mut lockf)?;
 
     Ok(())
 }

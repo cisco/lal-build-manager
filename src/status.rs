@@ -74,10 +74,10 @@ fn status_recurse(dep: &str,
 pub fn status(manifest: &Manifest, full: bool, show_ver: bool, show_time: bool) -> LalResult<()> {
     let mut error = None;
 
-    let lf = try!(Lockfile::default().populate_from_input());
+    let lf = Lockfile::default().populate_from_input()?;
 
     println!("{}", manifest.name);
-    let deps = try!(input::analyze_full(&manifest));
+    let deps = input::analyze_full(&manifest)?;
     let len = deps.len();
     for (i, (d, dep)) in deps.iter().enumerate() {
         let notes = if dep.missing && !dep.development {

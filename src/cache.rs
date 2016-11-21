@@ -24,7 +24,7 @@ pub fn store_tarball(cfg: &Config, name: &str, version: u32, env: &str) -> Resul
     // 1. mkdir -p cfg.cacheDir/$name/$version
     let destdir = get_cache_dir(cfg, name, version, env);
     if !destdir.is_dir() {
-        try!(fs::create_dir_all(&destdir));
+        fs::create_dir_all(&destdir)?;
     }
     // 2. stuff $PWD/$name.tar in there
     let tarname = [name, ".tar"].concat();
@@ -34,8 +34,8 @@ pub fn store_tarball(cfg: &Config, name: &str, version: u32, env: &str) -> Resul
         return Err(CliError::MissingTarball);
     }
     debug!("Move {:?} -> {:?}", src, dest);
-    try!(fs::copy(&src, &dest));
-    try!(fs::remove_file(&src));
+    fs::copy(&src, &dest)?;
+    fs::remove_file(&src)?;
 
     Ok(())
 }
@@ -64,23 +64,23 @@ pub fn stash(cfg: &Config, mf: &Manifest, name: &str) -> LalResult<()> {
     // stashed builds are only used locally so this allows easier inspection
     // full version list is available in `lal ls -f`
     let lf_path = Path::new("OUTPUT").join("lockfile.json");
-    let mut lf = try!(Lockfile::from_path(&lf_path, &mf.name));
+    let mut lf = Lockfile::from_path(&lf_path, &mf.name)?;
     lf.version = name.to_string();
-    try!(lf.write(&lf_path, true));
+    lf.write(&lf_path, true)?;
 
     let destdir = Path::new(&cfg.cache)
         .join("stash")
         .join(&mf.name)
         .join(name);
     debug!("Creating {:?}", destdir);
-    try!(fs::create_dir_all(&destdir));
+    fs::create_dir_all(&destdir)?;
 
     // Tar it straight into destination
-    try!(tar_output(&destdir.join(format!("{}.tar.gz", mf.name))));
+    tar_output(&destdir.join(format!("{}.tar.gz", mf.name)))?;
 
     // Copy the lockfile there for sanity
     // NB: this is not really needed, as it's included in the tarball anyway
-    try!(fs::copy("./OUTPUT/lockfile.json", destdir.join("lockfile.json")));
+    fs::copy("./OUTPUT/lockfile.json", destdir.join("lockfile.json"))?;
 
     Ok(())
 }
@@ -103,8 +103,8 @@ pub fn get_path_to_stashed_component(cfg: &Config,
 
 // helper for install::update
 pub fn fetch_from_stash(cfg: &Config, component: &str, stashname: &str) -> LalResult<()> {
-    let tarname = try!(get_path_to_stashed_component(cfg, component, stashname));
-    try!(install::extract_tarball_to_input(tarname, &component));
+    let tarname = get_path_to_stashed_component(cfg, component, stashname)?;
+    install::extract_tarball_to_input(tarname, &component)?;
     Ok(())
 }
 
@@ -127,7 +127,7 @@ fn clean_in_dir(cutoff: DateTime<UTC>, dirs: WalkDir) -> LalResult<()> {
         trace!("Found {} with mtime {}", pth.to_str().unwrap(), mtimedate);
         if mtimedate < cutoff {
             debug!("Cleaning {}", pth.to_str().unwrap());
-            try!(fs::remove_dir_all(pth));
+            fs::remove_dir_all(pth)?;
         }
     }
     Ok(())
@@ -144,11 +144,11 @@ pub fn clean(cfg: &Config, days: i64) -> LalResult<()> {
     // clean out environment subdirectories
     let edir = Path::new(&cfg.cache).join("environments");
     let edirs = WalkDir::new(&edir).min_depth(3).max_depth(3);
-    try!(clean_in_dir(cutoff, edirs));
+    clean_in_dir(cutoff, edirs)?;
 
     // clean out stash + globals
     let dirs = WalkDir::new(&cfg.cache).min_depth(3).max_depth(3);
-    try!(clean_in_dir(cutoff, dirs));
+    clean_in_dir(cutoff, dirs)?;
 
     Ok(())
 }

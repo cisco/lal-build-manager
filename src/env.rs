@@ -28,8 +28,8 @@ impl StickyOptions {
             return Ok(StickyOptions::default()); // everything off
         }
         let mut opts_data = String::new();
-        try!(try!(fs::File::open(&opts_path)).read_to_string(&mut opts_data));
-        let res = try!(json::decode(&opts_data));
+        fs::File::open(&opts_path)?.read_to_string(&mut opts_data)?;
+        let res = json::decode(&opts_data)?;
         Ok(res)
     }
 
@@ -38,8 +38,8 @@ impl StickyOptions {
         let opts_path = Path::new(".lalopts");
         let encoded = json::as_pretty_json(self);
 
-        let mut f = try!(fs::File::create(&opts_path));
-        try!(write!(f, "{}\n", encoded));
+        let mut f = fs::File::create(&opts_path)?;
+        write!(f, "{}\n", encoded)?;
         if silent {
             debug!("Wrote {}: \n{}", opts_path.display(), encoded);
         } else {
@@ -50,7 +50,7 @@ impl StickyOptions {
     /// Delete local `.lalopts`
     pub fn delete_local() -> LalResult<()> {
         let opts_path = Path::new(".lalopts");
-        Ok(try!(fs::remove_file(&opts_path)))
+        Ok(fs::remove_file(&opts_path)?)
     }
 }
 
@@ -59,7 +59,7 @@ pub fn update(container: &Container, env: &str) -> LalResult<()> {
     info!("Updating {} container", env);
     let args: Vec<String> = vec!["pull".into(), format!("{}", container)];
     trace!("Docker pull {}", container);
-    let s = try!(Command::new("docker").args(&args).status());
+    let s = Command::new("docker").args(&args).status()?;
     trace!("Exited docker");
     if !s.success() {
         return Err(CliError::SubprocessFailure(s.code().unwrap_or(1001)));
@@ -74,7 +74,7 @@ pub fn set(opts_: &StickyOptions, cfg: &Config, env: &str) -> LalResult<()> {
     // mutate a temporary copy - lal binary is done after this function anyway
     let mut opts = opts_.clone();
     opts.env = Some(env.into());
-    try!(opts.write(false));
+    opts.write(false)?;
     Ok(())
 }
 

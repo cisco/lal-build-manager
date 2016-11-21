@@ -1,4 +1,5 @@
 chain_base_indent = "tabbed"
 chain_indent = "tabbed"
-single_line_if_else = true
+single_line_if_else_max_width = 80
 write_mode = "overwrite"
+use_try_shorthand = true
