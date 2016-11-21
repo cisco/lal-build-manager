@@ -19,8 +19,8 @@ fn read_partial_lockfile(component: &str) -> LalResult<PartialLock> {
         return Err(CliError::MissingLockfile(component.to_string()));
     }
     let mut lock_str = String::new();
-    try!(try!(File::open(&lock_path)).read_to_string(&mut lock_str));
-    let res = try!(json::decode(&lock_str));
+    File::open(&lock_path)?.read_to_string(&mut lock_str)?;
+    let res = json::decode(&lock_str)?;
     Ok(res)
 }
 
@@ -41,7 +41,7 @@ pub fn analyze() -> LalResult<BTreeMap<String, String>> {
     for d in dirs {
         let pth = d.path().strip_prefix("INPUT").unwrap();
         let component = pth.to_str().unwrap();
-        let lck = try!(read_partial_lockfile(&component));
+        let lck = read_partial_lockfile(&component)?;
         deps.insert(component.to_string(), lck.version);
     }
     Ok(deps)
@@ -63,7 +63,7 @@ pub type InputMap = BTreeMap<String, InputDependency>;
 pub fn analyze_full(manifest: &Manifest) -> LalResult<InputMap> {
     let input = Path::new("./INPUT");
 
-    let deps = try!(analyze());
+    let deps = analyze()?;
     let saved_deps = manifest.all_dependencies();
 
     let mut depmap = InputMap::new();

@@ -29,12 +29,12 @@ struct ArtifactoryStorageResponse {
 // simple request body fetcher
 fn hyper_req(url: &str) -> LalResult<String> {
     let client = Client::new();
-    let mut res = try!(client.get(url).send());
+    let mut res = client.get(url).send()?;
     if res.status != hyper::Ok {
         return Err(CliError::ArtifactoryFailure(format!("GET request with {}", res.status)));
     }
     let mut body = String::new();
-    try!(res.read_to_string(&mut body));
+    res.read_to_string(&mut body)?;
     Ok(body)
 }
 
@@ -45,14 +45,14 @@ fn hyper_req(url: &str) -> LalResult<String> {
 fn get_storage_versions(uri: &str) -> LalResult<Vec<u32>> {
     debug!("GET {}", uri);
 
-    let resp = try!(hyper_req(uri).map_err(|e| {
-        warn!("Failed to GET {}: {}", uri, e);
-        CliError::ArtifactoryFailure("No version information found on API".into())
-    }));
+    let resp = hyper_req(uri).map_err(|e| {
+            warn!("Failed to GET {}: {}", uri, e);
+            CliError::ArtifactoryFailure("No version information found on API".into())
+        })?;
 
     trace!("Got body {}", resp);
 
-    let res: ArtifactoryStorageResponse = try!(json::decode(&resp));
+    let res: ArtifactoryStorageResponse = json::decode(&resp)?;
     let builds: Vec<u32> = res.children
         .iter()
         .map(|r| r.uri.as_str())
@@ -74,7 +74,7 @@ pub fn upload_artifact(arti: &Artifactory, uri: String, f: &mut File) -> LalResu
         let client = Client::new();
 
         let mut buffer: Vec<u8> = Vec::new();
-        try!(f.read_to_end(&mut buffer));
+        f.read_to_end(&mut buffer)?;
 
         let full_uri = format!("{}/{}/{}", arti.slave, arti.release, uri);
         // NB: will crash if invalid credentials or network failures atm
@@ -89,19 +89,19 @@ pub fn upload_artifact(arti: &Artifactory, uri: String, f: &mut File) -> LalResu
         });
 
         // upload the artifact
-        let resp = try!(client.put(&full_uri[..])
+        let resp = client.put(&full_uri[..])
             .header(auth.clone())
             .body(&buffer[..])
-            .send());
+            .send()?;
         trace!("resp={:?}", resp);
         assert_eq!(resp.status, StatusCode::Created);
 
         // do another request to get the hash on artifactory
-        let reqsha = try!(client.put(&full_uri[..])
+        let reqsha = client.put(&full_uri[..])
             .header(XCheckSumDeploy("true".into()))
             .header(XCheckSumSha1(sha.digest().to_string()))
             .header(auth)
-            .send());
+            .send()?;
         trace!("resp={:?}", reqsha);
         assert_eq!(reqsha.status, StatusCode::Created);
 
@@ -113,7 +113,7 @@ pub fn upload_artifact(arti: &Artifactory, uri: String, f: &mut File) -> LalResu
 
 /// Get the maximal version number from the storage api
 fn get_storage_as_u32(uri: &str) -> LalResult<u32> {
-    if let Some(&latest) = try!(get_storage_versions(uri)).iter().max() {
+    if let Some(&latest) = get_storage_versions(uri)?.iter().max() {
         Ok(latest)
     } else {
         Err(CliError::ArtifactoryFailure("No version information found on API".into()))
@@ -160,7 +160,7 @@ fn get_dependency_url_latest(art_cfg: &Artifactory, name: &str, env: &str) -> La
                       art_cfg.master,
                       art_cfg.release,
                       name);
-    let v = try!(get_storage_as_u32(&url));
+    let v = get_storage_as_u32(&url)?;
 
     debug!("Found latest version as {}", v);
     Ok(Component {
@@ -204,13 +204,13 @@ pub fn get_tarball_uri(art_cfg: &Artifactory,
 pub fn find_latest_lal_version(art_cfg: &Artifactory) -> LalResult<Version> {
     let uri = format!("{}/api/storage/{}/lal", art_cfg.master, art_cfg.release);
     debug!("GET {}", uri);
-    let resp = try!(hyper_req(&uri).map_err(|e| {
-        warn!("Failed to GET {}: {}", uri, e);
-        CliError::ArtifactoryFailure("No version information found on API".into())
-    }));
+    let resp = hyper_req(&uri).map_err(|e| {
+            warn!("Failed to GET {}: {}", uri, e);
+            CliError::ArtifactoryFailure("No version information found on API".into())
+        })?;
     trace!("Got body {}", resp);
 
-    let res: ArtifactoryStorageResponse = try!(json::decode(&resp));
+    let res: ArtifactoryStorageResponse = json::decode(&resp)?;
     let latest: Option<Version> = res.children
         .iter()
         .map(|r| r.uri.trim_matches('/').to_string())

@@ -8,7 +8,7 @@ use super::{LalResult, Config};
 /// If a newer version found (> in semver), then this is logged depending on mode.
 /// If run as part of the automatic update check, then it's silent.
 pub fn upgrade_check(cfg: &Config, silent: bool) -> LalResult<bool> {
-    let latest = try!(find_latest_lal_version(&cfg.artifactory));
+    let latest = find_latest_lal_version(&cfg.artifactory)?;
     let current = Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
     if latest > current {
         // New version found - always full output now

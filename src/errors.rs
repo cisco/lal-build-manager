@@ -96,10 +96,11 @@ impl fmt::Display for CliError {
             CliError::Io(ref err) => {
                 let knd = err.kind();
                 if knd == io::ErrorKind::PermissionDenied {
-                    warn!("If you are on norman - ensure you have access to clean ./OUTPUT and ./INPUT");
+                    warn!("If you are on norman - ensure you have access to clean ./OUTPUT and \
+                           ./INPUT");
                 }
                 err.fmt(f)
-            },
+            }
             CliError::Parse(ref err) => err.fmt(f),
             CliError::Hype(ref err) => err.fmt(f),
             CliError::MissingManifest => {

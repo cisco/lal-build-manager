@@ -125,20 +125,20 @@ impl Lockfile {
             return Err(CliError::MissingLockfile(name.to_string()));
         }
         let mut lock_str = String::new();
-        try!(try!(File::open(lock_path)).read_to_string(&mut lock_str));
-        Ok(try!(json::decode(&lock_str)))
+        File::open(lock_path)?.read_to_string(&mut lock_str)?;
+        Ok(json::decode(&lock_str)?)
     }
 
     /// A reader from ARTIFACT directory
     pub fn release_build() -> LalResult<Self> {
         let lpath = Path::new("ARTIFACT").join("lockfile.json");
-        Ok(try!(Lockfile::from_path(&lpath, "release build")))
+        Ok(Lockfile::from_path(&lpath, "release build")?)
     }
 
     // Helper constructor for input populator below
     fn from_input_component(component: &str) -> LalResult<Self> {
         let lock_path = Path::new("./INPUT").join(component).join("lockfile.json");
-        Ok(try!(Lockfile::from_path(&lock_path, component)))
+        Ok(Lockfile::from_path(&lock_path, component)?)
     }
 
 
@@ -148,10 +148,10 @@ impl Lockfile {
     /// the re-reads them fully in `read_lockfile_from_component` so can be sped up.
     pub fn populate_from_input(mut self) -> LalResult<Self> {
         debug!("Reading all lockfiles");
-        let deps = try!(input::analyze());
+        let deps = input::analyze()?;
         for name in deps.keys() {
             trace!("Populating lockfile with {}", name);
-            let deplock = try!(Lockfile::from_input_component(&name));
+            let deplock = Lockfile::from_input_component(&name)?;
             self.dependencies.insert(name.clone(), deplock);
         }
         Ok(self)
@@ -166,8 +166,8 @@ impl Lockfile {
     /// Write the current `Lockfile` struct to a Path
     pub fn write(&self, pth: &Path, silent: bool) -> LalResult<()> {
         let encoded = json::as_pretty_json(self);
-        let mut f = try!(File::create(pth));
-        try!(write!(f, "{}\n", encoded));
+        let mut f = File::create(pth)?;
+        write!(f, "{}\n", encoded)?;
         if silent {
             debug!("Wrote lockfile {}: \n{}", pth.display(), encoded);
         } else {

@@ -11,14 +11,14 @@ use {Config, Container, CliError, LalResult};
 /// so for builds to work sanely, user ids and group ids should match a standard
 /// linux setup and in particular, match the first user in a normal container.
 fn permission_sanity_check() -> LalResult<()> {
-    let uid_output = try!(Command::new("id").arg("-u").output());
+    let uid_output = Command::new("id").arg("-u").output()?;
     let uid_str = String::from_utf8_lossy(&uid_output.stdout);
     let uid = uid_str.trim().parse::<u32>().unwrap(); // trust `id -u` is sane
     if uid != 1000 {
         return Err(CliError::DockerPermissionSafety(format!("UID is {}, not 1000", uid)));
     }
 
-    let gid_output = try!(Command::new("id").arg("-g").output());
+    let gid_output = Command::new("id").arg("-g").output()?;
     let gid_str = String::from_utf8_lossy(&gid_output.stdout);
     let gid = gid_str.trim().parse::<u32>().unwrap(); // trust `id -g` is sane
     if gid != 1000 {
@@ -97,7 +97,7 @@ pub fn docker_run(cfg: &Config,
             warn!("You will likely have permission issues");
         }); // keep going, but with a warning if it failed
         trace!("Permissions verified, entering docker");
-        let s = try!(Command::new("docker").args(&args).status());
+        let s = Command::new("docker").args(&args).status()?;
         trace!("Exited docker");
         if !s.success() {
             return Err(CliError::SubprocessFailure(s.code().unwrap_or(1001)));
@@ -148,5 +148,5 @@ pub fn script(cfg: &Config,
     let cmd = vec!["bash".into(),
                    "-c".into(),
                    format!("source {}; main {}", pth.display(), args.join(" "))];
-    Ok(try!(docker_run(cfg, &container, cmd, cfg.interactive, false, privileged)))
+    Ok(docker_run(cfg, &container, cmd, cfg.interactive, false, privileged)?)
 }

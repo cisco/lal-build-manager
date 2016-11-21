@@ -48,15 +48,18 @@ fn verify_sane_input(m: &Manifest) -> LalResult<()> {
 fn verify_global_versions(lf: &Lockfile, m: &Manifest) -> LalResult<()> {
     let all_deps = m.all_dependencies();
     for (name, dep) in &lf.dependencies {
-        let v = try!(dep.version.parse::<u32>().map_err(|e| {
-            debug!("Failed to parse first version of {} as int ({:?})", name, e);
-            CliError::NonGlobalDependencies(name.clone())
-        }));
+        let v = dep.version
+            .parse::<u32>()
+            .map_err(|e| {
+                debug!("Failed to parse first version of {} as int ({:?})", name, e);
+                CliError::NonGlobalDependencies(name.clone())
+            })?;
         // also ensure it matches the version in the manifest
-        let vreq = *try!(all_deps.get(name).ok_or_else(|| {
-            // This is a first level dependency - it should be in the manifest
-            CliError::ExtraneousDependencies(name.clone())
-        }));
+        let vreq = *all_deps.get(name)
+            .ok_or_else(|| {
+                // This is a first level dependency - it should be in the manifest
+                CliError::ExtraneousDependencies(name.clone())
+            })?;
         if v != vreq {
             warn!("Dependency {} has version {}, but manifest requires {}",
                   name,
@@ -111,7 +114,7 @@ fn verify_environment_consistency(lf: &Lockfile, env: &str) -> LalResult<()> {
 /// would use.
 pub fn verify(m: &Manifest, env: &str) -> LalResult<()> {
     // 1. Verify that the manifest is sane
-    try!(verify_sane_manifest(&m));
+    verify_sane_manifest(&m)?;
 
     // 2. dependencies in `INPUT` match `manifest.json`.
     if m.dependencies.is_empty() {
@@ -119,19 +122,19 @@ pub fn verify(m: &Manifest, env: &str) -> LalResult<()> {
         // nothing needs to be verified in this case, so allow missing INPUT
         return Ok(());
     }
-    try!(verify_sane_input(&m));
+    verify_sane_input(&m)?;
 
     // get data for big verify steps
-    let lf = try!(Lockfile::default().populate_from_input());
+    let lf = Lockfile::default().populate_from_input()?;
 
     // 3. verify the root level dependencies match the manifest
-    try!(verify_global_versions(&lf, &m));
+    verify_global_versions(&lf, &m)?;
 
     // 4. the dependency tree is flat, and deps use only global deps
-    try!(verify_consistent_dependency_versions(&lf));
+    verify_consistent_dependency_versions(&lf)?;
 
     // 5. verify all components are built in the same environment
-    try!(verify_environment_consistency(&lf, env));
+    verify_environment_consistency(&lf, env)?;
 
     info!("Dependencies fully verified");
     Ok(())

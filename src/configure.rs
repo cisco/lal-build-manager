@@ -145,10 +145,10 @@ impl Config {
         if !cfg_path.exists() {
             return Err(CliError::MissingConfig);
         }
-        let mut f = try!(fs::File::open(&cfg_path));
+        let mut f = fs::File::open(&cfg_path)?;
         let mut cfg_str = String::new();
-        try!(f.read_to_string(&mut cfg_str));
-        let res: Config = try!(json::decode(&cfg_str));
+        f.read_to_string(&mut cfg_str)?;
+        let res: Config = json::decode(&cfg_str)?;
         if res.environments.contains_key("default") {
             return Err(CliError::InvalidEnvironment);
         }
@@ -163,7 +163,7 @@ impl Config {
     /// Update the upgradeCheck time to avoid triggering it for another day
     pub fn performed_upgrade(&mut self) -> LalResult<()> {
         self.upgradeCheck = UTC::now().to_rfc3339();
-        Ok(try!(self.write(true)))
+        Ok(self.write(true)?)
     }
     /// Overwrite `~/.lal/config` with serialized data from this struct
     pub fn write(&self, silent: bool) -> LalResult<()> {
@@ -171,8 +171,8 @@ impl Config {
 
         let encoded = json::as_pretty_json(self);
 
-        let mut f = try!(fs::File::create(&cfg_path));
-        try!(write!(f, "{}\n", encoded));
+        let mut f = fs::File::create(&cfg_path)?;
+        write!(f, "{}\n", encoded)?;
         if silent {
             debug!("Wrote config {}: \n{}", cfg_path.display(), encoded);
         } else {
@@ -203,7 +203,7 @@ fn create_lal_dir() -> LalResult<PathBuf> {
     let home = env::home_dir().unwrap();
     let laldir = Path::new(&home).join(".lal");
     if !laldir.is_dir() {
-        try!(fs::create_dir(&laldir));
+        fs::create_dir(&laldir)?;
     }
     Ok(laldir)
 }
@@ -212,10 +212,10 @@ fn create_lal_dir() -> LalResult<PathBuf> {
 ///
 /// A boolean option to discard the output is supplied for tests.
 pub fn configure(save: bool) -> LalResult<Config> {
-    let _ = try!(create_lal_dir());
+    let _ = create_lal_dir()?;
     let cfg = Config::new();
     if save {
-        try!(cfg.write(false));
+        cfg.write(false)?;
     }
     Ok(cfg)
 }

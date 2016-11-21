@@ -12,7 +12,7 @@ use std::process::Command;
 use std::io::prelude::*;
 use walkdir::WalkDir;
 
-//use loggerv::init_with_verbosity;
+// use loggerv::init_with_verbosity;
 use lal::{Config, Manifest};
 
 // TODO: macroify this stuff
@@ -28,12 +28,12 @@ mod chk {
         });
     }
 }
-//fn assert_err<T>(x: LalResult<T>, name: &str) {
+// fn assert_err<T>(x: LalResult<T>, name: &str) {
 //    let _ = x.map(|v| {
 //        println!("Bail out! {} unexpected ok: {}", name, v);
 //        process::exit(1);
 //    });
-//}
+//
 
 fn init_ssl() {
     use std::env;
@@ -42,7 +42,7 @@ fn init_ssl() {
 
 fn main() {
     init_ssl();
-    //init_with_verbosity(0).unwrap();
+    // init_with_verbosity(0).unwrap();
     let has_docker = true;
     let num_tests = if has_docker { 15 } else { 11 };
 
@@ -201,7 +201,12 @@ fn update_save() {
     let cfg = Config::read().unwrap();
 
     // gtest savedev
-    let ri = lal::update(&mf1, &cfg, vec!["gtest".to_string()], false, true, "default");
+    let ri = lal::update(&mf1,
+                         &cfg,
+                         vec!["gtest".to_string()],
+                         false,
+                         true,
+                         "default");
     chk::is_ok(ri, "could update gtest and save as dev");
 
     // three main deps (and re-read manifest to avoid overwriting devedps)
@@ -240,7 +245,8 @@ fn verify_checks() {
     let rall = lal::fetch(&mf, &cfg, true, "default");
     assert!(rall.is_ok(), "install all succeeded");
     assert!(yajl.is_dir(), "yajl was reinstalled from manifest");
-    assert!(!gtest.is_dir(), "gtest was not reinstalled from manifest with core");
+    assert!(!gtest.is_dir(),
+            "gtest was not reinstalled from manifest with core");
 
 
     let r3 = lal::verify(&mf, "centos");
@@ -251,13 +257,23 @@ fn verify_checks() {
 fn shell_echo() {
     let cfg = Config::read().unwrap();
     let container = cfg.get_container(Some("rust".into())).unwrap();
-    let r = lal::docker_run(&cfg, &container, vec!["echo".to_string(), "# echo from docker".to_string()], false, false, false);
+    let r = lal::docker_run(&cfg,
+                            &container,
+                            vec!["echo".to_string(), "# echo from docker".to_string()],
+                            false,
+                            false,
+                            false);
     assert!(r.is_ok(), "shell echoed");
 }
 fn shell_permissions() {
     let cfg = Config::read().unwrap();
     let container = cfg.get_container(Some("rust".into())).unwrap();
-    let r = lal::docker_run(&cfg, &container, vec!["touch".to_string(), "README.md".to_string()], false, false, false);
+    let r = lal::docker_run(&cfg,
+                            &container,
+                            vec!["touch".to_string(), "README.md".to_string()],
+                            false,
+                            false,
+                            false);
     assert!(r.is_ok(), "could touch files in container");
 }
 
@@ -269,7 +285,9 @@ fn build_stash_and_update_from_stash() {
     {
         let mut f = File::create("./BUILD").unwrap();
         // Rust check in there to verify we can build in a rust container
-        write!(f, "#!/bin/bash\nset -e\nwhich rustc\necho hi > OUTPUT/test.txt\n").unwrap();
+        write!(f,
+               "#!/bin/bash\nset -e\nwhich rustc\necho hi > OUTPUT/test.txt\n")
+            .unwrap();
         Command::new("chmod").arg("+x").arg("BUILD").output().unwrap();
     } // scope ensures file is not busy before lal::build
 
@@ -277,7 +295,16 @@ fn build_stash_and_update_from_stash() {
     // this avoids verify failing, but keeps build running in correct container
     // sorry to whoever reads this, this is a very strange test
     // because lal::build is definitely never being called in this way
-    let r = lal::build(&cfg, &mf, None, None, true, None, true, &container, "centos".into(), false);
+    let r = lal::build(&cfg,
+                       &mf,
+                       None,
+                       None,
+                       true,
+                       None,
+                       true,
+                       &container,
+                       "centos".into(),
+                       false);
     assert!(r.is_ok(), "could run lal build and could make tarball");
 
     // lal stash testmain
@@ -285,7 +312,12 @@ fn build_stash_and_update_from_stash() {
     assert!(r2.is_ok(), "could stash lal build artifact");
 
     // lal update lal=testmain
-    let ri = lal::update(&mf, &cfg, vec!["lal=testmain".to_string()], false, false, "default");
+    let ri = lal::update(&mf,
+                         &cfg,
+                         vec!["lal=testmain".to_string()],
+                         false,
+                         false,
+                         "default");
     chk::is_ok(ri, "could update lal from stash");
 }
 
