@@ -71,11 +71,11 @@ fn verify_global_versions(lf: &Lockfile, m: &Manifest) -> LalResult<()> {
     Ok(())
 }
 
-fn verify_consistent_dependency_versions(lf: &Lockfile) -> LalResult<()> {
+fn verify_consistent_dependency_versions(lf: &Lockfile, m: &Manifest) -> LalResult<()> {
     for (name, vers) in lf.find_all_dependencies() {
         debug!("Found version(s) for {} as {:?}", name, vers);
         assert!(vers.len() > 0, "found versions");
-        if vers.len() != 1 {
+        if vers.len() != 1 && m.dependencies.contains_key(&name) {
             warn!("Multiple version requirements on {} found in lockfile",
                   name.clone());
             return Err(CliError::MultipleVersions(name.clone()));
@@ -131,7 +131,7 @@ pub fn verify(m: &Manifest, env: &str) -> LalResult<()> {
     verify_global_versions(&lf, &m)?;
 
     // 4. the dependency tree is flat, and deps use only global deps
-    verify_consistent_dependency_versions(&lf)?;
+    verify_consistent_dependency_versions(&lf, &m)?;
 
     // 5. verify all components are built in the same environment
     verify_environment_consistency(&lf, env)?;
