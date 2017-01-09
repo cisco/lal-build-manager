@@ -27,10 +27,11 @@ When new versions are released, you will be told to re-run the `curl` command.
 Get [stable rust](https://www.rust-lang.org/downloads.html) (inlined below), clone, build, install, and make it available:
 
 ```sh
-curl -sSf https://static.rust-lang.org/rustup.sh | sh
+curl https://sh.rustup.rs -sSf | sh
+# `rustup update stable` - to upgrade rust later
 git clone git@sqbu-github.cisco.com:Edonus/lal.git && cd lal
-# install libssl-dev and curl (or distro equivalent) BEFORE you compile
 cargo build --release
+# install libssl-dev and curl (or distro equivalent) + `cargo clean` if build fails
 ln -sf $PWD/target/release/lal /usr/local/bin/lal
 lal configure
 echo "source $PWD/lal.complete.sh" >> ~/.bash_completion
