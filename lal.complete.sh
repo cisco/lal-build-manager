@@ -109,7 +109,7 @@ _lal()
             script|run)
                 [ -f "$PWD/manifest.json" ] || return 0
                 # locate the scripts in .lal/scripts
-                local -r scripts="$(find "$PWD/.lal/scripts/" -type f -printf "%f " 2> /dev/null)"
+                local -r scripts="$(find "$PWD/.lal/scripts/" -maxdepth 1 -type f -printf "%f " 2> /dev/null)"
                 local -r second_args="${scripts} -p --privileged"
 
                 if [[ $prev == @(script|run) ]] || [[ $prev == -* ]]; then
