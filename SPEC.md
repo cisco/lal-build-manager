@@ -8,7 +8,7 @@
 - [`lal env`](#lal-env-environment) - control build environment
 - [`lal build [name]`](#lal-build-name-flags) - run canonical build in docker with current directory mounted
 - [`lal shell`](#lal-shell) - enter container environment mounting current directory
-- [`lal script`](#lal-script-name) - runs a non-build script through lal shell
+- [`lal run`](#lal-run-name) - runs a non-build script through lal shell
 - [`lal configure`](#lal-configure) - generate configuration file
 - [`lal init`](#lal-init) - generate manifest file
 - [`lal stash`](#lal-stash-name) - copies current `OUTPUT` to cache
@@ -281,7 +281,7 @@ lal shell should allow passing in trailing arguments to run arbitrary commands:
 
 Alias: `lal sh`
 
-#### lal script [name]
+#### lal run [name]
 Runs scripts in the local `.lal/scripts/` folder via `lal shell`. Because `lal shell` mounts `$PWD`, the scripts folder can contain parametrised scripts such as:
 
 ```sh
@@ -296,9 +296,9 @@ completer() {
 }
 ```
 
-Which could be invoked with `lal script subroutine there mr`, which would `echo hi there mr` in the container. An optional `completer` function can be supplied for autocomplete of values.
+Which could be invoked with `lal run subroutine there mr`, which would `echo hi there mr` in the container. An optional `completer` function can be supplied for autocomplete of values.
 
-Alias: `lal run`
+Alias: `lal script`
 
 #### lal stash [name]
 Stashes the current `OUTPUT` folder to in `~/.lal/cache/stash/${component}/${NAME}` for future reuse. This can be put into another repository with `lal update component=name`

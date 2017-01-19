@@ -162,7 +162,7 @@ fn handle_docker_cmds(args: &ArgMatches,
                    a.is_present("print"),
                    xs,
                    a.is_present("privileged"))
-    } else if let Some(a) = args.subcommand_matches("script") {
+    } else if let Some(a) = args.subcommand_matches("run") {
         let xs = if a.is_present("parameters") {
             a.values_of("parameters").unwrap().collect::<Vec<_>>()
         } else {
@@ -277,9 +277,9 @@ fn main() {
                 .help("Only print the docker run command and exit"))
             .setting(AppSettings::TrailingVarArg)
             .arg(Arg::with_name("cmd").multiple(true)))
-        .subcommand(SubCommand::with_name("script")
+        .subcommand(SubCommand::with_name("run")
             .about("Runs scripts from .lal/scripts in the configured container")
-            .alias("run")
+            .alias("script")
             .arg(Arg::with_name("script")
                 .help("Name of the script file to be run")
                 .required(true))
