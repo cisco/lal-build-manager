@@ -115,13 +115,10 @@ _lal()
                 if [[ $prev == @(script|run) ]] || [[ $prev == -* ]]; then
                     COMPREPLY=($(compgen -W "$second_args" -- "$cur"))
                 else
-                    # Identify which script we used (arg after run)
+                    # Identify which script we used (arg after run that's not a flag)
                     local run_script i
                     for (( i=2; i < ${#words[@]}-1; i++ )); do
-                        if [[ ${words[i]} == @(-p|--privileged) ]]; then
-                            continue # don't try to grep with this - confuses grep
-                        fi
-                        if echo "$scripts" | grep -q "${words[i]}"; then
+                        if [[ ${words[i]} != -* ]] && echo "$scripts" | grep -q "${words[i]}"; then
                             run_script=${words[i]}
                         fi
                     done
