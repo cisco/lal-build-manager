@@ -109,13 +109,18 @@ _lal()
             script|run)
                 [ -f "$PWD/manifest.json" ] || return 0
                 # locate the scripts in .lal/scripts
-                local -r scripts=$(find "$PWD/.lal/scripts/" -type f -printf "%f " 2> /dev/null)
-                if [[ $prev == @(script|run) ]]; then
-                    COMPREPLY=($(compgen -W "$scripts" -- "$cur"))
+                local -r scripts="$(find "$PWD/.lal/scripts/" -type f -printf "%f " 2> /dev/null)"
+                local -r second_args="${scripts} -p --privileged"
+
+                if [[ $prev == @(script|run) ]] || [[ $prev == -* ]]; then
+                    COMPREPLY=($(compgen -W "$second_args" -- "$cur"))
                 else
                     # Identify which script we used (arg after run)
                     local run_script i
                     for (( i=2; i < ${#words[@]}-1; i++ )); do
+                        if [[ ${words[i]} == @(-p|--privileged) ]]; then
+                            continue # don't try to grep with this - confuses grep
+                        fi
                         if echo "$scripts" | grep -q "${words[i]}"; then
                             run_script=${words[i]}
                         fi
