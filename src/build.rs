@@ -120,7 +120,7 @@ pub fn build(cfg: &Config,
         let ename = format!("{} not found in configurations list", configuration_name);
         return Err(CliError::InvalidBuildConfiguration(ename));
     }
-    let lockfile = try!(Lockfile::new(&manifest.name,
+    let lockfile = try!(Lockfile::new(&component,
                                       container,
                                       &envname,
                                       version,
