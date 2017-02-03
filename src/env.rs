@@ -54,7 +54,7 @@ impl StickyOptions {
     }
 }
 
-
+/// Pull the current environment from docker
 pub fn update(container: &Container, env: &str) -> LalResult<()> {
     info!("Updating {} container", env);
     let args: Vec<String> = vec!["pull".into(), format!("{}", container)];
@@ -67,6 +67,7 @@ pub fn update(container: &Container, env: &str) -> LalResult<()> {
     Ok(())
 }
 
+/// Creates and sets the environment in the local .lalopts file
 pub fn set(opts_: &StickyOptions, cfg: &Config, env: &str) -> LalResult<()> {
     if !cfg.environments.contains_key(env) {
         return Err(CliError::MissingEnvironment(env.into()));
@@ -78,6 +79,7 @@ pub fn set(opts_: &StickyOptions, cfg: &Config, env: &str) -> LalResult<()> {
     Ok(())
 }
 
+/// Clears the local .lalopts file
 pub fn clear() -> LalResult<()> {
     let _ = StickyOptions::delete_local();
     Ok(())

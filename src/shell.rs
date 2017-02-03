@@ -28,6 +28,20 @@ fn permission_sanity_check() -> LalResult<()> {
     Ok(())
 }
 
+/// Flags for docker run that vary for different use cases
+///
+/// `interactive` should be on by default, but machine accounts should turn this off
+/// `privileged` is needed on some setups for `gdb` and other low level tools to work
+///
+/// NB: The derived default should only be used by tests (all false/zero)
+#[derive(Default)]
+pub struct DockerRunFlags {
+    /// Pass --interactive (allows ctrl-c on builds/scripts/shell commands)
+    pub interactive: bool,
+    /// Pass --privileged (situational)
+    pub privileged: bool,
+}
+
 
 /// Runs an arbitrary command in the configured docker environment
 ///
@@ -38,9 +52,8 @@ fn permission_sanity_check() -> LalResult<()> {
 pub fn docker_run(cfg: &Config,
                   container: &Container,
                   command: Vec<String>,
-                  interactive: bool,
-                  printonly: bool,
-                  privileged: bool)
+                  flags: DockerRunFlags,
+                  printonly: bool)
                   -> LalResult<()> {
     trace!("Finding home and cwd");
     let home = env::home_dir().unwrap(); // crash if no $HOME
@@ -65,7 +78,7 @@ pub fn docker_run(cfg: &Config,
     args.push("-v".into());
     args.push(format!("{}:/home/lal/volume", pwd.display()));
 
-    if privileged {
+    if flags.privileged {
         args.push("--privileged".into())
     }
 
@@ -80,7 +93,7 @@ pub fn docker_run(cfg: &Config,
         args.push("--entrypoint".into());
         args.push("/bin/bash".into());
     }
-    args.push((if interactive { "-it" } else { "-t" }).into());
+    args.push((if flags.interactive { "-it" } else { "-t" }).into());
 
     args.push(format!("{}:{}", container.name, container.tag));
     for c in command {
@@ -119,17 +132,20 @@ pub fn shell(cfg: &Config,
     if !printonly {
         info!("Entering {}", container);
     }
+    let flags = DockerRunFlags {
+        interactive: cmd.is_none() || cfg.interactive,
+        privileged: privileged,
+    };
     let mut bash = vec![];
-    let interactive = cmd.is_none() || cfg.interactive;
-    if cmd.is_some() {
-        for c in cmd.unwrap() {
+    if let Some(cmdu) = cmd {
+        for c in cmdu {
             bash.push(c.to_string())
         }
     }
-    docker_run(cfg, container, bash, interactive, printonly, privileged)
+    docker_run(cfg, container, bash, flags, printonly)
 }
 
-/// Runs a script in ./.lal/scripts/ with supplied arguments in a shell
+/// Runs a script in `.lal/scripts/` with supplied arguments in a docker shell
 ///
 /// This is a convenience helper for running things that aren't builds.
 /// E.g. `lal run my-large-test RUNONLY=foo`
@@ -144,9 +160,14 @@ pub fn script(cfg: &Config,
         return Err(CliError::MissingScript(name.into()));
     }
 
+    let flags = DockerRunFlags {
+        interactive: cfg.interactive,
+        privileged: privileged,
+    };
+
     // Simply run the script by adding on the arguments
     let cmd = vec!["bash".into(),
                    "-c".into(),
                    format!("source {}; main {}", pth.display(), args.join(" "))];
-    Ok(docker_run(cfg, &container, cmd, cfg.interactive, false, privileged)?)
+    Ok(docker_run(cfg, &container, cmd, flags, false)?)
 }

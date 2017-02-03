@@ -8,7 +8,7 @@ use walkdir::WalkDir;
 
 use shell;
 use verify::verify;
-use {Lockfile, Manifest, Container, Config, LalResult, CliError};
+use {Lockfile, Manifest, Container, Config, LalResult, CliError, DockerRunFlags};
 
 pub fn tar_output(tarball: &Path) -> LalResult<()> {
     use tar;
@@ -138,7 +138,11 @@ pub fn build(cfg: &Config,
         info!("Running build script in {} container", envname);
     }
 
-    shell::docker_run(cfg, container, cmd, cfg.interactive, printonly, false)?;
+    let run_flags = DockerRunFlags {
+        interactive: cfg.interactive,
+        privileged: false,
+    };
+    shell::docker_run(cfg, container, cmd, run_flags, printonly)?;
 
     // Extra info and warnings for people who missed the leading ones (build is spammy)
     if verify_failed {

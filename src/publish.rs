@@ -4,6 +4,10 @@ use std::fs::File;
 use util::artifactory::upload_artifact;
 use super::{LalResult, CliError, Config, Lockfile};
 
+/// Publish a release build to artifactory
+///
+/// Meant to be done after a `lal build -r <component>`
+/// and requires artifactory publish credentials in the local `Config`.
 pub fn publish(name: &str, cfg: &Config, env: &str) -> LalResult<()> {
     let artdir = Path::new("./ARTIFACT");
     let tarball = artdir.join(format!("{}.tar.gz", name));

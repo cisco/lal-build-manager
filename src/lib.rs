@@ -45,7 +45,7 @@ pub use errors::{LalResult, CliError};
 pub use build::{build, build_list};
 pub use configure::{configure, env_list, Config, Mount, Artifactory};
 pub use init::{init, dep_list, Manifest, ComponentConfiguration};
-pub use shell::{shell, docker_run, script};
+pub use shell::{shell, docker_run, script, DockerRunFlags};
 pub use install::{fetch, update, update_all, remove, export};
 pub use status::status;
 pub use verify::verify;
@@ -54,6 +54,8 @@ pub use upgrade::upgrade_check;
 pub use query::query;
 pub use env::StickyOptions;
 pub use publish::publish;
+/// Module to control a local `.lalopts` file
+pub mod env;
 
 mod util;
 mod errors;
@@ -67,5 +69,4 @@ mod verify;
 mod cache;
 mod status;
 mod upgrade;
-pub mod env;
 mod publish;
