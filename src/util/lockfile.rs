@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::io::prelude::*;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, BTreeMap};
 use std::collections::BTreeSet;
 use std::fmt;
 
@@ -85,7 +85,7 @@ pub struct Lockfile {
     /// Built timestamp
     pub built: Option<String>,
     /// Recursive map of dependencies used
-    pub dependencies: HashMap<String, Lockfile>,
+    pub dependencies: BTreeMap<String, Lockfile>,
 }
 
 /// Generates a temporary empty lockfile for internal analysis
@@ -116,7 +116,7 @@ impl Lockfile {
             built: Some(time.format("%Y-%m-%d %H:%M:%S").to_string()),
             defaultEnv: None,
             environment: Some(env.into()),
-            dependencies: HashMap::new(),
+            dependencies: BTreeMap::new(),
         }
     }
 
