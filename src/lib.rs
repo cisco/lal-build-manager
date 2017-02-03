@@ -42,7 +42,7 @@ extern crate rand;
 // re-exports
 pub use util::lockfile::{Lockfile, Container};
 pub use errors::{LalResult, CliError};
-pub use build::{build, build_list};
+pub use build::{build, build_list, configuration_list};
 pub use configure::{configure, env_list, Config, Mount, Artifactory};
 pub use init::{init, dep_list, Manifest, ComponentConfiguration};
 pub use shell::{shell, docker_run, script, DockerRunFlags};

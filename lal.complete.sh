@@ -7,7 +7,8 @@ _lal()
 
     local -r subcommands="build clean configure export fetch help init script run ls
                           query remove shell stash save status update upgrade verify
-                          publish env list-components list-dependencies list-environments"
+                          publish env list-components list-dependencies
+                          list-environments list-configurations"
 
     local has_sub
     for (( i=0; i < ${#words[@]}-1; i++ )); do
@@ -43,6 +44,16 @@ _lal()
                 local -r components=$(lal list-components)
                 if [[ $prev = "build" ]]; then
                     COMPREPLY=($(compgen -W "$components" -- "$cur"))
+                elif [[ $prev == @(--config|-c) ]]; then
+                    # Identify which component is used (arg after build that's not a flag)
+                    local build_component i
+                    for (( i=2; i < ${#words[@]}-1; i++ )); do
+                        if [[ ${words[i]} != -* ]]; then
+                            build_component=${words[i]}
+                        fi
+                    done
+                    local -r configs="$(lal list-configurations "${build_component}")"
+                    COMPREPLY=($(compgen -W "$configs" -- "$cur"))
                 else
                     # suggest flags
                     local -r build_flags="-r --release -f --force -c --config -h --help --print-only"

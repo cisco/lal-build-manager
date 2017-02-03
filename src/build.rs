@@ -64,6 +64,18 @@ pub fn build_list(manifest: &Manifest) -> LalResult<()> {
     Ok(())
 }
 
+/// Helper to print the available configurations for a buildable Component
+pub fn configuration_list(component: &str, manifest: &Manifest) -> LalResult<()> {
+     let component_settings = match manifest.components.get(component) {
+        Some(c) => c,
+        None => return Ok(()), // invalid component - but this is for completion
+    };
+    for c in &component_settings.configurations {
+        println!("{}", c);
+    }
+    Ok(())
+}
+
 /// Runs the `./BUILD` script in a container and packages artifacts.
 ///
 /// Expects a pre-read `Manifest` file, a `Config` file, as well as a bunch of optional flags

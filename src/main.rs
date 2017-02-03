@@ -50,6 +50,8 @@ fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Conf
                     a.is_present("time"))
     } else if let Some(_) = args.subcommand_matches("list-components") {
         lal::build_list(mf)
+    } else if let Some(a) = args.subcommand_matches("list-configurations") {
+        lal::configuration_list(a.value_of("component").unwrap(), mf)
     } else if let Some(_) = args.subcommand_matches("list-environments") {
         lal::env_list(cfg)
     } else if let Some(a) = args.subcommand_matches("list-dependencies") {
@@ -381,6 +383,12 @@ fn main() {
         .subcommand(SubCommand::with_name("list-environments")
             .setting(AppSettings::Hidden)
             .about("list environments that can be used with lal build"))
+        .subcommand(SubCommand::with_name("list-configurations")
+            .setting(AppSettings::Hidden)
+            .arg(Arg::with_name("component")
+                .required(true)
+                .help("Component name to look for in the manifest"))
+            .about("list configurations for a given component"))
         .subcommand(SubCommand::with_name("list-dependencies")
             .setting(AppSettings::Hidden)
             .arg(Arg::with_name("core")
