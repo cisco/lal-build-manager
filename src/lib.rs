@@ -1,3 +1,5 @@
+#![warn(missing_docs)]
+
 //! This is the rust doc for the `lal` *library* - what the `lal` *binary*
 //! depends on to do all the work. This documentation is likely only of use to you
 //! if you need to know the internals of `lal` for figuring out how to modify it.
