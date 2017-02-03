@@ -1,4 +1,4 @@
-use rustc_serialize::json;
+use serde_json;
 use chrono::{Duration, UTC, DateTime};
 use std::path::{Path, PathBuf};
 use std::fs;
@@ -18,7 +18,7 @@ fn lal_dir() -> PathBuf {
 
 
 /// Docker volume mount representation
-#[derive(RustcDecodable, RustcEncodable, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Mount {
     /// File or folder to mount
     pub src: String,
@@ -29,7 +29,7 @@ pub struct Mount {
 }
 
 /// Artifactory credentials
-#[derive(RustcDecodable, RustcEncodable, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Credentials {
     /// Upload username
     pub username: String,
@@ -38,7 +38,7 @@ pub struct Credentials {
 }
 
 /// Static Artifactory locations
-#[derive(RustcDecodable, RustcEncodable, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Artifactory {
     /// Location of artifactory API master (for API queries)
     pub master: String,
@@ -54,7 +54,7 @@ pub struct Artifactory {
 
 /// Representation of `~/.lal/config`
 #[allow(non_snake_case)]
-#[derive(RustcDecodable, RustcEncodable, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Config {
     /// Configuration settings for Artifactory
     pub artifactory: Artifactory,
@@ -148,7 +148,7 @@ impl Config {
         let mut f = fs::File::open(&cfg_path)?;
         let mut cfg_str = String::new();
         f.read_to_string(&mut cfg_str)?;
-        let res: Config = json::decode(&cfg_str)?;
+        let res: Config = serde_json::from_str(&cfg_str)?;
         if res.environments.contains_key("default") {
             return Err(CliError::InvalidEnvironment);
         }
@@ -169,7 +169,7 @@ impl Config {
     pub fn write(&self, silent: bool) -> LalResult<()> {
         let cfg_path = lal_dir().join("config");
 
-        let encoded = json::as_pretty_json(self);
+        let encoded = serde_json::to_string_pretty(self)?;
 
         let mut f = fs::File::create(&cfg_path)?;
         write!(f, "{}\n", encoded)?;

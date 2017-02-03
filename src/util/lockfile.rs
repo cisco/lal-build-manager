@@ -1,4 +1,4 @@
-use rustc_serialize::json;
+use serde_json;
 use chrono::UTC;
 use rand;
 
@@ -14,7 +14,7 @@ use errors::{CliError, LalResult};
 use util::input;
 
 /// Representation of a docker container image
-#[derive(RustcDecodable, RustcEncodable, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Container {
     /// The fully qualified image name
     pub name: String,
@@ -66,7 +66,7 @@ impl Container {
 
 /// Representation of `lockfile.json`
 #[allow(non_snake_case)]
-#[derive(RustcDecodable, RustcEncodable, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Lockfile {
     /// Name of the component built
     pub name: String,
@@ -126,7 +126,7 @@ impl Lockfile {
         }
         let mut lock_str = String::new();
         File::open(lock_path)?.read_to_string(&mut lock_str)?;
-        Ok(json::decode(&lock_str)?)
+        Ok(serde_json::from_str(&lock_str)?)
     }
 
     /// A reader from ARTIFACT directory
@@ -165,7 +165,7 @@ impl Lockfile {
 
     /// Write the current `Lockfile` struct to a Path
     pub fn write(&self, pth: &Path, silent: bool) -> LalResult<()> {
-        let encoded = json::as_pretty_json(self);
+        let encoded = serde_json::to_string_pretty(self)?;
         let mut f = File::create(pth)?;
         write!(f, "{}\n", encoded)?;
         if silent {

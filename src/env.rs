@@ -3,14 +3,14 @@ use std::fs;
 use std::io::prelude::{Read, Write};
 use std::path::Path;
 use std::vec::Vec;
-use rustc_serialize::json;
+use serde_json;
 
 use {Container, Config, CliError, LalResult};
 
 /// Representation of .lalopts
 ///
 /// This contains the currently supported, directory-wide, sticky options.
-#[derive(RustcDecodable, RustcEncodable, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct StickyOptions {
     /// Environment to be used implicitally instead of the default
     pub env: Option<String>,
@@ -29,14 +29,14 @@ impl StickyOptions {
         }
         let mut opts_data = String::new();
         fs::File::open(&opts_path)?.read_to_string(&mut opts_data)?;
-        let res = json::decode(&opts_data)?;
+        let res = serde_json::from_str(&opts_data)?;
         Ok(res)
     }
 
     /// Overwrite `.lalopts` with current settings
     pub fn write(&self, silent: bool) -> LalResult<()> {
         let opts_path = Path::new(".lalopts");
-        let encoded = json::as_pretty_json(self);
+        let encoded = serde_json::to_string_pretty(self)?;
 
         let mut f = fs::File::create(&opts_path)?;
         write!(f, "{}\n", encoded)?;

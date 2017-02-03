@@ -4,13 +4,13 @@ use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::collections::BTreeMap;
 use std::vec::Vec;
-use rustc_serialize::json;
+use serde_json;
 
 use super::{Config, CliError, LalResult};
 
 /// Representation of a value of the manifest.components hash
 #[allow(non_snake_case)]
-#[derive(RustcDecodable, RustcEncodable, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct ComponentConfiguration {
     /// The default config to use if not passed in - default is "release"
     pub defaultConfig: String,
@@ -29,7 +29,7 @@ impl Default for ComponentConfiguration {
 
 /// Representation of `manifest.json`
 #[allow(non_snake_case)]
-#[derive(RustcDecodable, RustcEncodable, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct Manifest {
     /// Name of the main component
     pub name: String,
@@ -79,14 +79,14 @@ impl Manifest {
         let mut f = File::open(&mpath)?;
         let mut data = String::new();
         f.read_to_string(&mut data)?;
-        let res = json::decode(&data)?;
+        let res = serde_json::from_str(&data)?;
         Ok(res)
     }
 
     /// Update the manifest file in the current folder
     pub fn write(&self) -> LalResult<()> {
         let pth = Path::new("./manifest.json");
-        let encoded = json::as_pretty_json(self);
+        let encoded = serde_json::to_string_pretty(self)?;
 
         let mut f = File::create(&pth)?;
         write!(f, "{}\n", encoded)?;

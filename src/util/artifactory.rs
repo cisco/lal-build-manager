@@ -3,7 +3,7 @@ use std::vec::Vec;
 use std::io::Read;
 use std::fs::File;
 
-use rustc_serialize::json;
+use serde_json;
 use semver::Version;
 use sha1;
 use hyper::{self, Client};
@@ -17,11 +17,11 @@ use errors::{CliError, LalResult};
 // Need these to query for stored artifacts:
 // This query has tons of info, but we only care about the version
 // And the version is encoded in children.uri with leading slash
-#[derive(RustcDecodable)]
+#[derive(Deserialize)]
 struct ArtifactoryVersion {
     uri: String, // folder: bool,
 }
-#[derive(RustcDecodable)]
+#[derive(Deserialize)]
 struct ArtifactoryStorageResponse {
     children: Vec<ArtifactoryVersion>,
 }
@@ -52,7 +52,7 @@ fn get_storage_versions(uri: &str) -> LalResult<Vec<u32>> {
 
     trace!("Got body {}", resp);
 
-    let res: ArtifactoryStorageResponse = json::decode(&resp)?;
+    let res: ArtifactoryStorageResponse = serde_json::from_str(&resp)?;
     let builds: Vec<u32> = res.children
         .iter()
         .map(|r| r.uri.as_str())
@@ -210,7 +210,7 @@ pub fn find_latest_lal_version(art_cfg: &Artifactory) -> LalResult<Version> {
         })?;
     trace!("Got body {}", resp);
 
-    let res: ArtifactoryStorageResponse = json::decode(&resp)?;
+    let res: ArtifactoryStorageResponse = serde_json::from_str(&resp)?;
     let latest: Option<Version> = res.children
         .iter()
         .map(|r| r.uri.trim_matches('/').to_string())

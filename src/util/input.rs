@@ -2,14 +2,14 @@ use std::io::prelude::*;
 use std::fs::File;
 use std::path::Path;
 use std::collections::BTreeMap;
-use rustc_serialize::json;
+use serde_json;
 
 use walkdir::WalkDir;
 
 use init::Manifest;
 use errors::{CliError, LalResult};
 
-#[derive(RustcDecodable)]
+#[derive(Deserialize)]
 struct PartialLock {
     pub version: String,
 }
@@ -19,8 +19,9 @@ fn read_partial_lockfile(component: &str) -> LalResult<PartialLock> {
         return Err(CliError::MissingLockfile(component.to_string()));
     }
     let mut lock_str = String::new();
+    trace!("Deserializing lockfile for {}", component);
     File::open(&lock_path)?.read_to_string(&mut lock_str)?;
-    let res = json::decode(&lock_str)?;
+    let res = serde_json::from_str(&lock_str)?;
     Ok(res)
 }
 

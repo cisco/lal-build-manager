@@ -1,7 +1,7 @@
 use std::fmt;
 use std::io;
 use hyper;
-use rustc_serialize::json;
+use serde_json;
 
 /// The one and only error type for the lal library
 ///
@@ -12,8 +12,8 @@ use rustc_serialize::json;
 pub enum CliError {
     /// Errors propagated from `std::fs`
     Io(io::Error),
-    /// Errors propagated from `rustc_serialize`
-    Parse(json::DecoderError),
+    /// Errors propagated from `serde_json`
+    Parse(serde_json::error::Error),
     /// Errors propagated from `hyper`
     Hype(hyper::Error),
 
@@ -186,8 +186,8 @@ impl From<hyper::Error> for CliError {
     }
 }
 
-impl From<json::DecoderError> for CliError {
-    fn from(err: json::DecoderError) -> CliError {
+impl From<serde_json::error::Error> for CliError {
+    fn from(err: serde_json::error::Error) -> CliError {
         CliError::Parse(err)
     }
 }
