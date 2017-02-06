@@ -6,7 +6,7 @@ _lal()
     _init_completion || return
 
     local -r subcommands="build clean configure export fetch help init script run ls
-                          query remove shell stash save status update upgrade verify
+                          query remove rm shell stash save status update upgrade verify
                           publish env list-components list-dependencies
                           list-environments list-configurations"
 
@@ -16,6 +16,11 @@ _lal()
             has_sub=1
         fi
     done
+
+    local in_lal_repo=""
+    if [ -f "$PWD/.lal/manifest.json" ] || [ -f "$PWD/manifest.json" ]; then
+        in_lal_repo="1"
+    fi
 
     # global flags
     if [[ $prev = 'lal' && "$cur" == -* ]]; then
@@ -40,7 +45,7 @@ _lal()
         case $special in
             build)
                 # lal can get the keys from manifest.components
-                [ -f "$PWD/manifest.json" ] || return 0
+                [[ $in_lal_repo ]] || return 0
                 local -r components=$(lal list-components)
                 if [[ $prev = "build" ]]; then
                     COMPREPLY=($(compgen -W "$components" -- "$cur"))
@@ -62,14 +67,14 @@ _lal()
                 ;;
             publish)
                 # lal can get the keys from manifest.components
-                [ -f "$PWD/manifest.json" ] || return 0
+                [[ $in_lal_repo ]] || return 0
                 local -r components=$(lal list-components)
                 if [[ $prev = "publish" ]]; then
                     COMPREPLY=($(compgen -W "$components" -- "$cur"))
                 fi
                 ;;
             env)
-                [ -f "$PWD/manifest.json" ] || return 0
+                [[ $in_lal_repo ]] || return 0
                 local -r env_subs="set reset update help -h --help"
                 if [[ $prev = "set" ]]; then
                     local -r envs="$(lal list-environments)"
@@ -79,7 +84,7 @@ _lal()
                 fi
                 ;;
             status|ls)
-                [ -f "$PWD/manifest.json" ] || return 0
+                [[ $in_lal_repo ]] || return 0
                 local -r ls_flags="-f --full -o --origin -t --time -h --help"
                 COMPREPLY=($(compgen -W "$ls_flags" -- "$cur"))
                 ;;
@@ -88,7 +93,7 @@ _lal()
                 COMPREPLY=($(compgen -W "$components" -- "$cur"))
                 ;;
             update)
-                [ -f "$PWD/manifest.json" ] || return 0
+                [[ $in_lal_repo ]] || return 0
                 # Looking in local cache for allowed component names
                 # Means this won't work first time, but will be quick
                 local components=""
@@ -104,13 +109,13 @@ _lal()
                 COMPREPLY=($(compgen -W "$components" -- "$cur"))
                 ;;
             remove|rm)
-                [ -f "$PWD/manifest.json" ] || return 0
+                [[ $in_lal_repo ]] || return 0
                 # look in INPUT here, nothing else makes sense
                 local -r installed=$(find "$PWD/INPUT/" -maxdepth 1 -mindepth 1 -type d -printf "%f " 2> /dev/null)
                 COMPREPLY=($(compgen -W "$installed" -- "$cur"))
                 ;;
             shell)
-                [ -f "$PWD/manifest.json" ] || return 0
+                [[ $in_lal_repo ]] || return 0
                 # suggest flags
                 local -r sh_flags="-p --privileged -h --help --print-only"
                 if [[ $prev = "shell" ]]; then
@@ -118,7 +123,7 @@ _lal()
                 fi
                 ;;
             script|run)
-                [ -f "$PWD/manifest.json" ] || return 0
+                [[ $in_lal_repo ]] || return 0
                 # locate the scripts in .lal/scripts
                 local -r scripts="$(find "$PWD/.lal/scripts/" -maxdepth 1 -type f -printf "%f " 2> /dev/null)"
                 local -r second_args="${scripts} -p --privileged"

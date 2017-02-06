@@ -1,7 +1,7 @@
 use std::io::prelude::*;
 use std::env;
 use std::path::{Path, PathBuf};
-use std::fs::File;
+use std::fs::{File, self};
 use std::collections::BTreeMap;
 use std::vec::Vec;
 use serde_json;
@@ -41,20 +41,68 @@ pub struct Manifest {
     pub dependencies: BTreeMap<String, u32>,
     /// Development dependencies
     pub devDependencies: BTreeMap<String, u32>,
+
+    /// Internal path of this manifest
+    #[serde(skip_serializing,skip_deserializing)]
+    location: String,
 }
+
+/// An enum to clarify intent
+pub enum ManifestLocation {
+    // plain style (old default)
+    RepoRoot,
+    // hidden
+    LalSubfolder,
+}
+impl Default for ManifestLocation {
+    fn default() -> ManifestLocation {
+        ManifestLocation::LalSubfolder
+    }
+}
+impl ManifestLocation {
+    fn as_path(&self, pwd: &PathBuf) -> PathBuf {
+        match *self {
+            ManifestLocation::RepoRoot => pwd.join("manifest.json"),
+            ManifestLocation::LalSubfolder =>  pwd.join(".lal/manifest.json")
+        }
+    }
+
+    /// Find the manifest file
+    ///
+    /// Looks first in `./.lal/manifest.json` and falls back to `./manifest.json`
+    fn identify(pwd: &PathBuf) -> LalResult<ManifestLocation> {
+        if ManifestLocation::LalSubfolder.as_path(&pwd).exists() {
+            // Show a warning if we have two manifests - we only use the new one then
+            // This could happen on other codebases - some javascript repos use manifest.json
+            // if both are for lal though, then this is user error, make it explicit:
+            if ManifestLocation::RepoRoot.as_path(&pwd).exists() {
+                warn!("manifest.json found in both .lal/ and current directory");
+                warn!("Reading the default: .lal/manifest.json");
+            }
+            Ok(ManifestLocation::LalSubfolder)
+        } else if ManifestLocation::RepoRoot.as_path(&pwd).exists() {
+            Ok(ManifestLocation::RepoRoot) // allow people to migrate for a while
+        }
+        else {
+            Err(CliError::MissingManifest)
+        }
+    }
+}
+
 
 impl Manifest {
     /// Initialize a manifest struct based on a name
     ///
     /// The name is assumed to be the default component and will create a
     /// component configuration for it with its default values.
-    pub fn new(name: &str, env: &str) -> Manifest {
+    pub fn new(name: &str, env: &str, location: PathBuf) -> Manifest {
         let mut comps = BTreeMap::new();
         comps.insert(name.into(), ComponentConfiguration::default());
         Manifest {
             name: name.into(),
             components: comps,
             environment: Some(env.into()),
+            location: location.to_string_lossy().into(),
             ..Default::default()
         }
     }
@@ -68,30 +116,29 @@ impl Manifest {
     }
     /// Read a manifest file in PWD
     pub fn read() -> LalResult<Manifest> {
-        Ok(Manifest::read_from(Path::new(".").to_path_buf())?)
+        Ok(Manifest::read_from(&Path::new(".").to_path_buf())?)
     }
+
     /// Read a manifest file in an arbitrary path
-    pub fn read_from(pth: PathBuf) -> LalResult<Manifest> {
-        let mpath = pth.join("manifest.json");
-        if !mpath.exists() {
-            return Err(CliError::MissingManifest);
-        }
+    pub fn read_from(pwd: &PathBuf) -> LalResult<Manifest> {
+        let mpath = ManifestLocation::identify(&pwd)?.as_path(&pwd);
+        trace!("Using manifest in {}", mpath.display());
         let mut f = File::open(&mpath)?;
         let mut data = String::new();
         f.read_to_string(&mut data)?;
-        let res = serde_json::from_str(&data)?;
+        let mut res : Manifest = serde_json::from_str(&data)?;
+        // store the location internally (not serialized to disk)
+        res.location = mpath.to_string_lossy().into();
         Ok(res)
     }
 
     /// Update the manifest file in the current folder
     pub fn write(&self) -> LalResult<()> {
-        let pth = Path::new("./manifest.json");
         let encoded = serde_json::to_string_pretty(self)?;
-
-        let mut f = File::create(&pth)?;
+        trace!("Writing manifest in {}", self.location);
+        let mut f = File::create(&self.location)?;
         write!(f, "{}\n", encoded)?;
-
-        info!("Wrote manifest {}: \n{}", pth.display(), encoded);
+        info!("Wrote manifest in {}: \n{}", self.location, encoded);
         Ok(())
     }
 }
@@ -101,6 +148,15 @@ pub fn dep_list(mf: &Manifest, core: bool) -> LalResult<()> {
     let deps = if core { mf.dependencies.clone() } else { mf.all_dependencies() };
     for k in deps.keys() {
         println!("{}", k);
+    }
+    Ok(())
+}
+
+
+fn create_lal_subdir(pwd: &PathBuf) -> LalResult<()> {
+    let loc = pwd.join(".lal");
+    if !loc.is_dir() {
+        fs::create_dir(&loc)?
     }
     Ok(())
 }
@@ -119,11 +175,21 @@ pub fn init(cfg: &Config, force: bool, env: &str) -> LalResult<()> {
     let last_comp = pwd.components().last().unwrap(); // std::path::Component
     let dirname = last_comp.as_os_str().to_str().unwrap();
 
-    let manifest_path = Path::new("manifest.json");
-    if !force && manifest_path.exists() {
+    let mpath = ManifestLocation::identify(&pwd);
+    if !force && mpath.is_ok() {
         return Err(CliError::ManifestExists);
     }
 
-    Manifest::new(dirname, env).write()?;
+    // we are allowed to overwrite or write a new manifest if we are here
+    // always create new manifests in new default location
+    create_lal_subdir(&pwd)?; // create the `.lal` subdir if it's not there already
+    Manifest::new(dirname, env, ManifestLocation::default().as_path(&pwd)).write()?;
+
+    // if the manifest already existed, warn about this now being placed elsewhere
+    if let Ok(ManifestLocation::RepoRoot) = mpath {
+        warn!("Created manifest in new location under .lal");
+        warn!("Please delete the old manifest - it will not be read anymore");
+    }
+
     Ok(())
 }
