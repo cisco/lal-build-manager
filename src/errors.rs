@@ -54,6 +54,8 @@ pub enum CliError {
     // build errors
     /// Build configurations does not match manifest or user input
     InvalidBuildConfiguration(String),
+    /// BUILD script not executable
+    BuildScriptNotExecutable(String),
 
     // script errors
     /// Script not found in local .lal/scripts/ directory
@@ -145,6 +147,9 @@ impl fmt::Display for CliError {
             }
             CliError::InvalidBuildConfiguration(ref s) => {
                 write!(f, "Invalid build configuration - {}", s)
+            }
+            CliError::BuildScriptNotExecutable(ref s) => {
+                write!(f, "BUILD script at {} is not executable", s)
             }
             CliError::MissingScript(ref s) => {
                 write!(f, "Missing script '{}' in local folder .lal/scripts/", s)

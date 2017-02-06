@@ -10,6 +10,29 @@ use shell;
 use verify::verify;
 use {Lockfile, Manifest, Container, Config, LalResult, CliError, DockerRunFlags};
 
+fn find_valid_build_script() -> LalResult<String> {
+    use std::os::unix::fs::PermissionsExt;
+
+    // less intrusive location for BUILD scripts
+    let mut bpath = Path::new("./.lal/BUILD");
+    if !bpath.exists() {
+        trace!("No BUILD existing in .lal");
+        bpath = Path::new("./BUILD"); // fallback if new version does not exist
+    }
+    trace!("Using BUILD script found in {}", bpath.display());
+    // Need the string to construct a list of argument for docker run
+    // lossy convert because paths can somehow contain non-unicode?
+    let build_string = bpath.to_string_lossy();
+
+    // presumably we can always get the permissions of a file, right? (inb4 nfs..)
+    let mode = bpath.metadata()?.permissions().mode();
+    if mode & 0o111 == 0 {
+        return Err(CliError::BuildScriptNotExecutable(build_string.into()));
+    }
+    Ok(build_string.into())
+}
+
+
 pub fn tar_output(tarball: &Path) -> LalResult<()> {
     use tar;
     use flate2::write::GzEncoder;
@@ -143,7 +166,8 @@ pub fn build(cfg: &Config,
     let lockpth = Path::new("./OUTPUT/lockfile.json");
     lockfile.write(&lockpth, true)?; // always put a lockfile in OUTPUT at the start of a build
 
-    let cmd = vec!["./BUILD".into(), component.into(), configuration_name];
+    let bpath = find_valid_build_script()?;
+    let cmd = vec![bpath, component.into(), configuration_name];
 
     debug!("Build script is {:?}", cmd);
     if !printonly {
