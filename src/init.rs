@@ -77,7 +77,7 @@ impl ManifestLocation {
             // if both are for lal though, then this is user error, make it explicit:
             if ManifestLocation::RepoRoot.as_path(&pwd).exists() {
                 warn!("manifest.json found in both .lal/ and current directory");
-                warn!("Reading the default: .lal/manifest.json");
+                warn!("Using the default: .lal/manifest.json");
             }
             Ok(ManifestLocation::LalSubfolder)
         } else if ManifestLocation::RepoRoot.as_path(&pwd).exists() {

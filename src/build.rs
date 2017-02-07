@@ -14,11 +14,19 @@ fn find_valid_build_script() -> LalResult<String> {
     use std::os::unix::fs::PermissionsExt;
 
     // less intrusive location for BUILD scripts
-    let mut bpath = Path::new("./.lal/BUILD");
-    if !bpath.exists() {
-        trace!("No BUILD existing in .lal");
-        bpath = Path::new("./BUILD"); // fallback if new version does not exist
+    let bpath_new = Path::new("./.lal/BUILD");
+    let bpath_old = Path::new("./BUILD"); // fallback if new version does not exist
+    let bpath = if bpath_new.exists() {
+        if bpath_old.exists() {
+            warn!("BUILD found in both .lal/ and current directory");
+            warn!("Using the default: .lal/BUILD");
+        }
+        bpath_new
     }
+    else {
+        trace!("No BUILD existing in .lal");
+        bpath_old
+    };
     trace!("Using BUILD script found in {}", bpath.display());
     // Need the string to construct a list of argument for docker run
     // lossy convert because paths can somehow contain non-unicode?
