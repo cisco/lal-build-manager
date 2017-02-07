@@ -280,9 +280,9 @@ pub fn remove(manifest: &Manifest, xs: Vec<&str>, save: bool, savedev: bool) -> 
 /// This will read, and HTTP GET all the dependencies at the specified versions.
 /// If the `core` bool is set, then `devDependencies` are not installed.
 pub fn fetch(manifest: &Manifest, cfg: &Config, core: bool, env: &str) -> LalResult<()> {
+    use super::Lockfile;
     debug!("Installing dependencies{}",
            if !core { " and devDependencies" } else { "" });
-    clean_input();
 
     // create the joined hashmap of dependencies and possibly devdependencies
     let mut deps = manifest.dependencies.clone();
@@ -291,9 +291,38 @@ pub fn fetch(manifest: &Manifest, cfg: &Config, core: bool, env: &str) -> LalRes
             deps.insert(k.clone(), *v);
         }
     }
+
+    // figure out what we have already
+    let lf = Lockfile::default().populate_from_input()?;
+    // filter out what we already have (being careful to examine env)
+    for (name, d) in lf.dependencies {
+        // if d.name at d.version in d.environment matches something in deps
+        if let Some(&cand) = deps.get(&name) { // ignore extranous deps found in INPUT
+            // ignore non-integer versions (stashed things must be overwritten)
+            if let Ok(n) = d.version.parse::<u32>() {
+                if n == cand && d.environment == Some(env.into()) {
+                    info!("Reuse {} {} {}", env, name, n);
+                    deps.remove(&name);
+                }
+            }
+        }
+    }
+
     let mut err = None;
     for (k, v) in deps {
         info!("Fetch {} {} {}", env, k, v);
+
+        // first kill the folders we actually need to fetch:
+        let cmponent_dir = Path::new("./INPUT").join(&k);
+        if cmponent_dir.is_dir() {
+            // Don't think this can fail, but we are dealing with NFS
+            fs::remove_dir_all(&cmponent_dir).map_err(|e| {
+                warn!("Failed to remove INPUT/{} - {}", k, e);
+                warn!("Please clean out your INPUT folder yourself to avoid corruption");
+                e
+            })?;
+        }
+
         let _ = fetch_and_unpack_component(cfg, &k, Some(v), env).map_err(|e| {
             warn!("Failed to completely install {} ({})", k, e);
             // likely symlinks inside tarball that are being dodgy
@@ -303,6 +332,8 @@ pub fn fetch(manifest: &Manifest, cfg: &Config, core: bool, env: &str) -> LalRes
     }
 
     if err.is_some() {
+        warn!("Cleaning potentially broken INPUT");
+        clean_input(); // don't want to risk having users in corrupted states
         return Err(CliError::InstallFailure);
     }
     Ok(())
