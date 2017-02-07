@@ -13,7 +13,7 @@ use std::io::prelude::*;
 use walkdir::WalkDir;
 
 // use loggerv::init_with_verbosity;
-use lal::{Config, Manifest};
+use lal::{Config, Manifest, DockerRunFlags};
 
 // TODO: macroify this stuff
 
@@ -139,9 +139,14 @@ fn kill_input() {
     assert_eq!(input.is_dir(), false);
 }
 fn kill_manifest() {
-    let manifest = Path::new(&env::current_dir().unwrap()).join("manifest.json");
+    let pwd = env::current_dir().unwrap();
+    let manifest = Path::new(&pwd).join("manifest.json");
+    let lalsubdir = Path::new(&pwd).join(".lal");
     if manifest.is_file() {
         fs::remove_file(&manifest).unwrap();
+    }
+    if lalsubdir.exists() {
+        fs::remove_dir_all(&lalsubdir).unwrap();
     }
     assert_eq!(manifest.is_file(), false);
 }
@@ -260,8 +265,7 @@ fn shell_echo() {
     let r = lal::docker_run(&cfg,
                             &container,
                             vec!["echo".to_string(), "# echo from docker".to_string()],
-                            false,
-                            false,
+                            DockerRunFlags::default(),
                             false);
     assert!(r.is_ok(), "shell echoed");
 }
@@ -271,8 +275,7 @@ fn shell_permissions() {
     let r = lal::docker_run(&cfg,
                             &container,
                             vec!["touch".to_string(), "README.md".to_string()],
-                            false,
-                            false,
+                            DockerRunFlags::default(),
                             false);
     assert!(r.is_ok(), "could touch files in container");
 }
@@ -394,6 +397,11 @@ fn export_check() {
 
     let gtest = Path::new(&env::current_dir().unwrap()).join("tests").join("gtest.tar.gz");
     assert!(gtest.is_file(), "gtest was copied correctly");
+
     let libcurl = Path::new(&env::current_dir().unwrap()).join("libcurl.tar.gz");
     assert!(libcurl.is_file(), "libcurl was copied correctly");
+
+    // clean up
+    fs::remove_file(&gtest).unwrap();
+    fs::remove_file(&libcurl).unwrap();
 }
