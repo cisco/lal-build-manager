@@ -38,7 +38,7 @@ pub struct Credentials {
 }
 
 /// Static Artifactory locations
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct Artifactory {
     /// Location of artifactory API master (for API queries)
     pub master: String,
@@ -70,75 +70,66 @@ pub struct Config {
     pub interactive: bool,
 }
 
-/// Edonusdevelopers default artifactory server
-impl Default for Artifactory {
-    fn default() -> Self {
-        Artifactory {
-            master: "https://engci-maven-master.cisco.com/artifactory".into(),
-            slave: "https://engci-maven.cisco.com/artifactory".into(),
-            release: "CME-release".into(),
-            vgroup: "CME-group".into(),
-            credentials: None,
-        }
-    }
+/// Representation of a configuration defaults file
+///
+/// This file is being used to generate the config when using `lal configure`
+#[derive(Serialize, Deserialize, Clone, Default)]
+pub struct ConfigDefaults {
+    /// Configuration settings for Artifactory
+    pub artifactory: Artifactory,
+    /// Environments shorthands that are allowed and their full meaning
+    pub environments: BTreeMap<String, Container>,
+    /// Extra volume mounts to be set for the container
+    pub mounts: Vec<Mount>,
 }
 
-/// Edonusdevelopers default Config
-///
-/// This will locate you homedir, and set last update check 2 days in the past.
-/// Thus, with a blank default config, you will always trigger an upgrade check.
-impl Default for Config {
-    fn default() -> Self {
-        let cachepath = lal_dir().join("cache");
-        let cachedir = cachepath.as_path().to_str().unwrap();
-        // edonusdevelopers default C++ containers
-        let mut envs = BTreeMap::new();
-        envs.insert("centos".into(),
-                    Container::latest("edonusdevelopers/centos_build"));
-        envs.insert("xenial".into(),
-                    Container::latest("edonusdevelopers/build_xenial"));
-        envs.insert("rust".into(),
-                    Container::latest("edonusdevelopers/muslrust"));
-        envs.insert("transcoder".into(),
-                    Container::latest("edonusdevelopers/mygdon-transcoder"));
-        envs.insert("py3".into(),
-                    Container::latest("edonusdevelopers/py3_xenial"));
-        // last update time
-        let time = UTC::now() - Duration::days(2);
-        // common edonusdevelopers mounts
-        let mut mounts = vec![];
-        let tools_mount = Path::new("/mnt/tools");
-        if tools_mount.exists() {
-            mounts.push(Mount {
-                src: "/mnt/tools".into(),
-                dest: "/tools".into(),
-                readonly: true,
-            })
+impl ConfigDefaults {
+    fn read(file: &str) -> LalResult<ConfigDefaults> {
+        let pth = Path::new(file);
+        if !pth.exists() {
+            error!("No such defaults file '{}'", file); // file open will fail below
         }
-        let files_mount = Path::new("/mnt/build-files");
-        if files_mount.exists() {
-            mounts.push(Mount {
-                src: "/mnt/build-files".into(),
-                dest: "/build-files".into(),
-                readonly: true,
-            })
-        }
-        Config {
-            cache: cachedir.into(),
-            mounts: mounts,
-            upgradeCheck: time.to_rfc3339(),
-            environments: envs,
-            artifactory: Artifactory::default(),
-            interactive: true,
-        }
+        let mut f = fs::File::open(&pth)?;
+        let mut data = String::new();
+        f.read_to_string(&mut data)?;
+        let defaults: ConfigDefaults = serde_json::from_str(&data)?;
+        Ok(defaults)
     }
 }
 
 impl Config {
-    /// Initialize a Config with defaults
-    pub fn new() -> Config {
-        Default::default()
+    /// Initialize a Config with ConfigDefaults
+    ///
+    /// This will locate you homedir, and set last update check 2 days in the past.
+    /// Thus, with a blank default config, you will always trigger an upgrade check.
+    pub fn new(defaults: ConfigDefaults) -> Config {
+        let cachepath = lal_dir().join("cache");
+        let cachedir = cachepath.as_path().to_str().unwrap();
+
+        // last update time
+        let time = UTC::now() - Duration::days(2);
+
+        // scan default mounts
+        let mut mounts = vec![];
+        for mount in defaults.mounts {
+            let mount_path = Path::new(&mount.src);
+            // only add mount if the user actually has it locally
+            if mount_path.exists() {
+                debug!("Configuring existing mount {}", mount.src);
+                mounts.push(mount.clone());
+            }
+        }
+
+        Config {
+            cache: cachedir.into(),
+            mounts: mounts, // the filtered defaults
+            upgradeCheck: time.to_rfc3339(),
+            environments: defaults.environments,
+            artifactory: defaults.artifactory,
+            interactive: true,
+        }
     }
+
     /// Read and deserialize a Config from ~/.lal/config
     pub fn read() -> LalResult<Config> {
         let cfg_path = lal_dir().join("config");
@@ -211,9 +202,11 @@ fn create_lal_dir() -> LalResult<PathBuf> {
 /// Create  `~/.lal/config` with defaults
 ///
 /// A boolean option to discard the output is supplied for tests.
-pub fn configure(save: bool, interactive: bool) -> LalResult<Config> {
+/// A defaults file must be supplied to seed the new config with defined environments
+pub fn configure(save: bool, interactive: bool, defaults: &str) -> LalResult<Config> {
     let _ = create_lal_dir()?;
-    let mut cfg = Config::new();
+
+    let mut cfg = Config::new(ConfigDefaults::read(defaults)?);
     cfg.interactive = interactive; // need to override default for tests
     if save {
         cfg.write(false)?;

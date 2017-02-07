@@ -302,7 +302,10 @@ fn main() {
                 .short("f")
                 .help("overwrites manifest if necessary")))
         .subcommand(SubCommand::with_name("configure")
-            .about("Creates a default lal config ~/.lal/"))
+            .about("Creates a default lal config ~/.lal/ from a defaults file")
+            .arg(Arg::with_name("file")
+                .required(true)
+                .help("An environments file to seed the config with")))
         .subcommand(SubCommand::with_name("export")
             .about("Fetch a raw tarball from artifactory")
             .arg(Arg::with_name("component")
@@ -412,8 +415,8 @@ fn main() {
     let subname = args.subcommand_name().unwrap();
 
     // Allow lal configure without assumptions
-    if let Some(_) = args.subcommand_matches("configure") {
-        result_exit("configure", lal::configure(true, true));
+    if let Some(a) = args.subcommand_matches("configure") {
+        result_exit("configure", lal::configure(true, true, a.value_of("file").unwrap()));
     }
 
     // Force config to exists before allowing remaining actions

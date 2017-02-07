@@ -36,7 +36,7 @@ _lal()
     # special subcommand completions
     local special i
     for (( i=0; i < ${#words[@]}-1; i++ )); do
-        if [[ ${words[i]} == @(build|remove|rm|export|update|script|run|status|ls|query|shell|publish|env) ]]; then
+        if [[ ${words[i]} == @(build|remove|rm|export|update|script|run|status|ls|query|shell|publish|env|configure|help) ]]; then
             special=${words[i]}
         fi
     done
@@ -122,6 +122,16 @@ _lal()
                     COMPREPLY=($(compgen -W "$sh_flags" -- "$cur"))
                 fi
                 ;;
+            configure)
+                # we would like to fallback to file path (default) completion here
+                # but this forces default completion for anything not listed in this file
+                # and that's wrong, because nothing else takes files
+                # thus, this one is a bit akward
+                return 1 # sufficient with 'complete -o default'
+                ;;
+            help)
+                COMPREPLY=($(compgen -W "$subcommands" -- "$cur"))
+                ;;
             script|run)
                 [[ $in_lal_repo ]] || return 0
                 # locate the scripts in .lal/scripts
@@ -148,4 +158,3 @@ _lal()
     return 0
 } &&
 complete -F _lal lal
-
