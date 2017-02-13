@@ -293,7 +293,13 @@ pub fn fetch(manifest: &Manifest, cfg: &Config, core: bool, env: &str) -> LalRes
     }
 
     // figure out what we have already
-    let lf = Lockfile::default().populate_from_input()?;
+    let lf = Lockfile::default().populate_from_input().map_err(|e| {
+        // Guide users a bit if they did something dumb - see #77
+        warn!("Populating INPUT data failed - your INPUT may be corrupt");
+        warn!("This can happen if you CTRL-C during `lal fetch`");
+        warn!("Try to `rm -rf INPUT` and `lal fetch` again.");
+        e
+    })?;
     // filter out what we already have (being careful to examine env)
     for (name, d) in lf.dependencies {
         // if d.name at d.version in d.environment matches something in deps
