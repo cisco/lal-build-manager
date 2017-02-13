@@ -24,7 +24,7 @@ serde = "0.9.5"
 serde_derive = "0.9.5"
 serde_json = "0.9.5"
 sha1 = "0.2.0"
-tar = "0.4.4"
+tar = "0.4.10"
 walkdir = "0.1.5"
 
 [lib]

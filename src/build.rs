@@ -1,10 +1,7 @@
 use std::path::Path;
-use std::fs::File;
 use std::fs;
 use std::io;
-// use std::collections::HashMap;
-
-use walkdir::WalkDir;
+use std::process::Command;
 
 use shell;
 use verify::verify;
@@ -42,37 +39,17 @@ fn find_valid_build_script() -> LalResult<String> {
 
 
 pub fn tar_output(tarball: &Path) -> LalResult<()> {
-    use tar;
-    use flate2::write::GzEncoder;
-    use flate2::Compression;
-
     info!("Taring OUTPUT");
+    let mut args = vec!["czvf".into()];
+    args.push(tarball.display().to_string());
+    args.push("-C".into());
+    args.push("OUTPUT".into());
+    args.push(".".into());
+    debug!("tar {}", args.join(" "));
+    let s = Command::new("tar").args(&args).status()?;
 
-    // pipe builder -> encoder -> file
-    let file = File::create(&tarball)?;
-    let mut encoder = GzEncoder::new(file, Compression::Default); // encoder writes file
-    let mut builder = tar::Builder::new(&mut encoder); // tar builder writes to encoder
-    // builder, THEN encoder, are finish()d at the end of this scope
-    // tarball has not been completely written until this function is over
-
-    let files = WalkDir::new("OUTPUT")
-        .min_depth(1)
-        .into_iter()
-        .filter_map(|e| e.ok())
-        .filter(|e| !e.path().is_dir()); // ignore directories (these are created anyway)
-    // Last line means that we exclude empty directories (must be added manually with tar)
-
-    let mut had_files = false;
-    // add files to builder
-    for f in files {
-        let pth = f.path().strip_prefix("OUTPUT").unwrap();
-        debug!("-> {}", pth.display());
-        let mut f = File::open(f.path())?;
-        builder.append_file(pth, &mut f)?;
-        had_files = true;
-    }
-    if !had_files {
-        return Err(CliError::MissingBuild);
+    if !s.success() {
+        return Err(CliError::SubprocessFailure(s.code().unwrap_or(1001)));
     }
     Ok(())
 }
