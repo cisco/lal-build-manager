@@ -40,11 +40,13 @@ fn find_valid_build_script() -> LalResult<String> {
 
 pub fn tar_output(tarball: &Path) -> LalResult<()> {
     info!("Taring OUTPUT");
-    let mut args = vec!["czvf".into()];
-    args.push(tarball.display().to_string());
-    args.push("-C".into());
-    args.push("OUTPUT".into());
-    args.push(".".into());
+    let args = vec![
+        "czvf",
+        tarball.to_str().unwrap(), // path created internally - always valid unicode
+        "-C",
+        "OUTPUT",
+        ".",
+    ];
     debug!("tar {}", args.join(" "));
     let s = Command::new("tar").args(&args).status()?;
 
