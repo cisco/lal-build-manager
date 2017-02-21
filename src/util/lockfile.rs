@@ -98,14 +98,14 @@ impl Default for Lockfile {
 impl Lockfile {
     /// Initialize an empty Lockfile with defaults
     ///
-    /// If no version is given, the version is EXPERIMENTAL+{randhex} for Colony.
+    /// If no version is given, the version is EXPERIMENTAL-{randhex} for Colony.
     pub fn new(name: &str,
                container: &Container,
                env: &str,
                v: Option<&str>,
                build_cfg: Option<&str>)
                -> Self {
-        let def_version = format!("EXPERIMENTAL+{:x}", rand::random::<u64>());
+        let def_version = format!("EXPERIMENTAL-{:x}", rand::random::<u64>());
         let time = UTC::now();
         Lockfile {
             name: name.to_string(),
