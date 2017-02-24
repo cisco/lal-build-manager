@@ -36,7 +36,7 @@ _lal()
     # special subcommand completions
     local special i
     for (( i=0; i < ${#words[@]}-1; i++ )); do
-        if [[ ${words[i]} == @(build|remove|rm|export|update|script|run|status|ls|query|shell|publish|env|configure|help) ]]; then
+        if [[ ${words[i]} == @(build|remove|rm|export|init|update|script|run|status|ls|query|shell|publish|env|configure|help) ]]; then
             special=${words[i]}
         fi
     done
@@ -81,6 +81,12 @@ _lal()
                     COMPREPLY=($(compgen -W "$envs" -- "$cur"))
                 else
                     COMPREPLY=($(compgen -W "$env_subs" -- "$cur"))
+                fi
+                ;;
+            init)
+                if [[ $prev = "init" ]]; then
+                    local -r envs="$(lal list-environments)"
+                    COMPREPLY=($(compgen -W "$envs" -- "$cur"))
                 fi
                 ;;
             status|ls)

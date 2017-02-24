@@ -36,6 +36,8 @@ fn handle_manifest_agnostic_cmds(args: &ArgMatches, cfg: &Config, env_partial: &
                     env_partial)
     } else if let Some(a) = args.subcommand_matches("query") {
         lal::query(cfg, a.value_of("component").unwrap())
+    } else if let Some(_) = args.subcommand_matches("list-environments") {
+        lal::env_list(cfg)
     } else {
         return ();
     };
@@ -52,8 +54,6 @@ fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Conf
         lal::build_list(mf)
     } else if let Some(a) = args.subcommand_matches("list-configurations") {
         lal::configuration_list(a.value_of("component").unwrap(), mf)
-    } else if let Some(_) = args.subcommand_matches("list-environments") {
-        lal::env_list(cfg)
     } else if let Some(a) = args.subcommand_matches("list-dependencies") {
         lal::dep_list(mf, a.is_present("core"))
     } else if let Some(a) = args.subcommand_matches("remove") {
