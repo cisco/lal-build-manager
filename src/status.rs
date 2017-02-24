@@ -6,8 +6,13 @@ use super::Lockfile;
 
 fn version_string(lf: Option<&Lockfile>, show_ver: bool, show_time: bool) -> ANSIString<'static> {
     if let Some(lock) = lf {
+        let ver_color = if lock.version.parse::<u32>().is_ok() {
+            12
+        } else {
+            11
+        };
         let verstr =
-            Colour::Fixed(12).paint(format!("({}-{})",
+            Colour::Fixed(ver_color).paint(format!("({}-{})",
                                             lock.version,
                                             lock.environment.clone()));
         let timestr = if let Some(ref time) = lock.built {
