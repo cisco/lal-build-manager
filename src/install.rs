@@ -306,7 +306,7 @@ pub fn fetch(manifest: &Manifest, cfg: &Config, core: bool, env: &str) -> LalRes
         if let Some(&cand) = deps.get(&name) { // ignore extranous deps found in INPUT
             // ignore non-integer versions (stashed things must be overwritten)
             if let Ok(n) = d.version.parse::<u32>() {
-                if n == cand && d.environment == Some(env.into()) {
+                if n == cand && d.environment == env {
                     info!("Reuse {} {} {}", env, name, n);
                     deps.remove(&name);
                 }

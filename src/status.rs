@@ -9,7 +9,7 @@ fn version_string(lf: Option<&Lockfile>, show_ver: bool, show_time: bool) -> ANS
         let verstr =
             Colour::Fixed(12).paint(format!("({}-{})",
                                             lock.version,
-                                            lock.environment.clone().unwrap_or("default".into())));
+                                            lock.environment.clone()));
         let timestr = if let Some(ref time) = lock.built {
             Colour::Fixed(14).paint(format!("({})", time))
         } else {

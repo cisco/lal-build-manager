@@ -26,13 +26,7 @@ pub fn publish(name: &str, cfg: &Config, env: &str) -> LalResult<()> {
             CliError::MissingReleaseBuild
         })?;
 
-    let build_env = lock.environment
-        .ok_or_else(|| {
-            error!("Release build has no environment");
-            CliError::MissingReleaseBuild
-        })?;
-    assert_eq!(env, build_env); // for now
-
+    assert_eq!(env, lock.environment); // for now
 
     info!("Publishing {}={}", name, version);
 

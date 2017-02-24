@@ -88,13 +88,12 @@ fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Config, env: &str
 
 fn handle_env_command(args: &ArgMatches,
                       cfg: &Config,
-                      env_: &str,
+                      env: &str,
                       stickies: &StickyOptions)
                       -> Container {
-    let env = if env_ == "default" { "centos".to_string() } else { env_.to_string() };
 
     // lookup associated container from
-    let container = cfg.get_container(Some(env.clone()))
+    let container = cfg.get_container(env.into())
         .map_err(|e| {
             error!("Environment error: {}", e);
             println!("Ensure that manifest.environment has a corresponding entry in ~/.lal/config");
@@ -129,9 +128,8 @@ fn handle_env_command(args: &ArgMatches,
 fn handle_docker_cmds(args: &ArgMatches,
                       mf: &Manifest,
                       cfg: &Config,
-                      env_: &str,
+                      env: &str,
                       container: &Container) {
-    let env = if env_ == "default" { "centos".to_string() } else { env_.to_string() };
     let res = if let Some(_) = args.subcommand_matches("verify") {
         // not really a docker related command, but it needs
         // the resolved env to verify consistent dependency usage
@@ -151,7 +149,7 @@ fn handle_docker_cmds(args: &ArgMatches,
                    a.value_of("with-version"),
                    !a.is_present("force"),
                    container,
-                   env,
+                   env.into(),
                    a.is_present("print"))
     } else if let Some(a) = args.subcommand_matches("shell") {
         let xs = if a.is_present("cmd") {
@@ -489,10 +487,11 @@ fn main() {
         .unwrap();
 
     // Subcommands that are environment agnostic
+    // TODO: this distinction is pointless if we force manifest.environment
     handle_environment_agnostic_cmds(&args, &manifest, &config);
 
     // Force a valid container key configured in manifest and corr. value in config
-    // NB: --env overrides sticky env overrides manifest.env overrides centos
+    // NB: --env overrides sticky env overrides manifest.env
     let env = if let Some(eflag) = args.value_of("environment") {
         eflag.into()
     } else if let Some(ref stickenv) = stickies.env {
@@ -500,10 +499,11 @@ fn main() {
     } else if let Some(ref menv) = manifest.environment {
         menv.clone()
     } else {
-        // nothing specified - defaults inferred differently later on:
-        // - docker commands translate this to "centos"
-        // - network ones translate it to the default artifactory location
-        "default".into()
+        // TODO: maybe force manifest.environment rather than have this?
+        error!("Manifest is missing an environment value");
+        error!("Please hardcode an environment inside manifest.json with a value from \
+               ~/.lal/config");
+        process::exit(1);
     };
     let container = handle_env_command(&args, &config, &env, &stickies);
 
@@ -514,10 +514,11 @@ fn main() {
             warn!("Running {} command in non-default {} environment", sub, env);
         }
     } else {
-        warn!("Manifest is missing an environment value");
-        warn!("Please hardcode an environment inside manifest.json with a value from \
+        error!("Manifest is missing an environment value");
+        error!("Please hardcode an environment inside manifest.json with a value from \
                ~/.lal/config");
-    }
+        process::exit(1);
+     }
 
     // Main subcommands
     handle_network_cmds(&args, &manifest, &config, &env);

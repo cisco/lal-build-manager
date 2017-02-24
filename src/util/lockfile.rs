@@ -75,7 +75,7 @@ pub struct Lockfile {
     /// Container and tag used to build
     pub container: Container,
     /// Name of the environment for the container at the time
-    pub environment: Option<String>,
+    pub environment: String,
     /// Name of the default environment set in the manifest
     pub defaultEnv: Option<String>,
     /// Version of the component built
@@ -115,7 +115,7 @@ impl Lockfile {
             tool: env!("CARGO_PKG_VERSION").to_string(),
             built: Some(time.format("%Y-%m-%d %H:%M:%S").to_string()),
             defaultEnv: None,
-            environment: Some(env.into()),
+            environment: env.into(),
             dependencies: BTreeMap::new(),
         }
     }
@@ -188,8 +188,7 @@ impl Lockfile {
         if key == "version" {
             self.version.clone()
         } else if key == "environment" {
-            // old components were built for centos only - keeping this default
-            self.environment.clone().unwrap_or("centos".into())
+            self.environment.clone()
         } else {
             unreachable!("Only using get_value internally");
         }

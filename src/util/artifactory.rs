@@ -149,6 +149,7 @@ fn get_dependency_env_url(art_cfg: &Artifactory, name: &str, version: u32, env: 
 
 fn get_dependency_url(art_cfg: &Artifactory, name: &str, version: u32, env: &str) -> String {
     if env == "default" {
+        // This is only used by lal export without -e
         get_dependency_url_default(art_cfg, name, version)
     } else {
         get_dependency_env_url(art_cfg, name, version, env)

@@ -169,7 +169,7 @@ fn create_lal_subdir(pwd: &PathBuf) -> LalResult<()> {
 /// The function will not overwrite an existing `manifest.json`,
 /// unless the `force` bool is set.
 pub fn init(cfg: &Config, force: bool, env: &str) -> LalResult<()> {
-    cfg.get_container(Some(env.into()))?;
+    cfg.get_container(env.into())?;
 
     let pwd = env::current_dir()?;
     let last_comp = pwd.components().last().unwrap(); // std::path::Component
