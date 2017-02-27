@@ -5,7 +5,7 @@ extern crate log;
 extern crate loggerv;
 
 extern crate lal;
-use lal::{LalResult, Config, Manifest, StickyOptions, Container};
+use lal::{LalResult, Config, Manifest, StickyOptions, Container, BuildOptions};
 use clap::{Arg, App, AppSettings, SubCommand, ArgMatches};
 use std::process;
 use std::env;
@@ -104,7 +104,7 @@ fn handle_env_command(args: &ArgMatches,
     // resolve env updates and sticky options before main subcommands
     if let Some(a) = args.subcommand_matches("env") {
         if let Some(_) = a.subcommand_matches("update") {
-            result_exit("env update", lal::env::update(&container, &env))
+            result_exit("env update", lal::env::update(&container, env))
         } else if let Some(_) = a.subcommand_matches("reset") {
             // NB: if .lalopts.env points at an environment not in config
             // reset will fail.. possible to fix, but complects this file too much
@@ -133,21 +133,20 @@ fn handle_docker_cmds(args: &ArgMatches,
     let res = if let Some(_) = args.subcommand_matches("verify") {
         // not really a docker related command, but it needs
         // the resolved env to verify consistent dependency usage
-        lal::verify(mf, &env)
+        lal::verify(mf, env)
     } else if let Some(a) = args.subcommand_matches("publish") {
         // ditto for publish, because it needs verify
-        lal::publish(a.value_of("component").unwrap(), cfg, &env)
+        lal::publish(a.value_of("component").unwrap(), cfg, env)
     } else if let Some(a) = args.subcommand_matches("build") {
-        lal::build(cfg,
-                   mf,
-                   a.value_of("component"),
-                   a.value_of("configuration"),
-                   a.is_present("release"),
-                   a.value_of("with-version"),
-                   !a.is_present("force"),
-                   container,
-                   env.into(),
-                   a.is_present("print"))
+        let bopts = BuildOptions {
+            name: a.value_of("component").map(String::from),
+            configuration: a.value_of("configuration").map(String::from),
+            release: a.is_present("release"),
+            version: a.value_of("with-version").map(String::from),
+            container: container.clone(),
+            force: a.is_present("force")
+        };
+        lal::build(cfg, mf, bopts, env.into(), a.is_present("print"))
     } else if let Some(a) = args.subcommand_matches("shell") {
         let xs = if a.is_present("cmd") {
             Some(a.values_of("cmd").unwrap().collect::<Vec<_>>())

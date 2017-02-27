@@ -101,14 +101,14 @@ impl Lockfile {
     pub fn new(name: &str,
                container: &Container,
                env: &str,
-               v: Option<&str>,
+               v: Option<String>,
                build_cfg: Option<&str>)
                -> Self {
         let def_version = format!("EXPERIMENTAL-{:x}", rand::random::<u64>());
         let time = UTC::now();
         Lockfile {
             name: name.to_string(),
-            version: v.unwrap_or(&def_version).to_string(),
+            version: v.unwrap_or(def_version),
             config: build_cfg.unwrap_or("release").to_string(),
             container: container.clone(),
             tool: env!("CARGO_PKG_VERSION").to_string(),

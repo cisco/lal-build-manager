@@ -45,7 +45,7 @@ extern crate rand;
 pub mod core;
 pub use core::*;
 
-pub use build::{build, build_list, configuration_list};
+pub use build::{build, build_list, configuration_list, BuildOptions};
 pub use configure::{configure, env_list};
 pub use init::{init, dep_list};
 pub use shell::{shell, docker_run, script, DockerRunFlags};

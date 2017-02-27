@@ -1,5 +1,7 @@
 #![allow(missing_docs)]
 
+// TODO: document better this stuff, most of this stuff is actually mostly documented
+
 pub use self::errors::{CliError, LalResult};
 pub use self::manifest::{Manifest, ComponentConfiguration, ManifestLocation};
 pub use self::lockfile::{Lockfile, Container};
