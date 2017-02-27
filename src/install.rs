@@ -18,7 +18,7 @@ pub fn download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
     let mut buffer: Vec<u8> = Vec::new();
     res.read_to_end(&mut buffer)?;
     let mut f = fs::File::create(save)?;
-    f.write(&buffer)?;
+    f.write_all(&buffer)?;
     Ok(())
 }
 
@@ -53,7 +53,7 @@ fn fetch_via_artifactory(cfg: &Config,
         // download to PWD then move it to stash immediately
         let local_tarball = Path::new(".").join(format!("{}.tar", name));
         download_to_path(&component.tarball, &local_tarball)?;
-        cache::store_tarball(&cfg, name, component.version, env)?;
+        cache::store_tarball(cfg, name, component.version, env)?;
     }
     assert!(cache::is_cached(cfg, &component.name, component.version, env),
             "cached component");
@@ -75,7 +75,7 @@ fn fetch_and_unpack_component(cfg: &Config,
     debug!("Unpacking tarball {} for {}",
            tarname.to_str().unwrap(),
            component.name);
-    extract_tarball_to_input(tarname, &name)?;
+    extract_tarball_to_input(tarname, name)?;
 
     Ok(component)
 }
@@ -205,7 +205,7 @@ pub fn export(cfg: &Config, comp: &str, output: Option<&str>, env: &str) -> LalR
         }
     } else {
         // fetch without a specific version (latest)
-        fetch_via_artifactory(cfg, &comp, None, env)?.0
+        fetch_via_artifactory(cfg, comp, None, env)?.0
     };
 
     let dest = Path::new(dir).join(format!("{}.tar.gz", component_name));

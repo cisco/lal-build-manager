@@ -71,16 +71,16 @@ impl ManifestLocation {
     ///
     /// Looks first in `./.lal/manifest.json` and falls back to `./manifest.json`
     pub fn identify(pwd: &PathBuf) -> LalResult<ManifestLocation> {
-        if ManifestLocation::LalSubfolder.as_path(&pwd).exists() {
+        if ManifestLocation::LalSubfolder.as_path(pwd).exists() {
             // Show a warning if we have two manifests - we only use the new one then
             // This could happen on other codebases - some javascript repos use manifest.json
             // if both are for lal though, then this is user error, make it explicit:
-            if ManifestLocation::RepoRoot.as_path(&pwd).exists() {
+            if ManifestLocation::RepoRoot.as_path(pwd).exists() {
                 warn!("manifest.json found in both .lal/ and current directory");
                 warn!("Using the default: .lal/manifest.json");
             }
             Ok(ManifestLocation::LalSubfolder)
-        } else if ManifestLocation::RepoRoot.as_path(&pwd).exists() {
+        } else if ManifestLocation::RepoRoot.as_path(pwd).exists() {
             Ok(ManifestLocation::RepoRoot) // allow people to migrate for a while
         }
         else {
@@ -121,7 +121,7 @@ impl Manifest {
 
     /// Read a manifest file in an arbitrary path
     pub fn read_from(pwd: &PathBuf) -> LalResult<Manifest> {
-        let mpath = ManifestLocation::identify(&pwd)?.as_path(&pwd);
+        let mpath = ManifestLocation::identify(pwd)?.as_path(pwd);
         trace!("Using manifest in {}", mpath.display());
         let mut f = File::open(&mpath)?;
         let mut data = String::new();

@@ -169,5 +169,5 @@ pub fn script(cfg: &Config,
     let cmd = vec!["bash".into(),
                    "-c".into(),
                    format!("source {}; main {}", pth.display(), args.join(" "))];
-    Ok(docker_run(cfg, &container, cmd, flags, false)?)
+    Ok(docker_run(cfg, container, cmd, flags, false)?)
 }

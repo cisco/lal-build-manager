@@ -80,7 +80,7 @@ pub fn status(manifest: &Manifest, full: bool, show_ver: bool, show_time: bool) 
     let lf = Lockfile::default().populate_from_input()?;
 
     println!("{}", manifest.name);
-    let deps = input::analyze_full(&manifest)?;
+    let deps = input::analyze_full(manifest)?;
     let len = deps.len();
     for (i, (d, dep)) in deps.iter().enumerate() {
         let notes = if dep.missing && !dep.development {
@@ -99,7 +99,7 @@ pub fn status(manifest: &Manifest, full: bool, show_ver: bool, show_time: bool) 
         // list children in --full mode
         // NB: missing deps will not be populatable
         let has_children = full && !dep.missing &&
-                           !lf.dependencies.get(&dep.name).unwrap().dependencies.is_empty();
+                           !&lf.dependencies[&dep.name].dependencies.is_empty();
         let fork_char = if has_children { "┬" } else { "─" };
         let is_last = i == len - 1;
         let turn_char = if is_last { "└" } else { "├" };
@@ -114,7 +114,7 @@ pub fn status(manifest: &Manifest, full: bool, show_ver: bool, show_time: bool) 
                    dep.name,
                    lf.dependencies);
             // dep unwrap relies on populate_from_input try! reading all lockfiles earlier
-            let sub_lock = lf.dependencies.get(&dep.name).unwrap();
+            let sub_lock = &lf.dependencies[&dep.name];
             status_recurse(&dep.name, sub_lock, 1, vec![], show_ver, show_time);
         }
     }

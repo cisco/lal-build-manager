@@ -54,7 +54,7 @@ pub fn tar_output(tarball: &Path) -> LalResult<()> {
     let find_str = String::from_utf8_lossy(&find_output.stdout);
 
     // append each file as an arg to the main tar process
-    for f in find_str.trim().split("\n") {
+    for f in find_str.trim().split('\n') {
         args.push(f.into())
     }
 
@@ -163,7 +163,7 @@ pub fn build(cfg: &Config,
         .populate_from_input());
 
     let lockpth = Path::new("./OUTPUT/lockfile.json");
-    lockfile.write(&lockpth, true)?; // always put a lockfile in OUTPUT at the start of a build
+    lockfile.write(lockpth, true)?; // always put a lockfile in OUTPUT at the start of a build
 
     let bpath = find_valid_build_script()?;
     let cmd = vec![bpath, component.into(), configuration_name];

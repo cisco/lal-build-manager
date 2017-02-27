@@ -41,7 +41,7 @@ pub fn analyze() -> LalResult<BTreeMap<String, String>> {
     for d in dirs {
         let pth = d.path().strip_prefix("INPUT").unwrap();
         let component = pth.to_str().unwrap();
-        let lck = read_partial_lockfile(&component)?;
+        let lck = read_partial_lockfile(component)?;
         deps.insert(component.to_string(), lck.version);
     }
     Ok(deps)
@@ -92,7 +92,7 @@ pub fn analyze_full(manifest: &Manifest) -> LalResult<InputMap> {
     // check for potentially non-manifested deps
     // i.e. something in INPUT, but not in manifest
     for name in deps.keys() {
-        let actual_ver = deps.get(name).unwrap().clone();
+        let actual_ver = deps[name].clone();
         if !saved_deps.contains_key(name) {
             depmap.insert(name.clone(),
                           InputDependency {

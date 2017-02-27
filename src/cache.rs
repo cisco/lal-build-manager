@@ -104,7 +104,7 @@ pub fn get_path_to_stashed_component(cfg: &Config,
 // helper for install::update
 pub fn fetch_from_stash(cfg: &Config, component: &str, stashname: &str) -> LalResult<()> {
     let tarname = get_path_to_stashed_component(cfg, component, stashname)?;
-    install::extract_tarball_to_input(tarname, &component)?;
+    install::extract_tarball_to_input(tarname, component)?;
     Ok(())
 }
 

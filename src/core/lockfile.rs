@@ -150,7 +150,7 @@ impl Lockfile {
         let deps = input::analyze()?;
         for name in deps.keys() {
             trace!("Populating lockfile with {}", name);
-            let deplock = Lockfile::from_input_component(&name)?;
+            let deplock = Lockfile::from_input_component(name)?;
             self.dependencies.insert(name.clone(), deplock);
         }
         Ok(self)
