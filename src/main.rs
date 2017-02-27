@@ -143,6 +143,7 @@ fn handle_docker_cmds(args: &ArgMatches,
             configuration: a.value_of("configuration").map(String::from),
             release: a.is_present("release"),
             version: a.value_of("with-version").map(String::from),
+            sha: a.value_of("with-sha").map(String::from),
             container: container.clone(),
             force: a.is_present("force")
         };
@@ -220,7 +221,12 @@ fn main() {
                 .long("with-version")
                 .takes_value(true)
                 .requires("release")
-                .help("Configure lockfiles for a release with an explicit new version"))
+                .help("Configure lockfiles with an explicit version number"))
+            .arg(Arg::with_name("with-sha")
+                .long("with-sha")
+                .takes_value(true)
+                .requires("release")
+                .help("Configure lockfiles with an explicit sha"))
             .arg(Arg::with_name("print")
                 .long("print-only")
                 .conflicts_with("release")

@@ -108,8 +108,10 @@ pub struct BuildOptions {
     pub container: Container,
     /// Create release tarball in `./ARTIFACT`
     pub release: bool,
-    /// Release option for the lockfile
+    /// An explicit version to put in the lockfile
     pub version: Option<String>,
+    /// An explicit sha changeset id to put in the lockfile
+    pub sha: Option<String>,
     /// Ignore verify failures
     pub force: bool,
 }
@@ -169,6 +171,7 @@ pub fn build(cfg: &Config,
                                       opts.version,
                                       Some(&configuration_name))
         .set_default_env(manifest.environment.clone())
+        .attach_revision_id(opts.sha)
         .populate_from_input());
 
     let lockpth = Path::new("./OUTPUT/lockfile.json");

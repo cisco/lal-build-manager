@@ -77,6 +77,8 @@ pub struct Lockfile {
     pub environment: String,
     /// Name of the default environment set in the manifest
     pub defaultEnv: Option<String>,
+    /// Revision id from version control
+    pub sha: Option<String>,
     /// Version of the component built
     pub version: String,
     /// Version of the lal tool
@@ -116,6 +118,7 @@ impl Lockfile {
             defaultEnv: None,
             environment: env.into(),
             dependencies: BTreeMap::new(),
+            sha: None,
         }
     }
 
@@ -159,6 +162,12 @@ impl Lockfile {
     /// Attach a default environment to the lockfile
     pub fn set_default_env(mut self, default: Option<String>) -> Self {
         self.defaultEnv = default;
+        self
+    }
+
+    /// Attach a revision id from source control
+    pub fn attach_revision_id(mut self, sha: Option<String>) -> Self {
+        self.sha = sha;
         self
     }
 
