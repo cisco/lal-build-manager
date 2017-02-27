@@ -2,10 +2,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-use super::{Manifest, Config, Lockfile};
 use build::tar_output;
 use install;
-use errors::{CliError, LalResult};
+use super::{CliError, LalResult, Manifest, Config, Lockfile};
 
 pub fn is_cached(cfg: &Config, name: &str, version: u32, env: &str) -> bool {
     get_cache_dir(cfg, name, version, env).is_dir()

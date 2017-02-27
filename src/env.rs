@@ -5,7 +5,7 @@ use std::path::Path;
 use std::vec::Vec;
 use serde_json;
 
-use {Container, Config, CliError, LalResult};
+use super::{Container, Config, CliError, LalResult};
 
 /// Representation of .lalopts
 ///

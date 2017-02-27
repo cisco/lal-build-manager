@@ -10,9 +10,14 @@ use hyper::{self, Client};
 use hyper::header::{Authorization, Basic};
 use hyper::status::StatusCode;
 
-use install::Component;
-use configure::Artifactory;
-use errors::{CliError, LalResult};
+use super::{CliError, LalResult, Artifactory};
+
+/// The basic definition of a component as it exists online
+pub struct Component {
+    pub name: String,
+    pub version: u32,
+    pub tarball: String,
+}
 
 // Need these to query for stored artifacts:
 // This query has tons of info, but we only care about the version

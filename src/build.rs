@@ -5,7 +5,7 @@ use std::process::Command;
 
 use shell;
 use verify::verify;
-use {Lockfile, Manifest, Container, Config, LalResult, CliError, DockerRunFlags};
+use super::{Lockfile, Manifest, Container, Config, LalResult, CliError, DockerRunFlags};
 
 fn find_valid_build_script() -> LalResult<String> {
     use std::os::unix::fs::PermissionsExt;

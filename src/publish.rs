@@ -1,7 +1,7 @@
 use std::path::Path;
 use std::fs::File;
 
-use util::artifactory::upload_artifact;
+use core::artifactory::upload_artifact;
 use super::{LalResult, CliError, Config, Lockfile};
 
 /// Publish a release build to artifactory

@@ -10,8 +10,7 @@ use std::collections::{HashMap, BTreeMap};
 use std::collections::BTreeSet;
 use std::fmt;
 
-use errors::{CliError, LalResult};
-use util::input;
+use super::{CliError, LalResult, input};
 
 /// Representation of a docker container image
 #[derive(Serialize, Deserialize, Debug, Clone)]

@@ -6,8 +6,7 @@ use serde_json;
 
 use walkdir::WalkDir;
 
-use init::Manifest;
-use errors::{CliError, LalResult};
+use super::{Manifest, CliError, LalResult};
 
 #[derive(Deserialize)]
 struct PartialLock {

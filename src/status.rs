@@ -1,8 +1,6 @@
 use ansi_term::{Colour, ANSIString};
-use Manifest;
-use errors::{CliError, LalResult};
-use util::input;
-use super::Lockfile;
+use core::input;
+use super::{Lockfile, CliError, LalResult, Manifest};
 
 fn version_string(lf: Option<&Lockfile>, show_ver: bool, show_time: bool) -> ANSIString<'static> {
     if let Some(lock) = lf {

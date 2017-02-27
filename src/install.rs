@@ -1,16 +1,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use util::artifactory::get_tarball_uri;
-use Manifest;
-use configure::Config;
-use errors::{CliError, LalResult};
-
-pub struct Component {
-    pub name: String,
-    pub version: u32,
-    pub tarball: String,
-}
+use core::artifactory::{get_tarball_uri, Component};
+use super::{CliError, LalResult, Config, Manifest};
 
 pub fn download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
     use hyper::{self, Client};

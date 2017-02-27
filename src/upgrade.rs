@@ -1,5 +1,5 @@
 use semver::Version;
-use util::artifactory::find_latest_lal_version;
+use core::artifactory::find_latest_lal_version;
 use super::{LalResult, Config};
 
 /// Check for new versions of lal on artifactory

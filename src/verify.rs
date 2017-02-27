@@ -1,6 +1,6 @@
 use walkdir::WalkDir;
 
-use {Lockfile, Manifest, CliError, LalResult};
+use super::{Lockfile, Manifest, CliError, LalResult};
 
 
 fn verify_sane_manifest(m: &Manifest) -> LalResult<()> {

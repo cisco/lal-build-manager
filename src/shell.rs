@@ -3,7 +3,7 @@ use std::env;
 use std::path::Path;
 use std::vec::Vec;
 
-use {Config, Container, CliError, LalResult};
+use super::{Config, Container, CliError, LalResult};
 
 /// Verifies that `id -u` and `id -g` are both 1000
 ///
