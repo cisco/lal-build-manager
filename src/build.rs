@@ -19,8 +19,7 @@ fn find_valid_build_script() -> LalResult<String> {
             warn!("Using the default: .lal/BUILD");
         }
         bpath_new
-    }
-    else {
+    } else {
         trace!("No BUILD existing in .lal");
         bpath_old
     };
@@ -40,7 +39,7 @@ fn find_valid_build_script() -> LalResult<String> {
 
 pub fn tar_output(tarball: &Path) -> LalResult<()> {
     info!("Taring OUTPUT");
-    let mut args : Vec<String> = vec![
+    let mut args: Vec<String> = vec![
         "czf".into(),
         tarball.to_str().unwrap().into(), // path created internally - always valid unicode
         "--transform=s,^OUTPUT/,,".into(), // remove leading OUTPUT
@@ -88,7 +87,7 @@ pub fn build_list(manifest: &Manifest) -> LalResult<()> {
 
 /// Helper to print the available configurations for a buildable Component
 pub fn configuration_list(component: &str, manifest: &Manifest) -> LalResult<()> {
-     let component_settings = match manifest.components.get(component) {
+    let component_settings = match manifest.components.get(component) {
         Some(c) => c,
         None => return Ok(()), // invalid component - but this is for completion
     };

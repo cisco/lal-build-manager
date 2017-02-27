@@ -145,7 +145,7 @@ fn handle_docker_cmds(args: &ArgMatches,
             version: a.value_of("with-version").map(String::from),
             sha: a.value_of("with-sha").map(String::from),
             container: container.clone(),
-            force: a.is_present("force")
+            force: a.is_present("force"),
         };
         lal::build(cfg, mf, bopts, env.into(), a.is_present("print"))
     } else if let Some(a) = args.subcommand_matches("shell") {
@@ -404,7 +404,7 @@ fn main() {
     match env::var_os("SSL_CERT_FILE") {
         Some(val) => trace!("Using SSL_CERT_FILE set to {:?}", val),
         // By default point it to normal location (wont work for centos)
-        None =>  env::set_var("SSL_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt")
+        None => env::set_var("SSL_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt"),
     }
 
     // we have a subcommand because SubcommandRequiredElseHelp
@@ -412,7 +412,8 @@ fn main() {
 
     // Allow lal configure without assumptions
     if let Some(a) = args.subcommand_matches("configure") {
-        result_exit("configure", lal::configure(true, true, a.value_of("file").unwrap()));
+        result_exit("configure",
+                    lal::configure(true, true, a.value_of("file").unwrap()));
     }
 
     // Force config to exists before allowing remaining actions
@@ -516,7 +517,7 @@ fn main() {
         error!("Please hardcode an environment inside manifest.json with a value from \
                ~/.lal/config");
         process::exit(1);
-     }
+    }
 
     // Main subcommands
     handle_network_cmds(&args, &manifest, &config, &env);

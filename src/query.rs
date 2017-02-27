@@ -12,7 +12,7 @@ pub fn query(cfg: &Config, component: &str) -> LalResult<()> {
         // see #36 - can probably be taken out in rust 1.16 or 1.17
         // if `lal query media-engine | head` does not crash
         if io::stdout().flush().is_err() {
-          return Ok(())
+            return Ok(());
         }
     }
     Ok(())

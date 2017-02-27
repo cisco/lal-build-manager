@@ -257,14 +257,12 @@ fn verify_checks() {
     fs::remove_dir_all(&gtest).unwrap();
     let rcore2 = lal::fetch(&mf, &cfg, true, "default");
     assert!(rcore2.is_ok(), "install core succeeded 2");
-    assert!(!gtest.is_dir(),
-            "gtest was not reinstalled with --core");
+    assert!(!gtest.is_dir(), "gtest was not reinstalled with --core");
 
     // and it is finally installed if we ask for non-core as well
     let rall = lal::fetch(&mf, &cfg, false, "default");
     assert!(rall.is_ok(), "install all succeeded");
-    assert!(gtest.is_dir(),
-            "gtest is otherwise installed again");
+    assert!(gtest.is_dir(), "gtest is otherwise installed again");
 
     let r3 = lal::verify(&mf, "centos");
     assert!(r3.is_ok(), "verify ok again");

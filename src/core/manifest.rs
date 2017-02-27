@@ -63,7 +63,7 @@ impl ManifestLocation {
     pub fn as_path(&self, pwd: &PathBuf) -> PathBuf {
         match *self {
             ManifestLocation::RepoRoot => pwd.join("manifest.json"),
-            ManifestLocation::LalSubfolder =>  pwd.join(".lal/manifest.json")
+            ManifestLocation::LalSubfolder => pwd.join(".lal/manifest.json"),
         }
     }
 
@@ -82,8 +82,7 @@ impl ManifestLocation {
             Ok(ManifestLocation::LalSubfolder)
         } else if ManifestLocation::RepoRoot.as_path(pwd).exists() {
             Ok(ManifestLocation::RepoRoot) // allow people to migrate for a while
-        }
-        else {
+        } else {
             Err(CliError::MissingManifest)
         }
     }
@@ -126,7 +125,7 @@ impl Manifest {
         let mut f = File::open(&mpath)?;
         let mut data = String::new();
         f.read_to_string(&mut data)?;
-        let mut res : Manifest = serde_json::from_str(&data)?;
+        let mut res: Manifest = serde_json::from_str(&data)?;
         // store the location internally (not serialized to disk)
         res.location = mpath.to_string_lossy().into();
         Ok(res)

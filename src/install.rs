@@ -285,17 +285,19 @@ pub fn fetch(manifest: &Manifest, cfg: &Config, core: bool, env: &str) -> LalRes
     }
 
     // figure out what we have already
-    let lf = Lockfile::default().populate_from_input().map_err(|e| {
-        // Guide users a bit if they did something dumb - see #77
-        warn!("Populating INPUT data failed - your INPUT may be corrupt");
-        warn!("This can happen if you CTRL-C during `lal fetch`");
-        warn!("Try to `rm -rf INPUT` and `lal fetch` again.");
-        e
-    })?;
+    let lf = Lockfile::default().populate_from_input()
+        .map_err(|e| {
+            // Guide users a bit if they did something dumb - see #77
+            warn!("Populating INPUT data failed - your INPUT may be corrupt");
+            warn!("This can happen if you CTRL-C during `lal fetch`");
+            warn!("Try to `rm -rf INPUT` and `lal fetch` again.");
+            e
+        })?;
     // filter out what we already have (being careful to examine env)
     for (name, d) in lf.dependencies {
         // if d.name at d.version in d.environment matches something in deps
-        if let Some(&cand) = deps.get(&name) { // ignore extranous deps found in INPUT
+        if let Some(&cand) = deps.get(&name) {
+            // ignore extranous deps found in INPUT
             // ignore non-integer versions (stashed things must be overwritten)
             if let Ok(n) = d.version.parse::<u32>() {
                 if n == cand && d.environment == env {
@@ -315,10 +317,10 @@ pub fn fetch(manifest: &Manifest, cfg: &Config, core: bool, env: &str) -> LalRes
         if cmponent_dir.is_dir() {
             // Don't think this can fail, but we are dealing with NFS
             fs::remove_dir_all(&cmponent_dir).map_err(|e| {
-                warn!("Failed to remove INPUT/{} - {}", k, e);
-                warn!("Please clean out your INPUT folder yourself to avoid corruption");
-                e
-            })?;
+                    warn!("Failed to remove INPUT/{} - {}", k, e);
+                    warn!("Please clean out your INPUT folder yourself to avoid corruption");
+                    e
+                })?;
         }
 
         let _ = fetch_and_unpack_component(cfg, &k, Some(v), env).map_err(|e| {

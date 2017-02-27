@@ -4,15 +4,9 @@ use super::{Lockfile, CliError, LalResult, Manifest};
 
 fn version_string(lf: Option<&Lockfile>, show_ver: bool, show_time: bool) -> ANSIString<'static> {
     if let Some(lock) = lf {
-        let ver_color = if lock.version.parse::<u32>().is_ok() {
-            12
-        } else {
-            11
-        };
-        let verstr =
-            Colour::Fixed(ver_color).paint(format!("({}-{})",
-                                            lock.version,
-                                            lock.environment.clone()));
+        let ver_color = if lock.version.parse::<u32>().is_ok() { 12 } else { 11 };
+        let verstr = Colour::Fixed(ver_color)
+            .paint(format!("({}-{})", lock.version, lock.environment.clone()));
         let timestr = if let Some(ref time) = lock.built {
             Colour::Fixed(14).paint(format!("({})", time))
         } else {
