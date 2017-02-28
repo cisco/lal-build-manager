@@ -42,7 +42,7 @@ extern crate filetime;
 extern crate rand;
 
 // re-exports
-pub mod core;
+mod core;
 pub use core::*;
 
 pub use build::{build, build_list, configuration_list, BuildOptions};

@@ -1,4 +1,5 @@
-/// Globalroot shim to get components from
+#![allow(missing_docs)]
+
 use std::vec::Vec;
 use std::io::Read;
 use std::fs::File;

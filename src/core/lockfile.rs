@@ -22,6 +22,7 @@ pub struct Container {
 }
 
 impl Container {
+    /// Container struct with latest tag
     pub fn latest(name: &str) -> Self {
         Container {
             name: name.into(),
@@ -122,6 +123,7 @@ impl Lockfile {
         }
     }
 
+    /// Opened lockfile at a path
     pub fn from_path(lock_path: &PathBuf, name: &str) -> LalResult<Self> {
         if !lock_path.exists() {
             return Err(CliError::MissingLockfile(name.to_string()));
@@ -239,9 +241,11 @@ impl Lockfile {
         acc
     }
 
+    /// List all used versions used of each dependency
     pub fn find_all_dependencies(&self) -> ValueUsage {
         self.find_all_values("version")
     }
+    /// List all used environments used of each dependency
     pub fn find_all_environments(&self) -> ValueUsage {
         self.find_all_values("environment")
     }

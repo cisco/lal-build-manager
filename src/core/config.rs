@@ -85,6 +85,7 @@ pub struct ConfigDefaults {
 }
 
 impl ConfigDefaults {
+    /// Open and deserialize a defaults file
     pub fn read(file: &str) -> LalResult<ConfigDefaults> {
         let pth = Path::new(file);
         if !pth.exists() {

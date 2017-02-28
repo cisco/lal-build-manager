@@ -49,9 +49,9 @@ pub struct Manifest {
 
 /// An enum to clarify intent
 pub enum ManifestLocation {
-    // plain style (old default)
+    /// Plain style (old default)
     RepoRoot,
-    // hidden
+    /// In the .lal subfolder
     LalSubfolder,
 }
 impl Default for ManifestLocation {
@@ -60,6 +60,7 @@ impl Default for ManifestLocation {
     }
 }
 impl ManifestLocation {
+    /// Generate path for Manifest assuming pwd is the root
     pub fn as_path(&self, pwd: &PathBuf) -> PathBuf {
         match *self {
             ManifestLocation::RepoRoot => pwd.join("manifest.json"),
