@@ -1,7 +1,7 @@
 pub use self::errors::{CliError, LalResult};
 pub use self::manifest::{Manifest, ComponentConfiguration, ManifestLocation};
 pub use self::lockfile::{Lockfile, Container};
-pub use self::config::{Config, ConfigDefaults, Artifactory, Credentials, Mount};
+pub use self::config::{Config, ConfigDefaults, ArtifactoryConfig, Credentials, Mount};
 pub use self::sticky::StickyOptions;
 
 mod config;

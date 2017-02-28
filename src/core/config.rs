@@ -40,7 +40,7 @@ pub struct Credentials {
 
 /// Static Artifactory locations
 #[derive(Serialize, Deserialize, Clone, Default)]
-pub struct Artifactory {
+pub struct ArtifactoryConfig {
     /// Location of artifactory API master (for API queries)
     pub master: String,
     /// Location of artifactory slave (for fetching artifacts)
@@ -58,7 +58,7 @@ pub struct Artifactory {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Config {
     /// Configuration settings for Artifactory
-    pub artifactory: Artifactory,
+    pub artifactory: ArtifactoryConfig,
     /// Cache directory for global and stashed builds
     pub cache: String,
     /// Environments shorthands that are allowed and their full meaning
@@ -77,7 +77,7 @@ pub struct Config {
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct ConfigDefaults {
     /// Configuration settings for Artifactory
-    pub artifactory: Artifactory,
+    pub artifactory: ArtifactoryConfig,
     /// Environments shorthands that are allowed and their full meaning
     pub environments: BTreeMap<String, Container>,
     /// Extra volume mounts to be set for the container

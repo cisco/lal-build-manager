@@ -11,9 +11,9 @@ use hyper::{self, Client};
 use hyper::header::{Authorization, Basic};
 use hyper::status::StatusCode;
 
-use super::{CliError, LalResult, Artifactory};
+use super::{CliError, LalResult, ArtifactoryConfig};
 
-/// The basic definition of a component as it exists online
+// TODO: move
 pub struct Component {
     pub name: String,
     pub version: u32,
@@ -75,7 +75,7 @@ header! {(XCheckSumSha1, "X-Checksum-Sha1") => [String]}
 /// Upload a tarball to artifactory
 ///
 /// This is using a http basic auth PUT to artifactory using config credentials.
-pub fn upload_artifact(arti: &Artifactory, uri: String, f: &mut File) -> LalResult<()> {
+pub fn upload_artifact(arti: &ArtifactoryConfig, uri: String, f: &mut File) -> LalResult<()> {
     if let Some(creds) = arti.credentials.clone() {
         let client = Client::new();
 
@@ -127,7 +127,7 @@ fn get_storage_as_u32(uri: &str) -> LalResult<u32> {
 }
 
 // The URL for a component tarball stored in the default artifactory location
-fn get_dependency_url_default(art_cfg: &Artifactory, name: &str, version: u32) -> String {
+fn get_dependency_url_default(art_cfg: &ArtifactoryConfig, name: &str, version: u32) -> String {
     let tar_url = format!("{}/{}/{}/{}/{}.tar.gz",
                           art_cfg.slave,
                           art_cfg.vgroup,
@@ -140,7 +140,7 @@ fn get_dependency_url_default(art_cfg: &Artifactory, name: &str, version: u32) -
 }
 
 // The URL for a component tarball under the one of the environment trees
-fn get_dependency_env_url(art_cfg: &Artifactory, name: &str, version: u32, env: &str) -> String {
+fn get_dependency_env_url(art_cfg: &ArtifactoryConfig, name: &str, version: u32, env: &str) -> String {
     let tar_url = format!("{}/{}/env/{}/{}/{}/{}.tar.gz",
                           art_cfg.slave,
                           art_cfg.vgroup,
@@ -153,7 +153,7 @@ fn get_dependency_env_url(art_cfg: &Artifactory, name: &str, version: u32, env: 
     tar_url
 }
 
-fn get_dependency_url(art_cfg: &Artifactory, name: &str, version: u32, env: &str) -> String {
+fn get_dependency_url(art_cfg: &ArtifactoryConfig, name: &str, version: u32, env: &str) -> String {
     if env == "default" {
         // This is only used by lal export without -e
         get_dependency_url_default(art_cfg, name, version)
@@ -162,7 +162,7 @@ fn get_dependency_url(art_cfg: &Artifactory, name: &str, version: u32, env: &str
     }
 }
 
-fn get_dependency_url_latest(art_cfg: &Artifactory, name: &str, env: &str) -> LalResult<Component> {
+fn get_dependency_url_latest(art_cfg: &ArtifactoryConfig, name: &str, env: &str) -> LalResult<Component> {
     let url = format!("{}/api/storage/{}/{}",
                       art_cfg.master,
                       art_cfg.release,
@@ -179,7 +179,7 @@ fn get_dependency_url_latest(art_cfg: &Artifactory, name: &str, env: &str) -> La
 
 // This queries the API for the default location
 // if a default exists, then all our current multi-builds must exist
-pub fn get_latest_versions(art_cfg: &Artifactory, name: &str) -> LalResult<Vec<u32>> {
+pub fn get_latest_versions(art_cfg: &ArtifactoryConfig, name: &str) -> LalResult<Vec<u32>> {
     let url = format!("{}/api/storage/{}/{}",
                       art_cfg.master,
                       art_cfg.release,
@@ -188,7 +188,7 @@ pub fn get_latest_versions(art_cfg: &Artifactory, name: &str) -> LalResult<Vec<u
 }
 
 /// Main entry point for install
-pub fn get_tarball_uri(art_cfg: &Artifactory,
+pub fn get_tarball_uri(art_cfg: &ArtifactoryConfig,
                        name: &str,
                        version: Option<u32>,
                        env: &str)
@@ -208,7 +208,7 @@ pub fn get_tarball_uri(art_cfg: &Artifactory,
 ///
 /// This mostly duplicates the behaviour in `get_storage_as_u32`, however,
 /// it is parsing the version as a `semver::Version` struct rather than a u32.
-pub fn find_latest_lal_version(art_cfg: &Artifactory) -> LalResult<Version> {
+pub fn find_latest_lal_version(art_cfg: &ArtifactoryConfig) -> LalResult<Version> {
     let uri = format!("{}/api/storage/{}/lal", art_cfg.master, art_cfg.release);
     debug!("GET {}", uri);
     let resp = hyper_req(&uri).map_err(|e| {
