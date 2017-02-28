@@ -42,7 +42,7 @@ pub struct Manifest {
     /// Name of the main component
     pub name: String,
     /// Default environment to build in
-    pub environment: Option<String>,
+    pub environment: String,
     /// Components and their available configurations that are buildable
     pub components: BTreeMap<String, ComponentConfiguration>,
     /// Dependencies that are always needed
@@ -109,7 +109,7 @@ impl Manifest {
         Manifest {
             name: name.into(),
             components: comps,
-            environment: Some(env.into()),
+            environment: env.into(),
             location: location.to_string_lossy().into(),
             ..Default::default()
         }

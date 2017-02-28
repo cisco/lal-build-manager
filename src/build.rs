@@ -198,15 +198,8 @@ pub fn build(cfg: &Config,
         info!("Build succeeded with verified dependencies")
     }
     // environment is temporarily optional in manifest:
-    if let Some(ref mandated_env) = manifest.environment {
-        if &envname != mandated_env {
-            // default was set, and we used not that
-            warn!("Build was using non-default {} environment", envname);
-        }
-    } else {
-        // default was not set, impossible to tell if this was sane
-        warn!("Build was done using non-default {} environment", envname);
-        warn!("Please hardcode an environment inside manifest.json");
+    if envname != manifest.environment {
+        warn!("Build was using non-default {} environment", envname);
     }
 
     if opts.release && !printonly {

@@ -116,7 +116,7 @@ impl Lockfile {
             container: container.clone(),
             tool: env!("CARGO_PKG_VERSION").to_string(),
             built: Some(time.format("%Y-%m-%d %H:%M:%S").to_string()),
-            defaultEnv: None,
+            defaultEnv: Some(env.into()),
             environment: env.into(),
             dependencies: BTreeMap::new(),
             sha: None,
@@ -162,8 +162,8 @@ impl Lockfile {
     }
 
     /// Attach a default environment to the lockfile
-    pub fn set_default_env(mut self, default: Option<String>) -> Self {
-        self.defaultEnv = default;
+    pub fn set_default_env(mut self, default: String) -> Self {
+        self.defaultEnv = Some(default);
         self
     }
 

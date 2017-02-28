@@ -486,7 +486,6 @@ fn main() {
         .unwrap();
 
     // Subcommands that are environment agnostic
-    // TODO: this distinction is pointless if we force manifest.environment
     handle_environment_agnostic_cmds(&args, &manifest, &config);
 
     // Force a valid container key configured in manifest and corr. value in config
@@ -495,28 +494,15 @@ fn main() {
         eflag.into()
     } else if let Some(ref stickenv) = stickies.env {
         stickenv.clone()
-    } else if let Some(ref menv) = manifest.environment {
-        menv.clone()
     } else {
-        // TODO: maybe force manifest.environment rather than have this?
-        error!("Manifest is missing an environment value");
-        error!("Please hardcode an environment inside manifest.json with a value from \
-               ~/.lal/config");
-        process::exit(1);
+        manifest.environment.clone()
     };
     let container = handle_env_command(&args, &config, &env, &stickies);
 
     // Warn users who are overriding the default for the main commands
-    if let Some(ref menv) = manifest.environment {
-        if *menv != env {
-            let sub = args.subcommand_name().unwrap();
-            warn!("Running {} command in non-default {} environment", sub, env);
-        }
-    } else {
-        error!("Manifest is missing an environment value");
-        error!("Please hardcode an environment inside manifest.json with a value from \
-               ~/.lal/config");
-        process::exit(1);
+    if env != manifest.environment {
+        let sub = args.subcommand_name().unwrap();
+        warn!("Running {} command in non-default {} environment", sub, env);
     }
 
     // Main subcommands
