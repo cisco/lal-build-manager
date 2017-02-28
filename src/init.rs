@@ -1,6 +1,4 @@
 use std::env;
-use std::fs;
-use std::path::PathBuf;
 
 use super::{Config, CliError, LalResult};
 use core::manifest::*;
@@ -15,14 +13,6 @@ pub fn dep_list(mf: &Manifest, core: bool) -> LalResult<()> {
     Ok(())
 }
 
-
-fn create_lal_subdir(pwd: &PathBuf) -> LalResult<()> {
-    let loc = pwd.join(".lal");
-    if !loc.is_dir() {
-        fs::create_dir(&loc)?
-    }
-    Ok(())
-}
 
 /// Generates a blank manifest in the current directory
 ///

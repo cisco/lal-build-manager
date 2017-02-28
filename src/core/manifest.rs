@@ -1,12 +1,20 @@
 use std::io::prelude::*;
-use std::fs::File;
+use std::fs::{self, File};
 use std::collections::BTreeMap;
 use std::vec::Vec;
 use serde_json;
 use std::path::{Path, PathBuf};
 
-
 use super::{CliError, LalResult};
+
+/// A startup helper used in a few places
+pub fn create_lal_subdir(pwd: &PathBuf) -> LalResult<()> {
+    let loc = pwd.join(".lal");
+    if !loc.is_dir() {
+        fs::create_dir(&loc)?
+    }
+    Ok(())
+}
 
 /// Representation of a value of the manifest.components hash
 #[allow(non_snake_case)]

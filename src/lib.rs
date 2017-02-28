@@ -55,9 +55,9 @@ pub use verify::verify;
 pub use cache::{stash, clean};
 pub use upgrade::upgrade_check;
 pub use query::query;
-pub use env::StickyOptions;
 pub use publish::publish;
-/// Module to control a local `.lalopts` file
+
+/// Env module for env subcommand
 pub mod env;
 
 mod configure;
