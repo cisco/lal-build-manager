@@ -250,6 +250,10 @@ Many `component` or `component=version` arguments can be used in one invocation.
 #### lal fetch
  - *lal fetch [--core]*: fetches all versions corresponding to the manifest from the registry and puts them into `INPUT`. The optional `--core` flag will disregard any `devDependencies`.
 
+ Any components already found in `INPUT` are reused if they are present at the right version and correct environment.
+
+ Any extraneous versions found in `INPUT` are removed.
+
 #### lal shell
 Enters an interactive shell in the container corresponding to the environment key in the manifest mounting the current directory.
 
