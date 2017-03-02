@@ -8,6 +8,7 @@ use std::collections::BTreeMap;
 use std::env;
 
 use super::{Container, LalResult, CliError};
+use backend::artifactory::ArtifactoryConfig;
 
 
 // helper
@@ -27,30 +28,6 @@ pub struct Mount {
     pub dest: String,
     /// Whether or not to write protect the mount inside the container
     pub readonly: bool,
-}
-
-/// Artifactory credentials
-#[derive(Serialize, Deserialize, Clone)]
-pub struct Credentials {
-    /// Upload username
-    pub username: String,
-    /// Upload password
-    pub password: String,
-}
-
-/// Static Artifactory locations
-#[derive(Serialize, Deserialize, Clone, Default)]
-pub struct ArtifactoryConfig {
-    /// Location of artifactory API master (for API queries)
-    pub master: String,
-    /// Location of artifactory slave (for fetching artifacts)
-    pub slave: String,
-    /// Release group name (for API queries)
-    pub release: String,
-    /// Virtual group (for downloads)
-    pub vgroup: String,
-    /// Optional publish credentials
-    pub credentials: Option<Credentials>,
 }
 
 /// Representation of `~/.lal/config`

@@ -1,14 +1,15 @@
 use std::path::Path;
 use std::fs::File;
 
-use core::artifactory::upload_artifact;
-use super::{LalResult, CliError, Config, Lockfile};
+// Need both the struct and the trait
+use backend::{Artifactory, Backend};
+use super::{LalResult, CliError, Lockfile};
 
 /// Publish a release build to artifactory
 ///
 /// Meant to be done after a `lal build -r <component>`
 /// and requires artifactory publish credentials in the local `Config`.
-pub fn publish(name: &str, cfg: &Config, env: &str) -> LalResult<()> {
+pub fn publish(name: &str, backend: &Artifactory, env: &str) -> LalResult<()> {
     let artdir = Path::new("./ARTIFACT");
     let tarball = artdir.join(format!("{}.tar.gz", name));
     let lockfile = artdir.join("lockfile.json");
@@ -26,17 +27,21 @@ pub fn publish(name: &str, cfg: &Config, env: &str) -> LalResult<()> {
             CliError::MissingReleaseBuild
         })?;
 
+    if lock.sha.is_none() {
+        warn!("Release build not done --with-sha=$(git rev-parse HEAD)");
+    }
+
     assert_eq!(env, lock.environment); // for now
 
     info!("Publishing {}={}", name, version);
 
     let tar_uri = format!("{}/{}/{}.tar.gz", name, version, name);
     let mut tarf = File::open(tarball)?;
-    upload_artifact(&cfg.artifactory, tar_uri, &mut tarf)?;
+    backend.upload_file(tar_uri, &mut tarf)?;
 
     let mut lockf = File::open(lockfile)?;
     let lf_uri = format!("{}/{}/lockfile.json", name, version);
-    upload_artifact(&cfg.artifactory, lf_uri, &mut lockf)?;
+    backend.upload_file(lf_uri, &mut lockf)?;
 
     Ok(())
 }

@@ -4,25 +4,33 @@ use walkdir::WalkDir;
 
 use build::tar_output;
 use install;
-use super::{CliError, LalResult, Manifest, Config, Lockfile};
+use backend::Artifactory;
+use super::{CliError, LalResult, Manifest, Lockfile};
 
-pub fn is_cached(cfg: &Config, name: &str, version: u32, env: &str) -> bool {
-    get_cache_dir(cfg, name, version, env).is_dir()
+pub fn is_cached(backend: &Artifactory, name: &str, version: u32, env: Option<&str>) -> bool {
+    get_cache_dir(backend, name, version, env).is_dir()
 }
 
-pub fn get_cache_dir(cfg: &Config, name: &str, version: u32, env: &str) -> PathBuf {
-    let leading_pth = if env == "default" {
-        // can still happen from `lal export` without -e
-        Path::new(&cfg.cache).join("globals")
-    } else {
-        Path::new(&cfg.cache).join("environments").join(env)
+pub fn get_cache_dir(backend: &Artifactory,
+                     name: &str,
+                     version: u32,
+                     env: Option<&str>)
+                     -> PathBuf {
+    let pth = Path::new(&backend.cache);
+    let leading_pth = match env {
+        None => pth.join("globals"),
+        Some(e) => pth.join("environments").join(e),
     };
     leading_pth.join(name).join(version.to_string())
 }
 
-pub fn store_tarball(cfg: &Config, name: &str, version: u32, env: &str) -> Result<(), CliError> {
-    // 1. mkdir -p cfg.cacheDir/$name/$version
-    let destdir = get_cache_dir(cfg, name, version, env);
+pub fn store_tarball(backend: &Artifactory,
+                     name: &str,
+                     version: u32,
+                     env: Option<&str>)
+                     -> Result<(), CliError> {
+    // 1. mkdir -p backend.cacheDir/$name/$version
+    let destdir = get_cache_dir(backend, name, version, env);
     if !destdir.is_dir() {
         fs::create_dir_all(&destdir)?;
     }
@@ -46,7 +54,7 @@ pub fn store_tarball(cfg: &Config, name: &str, version: u32, env: &str) -> Resul
 /// then copies this to `~/.lal/cache/stash/${name}/`.
 ///
 /// This file can then be installed via `update` using a component=${name} argument.
-pub fn stash(cfg: &Config, mf: &Manifest, name: &str) -> LalResult<()> {
+pub fn stash(backend: &Artifactory, mf: &Manifest, name: &str) -> LalResult<()> {
     info!("Stashing OUTPUT into cache under {}/{}", mf.name, name);
     // sanity: verify name does NOT parse as a u32
     if let Ok(n) = name.parse::<u32>() {
@@ -68,7 +76,7 @@ pub fn stash(cfg: &Config, mf: &Manifest, name: &str) -> LalResult<()> {
     lf.version = name.to_string();
     lf.write(&lf_path, true)?;
 
-    let destdir = Path::new(&cfg.cache)
+    let destdir = Path::new(&backend.cache)
         .join("stash")
         .join(&mf.name)
         .join(name);
@@ -86,11 +94,11 @@ pub fn stash(cfg: &Config, mf: &Manifest, name: &str) -> LalResult<()> {
 }
 
 // helper for install::export
-pub fn get_path_to_stashed_component(cfg: &Config,
+pub fn get_path_to_stashed_component(backend: &Artifactory,
                                      component: &str,
                                      stashname: &str)
                                      -> LalResult<PathBuf> {
-    let stashdir = Path::new(&cfg.cache).join("stash").join(component).join(stashname);
+    let stashdir = Path::new(&backend.cache).join("stash").join(component).join(stashname);
     if !stashdir.is_dir() {
         return Err(CliError::MissingStashArtifact(format!("{}/{}", component, stashname)));
     }
@@ -102,8 +110,8 @@ pub fn get_path_to_stashed_component(cfg: &Config,
 }
 
 // helper for install::update
-pub fn fetch_from_stash(cfg: &Config, component: &str, stashname: &str) -> LalResult<()> {
-    let tarname = get_path_to_stashed_component(cfg, component, stashname)?;
+pub fn fetch_from_stash(backend: &Artifactory, component: &str, stashname: &str) -> LalResult<()> {
+    let tarname = get_path_to_stashed_component(backend, component, stashname)?;
     install::extract_tarball_to_input(tarname, component)?;
     Ok(())
 }
@@ -133,21 +141,21 @@ fn clean_in_dir(cutoff: DateTime<UTC>, dirs: WalkDir) -> LalResult<()> {
     Ok(())
 }
 
-/// Clean old artifacts in `cfg.cache` cache directory
+/// Clean old artifacts in cache directory
 ///
 /// This does the equivalent of find CACHEDIR -mindepth 3 -maxdepth 3 -type d
 /// With the correct mtime flags, then -exec deletes these folders.
-pub fn clean(cfg: &Config, days: i64) -> LalResult<()> {
+pub fn clean(backend: &Artifactory, days: i64) -> LalResult<()> {
     let cutoff = UTC::now() - Duration::days(days);
     debug!("Cleaning all artifacts from before {}", cutoff);
 
     // clean out environment subdirectories
-    let edir = Path::new(&cfg.cache).join("environments");
+    let edir = Path::new(&backend.cache).join("environments");
     let edirs = WalkDir::new(&edir).min_depth(3).max_depth(3);
     clean_in_dir(cutoff, edirs)?;
 
     // clean out stash + globals
-    let dirs = WalkDir::new(&cfg.cache).min_depth(3).max_depth(3);
+    let dirs = WalkDir::new(&backend.cache).min_depth(3).max_depth(3);
     clean_in_dir(cutoff, dirs)?;
 
     Ok(())

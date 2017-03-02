@@ -45,6 +45,9 @@ extern crate rand;
 mod core;
 pub use core::*;
 
+mod backend;
+pub use backend::*;
+
 pub use build::{build, build_list, configuration_list, BuildOptions};
 pub use configure::{configure, env_list};
 pub use init::{init, dep_list};

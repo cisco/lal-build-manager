@@ -4,7 +4,7 @@ use std::io::prelude::{Read, Write};
 use std::path::Path;
 use serde_json;
 
-use super::{LalResult};
+use super::LalResult;
 use manifest::create_lal_subdir;
 
 /// Representation of .lal/opts

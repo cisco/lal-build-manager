@@ -1,6 +1,6 @@
 use std::io::{self, Write};
 
-use core::artifactory::get_latest_versions;
+use backend::artifactory::get_latest_versions;
 use super::{LalResult, Config};
 
 /// Prints a list of versions associated with a component

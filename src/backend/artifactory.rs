@@ -11,14 +11,33 @@ use hyper::{self, Client};
 use hyper::header::{Authorization, Basic};
 use hyper::status::StatusCode;
 
-use super::{CliError, LalResult, ArtifactoryConfig};
+use core::{CliError, LalResult};
 
-// TODO: move
-pub struct Component {
-    pub name: String,
-    pub version: u32,
-    pub tarball: String,
+
+/// Artifactory credentials
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Credentials {
+    /// Upload username
+    pub username: String,
+    /// Upload password
+    pub password: String,
 }
+
+/// Static Artifactory locations
+#[derive(Serialize, Deserialize, Clone, Default)]
+pub struct ArtifactoryConfig {
+    /// Location of artifactory API master (for API queries)
+    pub master: String,
+    /// Location of artifactory slave (for fetching artifacts)
+    pub slave: String,
+    /// Release group name (for API queries)
+    pub release: String,
+    /// Virtual group (for downloads)
+    pub vgroup: String,
+    /// Optional publish credentials
+    pub credentials: Option<Credentials>,
+}
+
 
 // Need these to query for stored artifacts:
 // This query has tons of info, but we only care about the version
@@ -75,7 +94,7 @@ header! {(XCheckSumSha1, "X-Checksum-Sha1") => [String]}
 /// Upload a tarball to artifactory
 ///
 /// This is using a http basic auth PUT to artifactory using config credentials.
-pub fn upload_artifact(arti: &ArtifactoryConfig, uri: String, f: &mut File) -> LalResult<()> {
+fn upload_artifact(arti: &ArtifactoryConfig, uri: String, f: &mut File) -> LalResult<()> {
     if let Some(creds) = arti.credentials.clone() {
         let client = Client::new();
 
@@ -140,7 +159,11 @@ fn get_dependency_url_default(art_cfg: &ArtifactoryConfig, name: &str, version: 
 }
 
 // The URL for a component tarball under the one of the environment trees
-fn get_dependency_env_url(art_cfg: &ArtifactoryConfig, name: &str, version: u32, env: &str) -> String {
+fn get_dependency_env_url(art_cfg: &ArtifactoryConfig,
+                          name: &str,
+                          version: u32,
+                          env: &str)
+                          -> String {
     let tar_url = format!("{}/{}/env/{}/{}/{}/{}.tar.gz",
                           art_cfg.slave,
                           art_cfg.vgroup,
@@ -162,7 +185,10 @@ fn get_dependency_url(art_cfg: &ArtifactoryConfig, name: &str, version: u32, env
     }
 }
 
-fn get_dependency_url_latest(art_cfg: &ArtifactoryConfig, name: &str, env: &str) -> LalResult<Component> {
+fn get_dependency_url_latest(art_cfg: &ArtifactoryConfig,
+                             name: &str,
+                             env: &str)
+                             -> LalResult<Component> {
     let url = format!("{}/api/storage/{}/{}",
                       art_cfg.master,
                       art_cfg.release,
@@ -174,6 +200,7 @@ fn get_dependency_url_latest(art_cfg: &ArtifactoryConfig, name: &str, env: &str)
         tarball: get_dependency_url(art_cfg, name, v, env),
         version: v,
         name: name.to_string(),
+        location: if env == "default" { None } else { Some(env.into()) },
     })
 }
 
@@ -188,16 +215,17 @@ pub fn get_latest_versions(art_cfg: &ArtifactoryConfig, name: &str) -> LalResult
 }
 
 /// Main entry point for install
-pub fn get_tarball_uri(art_cfg: &ArtifactoryConfig,
-                       name: &str,
-                       version: Option<u32>,
-                       env: &str)
-                       -> LalResult<Component> {
+fn get_tarball_uri(art_cfg: &ArtifactoryConfig,
+                   name: &str,
+                   version: Option<u32>,
+                   env: &str)
+                   -> LalResult<Component> {
     if let Some(v) = version {
         Ok(Component {
             tarball: get_dependency_url(art_cfg, name, v, env),
             version: v,
             name: name.to_string(),
+            location: if env == "default" { None } else { Some(env.into()) },
         })
     } else {
         get_dependency_url_latest(art_cfg, name, env)
@@ -230,5 +258,61 @@ pub fn find_latest_lal_version(art_cfg: &ArtifactoryConfig) -> LalResult<Version
     } else {
         warn!("Failed to parse version information from artifactory storage api for lal");
         Err(CliError::ArtifactoryFailure("No version information found on API".into()))
+    }
+}
+
+
+use super::{Backend, Component};
+
+// TODO: cache module should be tied to this
+// TODO: fetch_via_artifactory, extract_tarball_to_input
+// download_to_path, fetch_and_unpack_component
+// should be part of a helper in this folder
+
+pub struct Artifactory {
+    /// Artifactory config and credentials
+    pub config: ArtifactoryConfig,
+    /// Cache directory
+    pub cache: String,
+}
+impl Artifactory {
+    pub fn new(cfg: &ArtifactoryConfig, cache: &String) -> Self {
+        Artifactory {
+            config: cfg.clone(),
+            cache: cache.clone(),
+        }
+    }
+}
+
+impl Backend for Artifactory {
+    fn get_versions(&self, name: &str, loc: Option<&str>) -> LalResult<Vec<u32>> {
+        match loc {
+            None => get_latest_versions(&self.config, name),
+            Some(_) => {
+                // we shouldn't query for this yet
+                // want to not get versions that do not exist on join
+                unreachable!()
+            }
+        }
+
+    }
+
+    fn get_latest_version(&self, name: &str, loc: Option<&str>) -> LalResult<u32> {
+        let env = loc.unwrap_or("default");
+        let latest = get_dependency_url_latest(&self.config, name, env)?;
+        Ok(latest.version)
+    }
+
+    fn get_tarball_url(&self,
+                       name: &str,
+                       version: Option<u32>,
+                       loc: Option<&str>)
+                       -> LalResult<Component> {
+        let env = loc.unwrap_or("default");
+        get_tarball_uri(&self.config, name, version, &env)
+    }
+
+    fn upload_file(&self, uri: String, f: &mut File) -> LalResult<()> {
+        upload_artifact(&self.config, uri, f)
     }
 }
