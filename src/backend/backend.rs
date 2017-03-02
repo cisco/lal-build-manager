@@ -1,5 +1,6 @@
 use core::LalResult;
 use std::fs::File;
+use semver::Version;
 
 /// The basic definition of a component as it exists online
 ///
@@ -24,8 +25,6 @@ pub trait Backend {
     /// Get the latest version of a component
     fn get_latest_version(&self, name: &str, loc: Option<&str>) -> LalResult<u32>;
 
-    // TODO: another set of two for Semver components?
-
     /// Get the tarball url of a `Component` in a backend location
     /// If no version is given, return latest
     fn get_tarball_url(&self,
@@ -36,4 +35,7 @@ pub trait Backend {
 
     /// Publish a file into a specific location
     fn upload_file(&self, uri: String, f: &mut File) -> LalResult<()>;
+
+    /// How to perform an upgrade check
+    fn get_latest_lal_version(&self) -> LalResult<Version>;
 }

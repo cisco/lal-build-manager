@@ -1,14 +1,14 @@
 use semver::Version;
-use backend::artifactory::find_latest_lal_version;
-use super::{LalResult, Config};
+use super::{LalResult, Backend, Artifactory};
 
 /// Check for new versions of lal on artifactory
 ///
 /// This will just query for the latest version, and not install anything.
 /// If a newer version found (> in semver), then this is logged depending on mode.
 /// If run as part of the automatic update check, then it's silent.
-pub fn upgrade_check(cfg: &Config, silent: bool) -> LalResult<bool> {
-    let latest = find_latest_lal_version(&cfg.artifactory)?;
+pub fn upgrade_check(backend: &Artifactory, silent: bool) -> LalResult<bool> {
+    let latest = backend.get_latest_lal_version()?;
+    let cfg = backend.config.clone();
     let current = Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
     if latest > current {
         // New version found - always full output now
@@ -21,8 +21,8 @@ pub fn upgrade_check(cfg: &Config, silent: bool) -> LalResult<bool> {
         info!(" - `git pull && cargo build --release` in the source checkout");
         info!("If your version is prebuilt:");
         info!(" - `curl {}/{}/lal/latest/lal.tar | tar xz -C /usr/local`",
-              cfg.artifactory.slave,
-              cfg.artifactory.vgroup);
+              cfg.slave,
+              cfg.vgroup);
     } else if silent {
         debug!("You are running the latest version of lal");
     } else {

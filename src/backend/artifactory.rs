@@ -253,7 +253,7 @@ fn get_tarball_uri(art_cfg: &ArtifactoryConfig,
 ///
 /// This mostly duplicates the behaviour in `get_storage_as_u32`, however,
 /// it is parsing the version as a `semver::Version` struct rather than a u32.
-pub fn find_latest_lal_version(art_cfg: &ArtifactoryConfig) -> LalResult<Version> {
+fn find_latest_lal_version(art_cfg: &ArtifactoryConfig) -> LalResult<Version> {
     let uri = format!("{}/api/storage/{}/lal", art_cfg.master, art_cfg.release);
     debug!("GET {}", uri);
     let resp = hyper_req(&uri).map_err(|e| {
@@ -321,5 +321,9 @@ impl Backend for Artifactory {
 
     fn upload_file(&self, uri: String, f: &mut File) -> LalResult<()> {
         upload_artifact(&self.config, uri, f)
+    }
+
+    fn get_latest_lal_version(&self) -> LalResult<Version> {
+        find_latest_lal_version(&self.config)
     }
 }
