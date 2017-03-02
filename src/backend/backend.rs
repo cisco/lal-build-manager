@@ -11,8 +11,6 @@ pub struct Component {
     pub version: u32,
     /// The raw URL of the tarball at the specified version number
     pub tarball: String,
-    /// Bucket the tarball was found in
-    pub location: Option<String>,
 }
 
 /// Properties a storage backend of artifacts should have

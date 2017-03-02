@@ -176,18 +176,22 @@ fn get_dependency_env_url(art_cfg: &ArtifactoryConfig,
     tar_url
 }
 
-fn get_dependency_url(art_cfg: &ArtifactoryConfig, name: &str, version: u32, env: &str) -> String {
-    if env == "default" {
+fn get_dependency_url(art_cfg: &ArtifactoryConfig,
+                      name: &str,
+                      version: u32,
+                      env: Option<&str>)
+                      -> String {
+    if let Some(e) = env {
+        get_dependency_env_url(art_cfg, name, version, e)
+    } else {
         // This is only used by lal export without -e
         get_dependency_url_default(art_cfg, name, version)
-    } else {
-        get_dependency_env_url(art_cfg, name, version, env)
     }
 }
 
 fn get_dependency_url_latest(art_cfg: &ArtifactoryConfig,
                              name: &str,
-                             env: &str)
+                             env: Option<&str>)
                              -> LalResult<Component> {
     let url = format!("{}/api/storage/{}/{}",
                       art_cfg.master,
@@ -199,18 +203,32 @@ fn get_dependency_url_latest(art_cfg: &ArtifactoryConfig,
     Ok(Component {
         tarball: get_dependency_url(art_cfg, name, v, env),
         version: v,
-        name: name.to_string(),
-        location: if env == "default" { None } else { Some(env.into()) },
+        name: name.into(),
     })
 }
 
 // This queries the API for the default location
 // if a default exists, then all our current multi-builds must exist
-pub fn get_latest_versions(art_cfg: &ArtifactoryConfig, name: &str) -> LalResult<Vec<u32>> {
-    let url = format!("{}/api/storage/{}/{}",
-                      art_cfg.master,
-                      art_cfg.release,
-                      name);
+fn get_latest_versions(art_cfg: &ArtifactoryConfig,
+                       name: &str,
+                       env: Option<&str>)
+                       -> LalResult<Vec<u32>> {
+    let url = match env {
+        Some(e) => {
+            format!("{}/api/storage/{}/{}/{}/{}",
+                    art_cfg.master,
+                    art_cfg.release,
+                    "env",
+                    e,
+                    name)
+        }
+        None => {
+            format!("{}/api/storage/{}/{}",
+                    art_cfg.master,
+                    art_cfg.release,
+                    name)
+        }
+    };
     get_storage_versions(&url)
 }
 
@@ -218,14 +236,13 @@ pub fn get_latest_versions(art_cfg: &ArtifactoryConfig, name: &str) -> LalResult
 fn get_tarball_uri(art_cfg: &ArtifactoryConfig,
                    name: &str,
                    version: Option<u32>,
-                   env: &str)
+                   env: Option<&str>)
                    -> LalResult<Component> {
     if let Some(v) = version {
         Ok(Component {
             tarball: get_dependency_url(art_cfg, name, v, env),
             version: v,
-            name: name.to_string(),
-            location: if env == "default" { None } else { Some(env.into()) },
+            name: name.into(),
         })
     } else {
         get_dependency_url_latest(art_cfg, name, env)
@@ -286,20 +303,11 @@ impl Artifactory {
 
 impl Backend for Artifactory {
     fn get_versions(&self, name: &str, loc: Option<&str>) -> LalResult<Vec<u32>> {
-        match loc {
-            None => get_latest_versions(&self.config, name),
-            Some(_) => {
-                // we shouldn't query for this yet
-                // want to not get versions that do not exist on join
-                unreachable!()
-            }
-        }
-
+        get_latest_versions(&self.config, name, loc)
     }
 
     fn get_latest_version(&self, name: &str, loc: Option<&str>) -> LalResult<u32> {
-        let env = loc.unwrap_or("default");
-        let latest = get_dependency_url_latest(&self.config, name, env)?;
+        let latest = get_dependency_url_latest(&self.config, name, loc)?;
         Ok(latest.version)
     }
 
@@ -308,8 +316,7 @@ impl Backend for Artifactory {
                        version: Option<u32>,
                        loc: Option<&str>)
                        -> LalResult<Component> {
-        let env = loc.unwrap_or("default");
-        get_tarball_uri(&self.config, name, version, &env)
+        get_tarball_uri(&self.config, name, version, loc)
     }
 
     fn upload_file(&self, uri: String, f: &mut File) -> LalResult<()> {

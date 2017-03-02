@@ -31,14 +31,14 @@ fn result_exit<T>(name: &str, x: LalResult<T>) {
 fn handle_manifest_agnostic_cmds(args: &ArgMatches,
                                  cfg: &Config,
                                  backend: &Artifactory,
-                                 env_hint: Option<&str>) {
+                                 explicit_env: Option<&str>) {
     let res = if let Some(a) = args.subcommand_matches("export") {
         lal::export(backend,
                     a.value_of("component").unwrap(),
                     a.value_of("output"),
-                    env_hint)
+                    explicit_env)
     } else if let Some(a) = args.subcommand_matches("query") {
-        lal::query(cfg, a.value_of("component").unwrap())
+        lal::query(backend, explicit_env, a.value_of("component").unwrap())
     } else if let Some(_) = args.subcommand_matches("list-environments") {
         lal::env_list(cfg)
     } else {
@@ -473,16 +473,10 @@ fn main() {
         })
         .unwrap(); // we get a default empty options here otherwise
 
-    // Work out a best guess at environment for manifest agnostic commands
-    let env_hint: Option<&str> = if let Some(eflag) = args.value_of("environment") {
-        Some(eflag.into())
-    } else if let Some(ref stickenv) = stickies.env {
-        Some(&stickenv)
-    } else {
-        None // hooks into global location for artifacts
-    };
+    // Manifest agnostic commands need explicit environments to not look in global location
+    let explicit_env = args.value_of("environment");
     // TODO: validate env_hint - needs to be in ~/.lal/config
-    handle_manifest_agnostic_cmds(&args, &config, &backend, env_hint);
+    handle_manifest_agnostic_cmds(&args, &config, &backend, explicit_env);
 
     // Force manifest to exist before allowing remaining actions
     let manifest = Manifest::read()
