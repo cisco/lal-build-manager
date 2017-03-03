@@ -246,17 +246,16 @@ fn verify_checks() {
     let r2 = lal::verify(&mf, "centos".into());
     assert!(r2.is_err(), "verify failed after fiddling");
 
-    // re-install core deps that's not in INPUT
+    // fetch --core, resyncs with core deps (removes devDeps and other extraneous)
     let rcore = lal::fetch(&mf, &cfg, true, "default");
     assert!(rcore.is_ok(), "install core succeeded");
     assert!(yajl.is_dir(), "yajl was reinstalled from manifest");
-    assert!(gtest.is_dir(),
-            "gtest was was already present and not removed");
+    assert!(!gtest.is_dir(), "gtest was was extraneous with --core => removed");
 
-    // but if we remove it and install with core
-    fs::remove_dir_all(&gtest).unwrap();
+    // fetch --core also doesn't install else again
     let rcore2 = lal::fetch(&mf, &cfg, true, "default");
     assert!(rcore2.is_ok(), "install core succeeded 2");
+    assert!(yajl.is_dir(), "yajl still there");
     assert!(!gtest.is_dir(), "gtest was not reinstalled with --core");
 
     // and it is finally installed if we ask for non-core as well

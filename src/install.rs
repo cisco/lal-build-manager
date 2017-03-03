@@ -211,6 +211,7 @@ pub fn fetch(manifest: &Manifest, backend: &Artifactory, core: bool, env: &str) 
             deps.insert(k.clone(), *v);
         }
     }
+    let mut extraneous = vec![]; // stuff we should remove
 
     // figure out what we have already
     let lf = Lockfile::default().populate_from_input()
@@ -224,8 +225,7 @@ pub fn fetch(manifest: &Manifest, backend: &Artifactory, core: bool, env: &str) 
     // filter out what we already have (being careful to examine env)
     for (name, d) in lf.dependencies {
         // if d.name at d.version in d.environment matches something in deps
-        if let Some(&cand) = deps.get(&name) {
-            // ignore extranous deps found in INPUT
+        if let Some(&cand) = deps.get(&name) { // version found in manifest
             // ignore non-integer versions (stashed things must be overwritten)
             if let Ok(n) = d.version.parse::<u32>() {
                 if n == cand && d.environment == env {
@@ -233,6 +233,8 @@ pub fn fetch(manifest: &Manifest, backend: &Artifactory, core: bool, env: &str) 
                     deps.remove(&name);
                 }
             }
+        } else {
+            extraneous.push(name.clone());
         }
     }
 
@@ -257,6 +259,15 @@ pub fn fetch(manifest: &Manifest, backend: &Artifactory, core: bool, env: &str) 
             // this is why we clean_input
             err = Some(e);
         });
+    }
+
+    // remove extraneous deps
+    for name in extraneous {
+        info!("Remove {}", name);
+        let pth = Path::new("./INPUT").join(&name);
+        if pth.is_dir() {
+            fs::remove_dir_all(&pth)?;
+        }
     }
 
     if err.is_some() {
