@@ -37,11 +37,11 @@ pub fn publish(name: &str, backend: &Artifactory, env: &str) -> LalResult<()> {
 
     let tar_uri = format!("{}/{}/{}.tar.gz", name, version, name);
     let mut tarf = File::open(tarball)?;
-    backend.upload_file(tar_uri, &mut tarf)?;
+    backend.upload_file(&tar_uri, &mut tarf)?;
 
     let mut lockf = File::open(lockfile)?;
     let lf_uri = format!("{}/{}/lockfile.json", name, version);
-    backend.upload_file(lf_uri, &mut lockf)?;
+    backend.upload_file(&lf_uri, &mut lockf)?;
 
     Ok(())
 }

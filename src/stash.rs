@@ -1,52 +1,10 @@
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use walkdir::WalkDir;
 
-use build::tar_output;
-use install;
-use backend::Artifactory;
+use backend::{Artifactory, tar_output};
 use super::{CliError, LalResult, Manifest, Lockfile};
 
-pub fn is_cached(backend: &Artifactory, name: &str, version: u32, env: Option<&str>) -> bool {
-    get_cache_dir(backend, name, version, env).is_dir()
-}
-
-pub fn get_cache_dir(backend: &Artifactory,
-                     name: &str,
-                     version: u32,
-                     env: Option<&str>)
-                     -> PathBuf {
-    let pth = Path::new(&backend.cache);
-    let leading_pth = match env {
-        None => pth.join("globals"),
-        Some(e) => pth.join("environments").join(e),
-    };
-    leading_pth.join(name).join(version.to_string())
-}
-
-pub fn store_tarball(backend: &Artifactory,
-                     name: &str,
-                     version: u32,
-                     env: Option<&str>)
-                     -> Result<(), CliError> {
-    // 1. mkdir -p backend.cacheDir/$name/$version
-    let destdir = get_cache_dir(backend, name, version, env);
-    if !destdir.is_dir() {
-        fs::create_dir_all(&destdir)?;
-    }
-    // 2. stuff $PWD/$name.tar in there
-    let tarname = [name, ".tar"].concat();
-    let dest = Path::new(&destdir).join(&tarname);
-    let src = Path::new(".").join(&tarname);
-    if !src.is_file() {
-        return Err(CliError::MissingTarball);
-    }
-    debug!("Move {:?} -> {:?}", src, dest);
-    fs::copy(&src, &dest)?;
-    fs::remove_file(&src)?;
-
-    Ok(())
-}
 
 /// Saves current build `./OUTPUT` to the local cache under a specific name
 ///
@@ -93,28 +51,6 @@ pub fn stash(backend: &Artifactory, mf: &Manifest, name: &str) -> LalResult<()> 
     Ok(())
 }
 
-// helper for install::export
-pub fn get_path_to_stashed_component(backend: &Artifactory,
-                                     component: &str,
-                                     stashname: &str)
-                                     -> LalResult<PathBuf> {
-    let stashdir = Path::new(&backend.cache).join("stash").join(component).join(stashname);
-    if !stashdir.is_dir() {
-        return Err(CliError::MissingStashArtifact(format!("{}/{}", component, stashname)));
-    }
-    debug!("Inferring stashed version {} of component {}",
-           stashname,
-           component);
-    let tarname = stashdir.join(format!("{}.tar.gz", component));
-    Ok(tarname)
-}
-
-// helper for install::update
-pub fn fetch_from_stash(backend: &Artifactory, component: &str, stashname: &str) -> LalResult<()> {
-    let tarname = get_path_to_stashed_component(backend, component, stashname)?;
-    install::extract_tarball_to_input(tarname, component)?;
-    Ok(())
-}
 
 use chrono::{DateTime, UTC, Duration, TimeZone};
 use filetime::FileTime;

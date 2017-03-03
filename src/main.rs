@@ -10,6 +10,7 @@ use clap::{Arg, App, AppSettings, SubCommand, ArgMatches};
 use std::process;
 use std::env;
 
+
 fn is_integer(v: String) -> Result<(), String> {
     if v.parse::<u32>().is_ok() {
         return Ok(());
@@ -39,7 +40,7 @@ fn handle_manifest_agnostic_cmds(args: &ArgMatches,
                     explicit_env)
     } else if let Some(a) = args.subcommand_matches("query") {
         lal::query(backend, explicit_env, a.value_of("component").unwrap())
-    } else if let Some(_) = args.subcommand_matches("list-environments") {
+    } else if args.subcommand_matches("list-environments").is_some() {
         lal::env_list(cfg)
     } else {
         return ();
@@ -54,7 +55,7 @@ fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, backend: &
                     a.is_present("full"),
                     a.is_present("origin"),
                     a.is_present("time"))
-    } else if let Some(_) = args.subcommand_matches("list-components") {
+    } else if args.subcommand_matches("list-components").is_some() {
         lal::build_list(mf)
     } else if let Some(a) = args.subcommand_matches("list-configurations") {
         lal::configuration_list(a.value_of("component").unwrap(), mf)
@@ -73,7 +74,7 @@ fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, backend: &
 
 fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, backend: &Artifactory, env: &str) {
     let res = if let Some(a) = args.subcommand_matches("update") {
-        let xs = a.values_of("components").unwrap().map(|s| s.to_string()).collect::<Vec<_>>();
+        let xs = a.values_of("components").unwrap().map(String::from).collect::<Vec<_>>();
         lal::update(mf,
                     backend,
                     xs,
@@ -110,9 +111,9 @@ fn handle_env_command(args: &ArgMatches,
 
     // resolve env updates and sticky options before main subcommands
     if let Some(a) = args.subcommand_matches("env") {
-        if let Some(_) = a.subcommand_matches("update") {
+        if a.subcommand_matches("update").is_some() {
             result_exit("env update", lal::env::update(&container, env))
-        } else if let Some(_) = a.subcommand_matches("reset") {
+        } else if a.subcommand_matches("reset").is_some() {
             // NB: if .lal/opts.env points at an environment not in config
             // reset will fail.. possible to fix, but complects this file too much
             // .lal/opts writes are checked in lal::env::set anyway so this
@@ -137,7 +138,7 @@ fn handle_docker_cmds(args: &ArgMatches,
                       cfg: &Config,
                       env: &str,
                       container: &Container) {
-    let res = if let Some(_) = args.subcommand_matches("verify") {
+    let res = if args.subcommand_matches("verify").is_some() {
         // not really a docker related command, but it needs
         // the resolved env to verify consistent dependency usage
         lal::verify(mf, env)
@@ -433,7 +434,7 @@ fn main() {
     let backend = Artifactory::new(&config.artifactory, &config.cache);
 
     // Allow lal upgrade without manifest
-    if let Some(_) = args.subcommand_matches("upgrade") {
+    if args.subcommand_matches("upgrade").is_some() {
         result_exit("upgrade", lal::upgrade_check(&backend, false)); // explicit, verbose check
     }
     // Timed daily, silent upgrade check (if not using upgrade)

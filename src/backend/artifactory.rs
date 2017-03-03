@@ -94,7 +94,7 @@ header! {(XCheckSumSha1, "X-Checksum-Sha1") => [String]}
 /// Upload a tarball to artifactory
 ///
 /// This is using a http basic auth PUT to artifactory using config credentials.
-fn upload_artifact(arti: &ArtifactoryConfig, uri: String, f: &mut File) -> LalResult<()> {
+fn upload_artifact(arti: &ArtifactoryConfig, uri: &str, f: &mut File) -> LalResult<()> {
     if let Some(creds) = arti.credentials.clone() {
         let client = Client::new();
 
@@ -281,11 +281,6 @@ fn find_latest_lal_version(art_cfg: &ArtifactoryConfig) -> LalResult<Version> {
 
 use super::{Backend, Component};
 
-// TODO: cache module should be tied to this
-// TODO: fetch_via_artifactory, extract_tarball_to_input
-// download_to_path, fetch_and_unpack_component
-// should be part of a helper in this folder
-
 pub struct Artifactory {
     /// Artifactory config and credentials
     pub config: ArtifactoryConfig,
@@ -293,10 +288,10 @@ pub struct Artifactory {
     pub cache: String,
 }
 impl Artifactory {
-    pub fn new(cfg: &ArtifactoryConfig, cache: &String) -> Self {
+    pub fn new(cfg: &ArtifactoryConfig, cache: &str) -> Self {
         Artifactory {
             config: cfg.clone(),
-            cache: cache.clone(),
+            cache: cache.into(),
         }
     }
 }
@@ -319,7 +314,7 @@ impl Backend for Artifactory {
         get_tarball_uri(&self.config, name, version, loc)
     }
 
-    fn upload_file(&self, uri: String, f: &mut File) -> LalResult<()> {
+    fn upload_file(&self, uri: &str, f: &mut File) -> LalResult<()> {
         upload_artifact(&self.config, uri, f)
     }
 

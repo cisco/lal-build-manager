@@ -34,7 +34,7 @@ pub trait Backend {
                        -> LalResult<Component>;
 
     /// Publish a file into a specific location
-    fn upload_file(&self, uri: String, f: &mut File) -> LalResult<()>;
+    fn upload_file(&self, uri: &str, f: &mut File) -> LalResult<()>;
 
     /// How to perform an upgrade check
     fn get_latest_lal_version(&self) -> LalResult<Version>;

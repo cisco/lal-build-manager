@@ -1,85 +1,9 @@
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
-use backend::{Component, Artifactory, Backend};
+use backend::{self, Artifactory};
 use super::{CliError, LalResult, Manifest};
 
-pub fn download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
-    use hyper::{self, Client};
-    use std::io::prelude::{Write, Read};
-
-    debug!("GET {}", url);
-    let client = Client::new();
-    let mut res = client.get(url).send()?;
-    if res.status != hyper::Ok {
-        return Err(CliError::ArtifactoryFailure(format!("GET request with {}", res.status)));
-    }
-
-    let mut buffer: Vec<u8> = Vec::new();
-    res.read_to_end(&mut buffer)?;
-    let mut f = fs::File::create(save)?;
-    f.write_all(&buffer)?;
-    Ok(())
-}
-
-// helper for fetch_and_unpack_component and stash::fetch_from_stash
-pub fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<()> {
-    use tar::Archive;
-    use flate2::read::GzDecoder;
-
-    let data = fs::File::open(tarname)?;
-    let decompressed = GzDecoder::new(data)?; // decoder reads data
-    let mut archive = Archive::new(decompressed); // Archive reads decoded
-
-    let extract_path = Path::new("./INPUT").join(component);
-    let _ = fs::remove_dir_all(&extract_path); // remove current dir if exists
-    fs::create_dir_all(&extract_path)?;
-    archive.unpack(&extract_path)?;
-    Ok(())
-}
-
-// export a component from artifactory to stash
-fn fetch_via_artifactory(backend: &Artifactory,
-                         name: &str,
-                         version: Option<u32>,
-                         env: Option<&str>)
-                         -> LalResult<(PathBuf, Component)> {
-    use cache;
-
-    trace!("Locate component {}", name);
-
-    let component = backend.get_tarball_url(name, version, env)?;
-
-    if !cache::is_cached(backend, &component.name, component.version, env) {
-        // download to PWD then move it to stash immediately
-        let local_tarball = Path::new(".").join(format!("{}.tar", name));
-        download_to_path(&component.tarball, &local_tarball)?;
-        cache::store_tarball(backend, name, component.version, env)?;
-    }
-    assert!(cache::is_cached(backend, &component.name, component.version, env),
-            "cached component");
-
-    trace!("Fetching {} from cache", name);
-    let tarname = cache::get_cache_dir(backend, &component.name, component.version, env)
-        .join(format!("{}.tar", name));
-    Ok((tarname, component))
-}
-
-// import a component from stash to artifactory
-fn fetch_and_unpack_component(backend: &Artifactory,
-                              name: &str,
-                              version: Option<u32>,
-                              env: Option<&str>)
-                              -> LalResult<Component> {
-    let (tarname, component) = fetch_via_artifactory(backend, name, version, env)?;
-
-    debug!("Unpacking tarball {} for {}",
-           tarname.to_str().unwrap(),
-           component.name);
-    extract_tarball_to_input(tarname, name)?;
-
-    Ok(component)
-}
 
 fn clean_input() {
     let input = Path::new("./INPUT");
@@ -103,7 +27,6 @@ pub fn update(manifest: &Manifest,
               savedev: bool,
               env: &str)
               -> LalResult<()> {
-    use cache;
     debug!("Update specific deps: {:?}", components);
 
     let mut error = None;
@@ -114,7 +37,7 @@ pub fn update(manifest: &Manifest,
             let pair: Vec<&str> = comp.split('=').collect();
             if let Ok(n) = pair[1].parse::<u32>() {
                 // standard fetch with an integer version
-                match fetch_and_unpack_component(backend, pair[0], Some(n), Some(env)) {
+                match backend::fetch_and_unpack_component(backend, pair[0], Some(n), Some(env)) {
                     Ok(c) => updated.push(c),
                     Err(e) => {
                         warn!("Failed to update {} ({})", pair[0], e);
@@ -124,14 +47,14 @@ pub fn update(manifest: &Manifest,
             } else {
                 // fetch from stash - this does not go into `updated` it it succeeds
                 // because we wont and cannot save stashed versions in the manifest
-                let _ = cache::fetch_from_stash(backend, pair[0], pair[1]).map_err(|e| {
+                let _ = backend::fetch_from_stash(backend, pair[0], pair[1]).map_err(|e| {
                     warn!("Failed to update {} from stash ({})", pair[0], e);
                     error = Some(e);
                 });
             }
         } else {
             // fetch without a specific version (latest)
-            match fetch_and_unpack_component(backend, comp, None, Some(env)) {
+            match backend::fetch_and_unpack_component(backend, comp, None, Some(env)) {
                 Ok(c) => updated.push(c),
                 Err(e) => {
                     warn!("Failed to update {} ({})", &comp, e);
@@ -140,8 +63,8 @@ pub fn update(manifest: &Manifest,
             }
         }
     }
-    if error.is_some() {
-        return Err(error.unwrap());
+    if let Some(e) = error {
+        return Err(e);
     }
 
     // Update manifest if saving in any way
@@ -192,7 +115,6 @@ pub fn export(backend: &Artifactory,
               output: Option<&str>,
               env: Option<&str>)
               -> LalResult<()> {
-    use cache;
     let dir = output.unwrap_or(".");
 
     info!("Export {} {} to {}", env.unwrap_or("global"), comp, dir);
@@ -203,15 +125,15 @@ pub fn export(backend: &Artifactory,
         if let Ok(n) = pair[1].parse::<u32>() {
             // standard fetch with an integer version
             component_name = pair[0]; // save so we have sensible tarball names
-            fetch_via_artifactory(backend, pair[0], Some(n), env)?.0
+            backend::fetch_via_artifactory(backend, pair[0], Some(n), env)?.0
         } else {
             // string version -> stash
             component_name = pair[0]; // save so we have sensible tarball names
-            cache::get_path_to_stashed_component(backend, pair[0], pair[1])?
+            backend::get_path_to_stashed_component(backend, pair[0], pair[1])?
         }
     } else {
         // fetch without a specific version (latest)
-        fetch_via_artifactory(backend, comp, None, env)?.0
+        backend::fetch_via_artifactory(backend, comp, None, env)?.0
     };
 
     let dest = Path::new(dir).join(format!("{}.tar.gz", component_name));
@@ -329,7 +251,7 @@ pub fn fetch(manifest: &Manifest, backend: &Artifactory, core: bool, env: &str) 
                 })?;
         }
 
-        let _ = fetch_and_unpack_component(backend, &k, Some(v), Some(env)).map_err(|e| {
+        let _ = backend::fetch_and_unpack_component(backend, &k, Some(v), Some(env)).map_err(|e| {
             warn!("Failed to completely install {} ({})", k, e);
             // likely symlinks inside tarball that are being dodgy
             // this is why we clean_input
