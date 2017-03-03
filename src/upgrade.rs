@@ -1,14 +1,14 @@
 use semver::Version;
-use super::{LalResult, Backend, Artifactory};
+use super::{LalResult, Backend};
 
-/// Check for new versions of lal on artifactory
+/// Check for new versions of lal
 ///
 /// This will just query for the latest version, and not install anything.
 /// If a newer version found (> in semver), then this is logged depending on mode.
 /// If run as part of the automatic update check, then it's silent.
-pub fn upgrade_check(backend: &Artifactory, silent: bool) -> LalResult<bool> {
+pub fn upgrade_check<T: Backend>(backend: &T, silent: bool) -> LalResult<bool> {
     let latest = backend.get_latest_lal_version()?;
-    let cfg = backend.config.clone();
+    let cfg = backend.get_config();
     let current = Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
     if latest > current {
         // New version found - always full output now

@@ -81,14 +81,14 @@ pub enum CliError {
     // fetch/update failures
     /// Unspecified install failure
     InstallFailure,
-    /// Fetch failure related to artifactory
-    ArtifactoryFailure(String),
+    /// Fetch failure related to backend
+    BackendFailure(String),
 
     // publish errors
     /// Missing release build
     MissingReleaseBuild,
-    /// Config missing artifactory credentials
-    MissingArtifactoryCredentials,
+    /// Config missing backend credentials
+    MissingBackendCredentials,
 }
 
 // Format implementation used when printing an error
@@ -169,10 +169,10 @@ impl fmt::Display for CliError {
                 write!(f, "ID mismatch inside and outside docker - {}", s)
             }
             CliError::InstallFailure => write!(f, "Install failed"),
-            CliError::ArtifactoryFailure(ref s) => write!(f, "Artifactory - {}", s),
+            CliError::BackendFailure(ref s) => write!(f, "Backend - {}", s),
             CliError::MissingReleaseBuild => write!(f, "Missing release build"),
-            CliError::MissingArtifactoryCredentials => {
-                write!(f, "Missing artifactory credentials in ~/.lal/config")
+            CliError::MissingBackendCredentials => {
+                write!(f, "Missing backend credentials in ~/.lal/config")
             }
         }
     }

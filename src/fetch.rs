@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::Path;
 
-use backend::{self, Artifactory};
+use storage::{download, Cacheable, Backend};
 use super::{CliError, LalResult, Lockfile, Manifest};
 
 fn clean_input() {
@@ -15,7 +15,11 @@ fn clean_input() {
 ///
 /// This will read, and HTTP GET all the dependencies at the specified versions.
 /// If the `core` bool is set, then `devDependencies` are not installed.
-pub fn fetch(manifest: &Manifest, backend: &Artifactory, core: bool, env: &str) -> LalResult<()> {
+pub fn fetch<T: Backend + Cacheable>(manifest: &Manifest,
+                                     backend: &T,
+                                     core: bool,
+                                     env: &str)
+                                     -> LalResult<()> {
     debug!("Installing dependencies{}",
            if !core { " and devDependencies" } else { "" });
 
@@ -40,7 +44,8 @@ pub fn fetch(manifest: &Manifest, backend: &Artifactory, core: bool, env: &str) 
     // filter out what we already have (being careful to examine env)
     for (name, d) in lf.dependencies {
         // if d.name at d.version in d.environment matches something in deps
-        if let Some(&cand) = deps.get(&name) { // version found in manifest
+        if let Some(&cand) = deps.get(&name) {
+            // version found in manifest
             // ignore non-integer versions (stashed things must be overwritten)
             if let Ok(n) = d.version.parse::<u32>() {
                 if n == cand && d.environment == env {
@@ -68,12 +73,13 @@ pub fn fetch(manifest: &Manifest, backend: &Artifactory, core: bool, env: &str) 
                 })?;
         }
 
-        let _ = backend::fetch_and_unpack_component(backend, &k, Some(v), Some(env)).map_err(|e| {
-            warn!("Failed to completely install {} ({})", k, e);
-            // likely symlinks inside tarball that are being dodgy
-            // this is why we clean_input
-            err = Some(e);
-        });
+        let _ = download::fetch_and_unpack_component(backend, &k, Some(v), Some(env))
+            .map_err(|e| {
+                warn!("Failed to completely install {} ({})", k, e);
+                // likely symlinks inside tarball that are being dodgy
+                // this is why we clean_input
+                err = Some(e);
+            });
     }
 
     // remove extraneous deps

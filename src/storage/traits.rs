@@ -2,6 +2,9 @@ use core::LalResult;
 use std::fs::File;
 use semver::Version;
 
+// TODO: no.
+use super::ArtifactoryConfig;
+
 /// The basic definition of a component as it exists online
 ///
 /// A component may have many build artifacts from many environments.
@@ -33,9 +36,19 @@ pub trait Backend {
                        loc: Option<&str>)
                        -> LalResult<Component>;
 
+    // TODO: generic config
+    /// Raw config information when all encapsulation fails
+    fn get_config(&self) -> ArtifactoryConfig;
+
     /// Publish a file into a specific location
     fn upload_file(&self, uri: &str, f: &mut File) -> LalResult<()>;
 
     /// How to perform an upgrade check
     fn get_latest_lal_version(&self) -> LalResult<Version>;
+}
+
+/// Behaviour we expect to have for our caching layer
+pub trait Cacheable {
+    /// Return the base directory to be used to dump cached downloads
+    fn get_cache_dir(&self) -> String;
 }

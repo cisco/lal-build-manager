@@ -1,15 +1,15 @@
 use std::fs;
 use std::path::Path;
 
-use backend::{self, Artifactory};
+use storage::{download, Cacheable, Backend};
 use super::LalResult;
 
-/// Export a specific component from artifactory
-pub fn export(backend: &Artifactory,
-              comp: &str,
-              output: Option<&str>,
-              env: Option<&str>)
-              -> LalResult<()> {
+/// Export a specific component from the storage backend
+pub fn export<T: Backend + Cacheable>(backend: &T,
+                                      comp: &str,
+                                      output: Option<&str>,
+                                      env: Option<&str>)
+                                      -> LalResult<()> {
     let dir = output.unwrap_or(".");
 
     info!("Export {} {} to {}", env.unwrap_or("global"), comp, dir);
@@ -20,15 +20,15 @@ pub fn export(backend: &Artifactory,
         if let Ok(n) = pair[1].parse::<u32>() {
             // standard fetch with an integer version
             component_name = pair[0]; // save so we have sensible tarball names
-            backend::fetch_via_artifactory(backend, pair[0], Some(n), env)?.0
+            download::fetch_via_remote(backend, pair[0], Some(n), env)?.0
         } else {
             // string version -> stash
             component_name = pair[0]; // save so we have sensible tarball names
-            backend::get_path_to_stashed_component(backend, pair[0], pair[1])?
+            download::get_path_to_stashed_component(backend, pair[0], pair[1])?
         }
     } else {
         // fetch without a specific version (latest)
-        backend::fetch_via_artifactory(backend, comp, None, env)?.0
+        download::fetch_via_remote(backend, comp, None, env)?.0
     };
 
     let dest = Path::new(dir).join(format!("{}.tar.gz", component_name));

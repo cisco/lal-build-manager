@@ -1,6 +1,6 @@
 use std::io::{self, Write};
 
-use backend::Backend;
+use storage::Backend;
 use super::LalResult;
 
 /// Prints a list of versions associated with a component

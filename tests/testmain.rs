@@ -250,7 +250,8 @@ fn verify_checks() {
     let rcore = lal::fetch(&mf, &cfg, true, "default");
     assert!(rcore.is_ok(), "install core succeeded");
     assert!(yajl.is_dir(), "yajl was reinstalled from manifest");
-    assert!(!gtest.is_dir(), "gtest was was extraneous with --core => removed");
+    assert!(!gtest.is_dir(),
+            "gtest was was extraneous with --core => removed");
 
     // fetch --core also doesn't install else again
     let rcore2 = lal::fetch(&mf, &cfg, true, "default");

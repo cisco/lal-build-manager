@@ -2,14 +2,14 @@ use std::path::Path;
 use std::fs::File;
 
 // Need both the struct and the trait
-use backend::{Artifactory, Backend};
+use storage::Backend;
 use super::{LalResult, CliError, Lockfile};
 
-/// Publish a release build to artifactory
+/// Publish a release build to the storage backend
 ///
 /// Meant to be done after a `lal build -r <component>`
-/// and requires artifactory publish credentials in the local `Config`.
-pub fn publish(name: &str, backend: &Artifactory, env: &str) -> LalResult<()> {
+/// and requires publish credentials in the local `Config`.
+pub fn publish(name: &str, backend: &Backend, env: &str) -> LalResult<()> {
     let artdir = Path::new("./ARTIFACT");
     let tarball = artdir.join(format!("{}.tar.gz", name));
     let lockfile = artdir.join("lockfile.json");

@@ -8,7 +8,8 @@ use std::collections::BTreeMap;
 use std::env;
 
 use super::{Container, LalResult, CliError};
-use backend::artifactory::ArtifactoryConfig;
+// TODO: have this decided in storage::traits?
+use storage::ArtifactoryConfig;
 
 
 // helper

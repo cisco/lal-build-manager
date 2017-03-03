@@ -1,19 +1,20 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use backend::{Artifactory, Component};
+use storage::{Backend, Cacheable, Component};
 use core::{CliError, LalResult};
 
-fn is_cached(backend: &Artifactory, name: &str, version: u32, env: Option<&str>) -> bool {
+fn is_cached<T: Cacheable>(backend: &T, name: &str, version: u32, env: Option<&str>) -> bool {
     get_cache_dir(backend, name, version, env).is_dir()
 }
 
-fn get_cache_dir(backend: &Artifactory,
-                     name: &str,
-                     version: u32,
-                     env: Option<&str>)
-                     -> PathBuf {
-    let pth = Path::new(&backend.cache);
+fn get_cache_dir<T: Cacheable>(backend: &T,
+                               name: &str,
+                               version: u32,
+                               env: Option<&str>)
+                               -> PathBuf {
+    let cache = backend.get_cache_dir();
+    let pth = Path::new(&cache);
     let leading_pth = match env {
         None => pth.join("globals"),
         Some(e) => pth.join("environments").join(e),
@@ -21,12 +22,12 @@ fn get_cache_dir(backend: &Artifactory,
     leading_pth.join(name).join(version.to_string())
 }
 
-fn store_tarball(backend: &Artifactory,
-                     name: &str,
-                     version: u32,
-                     env: Option<&str>)
-                     -> Result<(), CliError> {
-    // 1. mkdir -p backend.cacheDir/$name/$version
+fn store_tarball<T: Backend + Cacheable>(backend: &T,
+                                         name: &str,
+                                         version: u32,
+                                         env: Option<&str>)
+                                         -> Result<(), CliError> {
+    // 1. mkdir -p cacheDir/$name/$version
     let destdir = get_cache_dir(backend, name, version, env);
     if !destdir.is_dir() {
         fs::create_dir_all(&destdir)?;
@@ -53,7 +54,7 @@ fn download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
     let client = Client::new();
     let mut res = client.get(url).send()?;
     if res.status != hyper::Ok {
-        return Err(CliError::ArtifactoryFailure(format!("GET request with {}", res.status)));
+        return Err(CliError::BackendFailure(format!("GET request with {}", res.status)));
     }
 
     let mut buffer: Vec<u8> = Vec::new();
@@ -80,7 +81,10 @@ fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<()> 
 }
 
 /// helper for `install::update`
-pub fn fetch_from_stash(backend: &Artifactory, component: &str, stashname: &str) -> LalResult<()> {
+pub fn fetch_from_stash<T: Cacheable>(backend: &T,
+                                      component: &str,
+                                      stashname: &str)
+                                      -> LalResult<()> {
     let tarname = get_path_to_stashed_component(backend, component, stashname)?;
     extract_tarball_to_input(tarname, component)?;
     Ok(())
@@ -88,11 +92,12 @@ pub fn fetch_from_stash(backend: &Artifactory, component: &str, stashname: &str)
 
 
 /// helper for `install::export`
-pub fn get_path_to_stashed_component(backend: &Artifactory,
-                                     component: &str,
-                                     stashname: &str)
-                                     -> LalResult<PathBuf> {
-    let stashdir = Path::new(&backend.cache).join("stash").join(component).join(stashname);
+pub fn get_path_to_stashed_component<T: Cacheable>(backend: &T,
+                                                   component: &str,
+                                                   stashname: &str)
+                                                   -> LalResult<PathBuf> {
+    let stashdir =
+        Path::new(&backend.get_cache_dir()).join("stash").join(component).join(stashname);
     if !stashdir.is_dir() {
         return Err(CliError::MissingStashArtifact(format!("{}/{}", component, stashname)));
     }
@@ -104,13 +109,12 @@ pub fn get_path_to_stashed_component(backend: &Artifactory,
 }
 
 /// Download an artifact into stash and return its path and details
-pub fn fetch_via_artifactory(backend: &Artifactory,
-                         name: &str,
-                         version: Option<u32>,
-                         env: Option<&str>)
-                         -> LalResult<(PathBuf, Component)> {
+pub fn fetch_via_remote<T: Backend + Cacheable>(backend: &T,
+                                                name: &str,
+                                                version: Option<u32>,
+                                                env: Option<&str>)
+                                                -> LalResult<(PathBuf, Component)> {
 
-    use backend::Backend;
     trace!("Locate component {}", name);
 
     let component = backend.get_tarball_url(name, version, env)?;
@@ -131,12 +135,12 @@ pub fn fetch_via_artifactory(backend: &Artifactory,
 }
 
 /// Full fetch + unpack procedure used by fetch subcommand for non stashed comps
-pub fn fetch_and_unpack_component(backend: &Artifactory,
-                              name: &str,
-                              version: Option<u32>,
-                              env: Option<&str>)
-                              -> LalResult<Component> {
-    let (tarname, component) = fetch_via_artifactory(backend, name, version, env)?;
+pub fn fetch_and_unpack_component<T: Backend + Cacheable>(backend: &T,
+                                                          name: &str,
+                                                          version: Option<u32>,
+                                                          env: Option<&str>)
+                                                          -> LalResult<Component> {
+    let (tarname, component) = fetch_via_remote(backend, name, version, env)?;
 
     debug!("Unpacking tarball {} for {}",
            tarname.to_str().unwrap(),

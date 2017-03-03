@@ -56,7 +56,7 @@ fn hyper_req(url: &str) -> LalResult<String> {
     let client = Client::new();
     let mut res = client.get(url).send()?;
     if res.status != hyper::Ok {
-        return Err(CliError::ArtifactoryFailure(format!("GET request with {}", res.status)));
+        return Err(CliError::BackendFailure(format!("GET request with {}", res.status)));
     }
     let mut body = String::new();
     res.read_to_string(&mut body)?;
@@ -72,7 +72,7 @@ fn get_storage_versions(uri: &str) -> LalResult<Vec<u32>> {
 
     let resp = hyper_req(uri).map_err(|e| {
             warn!("Failed to GET {}: {}", uri, e);
-            CliError::ArtifactoryFailure("No version information found on API".into())
+            CliError::BackendFailure("No version information found on API".into())
         })?;
 
     trace!("Got body {}", resp);
@@ -132,7 +132,7 @@ fn upload_artifact(arti: &ArtifactoryConfig, uri: &str, f: &mut File) -> LalResu
 
         Ok(())
     } else {
-        Err(CliError::MissingArtifactoryCredentials)
+        Err(CliError::MissingBackendCredentials)
     }
 }
 
@@ -141,7 +141,7 @@ fn get_storage_as_u32(uri: &str) -> LalResult<u32> {
     if let Some(&latest) = get_storage_versions(uri)?.iter().max() {
         Ok(latest)
     } else {
-        Err(CliError::ArtifactoryFailure("No version information found on API".into()))
+        Err(CliError::BackendFailure("No version information found on API".into()))
     }
 }
 
@@ -258,7 +258,7 @@ fn find_latest_lal_version(art_cfg: &ArtifactoryConfig) -> LalResult<Version> {
     debug!("GET {}", uri);
     let resp = hyper_req(&uri).map_err(|e| {
             warn!("Failed to GET {}: {}", uri, e);
-            CliError::ArtifactoryFailure("No version information found on API".into())
+            CliError::BackendFailure("No version information found on API".into())
         })?;
     trace!("Got body {}", resp);
 
@@ -274,12 +274,12 @@ fn find_latest_lal_version(art_cfg: &ArtifactoryConfig) -> LalResult<Version> {
         Ok(l)
     } else {
         warn!("Failed to parse version information from artifactory storage api for lal");
-        Err(CliError::ArtifactoryFailure("No version information found on API".into()))
+        Err(CliError::BackendFailure("No version information found on API".into()))
     }
 }
 
 
-use super::{Backend, Component};
+use super::{Backend, Cacheable, Component};
 
 pub struct Artifactory {
     /// Artifactory config and credentials
@@ -320,5 +320,15 @@ impl Backend for Artifactory {
 
     fn get_latest_lal_version(&self) -> LalResult<Version> {
         find_latest_lal_version(&self.config)
+    }
+
+    fn get_config(&self) -> ArtifactoryConfig {
+        self.config.clone()
+    }
+}
+
+impl Cacheable for Artifactory {
+    fn get_cache_dir(&self) -> String {
+        self.cache.clone()
     }
 }

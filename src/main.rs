@@ -477,10 +477,12 @@ fn main() {
     // Manifest agnostic commands need explicit environments to not look in global location
     let explicit_env = args.value_of("environment");
     if let Some(env) = explicit_env {
-        config.get_container(env.into()).map_err(|e| {
-            error!("Environment error: {}", e);
-            process::exit(1)
-        }).unwrap();
+        config.get_container(env.into())
+            .map_err(|e| {
+                error!("Environment error: {}", e);
+                process::exit(1)
+            })
+            .unwrap();
     }
     handle_manifest_agnostic_cmds(&args, &config, &backend, explicit_env);
 

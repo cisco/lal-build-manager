@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::Path;
 
-use backend::{Artifactory};
+use storage::{Cacheable, Backend};
 use super::{CliError, LalResult, Manifest, Lockfile, output};
 
 
@@ -11,7 +11,7 @@ use super::{CliError, LalResult, Manifest, Lockfile, output};
 /// then copies this to `~/.lal/cache/stash/${name}/`.
 ///
 /// This file can then be installed via `update` using a component=${name} argument.
-pub fn stash(backend: &Artifactory, mf: &Manifest, name: &str) -> LalResult<()> {
+pub fn stash<T: Backend + Cacheable>(backend: &T, mf: &Manifest, name: &str) -> LalResult<()> {
     info!("Stashing OUTPUT into cache under {}/{}", mf.name, name);
     // sanity: verify name does NOT parse as a u32
     if let Ok(n) = name.parse::<u32>() {
@@ -33,7 +33,8 @@ pub fn stash(backend: &Artifactory, mf: &Manifest, name: &str) -> LalResult<()> 
     lf.version = name.to_string();
     lf.write(&lf_path, true)?;
 
-    let destdir = Path::new(&backend.cache)
+    let cache = backend.get_cache_dir();
+    let destdir = Path::new(&cache)
         .join("stash")
         .join(&mf.name)
         .join(name);

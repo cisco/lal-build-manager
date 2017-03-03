@@ -45,8 +45,8 @@ extern crate rand;
 mod core;
 pub use core::*;
 
-mod backend;
-pub use backend::*;
+mod storage;
+pub use storage::*;
 
 /// Env module for env subcommand (which has further subcommands)
 pub mod env;
