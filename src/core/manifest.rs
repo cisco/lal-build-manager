@@ -149,4 +149,18 @@ impl Manifest {
         info!("Wrote manifest in {}: \n{}", self.location, encoded);
         Ok(())
     }
+
+    /// Verify assumptions about configurations
+    pub fn verify(&self) -> LalResult<()> {
+        for (name, conf) in &self.components {
+            // Verify ComponentSettings (manifest.components[x])
+            debug!("Verifying component {}", name);
+            if !conf.configurations.contains(&conf.defaultConfig) {
+                let ename = format!("default configuration '{}' not found in configurations list",
+                                    conf.defaultConfig);
+                return Err(CliError::InvalidBuildConfiguration(ename));
+            }
+        }
+        Ok(())
+    }
 }
