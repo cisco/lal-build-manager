@@ -50,12 +50,14 @@ pub use backend::*;
 
 /// Env module for env subcommand (which has further subcommands)
 pub mod env;
+/// List module for all the list-* subcommands
+pub mod list;
 
 // lift most other pub functions into our libraries main scope
 // this avoids having to type lal::build::build in tests and main.rs
-pub use build::{build, build_list, configuration_list, BuildOptions};
-pub use configure::{configure, env_list};
-pub use init::{init, dep_list};
+pub use build::{build, BuildOptions};
+pub use configure::configure;
+pub use init::init;
 pub use shell::{shell, docker_run, script, DockerRunFlags};
 pub use fetch::fetch;
 pub use update::{update, update_all};

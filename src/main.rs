@@ -41,7 +41,7 @@ fn handle_manifest_agnostic_cmds(args: &ArgMatches,
     } else if let Some(a) = args.subcommand_matches("query") {
         lal::query(backend, explicit_env, a.value_of("component").unwrap())
     } else if args.subcommand_matches("list-environments").is_some() {
-        lal::env_list(cfg)
+        lal::list::environments(cfg)
     } else {
         return ();
     };
@@ -56,11 +56,11 @@ fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, backend: &
                     a.is_present("origin"),
                     a.is_present("time"))
     } else if args.subcommand_matches("list-components").is_some() {
-        lal::build_list(mf)
+        lal::list::buildables(mf)
     } else if let Some(a) = args.subcommand_matches("list-configurations") {
-        lal::configuration_list(a.value_of("component").unwrap(), mf)
+        lal::list::configurations(a.value_of("component").unwrap(), mf)
     } else if let Some(a) = args.subcommand_matches("list-dependencies") {
-        lal::dep_list(mf, a.is_present("core"))
+        lal::list::dependencies(mf, a.is_present("core"))
     } else if let Some(a) = args.subcommand_matches("remove") {
         let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
         lal::remove(mf, xs, a.is_present("save"), a.is_present("savedev"))

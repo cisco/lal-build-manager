@@ -4,16 +4,6 @@ use super::{Config, CliError, LalResult};
 use core::manifest::*;
 
 
-/// Helper to print the dependencies from the manifest
-pub fn dep_list(mf: &Manifest, core: bool) -> LalResult<()> {
-    let deps = if core { mf.dependencies.clone() } else { mf.all_dependencies() };
-    for k in deps.keys() {
-        println!("{}", k);
-    }
-    Ok(())
-}
-
-
 /// Generates a blank manifest in the current directory
 ///
 /// This will use the directory name as the assumed default component name

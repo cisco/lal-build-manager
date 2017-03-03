@@ -47,26 +47,6 @@ fn ensure_dir_exists_fresh(subdir: &str) -> io::Result<()> {
     Ok(())
 }
 
-/// Helper to print the buildable components from the `Manifest`
-pub fn build_list(manifest: &Manifest) -> LalResult<()> {
-    for k in manifest.components.keys() {
-        println!("{}", k);
-    }
-    Ok(())
-}
-
-/// Helper to print the available configurations for a buildable Component
-pub fn configuration_list(component: &str, manifest: &Manifest) -> LalResult<()> {
-    let component_settings = match manifest.components.get(component) {
-        Some(c) => c,
-        None => return Ok(()), // invalid component - but this is for completion
-    };
-    for c in &component_settings.configurations {
-        println!("{}", c);
-    }
-    Ok(())
-}
-
 /// Configurable build flags for `lal build`
 pub struct BuildOptions {
     /// Component to build if specified
@@ -119,6 +99,9 @@ pub fn build(cfg: &Config,
 
     let component = opts.name.unwrap_or_else(|| manifest.name.clone());
     debug!("Getting configurations for {}", component);
+
+    // A couple of matchups of configurations and components and sanity checks
+    // If verify passed then these won't fail, but verify is sometimes ignorable
 
     // find component details in components.NAME
     let component_settings = match manifest.components.get(&component) {
