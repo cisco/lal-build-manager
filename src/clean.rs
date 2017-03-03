@@ -5,7 +5,6 @@ use chrono::{DateTime, UTC, Duration, TimeZone};
 use filetime::FileTime;
 use walkdir::WalkDir;
 
-use backend::Artifactory; // TODO: only need cache dir
 use super::LalResult;
 
 // helper for `lal::clean`
@@ -34,17 +33,17 @@ fn clean_in_dir(cutoff: DateTime<UTC>, dirs: WalkDir) -> LalResult<()> {
 ///
 /// This does the equivalent of find CACHEDIR -mindepth 3 -maxdepth 3 -type d
 /// With the correct mtime flags, then -exec deletes these folders.
-pub fn clean(backend: &Artifactory, days: i64) -> LalResult<()> {
+pub fn clean(cachedir: &str, days: i64) -> LalResult<()> {
     let cutoff = UTC::now() - Duration::days(days);
     debug!("Cleaning all artifacts from before {}", cutoff);
 
     // clean out environment subdirectories
-    let edir = Path::new(&backend.cache).join("environments");
+    let edir = Path::new(&cachedir).join("environments");
     let edirs = WalkDir::new(&edir).min_depth(3).max_depth(3);
     clean_in_dir(cutoff, edirs)?;
 
     // clean out stash + globals
-    let dirs = WalkDir::new(&backend.cache).min_depth(3).max_depth(3);
+    let dirs = WalkDir::new(&cachedir).min_depth(3).max_depth(3);
     clean_in_dir(cutoff, dirs)?;
 
     Ok(())

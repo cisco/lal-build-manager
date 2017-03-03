@@ -461,7 +461,7 @@ fn main() {
                               a.value_of("environment").unwrap()));
     } else if let Some(a) = args.subcommand_matches("clean") {
         let days = a.value_of("days").unwrap().parse().unwrap();
-        result_exit("clean", lal::clean(&backend, days));
+        result_exit("clean", lal::clean(&config.cache, days));
     }
 
     // Read .lalopts if it exists
