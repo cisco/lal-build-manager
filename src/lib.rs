@@ -48,6 +48,11 @@ pub use core::*;
 mod backend;
 pub use backend::*;
 
+/// Env module for env subcommand (which has further subcommands)
+pub mod env;
+
+// lift most other pub functions into our libraries main scope
+// this avoids having to type lal::build::build in tests and main.rs
 pub use build::{build, build_list, configuration_list, BuildOptions};
 pub use configure::{configure, env_list};
 pub use init::{init, dep_list};
@@ -63,9 +68,6 @@ pub use clean::clean;
 pub use upgrade::upgrade_check;
 pub use query::query;
 pub use publish::publish;
-
-/// Env module for env subcommand
-pub mod env;
 
 mod configure;
 mod init;

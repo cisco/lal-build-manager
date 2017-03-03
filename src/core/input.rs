@@ -26,6 +26,7 @@ fn read_partial_lockfile(component: &str) -> LalResult<PartialLock> {
     Ok(res)
 }
 
+/// Simple INPUT analyzer for the lockfile generator and `analyze_full`
 pub fn analyze() -> LalResult<BTreeMap<String, String>> {
     let input = Path::new("./INPUT");
 
@@ -61,7 +62,7 @@ pub struct InputDependency {
 
 pub type InputMap = BTreeMap<String, InputDependency>;
 
-
+/// Helper for `lal::status`
 pub fn analyze_full(manifest: &Manifest) -> LalResult<InputMap> {
     let input = Path::new("./INPUT");
 
