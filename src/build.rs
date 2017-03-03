@@ -4,8 +4,7 @@ use std::io;
 
 use shell;
 use verify::verify;
-use super::{Lockfile, Manifest, Container, Config, LalResult, CliError, DockerRunFlags};
-use backend::tar_output;
+use super::{output, Lockfile, Manifest, Container, Config, LalResult, CliError, DockerRunFlags};
 
 
 fn find_valid_build_script() -> LalResult<String> {
@@ -181,7 +180,7 @@ pub fn build(cfg: &Config,
 
         trace!("Tar up OUTPUT into ARTIFACT/component.tar.gz");
         let tarpth = Path::new("./ARTIFACT").join([component, ".tar.gz".into()].concat());
-        tar_output(&tarpth)?;
+        output::tar(&tarpth)?;
     }
     Ok(())
 }

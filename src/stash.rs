@@ -1,8 +1,8 @@
 use std::fs;
 use std::path::Path;
 
-use backend::{Artifactory, tar_output};
-use super::{CliError, LalResult, Manifest, Lockfile};
+use backend::{Artifactory};
+use super::{CliError, LalResult, Manifest, Lockfile, output};
 
 
 /// Saves current build `./OUTPUT` to the local cache under a specific name
@@ -41,7 +41,7 @@ pub fn stash(backend: &Artifactory, mf: &Manifest, name: &str) -> LalResult<()> 
     fs::create_dir_all(&destdir)?;
 
     // Tar it straight into destination
-    tar_output(&destdir.join(format!("{}.tar.gz", mf.name)))?;
+    output::tar(&destdir.join(format!("{}.tar.gz", mf.name)))?;
 
     // Copy the lockfile there for sanity
     // NB: this is not really needed, as it's included in the tarball anyway
