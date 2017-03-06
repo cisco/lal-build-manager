@@ -5,7 +5,8 @@ extern crate log;
 extern crate loggerv;
 
 extern crate lal;
-use lal::{LalResult, Config, Manifest, StickyOptions, Container, BuildOptions, ArtifactoryBackend, BackendConfiguration};
+use lal::{LalResult, Config, Manifest, StickyOptions, Container, BuildOptions, ArtifactoryBackend,
+          BackendConfiguration};
 use clap::{Arg, App, AppSettings, SubCommand, ArgMatches};
 use std::process;
 use std::env;
@@ -434,7 +435,9 @@ fn main() {
 
     // Create a backend (artifactory + cache wrapper)
     let backend = match &config.backend {
-        &BackendConfiguration::Artifactory(ref art_cfg) => ArtifactoryBackend::new(&art_cfg, &config.cache),
+        &BackendConfiguration::Artifactory(ref art_cfg) => {
+            ArtifactoryBackend::new(&art_cfg, &config.cache)
+        }
     };
 
     // Allow lal upgrade without manifest
