@@ -1,8 +1,7 @@
-use std::fs;
 use std::path::Path;
 
-use storage::{Cacheable, Backend};
-use super::{CliError, LalResult, Manifest, Lockfile, output};
+use storage::CachedBackend;
+use super::{CliError, LalResult, Manifest, Lockfile};
 
 
 /// Saves current build `./OUTPUT` to the local cache under a specific name
@@ -11,7 +10,7 @@ use super::{CliError, LalResult, Manifest, Lockfile, output};
 /// then copies this to `~/.lal/cache/stash/${name}/`.
 ///
 /// This file can then be installed via `update` using a component=${name} argument.
-pub fn stash<T: Backend + Cacheable>(backend: &T, mf: &Manifest, name: &str) -> LalResult<()> {
+pub fn stash<T: CachedBackend>(backend: &T, mf: &Manifest, name: &str) -> LalResult<()> {
     info!("Stashing OUTPUT into cache under {}/{}", mf.name, name);
     // sanity: verify name does NOT parse as a u32
     if let Ok(n) = name.parse::<u32>() {
@@ -33,20 +32,8 @@ pub fn stash<T: Backend + Cacheable>(backend: &T, mf: &Manifest, name: &str) -> 
     lf.version = name.to_string();
     lf.write(&lf_path, true)?;
 
-    let cache = backend.get_cache_dir();
-    let destdir = Path::new(&cache)
-        .join("stash")
-        .join(&mf.name)
-        .join(name);
-    debug!("Creating {:?}", destdir);
-    fs::create_dir_all(&destdir)?;
-
-    // Tar it straight into destination
-    output::tar(&destdir.join(format!("{}.tar.gz", mf.name)))?;
-
-    // Copy the lockfile there for sanity
-    // NB: this is not really needed, as it's included in the tarball anyway
-    fs::copy("./OUTPUT/lockfile.json", destdir.join("lockfile.json"))?;
+    // main operation:
+    backend.stash_output(&mf.name, name)?;
 
     Ok(())
 }

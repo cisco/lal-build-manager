@@ -1,9 +1,7 @@
-pub use self::traits::{Backend, Cacheable, Component};
+pub use self::traits::{BackendConfiguration, Backend, CachedBackend, Component};
 
-pub use self::artifactory::{ArtifactoryConfig, Credentials, Artifactory};
+pub use self::artifactory::{ArtifactoryConfig, Credentials, ArtifactoryBackend};
 
 mod traits;
 mod artifactory;
-
-/// Download and cache helpers
-pub mod download;
+mod download;

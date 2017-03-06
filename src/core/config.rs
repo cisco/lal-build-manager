@@ -8,8 +8,7 @@ use std::collections::BTreeMap;
 use std::env;
 
 use super::{Container, LalResult, CliError};
-// TODO: have this decided in storage::traits?
-use storage::ArtifactoryConfig;
+use storage::BackendConfiguration;
 
 
 // helper
@@ -35,8 +34,8 @@ pub struct Mount {
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Config {
-    /// Configuration settings for Artifactory
-    pub artifactory: ArtifactoryConfig,
+    /// Configuration settings for the `Backend`
+    pub backend: BackendConfiguration,
     /// Cache directory for global and stashed builds
     pub cache: String,
     /// Environments shorthands that are allowed and their full meaning
@@ -54,8 +53,8 @@ pub struct Config {
 /// This file is being used to generate the config when using `lal configure`
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct ConfigDefaults {
-    /// Configuration settings for Artifactory
-    pub artifactory: ArtifactoryConfig,
+    /// Configuration settings for the `Backend`
+    pub backend: BackendConfiguration,
     /// Environments shorthands that are allowed and their full meaning
     pub environments: BTreeMap<String, Container>,
     /// Extra volume mounts to be set for the container
@@ -105,7 +104,7 @@ impl Config {
             mounts: mounts, // the filtered defaults
             upgradeCheck: time.to_rfc3339(),
             environments: defaults.environments,
-            artifactory: defaults.artifactory,
+            backend: defaults.backend,
             interactive: true,
         }
     }

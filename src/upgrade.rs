@@ -8,7 +8,6 @@ use super::{LalResult, Backend};
 /// If run as part of the automatic update check, then it's silent.
 pub fn upgrade_check<T: Backend>(backend: &T, silent: bool) -> LalResult<bool> {
     let latest = backend.get_latest_lal_version()?;
-    let cfg = backend.get_config();
     let current = Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
     if latest > current {
         // New version found - always full output now
@@ -18,11 +17,11 @@ pub fn upgrade_check<T: Backend>(backend: &T, silent: bool) -> LalResult<bool> {
 
         // Source install - just tell the user what to do regardless of dry_run:
         info!("If your version is compiled from source:");
-        info!(" - `git pull && cargo build --release` in the source checkout");
+        info!(" - `rustup update stable && git pull && cargo build --release` in the source \
+               checkout");
         info!("If your version is prebuilt:");
-        info!(" - `curl {}/{}/lal/latest/lal.tar | tar xz -C /usr/local`",
-              cfg.slave,
-              cfg.vgroup);
+        info!(" - `curl {} | tar xz -C /usr/local`",
+              backend.get_lal_upgrade_url());
     } else if silent {
         debug!("You are running the latest version of lal");
     } else {

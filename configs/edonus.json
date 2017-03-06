@@ -1,10 +1,12 @@
 {
-  "artifactory": {
-    "master": "https://engci-maven-master.cisco.com/artifactory",
-    "slave": "https://engci-maven.cisco.com/artifactory",
-    "release": "CME-release",
-    "vgroup": "CME-group",
-    "credentials": null
+  "backend": {
+    "artifactory": {
+      "master": "https://engci-maven-master.cisco.com/artifactory",
+      "slave": "https://engci-maven.cisco.com/artifactory",
+      "release": "CME-release",
+      "vgroup": "CME-group",
+      "credentials": null
+    }
   },
   "environments": {
     "centos": {

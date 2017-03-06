@@ -5,7 +5,7 @@ extern crate log;
 extern crate loggerv;
 
 extern crate lal;
-use lal::{LalResult, Config, Manifest, StickyOptions, Container, BuildOptions, Artifactory};
+use lal::{LalResult, Config, Manifest, StickyOptions, Container, BuildOptions, ArtifactoryBackend, BackendConfiguration};
 use clap::{Arg, App, AppSettings, SubCommand, ArgMatches};
 use std::process;
 use std::env;
@@ -31,7 +31,7 @@ fn result_exit<T>(name: &str, x: LalResult<T>) {
 // functions that work without a manifest, and thus can run without a set env
 fn handle_manifest_agnostic_cmds(args: &ArgMatches,
                                  cfg: &Config,
-                                 backend: &Artifactory,
+                                 backend: &ArtifactoryBackend,
                                  explicit_env: Option<&str>) {
     let res = if let Some(a) = args.subcommand_matches("export") {
         lal::export(backend,
@@ -49,7 +49,9 @@ fn handle_manifest_agnostic_cmds(args: &ArgMatches,
 }
 
 // functions that need a manifest, but do not depend on environment values
-fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, backend: &Artifactory) {
+fn handle_environment_agnostic_cmds(args: &ArgMatches,
+                                    mf: &Manifest,
+                                    backend: &ArtifactoryBackend) {
     let res = if let Some(a) = args.subcommand_matches("status") {
         lal::status(mf,
                     a.is_present("full"),
@@ -72,7 +74,7 @@ fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, backend: &
     result_exit(args.subcommand_name().unwrap(), res);
 }
 
-fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, backend: &Artifactory, env: &str) {
+fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, backend: &ArtifactoryBackend, env: &str) {
     let res = if let Some(a) = args.subcommand_matches("update") {
         let xs = a.values_of("components").unwrap().map(String::from).collect::<Vec<_>>();
         lal::update(mf,
@@ -431,7 +433,9 @@ fn main() {
         .unwrap();
 
     // Create a backend (artifactory + cache wrapper)
-    let backend = Artifactory::new(&config.artifactory, &config.cache);
+    let backend = match &config.backend {
+        &BackendConfiguration::Artifactory(ref art_cfg) => ArtifactoryBackend::new(&art_cfg, &config.cache),
+    };
 
     // Allow lal upgrade without manifest
     if args.subcommand_matches("upgrade").is_some() {

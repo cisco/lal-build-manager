@@ -279,24 +279,29 @@ fn find_latest_lal_version(art_cfg: &ArtifactoryConfig) -> LalResult<Version> {
 }
 
 
-use super::{Backend, Cacheable, Component};
+use super::{Backend, Component};
 
-pub struct Artifactory {
+/// Everything we need for Artifactory to implement the Backend trait
+pub struct ArtifactoryBackend {
     /// Artifactory config and credentials
     pub config: ArtifactoryConfig,
     /// Cache directory
     pub cache: String,
 }
-impl Artifactory {
+impl ArtifactoryBackend {
     pub fn new(cfg: &ArtifactoryConfig, cache: &str) -> Self {
-        Artifactory {
+        ArtifactoryBackend {
             config: cfg.clone(),
             cache: cache.into(),
         }
     }
 }
 
-impl Backend for Artifactory {
+/// Artifact backend trait for `ArtifactoryBackend`
+///
+/// This is intended to be used by the caching trait `CachedBackend`, but for
+/// specific low-level use cases, these methods can be used directly.
+impl Backend for ArtifactoryBackend {
     fn get_versions(&self, name: &str, loc: Option<&str>) -> LalResult<Vec<u32>> {
         get_latest_versions(&self.config, name, loc)
     }
@@ -322,12 +327,12 @@ impl Backend for Artifactory {
         find_latest_lal_version(&self.config)
     }
 
-    fn get_config(&self) -> ArtifactoryConfig {
-        self.config.clone()
+    fn get_lal_upgrade_url(&self) -> String {
+        format!("{}/{}/lal/latest/lal.tar",
+                &self.config.slave,
+                &self.config.vgroup)
     }
-}
 
-impl Cacheable for Artifactory {
     fn get_cache_dir(&self) -> String {
         self.cache.clone()
     }

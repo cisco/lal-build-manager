@@ -1,32 +1,29 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use storage::{Backend, Cacheable, Component};
-use core::{CliError, LalResult};
+use storage::{Backend, CachedBackend, Component};
+use core::{CliError, LalResult, output};
 
-fn is_cached<T: Cacheable>(backend: &T, name: &str, version: u32, env: Option<&str>) -> bool {
+fn is_cached<T: Backend>(backend: &T, name: &str, version: u32, env: Option<&str>) -> bool {
     get_cache_dir(backend, name, version, env).is_dir()
 }
 
-fn get_cache_dir<T: Cacheable>(backend: &T,
-                               name: &str,
-                               version: u32,
-                               env: Option<&str>)
-                               -> PathBuf {
+fn get_cache_dir<T: Backend>(backend: &T, name: &str, version: u32, env: Option<&str>) -> PathBuf {
     let cache = backend.get_cache_dir();
     let pth = Path::new(&cache);
-    let leading_pth = match env {
-        None => pth.join("globals"),
-        Some(e) => pth.join("environments").join(e),
-    };
-    leading_pth.join(name).join(version.to_string())
+    match env {
+            None => pth.join("globals"),
+            Some(e) => pth.join("environments").join(e),
+        }
+        .join(name)
+        .join(version.to_string())
 }
 
-fn store_tarball<T: Backend + Cacheable>(backend: &T,
-                                         name: &str,
-                                         version: u32,
-                                         env: Option<&str>)
-                                         -> Result<(), CliError> {
+fn store_tarball<T: Backend>(backend: &T,
+                             name: &str,
+                             version: u32,
+                             env: Option<&str>)
+                             -> Result<(), CliError> {
     // 1. mkdir -p cacheDir/$name/$version
     let destdir = get_cache_dir(backend, name, version, env);
     if !destdir.is_dir() {
@@ -64,7 +61,7 @@ fn download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
     Ok(())
 }
 
-// helper for fetch_and_unpack_component and fetch_from_stash
+// helper for the unpack_ functions
 fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<()> {
     use tar::Archive;
     use flate2::read::GzDecoder;
@@ -80,72 +77,93 @@ fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<()> 
     Ok(())
 }
 
-/// helper for `install::update`
-pub fn fetch_from_stash<T: Cacheable>(backend: &T,
-                                      component: &str,
-                                      stashname: &str)
-                                      -> LalResult<()> {
-    let tarname = get_path_to_stashed_component(backend, component, stashname)?;
-    extract_tarball_to_input(tarname, component)?;
-    Ok(())
-}
+/// Cacheable trait implemented for all Backends.
+///
+/// As long as we have the Backend trait implemented, we can add a caching layer
+/// around this, which implements the basic compression ops and file gymnastics.
+///
+/// Most subcommands should be OK with just using this trait rather than using
+/// `Backend` directly as this does the stuff you normally would want done.
+impl<T> CachedBackend for T
+    where T: Backend
+{
+    /// Locate a proper component, downloading it and caching if necessary
+    fn retrieve_published_component(&self,
+                                    name: &str,
+                                    version: Option<u32>,
+                                    env: Option<&str>)
+                                    -> LalResult<(PathBuf, Component)> {
+        trace!("Locate component {}", name);
 
+        let component = self.get_tarball_url(name, version, env)?;
 
-/// helper for `install::export`
-pub fn get_path_to_stashed_component<T: Cacheable>(backend: &T,
-                                                   component: &str,
-                                                   stashname: &str)
-                                                   -> LalResult<PathBuf> {
-    let stashdir =
-        Path::new(&backend.get_cache_dir()).join("stash").join(component).join(stashname);
-    if !stashdir.is_dir() {
-        return Err(CliError::MissingStashArtifact(format!("{}/{}", component, stashname)));
+        if !is_cached(self, &component.name, component.version, env) {
+            // download to PWD then move it to stash immediately
+            let local_tarball = Path::new(".").join(format!("{}.tar", name));
+            download_to_path(&component.tarball, &local_tarball)?;
+            store_tarball(self, name, component.version, env)?;
+        }
+        assert!(is_cached(self, &component.name, component.version, env),
+                "cached component");
+
+        trace!("Fetching {} from cache", name);
+        let tarname = get_cache_dir(self, &component.name, component.version, env)
+            .join(format!("{}.tar", name));
+        Ok((tarname, component))
     }
-    debug!("Inferring stashed version {} of component {}",
-           stashname,
-           component);
-    let tarname = stashdir.join(format!("{}.tar.gz", component));
-    Ok(tarname)
-}
 
-/// Download an artifact into stash and return its path and details
-pub fn fetch_via_remote<T: Backend + Cacheable>(backend: &T,
-                                                name: &str,
-                                                version: Option<u32>,
-                                                env: Option<&str>)
-                                                -> LalResult<(PathBuf, Component)> {
+    // basic functionality for `fetch`/`update`
+    fn unpack_published_component(&self,
+                                  name: &str,
+                                  version: Option<u32>,
+                                  env: Option<&str>)
+                                  -> LalResult<Component> {
+        let (tarname, component) = self.retrieve_published_component(name, version, env)?;
 
-    trace!("Locate component {}", name);
+        debug!("Unpacking tarball {} for {}",
+               tarname.to_str().unwrap(),
+               component.name);
+        extract_tarball_to_input(tarname, name)?;
 
-    let component = backend.get_tarball_url(name, version, env)?;
-
-    if !is_cached(backend, &component.name, component.version, env) {
-        // download to PWD then move it to stash immediately
-        let local_tarball = Path::new(".").join(format!("{}.tar", name));
-        download_to_path(&component.tarball, &local_tarball)?;
-        store_tarball(backend, name, component.version, env)?;
+        Ok(component)
     }
-    assert!(is_cached(backend, &component.name, component.version, env),
-            "cached component");
 
-    trace!("Fetching {} from cache", name);
-    let tarname = get_cache_dir(backend, &component.name, component.version, env)
-        .join(format!("{}.tar", name));
-    Ok((tarname, component))
-}
+    /// helper for `update`
+    fn unpack_stashed_component(&self, name: &str, code: &str) -> LalResult<()> {
+        let tarpath = self.retrieve_stashed_component(name, code)?;
 
-/// Full fetch + unpack procedure used by fetch subcommand for non stashed comps
-pub fn fetch_and_unpack_component<T: Backend + Cacheable>(backend: &T,
-                                                          name: &str,
-                                                          version: Option<u32>,
-                                                          env: Option<&str>)
-                                                          -> LalResult<Component> {
-    let (tarname, component) = fetch_via_remote(backend, name, version, env)?;
+        extract_tarball_to_input(tarpath, name)?;
+        Ok(())
+    }
 
-    debug!("Unpacking tarball {} for {}",
-           tarname.to_str().unwrap(),
-           component.name);
-    extract_tarball_to_input(tarname, name)?;
+    /// helper for unpack_, `export`
+    fn retrieve_stashed_component(&self, name: &str, code: &str) -> LalResult<PathBuf> {
+        let tarpath = Path::new(&self.get_cache_dir())
+            .join("stash")
+            .join(name)
+            .join(code)
+            .join(format!("{}.tar.gz", name));
+        if !tarpath.is_file() {
+            return Err(CliError::MissingStashArtifact(format!("{}/{}", name, code)));
+        }
+        Ok(tarpath)
+    }
 
-    Ok(component)
+    // helper for `stash`
+    fn stash_output(&self, name: &str, code: &str) -> LalResult<()> {
+        let destdir = Path::new(&self.get_cache_dir())
+            .join("stash")
+            .join(name)
+            .join(code);
+        debug!("Creating {:?}", destdir);
+        fs::create_dir_all(&destdir)?;
+
+        // Tar it straight into destination
+        output::tar(&destdir.join(format!("{}.tar.gz", name)))?;
+
+        // Copy the lockfile there for users inspecting the stashed folder
+        // NB: this is not really needed, as it's included in the tarball anyway
+        fs::copy("./OUTPUT/lockfile.json", destdir.join("lockfile.json"))?;
+        Ok(())
+    }
 }

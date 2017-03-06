@@ -1,4 +1,4 @@
-use storage::{download, Cacheable, Backend};
+use storage::CachedBackend;
 use super::{LalResult, Manifest};
 
 /// Update specific dependencies outside the manifest
@@ -9,13 +9,13 @@ use super::{LalResult, Manifest};
 /// If installation was successful, the fetched tarballs are unpacked into `./INPUT`.
 /// If one `save` or `savedev` was set, the fetched versions are also updated in the
 /// manifest. This provides an easy way to not have to deal with strict JSON manually.
-pub fn update<T: Backend + Cacheable>(manifest: &Manifest,
-                                      backend: &T,
-                                      components: Vec<String>,
-                                      save: bool,
-                                      savedev: bool,
-                                      env: &str)
-                                      -> LalResult<()> {
+pub fn update<T: CachedBackend>(manifest: &Manifest,
+                                backend: &T,
+                                components: Vec<String>,
+                                save: bool,
+                                savedev: bool,
+                                env: &str)
+                                -> LalResult<()> {
     debug!("Update specific deps: {:?}", components);
 
     let mut error = None;
@@ -26,7 +26,7 @@ pub fn update<T: Backend + Cacheable>(manifest: &Manifest,
             let pair: Vec<&str> = comp.split('=').collect();
             if let Ok(n) = pair[1].parse::<u32>() {
                 // standard fetch with an integer version
-                match download::fetch_and_unpack_component(backend, pair[0], Some(n), Some(env)) {
+                match backend.unpack_published_component(pair[0], Some(n), Some(env)) {
                     Ok(c) => updated.push(c),
                     Err(e) => {
                         warn!("Failed to update {} ({})", pair[0], e);
@@ -36,14 +36,14 @@ pub fn update<T: Backend + Cacheable>(manifest: &Manifest,
             } else {
                 // fetch from stash - this does not go into `updated` it it succeeds
                 // because we wont and cannot save stashed versions in the manifest
-                let _ = download::fetch_from_stash(backend, pair[0], pair[1]).map_err(|e| {
+                let _ = backend.unpack_stashed_component(pair[0], pair[1]).map_err(|e| {
                     warn!("Failed to update {} from stash ({})", pair[0], e);
                     error = Some(e);
                 });
             }
         } else {
             // fetch without a specific version (latest)
-            match download::fetch_and_unpack_component(backend, comp, None, Some(env)) {
+            match backend.unpack_published_component(comp, None, Some(env)) {
                 Ok(c) => updated.push(c),
                 Err(e) => {
                     warn!("Failed to update {} ({})", &comp, e);
@@ -84,12 +84,12 @@ pub fn update<T: Backend + Cacheable>(manifest: &Manifest,
 /// This will pass all dependencies or devDependencies to update.
 /// If the save flag is set, then the manifest will be updated correctly.
 /// I.e. dev updates will update only the dev portions of the manifest.
-pub fn update_all<T: Backend + Cacheable>(manifest: &Manifest,
-                                          backend: &T,
-                                          save: bool,
-                                          dev: bool,
-                                          env: &str)
-                                          -> LalResult<()> {
+pub fn update_all<T: CachedBackend>(manifest: &Manifest,
+                                    backend: &T,
+                                    save: bool,
+                                    dev: bool,
+                                    env: &str)
+                                    -> LalResult<()> {
     let deps: Vec<String> = if dev {
         manifest.devDependencies.keys().cloned().collect()
     } else {

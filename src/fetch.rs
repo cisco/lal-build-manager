@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::Path;
 
-use storage::{download, Cacheable, Backend};
+use storage::CachedBackend;
 use super::{CliError, LalResult, Lockfile, Manifest};
 
 fn clean_input() {
@@ -15,11 +15,11 @@ fn clean_input() {
 ///
 /// This will read, and HTTP GET all the dependencies at the specified versions.
 /// If the `core` bool is set, then `devDependencies` are not installed.
-pub fn fetch<T: Backend + Cacheable>(manifest: &Manifest,
-                                     backend: &T,
-                                     core: bool,
-                                     env: &str)
-                                     -> LalResult<()> {
+pub fn fetch<T: CachedBackend>(manifest: &Manifest,
+                               backend: &T,
+                               core: bool,
+                               env: &str)
+                               -> LalResult<()> {
     debug!("Installing dependencies{}",
            if !core { " and devDependencies" } else { "" });
 
@@ -73,7 +73,7 @@ pub fn fetch<T: Backend + Cacheable>(manifest: &Manifest,
                 })?;
         }
 
-        let _ = download::fetch_and_unpack_component(backend, &k, Some(v), Some(env))
+        let _ = backend.unpack_published_component(&k, Some(v), Some(env))
             .map_err(|e| {
                 warn!("Failed to completely install {} ({})", k, e);
                 // likely symlinks inside tarball that are being dodgy
