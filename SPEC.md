@@ -227,7 +227,9 @@ If no arguments are suppplied it will run `./BUILD $name $config` where `name` i
 
 E.g. `lal build` in media-engine will `./BUILD media-engine release` in the container.
 
-`lal build` will run `lal verify` and abort if this fails. This warning can be overridden with `-f` or `--force`. There are legit developer reasons to ignore the `lal verify` reason when building with custom dependencies, but once code gets published, it must build without these warnings.
+`lal build` will run `lal verify` and abort if this fails. When using stashed components, you should build with `--simple-verify` or `-s` for short. This will allow stashed versions to pass, but still not cripple the verifier so that you accidentally include things built in different environments.
+
+Any further verify blocks can be overridden with `-f` or `--force`. There are very few legit developer reasons why you would want to completely ignore `lal verify`, but maybe you have such a special case.
 
 Release specific flags:
 
@@ -329,6 +331,8 @@ Helper command used by `lal build` exposed for convenience/sanity. Verifies that
 - dependencies in `INPUT` were built using the correct environment
 
 `lal build` normally guards on this command.
+
+An optional `--simple` or `-s` can be passed to `lal verify` to not check for global dependencies and a flat dependency tree.
 
 #### lal configure [defaults]
 Sets up a default config with a set of pre-configured defaults from a seperately supplied file with default values:

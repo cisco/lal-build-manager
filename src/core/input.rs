@@ -142,7 +142,7 @@ pub fn verify_dependencies_present(m: &Manifest) -> LalResult<()> {
     if let Some(e) = error { Err(e) } else { Ok(()) }
 }
 
-/// Optional part of input verifier - checks that all versions use global versions
+/// Optional part of input verifier - checks that all versions use correct versions
 pub fn verify_global_versions(lf: &Lockfile, m: &Manifest) -> LalResult<()> {
     let all_deps = m.all_dependencies();
     for (name, dep) in &lf.dependencies {

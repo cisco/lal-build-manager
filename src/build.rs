@@ -63,6 +63,8 @@ pub struct BuildOptions {
     pub sha: Option<String>,
     /// Ignore verify failures
     pub force: bool,
+    /// Use the `simple` verify algorithm
+    pub simple_verify: bool,
 }
 
 
@@ -88,7 +90,7 @@ pub fn build(cfg: &Config,
 
     // Verify INPUT
     let mut verify_failed = false;
-    if let Some(e) = verify(manifest, &envname).err() {
+    if let Some(e) = verify(manifest, &envname, opts.simple_verify).err() {
         if !opts.force {
             return Err(e);
         }

@@ -141,10 +141,10 @@ fn handle_docker_cmds(args: &ArgMatches,
                       cfg: &Config,
                       env: &str,
                       container: &Container) {
-    let res = if args.subcommand_matches("verify").is_some() {
+    let res = if let Some(a) = args.subcommand_matches("verify") {
         // not really a docker related command, but it needs
         // the resolved env to verify consistent dependency usage
-        lal::verify(mf, env)
+        lal::verify(mf, env, a.is_present("simple"))
     } else if let Some(a) = args.subcommand_matches("build") {
         let bopts = BuildOptions {
             name: a.value_of("component").map(String::from),
@@ -154,6 +154,7 @@ fn handle_docker_cmds(args: &ArgMatches,
             sha: a.value_of("with-sha").map(String::from),
             container: container.clone(),
             force: a.is_present("force"),
+            simple_verify: a.is_present("simple-verify"),
         };
         lal::build(cfg, mf, bopts, env.into(), a.is_present("print"))
     } else if let Some(a) = args.subcommand_matches("shell") {
@@ -217,6 +218,10 @@ fn main() {
                 .short("c")
                 .takes_value(true)
                 .help("Build using a specific configuration (else will use defaultConfig)"))
+            .arg(Arg::with_name("simple-verify")
+                .short("s")
+                .long("simple-verify")
+                .help("Use verify --simple to check INPUT (allows stashed dependencies)"))
             .arg(Arg::with_name("force")
                 .long("force")
                 .short("f")
@@ -255,7 +260,12 @@ fn main() {
                 .long("save-dev")
                 .conflicts_with("save")
                 .help("Save updated versions in devDependencies in the manifest")))
-        .subcommand(SubCommand::with_name("verify").about("verify consistency of INPUT"))
+        .subcommand(SubCommand::with_name("verify")
+            .arg(Arg::with_name("simple")
+                .short("s")
+                .long("simple")
+                .help("Allow stashed versions in this simpler verify algorithm"))
+            .about("verify consistency of INPUT"))
         .subcommand(SubCommand::with_name("status")
             .alias("ls")
             .arg(Arg::with_name("full")
@@ -433,7 +443,7 @@ fn main() {
         })
         .unwrap();
 
-    // Create a backend (artifactory + cache wrapper)
+    // Create a storage backend (something that implements storage/traits.rs)
     let backend = match &config.backend {
         &BackendConfiguration::Artifactory(ref art_cfg) => {
             ArtifactoryBackend::new(&art_cfg, &config.cache)

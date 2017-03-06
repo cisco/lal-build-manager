@@ -3,7 +3,6 @@ use std::path::PathBuf;
 use semver::Version;
 
 use core::LalResult;
-
 use super::ArtifactoryConfig;
 
 /// An enum struct for the currently configured `Backend`

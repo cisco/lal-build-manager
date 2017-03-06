@@ -13,7 +13,12 @@ use input;
 /// This function is meant to be a helper for when we want official builds, but also
 /// a way to tell developers that they are using things that differ from what jenkins
 /// would use.
-pub fn verify(m: &Manifest, env: &str) -> LalResult<()> {
+///
+/// A simple verify was added to aid the workflow of stashed components.
+/// Users can use `lal verify --simple` or `lal build -s` aka. `--simple-verify`,
+/// instead of having to use `lal build --force` when just using stashed components.
+/// This avoids problems with different environments going undetected.
+pub fn verify(m: &Manifest, env: &str, simple: bool) -> LalResult<()> {
     // 1. Verify that the manifest is sane
     m.verify()?;
 
@@ -29,10 +34,14 @@ pub fn verify(m: &Manifest, env: &str) -> LalResult<()> {
     let lf = Lockfile::default().populate_from_input()?;
 
     // 3. verify the root level dependencies match the manifest
-    input::verify_global_versions(&lf, m)?;
+    if !simple {
+        input::verify_global_versions(&lf, m)?;
+    }
 
     // 4. the dependency tree is flat, and deps use only global deps
-    input::verify_consistent_dependency_versions(&lf, m)?;
+    if !simple {
+        input::verify_consistent_dependency_versions(&lf, m)?;
+    }
 
     // 5. verify all components are built in the same environment
     input::verify_environment_consistency(&lf, env)?;

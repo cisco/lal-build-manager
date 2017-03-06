@@ -77,7 +77,7 @@ lal build
 lal stash asan
 cd ../media-engine
 lal update ciscossl=asan # update named version (always from stash)
-lal build
+lal build -s
 ```
 
 This workflow allows building multiple components simultaneously, and `lal status` provides safeguards and information on what dependencies you are using. Note that while doing this, you will receive warnings that you are using non-canonical dependencies.

@@ -136,7 +136,7 @@ impl fmt::Display for CliError {
             }
             CliError::NonGlobalDependencies(ref s) => {
                 write!(f,
-                       "Depending on a custom version of {} (build requires -f to force)",
+                       "Depending on a custom version of {} (use -s to allow stashed versions)",
                        s)
             }
             CliError::MissingEnvironment(ref s) => {
