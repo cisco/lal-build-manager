@@ -452,14 +452,13 @@ fn main() {
 
     // Allow lal upgrade without manifest
     if args.subcommand_matches("upgrade").is_some() {
-        result_exit("upgrade", lal::upgrade_check(&backend, false)); // explicit, verbose check
+        result_exit("upgrade", lal::upgrade(&backend, false)); // explicit, verbose check
     }
     // Timed daily, silent upgrade check (if not using upgrade)
     // also excluding all listers because they are used in autocomplete
     if subname != "upgrade" && !subname.contains("list-") && config.upgrade_check_time() {
         debug!("Performing daily upgrade check");
-        // silent dry-run
-        let _ = lal::upgrade_check(&backend, false).map_err(|e| {
+        let _ = lal::upgrade(&backend, false).map_err(|e| {
             error!("Daily upgrade check failed: {}", e);
             // don't halt here if this ever happens as it could break it for users
         });

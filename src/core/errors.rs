@@ -89,6 +89,10 @@ pub enum CliError {
     MissingReleaseBuild,
     /// Config missing backend credentials
     MissingBackendCredentials,
+
+    // upgrade error
+    /// Failing to write to our current install prefix
+    MissingPrefixPermissions(String),
 }
 
 // Format implementation used when printing an error
@@ -173,6 +177,12 @@ impl fmt::Display for CliError {
             CliError::MissingReleaseBuild => write!(f, "Missing release build"),
             CliError::MissingBackendCredentials => {
                 write!(f, "Missing backend credentials in ~/.lal/config")
+            }
+            CliError::MissingPrefixPermissions(ref s) => {
+                write!(f,
+                       "No write access in {} - consider chowning: `sudo chown -R $USER {}`",
+                       s,
+                       s)
             }
         }
     }

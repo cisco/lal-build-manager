@@ -67,7 +67,7 @@ pub use status::status;
 pub use verify::verify;
 pub use stash::stash;
 pub use clean::clean;
-pub use upgrade::upgrade_check;
+pub use upgrade::upgrade;
 pub use query::query;
 pub use publish::publish;
 
