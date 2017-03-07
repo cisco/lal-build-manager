@@ -63,6 +63,9 @@ pub trait Backend {
     /// Where to fetch latest upgrade tarball
     fn get_lal_upgrade_url(&self) -> String;
 
+    /// Raw dowlnload of a url to a destination
+    fn raw_download(&self, url: &str, dest: &PathBuf) -> LalResult<()>;
+
     /// Return the base directory to be used to dump cached downloads
     /// This has to be in here for `CachedBackend` to have a straight dependency
     fn get_cache_dir(&self) -> String;

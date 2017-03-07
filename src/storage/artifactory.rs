@@ -1,8 +1,9 @@
 #![allow(missing_docs)]
 
 use std::vec::Vec;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::fs::File;
+use std::path::PathBuf;
 
 use serde_json;
 use semver::Version;
@@ -62,6 +63,23 @@ fn hyper_req(url: &str) -> LalResult<String> {
     res.read_to_string(&mut body)?;
     Ok(body)
 }
+
+// simple request downloader
+fn download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
+    debug!("GET {}", url);
+    let client = Client::new();
+    let mut res = client.get(url).send()?;
+    if res.status != hyper::Ok {
+        return Err(CliError::BackendFailure(format!("GET request with {}", res.status)));
+    }
+
+    let mut buffer: Vec<u8> = Vec::new();
+    res.read_to_end(&mut buffer)?;
+    let mut f = File::create(save)?;
+    f.write_all(&buffer)?;
+    Ok(())
+}
+
 
 /// Query the Artifactory storage api
 ///
@@ -288,8 +306,10 @@ pub struct ArtifactoryBackend {
     /// Cache directory
     pub cache: String,
 }
+
 impl ArtifactoryBackend {
     pub fn new(cfg: &ArtifactoryConfig, cache: &str) -> Self {
+        // TODO: create hyper clients in here rather than once per download
         ArtifactoryBackend {
             config: cfg.clone(),
             cache: cache.into(),
@@ -335,5 +355,9 @@ impl Backend for ArtifactoryBackend {
 
     fn get_cache_dir(&self) -> String {
         self.cache.clone()
+    }
+
+    fn raw_download(&self, url: &str, dest: &PathBuf) -> LalResult<()> {
+        download_to_path(url, dest)
     }
 }

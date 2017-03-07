@@ -43,24 +43,6 @@ fn store_tarball<T: Backend>(backend: &T,
     Ok(())
 }
 
-fn download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
-    use hyper::{self, Client};
-    use std::io::prelude::{Write, Read};
-
-    debug!("GET {}", url);
-    let client = Client::new();
-    let mut res = client.get(url).send()?;
-    if res.status != hyper::Ok {
-        return Err(CliError::BackendFailure(format!("GET request with {}", res.status)));
-    }
-
-    let mut buffer: Vec<u8> = Vec::new();
-    res.read_to_end(&mut buffer)?;
-    let mut f = fs::File::create(save)?;
-    f.write_all(&buffer)?;
-    Ok(())
-}
-
 // helper for the unpack_ functions
 fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<()> {
     use tar::Archive;
@@ -100,7 +82,7 @@ impl<T> CachedBackend for T
         if !is_cached(self, &component.name, component.version, env) {
             // download to PWD then move it to stash immediately
             let local_tarball = Path::new(".").join(format!("{}.tar", name));
-            download_to_path(&component.tarball, &local_tarball)?;
+            self.raw_download(&component.tarball, &local_tarball)?;
             store_tarball(self, name, component.version, env)?;
         }
         assert!(is_cached(self, &component.name, component.version, env),
