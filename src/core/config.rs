@@ -40,8 +40,10 @@ pub struct Config {
     pub cache: String,
     /// Environments shorthands that are allowed and their full meaning
     pub environments: BTreeMap<String, Container>,
-    /// Time of last upgrade_check
-    pub upgradeCheck: String,
+    /// Time of last upgrade
+    pub lastUpgrade: String,
+    /// Whether to perform automatic upgrade
+    pub autoupgrade: bool,
     /// Extra volume mounts to be set for the container
     pub mounts: Vec<Mount>,
     /// Force inteactive shells
@@ -102,7 +104,8 @@ impl Config {
         Config {
             cache: cachedir.into(),
             mounts: mounts, // the filtered defaults
-            upgradeCheck: time.to_rfc3339(),
+            lastUpgrade: time.to_rfc3339(),
+            autoupgrade: true,
             environments: defaults.environments,
             backend: defaults.backend,
             interactive: true,
@@ -126,13 +129,13 @@ impl Config {
     }
     /// Checks if it is time to perform an upgrade check
     pub fn upgrade_check_time(&self) -> bool {
-        let last = self.upgradeCheck.parse::<DateTime<UTC>>().unwrap();
+        let last = self.lastUpgrade.parse::<DateTime<UTC>>().unwrap();
         let cutoff = UTC::now() - Duration::days(1);
         last < cutoff
     }
-    /// Update the upgradeCheck time to avoid triggering it for another day
+    /// Update the lastUpgrade time to avoid triggering it for another day
     pub fn performed_upgrade(&mut self) -> LalResult<()> {
-        self.upgradeCheck = UTC::now().to_rfc3339();
+        self.lastUpgrade = UTC::now().to_rfc3339();
         Ok(self.write(true)?)
     }
     /// Overwrite `~/.lal/config` with serialized data from this struct
