@@ -9,8 +9,8 @@ You will need access to the [edonusdevelopers group](https://hub.docker.com/r/ed
 
 The following common executables are needed:
 
- - tar (coreutils)
- - realpath
+ - `tar`
+ - `realpath`
 
 ## Installation
 Two ways to install, depending on whether you can be bothered to run the rust install script:
