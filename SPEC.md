@@ -401,13 +401,23 @@ Publishes a release build in the local `ARTIFACT` subdirectory provided it is bu
 ```sh
 lal env set xenial
 lal fetch
-lal build libldns --release --with-version=20
+lal build libldns --release --with-version=20 --with-sha=$(git rev-parse HEAD)
+# specific builds should push immediately (even if there are more builds)
+lal -e xenial publish libldns
+# last publish is a join step (done iff all environments succeeded)
 lal publish libldns
 ```
 
-The publish command will verify that `./ARTIFACT/lockfile.json` is built in xenial and that the version is not experimental.
+The publish command will verify that `./ARTIFACT/lockfile.json` is built in the correct environment and that the version is not experimental.
 
-The uploaded artifact will in this case end up in `https://artifactory.host/artifactory/CME-group/libldns/20/xenial/`. Note that if the artifact already exists, this will fail unless `--force` is passed to `lal publish`.
+The uploaded artifact will in this case end up in two locations:
+
+- `https://artifactory.host/artifactory/group/env/xenial/libldns/20/`
+- `https://artifactory.host/artifactory/group/libldns/20/`.
+
+Beause `lal update` and `lal fetch` always verify that components are found on the second location first (the global non-env specific bucket), it's important to upload the global environment artifact last (as a join step).
+
+This is largely irrelevant if you are only building one environment, but nevertheless we do require that you publish the place to both buckets, for clarity.
 
 ### Universal Options
 

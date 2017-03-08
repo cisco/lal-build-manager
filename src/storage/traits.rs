@@ -1,4 +1,3 @@
-use std::fs::File;
 use std::path::PathBuf;
 use semver::Version;
 
@@ -55,8 +54,8 @@ pub trait Backend {
                        loc: Option<&str>)
                        -> LalResult<Component>;
 
-    /// Publish a file into a specific location
-    fn upload_file(&self, uri: &str, f: &mut File) -> LalResult<()>;
+    /// Publish a release build (ARTIFACT dir) to a specific location
+    fn upload_artifact_dir(&self, name: &str, version: u32, env: Option<&str>) -> LalResult<()>;
 
     /// How to perform an upgrade check
     fn get_latest_lal_version(&self) -> LalResult<Version>;

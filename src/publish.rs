@@ -1,5 +1,4 @@
 use std::path::Path;
-use std::fs::File;
 
 // Need both the struct and the trait
 use storage::Backend;
@@ -9,10 +8,9 @@ use super::{LalResult, CliError, Lockfile};
 ///
 /// Meant to be done after a `lal build -r <component>`
 /// and requires publish credentials in the local `Config`.
-pub fn publish(name: &str, backend: &Backend, env: &str) -> LalResult<()> {
+pub fn publish<T: Backend>(name: &str, backend: &T, env: Option<&str>) -> LalResult<()> {
     let artdir = Path::new("./ARTIFACT");
     let tarball = artdir.join(format!("{}.tar.gz", name));
-    let lockfile = artdir.join("lockfile.json");
     if !artdir.is_dir() || !tarball.exists() {
         return Err(CliError::MissingReleaseBuild);
     }
@@ -31,17 +29,16 @@ pub fn publish(name: &str, backend: &Backend, env: &str) -> LalResult<()> {
         warn!("Release build not done --with-sha=$(git rev-parse HEAD)");
     }
 
-    assert_eq!(env, lock.environment); // for now
+    if let Some(envu) = env {
+        // no accidental publishes to envs it wasn't built in!
+        if envu != lock.environment {
+            error!("Cannot publish {} built component to the {} environment", lock.environment, envu);
+            return Err(CliError::MissingReleaseBuild);
+        }
+    }
 
-    info!("Publishing {}={}", name, version);
-
-    let tar_uri = format!("{}/{}/{}.tar.gz", name, version, name);
-    let mut tarf = File::open(tarball)?;
-    backend.upload_file(&tar_uri, &mut tarf)?;
-
-    let mut lockf = File::open(lockfile)?;
-    let lf_uri = format!("{}/{}/lockfile.json", name, version);
-    backend.upload_file(&lf_uri, &mut lockf)?;
+    info!("Publishing {}={} to {}", name, version, env.unwrap_or("global"));
+    backend.upload_artifact_dir(name, version, env)?;
 
     Ok(())
 }

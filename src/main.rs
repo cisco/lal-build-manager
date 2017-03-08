@@ -40,6 +40,8 @@ fn handle_manifest_agnostic_cmds(args: &ArgMatches,
                     explicit_env)
     } else if let Some(a) = args.subcommand_matches("query") {
         lal::query(backend, explicit_env, a.value_of("component").unwrap())
+    } else if let Some(a) = args.subcommand_matches("publish") {
+        lal::publish(a.value_of("component").unwrap(), backend, explicit_env)
     } else if args.subcommand_matches("list-environments").is_some() {
         lal::list::environments(cfg)
     } else {
@@ -87,9 +89,6 @@ fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, backend: &ArtifactoryBa
         lal::update_all(mf, backend, a.is_present("save"), a.is_present("dev"), env)
     } else if let Some(a) = args.subcommand_matches("fetch") {
         lal::fetch(mf, backend, a.is_present("core"), env)
-    } else if let Some(a) = args.subcommand_matches("publish") {
-        // ditto for publish, because it needs verify
-        lal::publish(a.value_of("component").unwrap(), backend, env)
     } else {
         return (); // not a network cmnd
     };

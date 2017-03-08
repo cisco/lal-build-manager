@@ -3,7 +3,7 @@
 use std::vec::Vec;
 use std::io::{Read, Write};
 use std::fs::File;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use serde_json;
 use semver::Version;
@@ -339,8 +339,25 @@ impl Backend for ArtifactoryBackend {
         get_tarball_uri(&self.config, name, version, loc)
     }
 
-    fn upload_file(&self, uri: &str, f: &mut File) -> LalResult<()> {
-        upload_artifact(&self.config, uri, f)
+    fn upload_artifact_dir(&self, name: &str, version: u32, env: Option<&str>) -> LalResult<()> {
+        // this fn basically assumes all the sanity checks have been performed
+        // files must exist and lockfile must be sensible
+        let artdir = Path::new("./ARTIFACT");
+        let tarball = artdir.join(format!("{}.tar.gz", name));
+        let lockfile = artdir.join("lockfile.json");
+
+        // uri prefix if specific env upload
+        let prefix = env.map(|s| format!("env/{}", s))
+            .unwrap_or_else(|| "".into());
+
+        let tar_uri = format!("{}/{}/{}/{}.tar.gz", prefix, name, version, name);
+        let mut tarf = File::open(tarball)?;
+        upload_artifact(&self.config, &tar_uri, &mut tarf)?;
+
+        let mut lockf = File::open(lockfile)?;
+        let lf_uri = format!("{}/{}/{}/lockfile.json", prefix, name, version);
+        upload_artifact(&self.config, &lf_uri, &mut lockf)?;
+        Ok(())
     }
 
     fn get_latest_lal_version(&self) -> LalResult<Version> {
