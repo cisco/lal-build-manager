@@ -5,8 +5,7 @@ extern crate log;
 extern crate loggerv;
 
 extern crate lal;
-use lal::{LalResult, Config, Manifest, StickyOptions, Container, BuildOptions, ArtifactoryBackend,
-          BackendConfiguration};
+use lal::*;
 use clap::{Arg, App, AppSettings, SubCommand, ArgMatches};
 use std::process;
 use std::env;
@@ -156,7 +155,7 @@ fn handle_docker_cmds(args: &ArgMatches,
             force: a.is_present("force"),
             simple_verify: a.is_present("simple-verify"),
         };
-        lal::build(cfg, mf, bopts, env.into(), a.is_present("print"))
+        lal::build(cfg, mf, &bopts, env.into(), a.is_present("print"))
     } else if let Some(a) = args.subcommand_matches("shell") {
         let xs = if a.is_present("cmd") {
             Some(a.values_of("cmd").unwrap().collect::<Vec<_>>())

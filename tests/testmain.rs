@@ -13,7 +13,7 @@ use std::io::prelude::*;
 use walkdir::WalkDir;
 
 // use loggerv::init_with_verbosity;
-use lal::{Config, Manifest, DockerRunFlags};
+use lal::*;
 
 // TODO: macroify this stuff
 
@@ -42,6 +42,7 @@ fn init_ssl() {
 
 fn main() {
     init_ssl();
+
     // init_with_verbosity(0).unwrap();
     let has_docker = true;
     let num_tests = if has_docker { 15 } else { 11 };
@@ -63,7 +64,7 @@ fn main() {
     println!("ok {} kill_manifest", i);
 
     i += 1;
-    configure_yes();
+    let backend = configure_yes();
     println!("ok {} configure_yes", i);
 
     i += 1;
@@ -76,11 +77,11 @@ fn main() {
     // assume we have manifest and config after this point
 
     i += 1;
-    update_save();
+    update_save(&backend);
     println!("ok {} update_save", i);
 
     i += 1;
-    verify_checks();
+    verify_checks(&backend);
     println!("ok {} verify_checks", i);
 
     if has_docker {
@@ -93,7 +94,7 @@ fn main() {
         println!("ok {} shell_permissions", i);
 
         i += 1;
-        build_stash_and_update_from_stash();
+        build_stash_and_update_from_stash(&backend);
         println!("ok {} build_stash_and_update_from_stash", i);
 
         i += 1;
@@ -106,11 +107,11 @@ fn main() {
     }
 
     i += 1;
-    upgrade_does_not_fail();
+    upgrade_does_not_fail(&backend);
     println!("ok {} upgrade_does_not_fail", i);
 
     i += 1;
-    export_check();
+    export_check(&backend);
     println!("ok {} export_check", i);
 
     i += 1;
@@ -152,15 +153,25 @@ fn kill_manifest() {
 }
 
 // Create config
-fn configure_yes() {
+fn configure_yes() -> ArtifactoryBackend {
     let config = Config::read();
     assert!(config.is_err(), "no config at this point");
 
-    let r = lal::configure(true, false);
+    let r = lal::configure(true, false, "configs/edonus.json");
     assert!(r.is_ok(), "configure succeeded");
 
     let cfg = Config::read();
     assert!(cfg.is_ok(), "config exists now");
+
+    let cfgu = cfg.unwrap();
+
+    let backend = match &cfgu.backend {
+        &BackendConfiguration::Artifactory(ref art_cfg) => {
+            ArtifactoryBackend::new(&art_cfg, &cfgu.cache)
+        }
+    };
+    backend
+
 }
 
 // Create manifest
@@ -196,104 +207,107 @@ fn has_config_and_manifest() {
     chk::is_ok(Manifest::read(), "could read manifest");
 
     // There is no INPUT yet, but we have no dependencies, so this should work:
-    let r = lal::verify(&manifest.unwrap(), "centos".into());
+    let r = lal::verify(&manifest.unwrap(), "centos".into(), false);
     chk::is_ok(r, "could verify after install");
 }
 
 // add some dependencies
-fn update_save() {
+fn update_save<T: CachedBackend + Backend>(backend: &T) {
     let mf1 = Manifest::read().unwrap();
-    let cfg = Config::read().unwrap();
 
     // gtest savedev
     let ri = lal::update(&mf1,
-                         &cfg,
+                         backend,
                          vec!["gtest".to_string()],
                          false,
                          true,
-                         "default");
+                         "xenial");
     chk::is_ok(ri, "could update gtest and save as dev");
 
     // three main deps (and re-read manifest to avoid overwriting devedps)
     let mf2 = Manifest::read().unwrap();
     let updates = vec!["libyaml".to_string(), "yajl".to_string(), "libwebsockets".to_string()];
-    let ri = lal::update(&mf2, &cfg, updates, true, false, "default");
+    let ri = lal::update(&mf2, backend, updates, true, false, "xenial");
     chk::is_ok(ri, "could update libyaml and save");
 
     // verify update-all --save
     let mf3 = Manifest::read().unwrap();
-    let ri = lal::update_all(&mf3, &cfg, true, false, "default");
+    let ri = lal::update_all(&mf3, backend, true, false, "xenial");
     chk::is_ok(ri, "could update all and --save");
 
     // verify update-all --save --dev
     let mf4 = Manifest::read().unwrap();
-    let ri = lal::update_all(&mf4, &cfg, false, true, "default");
+    let ri = lal::update_all(&mf4, backend, false, true, "xenial");
     chk::is_ok(ri, "could update all and --save --dev");
 }
 
-fn verify_checks() {
-    let cfg = Config::read().unwrap();
+fn verify_checks<T: CachedBackend + Backend>(backend: &T) {
     let mf = Manifest::read().unwrap();
 
-    let r = lal::verify(&mf, "centos".into());
+    let r = lal::verify(&mf, "xenial".into(), false);
     assert!(r.is_ok(), "could verify after install");
+
+    let renv1 = lal::verify(&mf, "centos".into(), false);
+    assert!(renv1.is_err(), "could not verify with wrong env");
+    let renv2 = lal::verify(&mf, "centos".into(), true);
+    assert!(renv2.is_err(), "could not verify with wrong env - even with simple");
 
     let gtest = Path::new(&env::current_dir().unwrap()).join("INPUT").join("gtest");
     // clean folders and verify it fails
     let yajl = Path::new(&env::current_dir().unwrap()).join("INPUT").join("yajl");
     fs::remove_dir_all(&yajl).unwrap();
 
-    let r2 = lal::verify(&mf, "centos".into());
+    let r2 = lal::verify(&mf, "xenial".into(), false);
     assert!(r2.is_err(), "verify failed after fiddling");
 
     // fetch --core, resyncs with core deps (removes devDeps and other extraneous)
-    let rcore = lal::fetch(&mf, &cfg, true, "default");
+    let rcore = lal::fetch(&mf, backend, true, "xenial");
     assert!(rcore.is_ok(), "install core succeeded");
     assert!(yajl.is_dir(), "yajl was reinstalled from manifest");
     assert!(!gtest.is_dir(),
             "gtest was was extraneous with --core => removed");
 
     // fetch --core also doesn't install else again
-    let rcore2 = lal::fetch(&mf, &cfg, true, "default");
+    let rcore2 = lal::fetch(&mf, backend, true, "xenial");
     assert!(rcore2.is_ok(), "install core succeeded 2");
     assert!(yajl.is_dir(), "yajl still there");
     assert!(!gtest.is_dir(), "gtest was not reinstalled with --core");
 
     // and it is finally installed if we ask for non-core as well
-    let rall = lal::fetch(&mf, &cfg, false, "default");
+    let rall = lal::fetch(&mf, backend, false, "xenial");
     assert!(rall.is_ok(), "install all succeeded");
     assert!(gtest.is_dir(), "gtest is otherwise installed again");
 
-    let r3 = lal::verify(&mf, "centos");
+    let r3 = lal::verify(&mf, "xenial", false);
     assert!(r3.is_ok(), "verify ok again");
 }
 
 // Shell tests
 fn shell_echo() {
     let cfg = Config::read().unwrap();
-    let container = cfg.get_container(Some("rust".into())).unwrap();
+    let container = cfg.get_container("rust".into()).unwrap();
     let r = lal::docker_run(&cfg,
                             &container,
                             vec!["echo".to_string(), "# echo from docker".to_string()],
-                            DockerRunFlags::default(),
+                            &DockerRunFlags::default(),
                             false);
     assert!(r.is_ok(), "shell echoed");
 }
 fn shell_permissions() {
     let cfg = Config::read().unwrap();
-    let container = cfg.get_container(Some("rust".into())).unwrap();
+    let container = cfg.get_container("rust".into()).unwrap();
     let r = lal::docker_run(&cfg,
                             &container,
                             vec!["touch".to_string(), "README.md".to_string()],
-                            DockerRunFlags::default(),
+                            &DockerRunFlags::default(),
                             false);
     assert!(r.is_ok(), "could touch files in container");
 }
 
-fn build_stash_and_update_from_stash() {
+fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
     let mf = Manifest::read().unwrap();
     let cfg = Config::read().unwrap();
-    let container = cfg.get_container(Some("rust".into())).unwrap();
+    let container = cfg.get_container("rust".into()).unwrap();
 
     {
         let mut f = File::create("./BUILD").unwrap();
@@ -304,34 +318,65 @@ fn build_stash_and_update_from_stash() {
         Command::new("chmod").arg("+x").arg("BUILD").output().unwrap();
     } // scope ensures file is not busy before lal::build
 
-    // hacky build test: using rust container but verify with centos
-    // this avoids verify failing, but keeps build running in correct container
-    // sorry to whoever reads this, this is a very strange test
-    // because lal::build is definitely never being called in this way
-    let r = lal::build(&cfg,
-                       &mf,
-                       None,
-                       None,
-                       true,
-                       None,
-                       true,
-                       &container,
-                       "centos".into(),
-                       false);
-    assert!(r.is_ok(), "could run lal build and could make tarball");
+
+    // we'll try with various build options further down with various deps
+    let mut bopts = BuildOptions {
+        name: Some("lal".into()),
+        configuration: Some("release".into()),
+        container: container,
+        release: true,
+        version: None,
+        sha: None,
+        force: false,
+        simple_verify: false,
+    };
+    // basic build works - all deps are global at right env
+    let r = lal::build(&cfg, &mf, &bopts, "xenial".into(), false);
+    assert!(r.is_ok(), "could perform a xenial build");
 
     // lal stash testmain
-    let r2 = lal::stash(&cfg, &mf, "testmain");
-    assert!(r2.is_ok(), "could stash lal build artifact");
+    let rs = lal::stash(backend, &mf, "testmain");
+    assert!(rs.is_ok(), "could stash lal build artifact");
 
     // lal update lal=testmain
-    let ri = lal::update(&mf,
-                         &cfg,
+    let ru = lal::update(&mf,
+                         backend,
                          vec!["lal=testmain".to_string()],
                          false,
                          false,
-                         "default");
-    chk::is_ok(ri, "could update lal from stash");
+                         "garbage"); // env not relevant for stash
+    chk::is_ok(ru, "could update lal from stash");
+
+    // basic build won't work now without simple verify
+    let r1 = lal::build(&cfg, &mf, &bopts, "xenial".into(), false);
+    assert!(r1.is_err(), "could not verify a new xenial build");
+    if let Err(CliError::NonGlobalDependencies(nonglob)) = r1 {
+        assert_eq!(nonglob, "lal");
+    } else {
+        println!("actual r1 was {:?}", r1);
+        assert!(false);
+    }
+
+    bopts.simple_verify = true;
+    let r2 = lal::build(&cfg, &mf, &bopts, "xenial".into(), false);
+    assert!(r2.is_ok(), "can build with stashed deps with simple verify");
+
+
+    // force will also work - even with stashed deps from wrong env
+    let renv = lal::build(&cfg, &mf, &bopts, "rust".into(), false);
+    assert!(renv.is_err(), "cannot build with simple verify when wrong env");
+        if let Err(CliError::EnvironmentMismatch(_, compenv)) = renv {
+        assert_eq!(compenv, "xenial"); // expected complaints about xenial env
+    } else {
+        println!("actual renv was {:?}", renv);
+        assert!(false);
+    }
+
+    // settings that reflect lal build -f
+    bopts.simple_verify = false;
+    bopts.force = true;
+    let renv2 = lal::build(&cfg, &mf, &bopts, "rust".into(), false);
+    assert!(renv2.is_ok(), "could force build in different env");
 }
 
 fn run_scripts() {
@@ -342,7 +387,7 @@ fn run_scripts() {
         Command::new("chmod").arg("+x").arg(".lal/scripts/subroutine").output().unwrap();
     }
     let cfg = Config::read().unwrap();
-    let container = cfg.get_container(Some("rust".into())).unwrap();
+    let container = cfg.get_container("rust".into()).unwrap();
     let r = lal::script(&cfg, &container, "subroutine", vec!["there", "mr"], false);
     assert!(r.is_ok(), "could run subroutine script");
 }
@@ -356,9 +401,8 @@ fn status_on_experimentals() {
     assert!(r.is_err(), "status should complain at experimental deps");
 }
 
-fn upgrade_does_not_fail() {
-    let cfg = Config::read().unwrap();
-    let uc = lal::upgrade_check(&cfg, true);
+fn upgrade_does_not_fail<T: CachedBackend + Backend>(backend: &T) {
+    let uc = lal::upgrade(backend, true);
     assert!(uc.is_ok(), "could perform upgrade check");
     let upgraded = uc.unwrap();
     assert!(!upgraded, "we never have upgrades in the tip source tree");
@@ -366,7 +410,7 @@ fn upgrade_does_not_fail() {
 
 fn clean_check() {
     let cfg = Config::read().unwrap();
-    let r = lal::clean(&cfg, 1);
+    let r = lal::clean(&cfg.cache, 1);
     assert!(r.is_ok(), "could run partial lal cleanup");
 
     // scan cache dir
@@ -381,7 +425,7 @@ fn clean_check() {
     assert!(first.is_some(), "some artifacts cached since last time");
 
     // run check again cleaning everything
-    let r = lal::clean(&cfg, 0);
+    let r = lal::clean(&cfg.cache, 0);
     assert!(r.is_ok(), "could run full lal cleanup");
 
     // scan cache dir
@@ -396,13 +440,11 @@ fn clean_check() {
     assert!(first2.is_none(), "no artifacts left in cache");
 }
 
-fn export_check() {
-    let cfg = Config::read().unwrap();
+fn export_check<T: CachedBackend + Backend>(backend: &T) {
+    let r = lal::export(backend, "gtest=6", Some("tests"), None);
+    assert!(r.is_ok(), "could export global gtest=6 into subdir");
 
-    let r = lal::export(&cfg, "gtest=6", Some("tests"), "default");
-    assert!(r.is_ok(), "could export gtest=6 into subdir");
-
-    let r2 = lal::export(&cfg, "libcurl", None, "default");
+    let r2 = lal::export(backend, "libcurl", None, Some("xenial"));
     assert!(r2.is_ok(), "could export latest libcurl into PWD");
 
     let gtest = Path::new(&env::current_dir().unwrap()).join("tests").join("gtest.tar.gz");

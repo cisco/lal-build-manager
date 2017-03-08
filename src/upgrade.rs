@@ -136,6 +136,7 @@ pub fn upgrade<T: Backend>(backend: &T, silent: bool) -> LalResult<bool> {
                   build_flag);
         } else if exe.prefix.is_some() {
             // install lal in the prefix it's normally in
+            info!("Upgrading...");
             upgrade_exe(backend, &exe)?;
             info!("lal upgraded successfully to {} at {}", latest, exe.path);
         } else {

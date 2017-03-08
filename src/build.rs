@@ -75,7 +75,7 @@ pub struct BuildOptions {
 ///
 pub fn build(cfg: &Config,
              manifest: &Manifest,
-             opts: BuildOptions,
+             opts: &BuildOptions,
              envname: String,
              printonly: bool)
              -> LalResult<()> {
@@ -99,7 +99,7 @@ pub fn build(cfg: &Config,
     }
 
 
-    let component = opts.name.unwrap_or_else(|| manifest.name.clone());
+    let component = opts.name.clone().unwrap_or_else(|| manifest.name.clone());
     debug!("Getting configurations for {}", component);
 
     // A couple of matchups of configurations and components and sanity checks
@@ -110,8 +110,8 @@ pub fn build(cfg: &Config,
         Some(c) => c,
         None => return Err(CliError::MissingComponent(component)),
     };
-    let configuration_name: String = if let Some(c) = opts.configuration {
-        c.to_string()
+    let configuration_name: String = if let Some(c) = opts.configuration.clone() {
+        c
     } else {
         component_settings.defaultConfig.clone()
     };
@@ -122,10 +122,10 @@ pub fn build(cfg: &Config,
     let lockfile = try!(Lockfile::new(&component,
                                       &opts.container,
                                       &envname,
-                                      opts.version,
+                                      opts.version.clone(),
                                       Some(&configuration_name))
         .set_default_env(manifest.environment.clone())
-        .attach_revision_id(opts.sha)
+        .attach_revision_id(opts.sha.clone())
         .populate_from_input());
 
     let lockpth = Path::new("./OUTPUT/lockfile.json");
