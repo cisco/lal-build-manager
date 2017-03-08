@@ -7,11 +7,6 @@ You need [docker](https://docs.docker.com/engine/installation/linux/) (minimum v
 
 You will need access to the [edonusdevelopers group](https://hub.docker.com/r/edonusdevelopers/), and you need to have called `docker login` on the command line as well.
 
-The following common executables are needed:
-
- - `tar`
- - `realpath`
-
 ## Installation
 Two ways to install, depending on whether you can be bothered to run the rust install script:
 

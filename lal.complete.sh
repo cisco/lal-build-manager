@@ -131,7 +131,7 @@ _lal()
             configure)
                 # figure out what type of lal installation we have
                 # and from that infer where the configs would be
-                local -r run_pth=$(realpath "$(which lal)")
+                local -r run_pth=$(readlink -f "$(which lal)")
                 local config_dir;
                 if [[ $run_pth == *target/debug/lal ]] || [[ $run_pth == *target/release/lal ]]; then
                     # compiled lal => configs in the source dir (up from the target build dir)
