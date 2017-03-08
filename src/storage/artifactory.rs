@@ -347,15 +347,15 @@ impl Backend for ArtifactoryBackend {
         let lockfile = artdir.join("lockfile.json");
 
         // uri prefix if specific env upload
-        let prefix = env.map(|s| format!("env/{}", s))
+        let prefix = env.map(|s| format!("env/{}/", s))
             .unwrap_or_else(|| "".into());
 
-        let tar_uri = format!("{}/{}/{}/{}.tar.gz", prefix, name, version, name);
+        let tar_uri = format!("{}{}/{}/{}.tar.gz", prefix, name, version, name);
         let mut tarf = File::open(tarball)?;
         upload_artifact(&self.config, &tar_uri, &mut tarf)?;
 
         let mut lockf = File::open(lockfile)?;
-        let lf_uri = format!("{}/{}/{}/lockfile.json", prefix, name, version);
+        let lf_uri = format!("{}{}/{}/lockfile.json", prefix, name, version);
         upload_artifact(&self.config, &lf_uri, &mut lockf)?;
         Ok(())
     }
