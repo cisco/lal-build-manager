@@ -129,11 +129,19 @@ _lal()
                 fi
                 ;;
             configure)
-                # we would like to fallback to file path (default) completion here
-                # but this forces default completion for anything not listed in this file
-                # and that's wrong, because nothing else takes files
-                # thus, this one is a bit akward
-                return 1 # sufficient with 'complete -o default'
+                # figure out what type of lal installation we have
+                # and from that infer where the configs would be
+                local -r run_pth=$(realpath "$(which lal)")
+                local config_dir;
+                if [[ $run_pth == *target/debug/lal ]] || [[ $run_pth == *target/release/lal ]]; then
+                    # compiled lal => configs in the source dir (up from the target build dir)
+                    config_dir="${run_pth%/target/*}/configs"
+                else
+                    # musl release => configs in prefix/share/lal/configs
+                    config_dir="${run_pth%/bin/*}/share/lal/configs"
+                fi
+                local -r configs=$(find "$config_dir" -type f)
+                COMPREPLY=($(compgen -W "$configs" -- "$cur"))
                 ;;
             help)
                 COMPREPLY=($(compgen -W "$subcommands" -- "$cur"))
