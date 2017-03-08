@@ -1,11 +1,11 @@
 use std::path::Path;
 use std::fs;
 use std::io;
-use std::process::Command;
 
 use shell;
 use verify::verify;
-use {Lockfile, Manifest, Container, Config, LalResult, CliError, DockerRunFlags};
+use super::{output, Lockfile, Manifest, Container, Config, LalResult, CliError, DockerRunFlags};
+
 
 fn find_valid_build_script() -> LalResult<String> {
     use std::os::unix::fs::PermissionsExt;
@@ -19,8 +19,7 @@ fn find_valid_build_script() -> LalResult<String> {
             warn!("Using the default: .lal/BUILD");
         }
         bpath_new
-    }
-    else {
+    } else {
         trace!("No BUILD existing in .lal");
         bpath_old
     };
@@ -38,36 +37,6 @@ fn find_valid_build_script() -> LalResult<String> {
 }
 
 
-pub fn tar_output(tarball: &Path) -> LalResult<()> {
-    info!("Taring OUTPUT");
-    let mut args : Vec<String> = vec![
-        "czf".into(),
-        tarball.to_str().unwrap().into(), // path created internally - always valid unicode
-        "--transform=s,^OUTPUT/,,".into(), // remove leading OUTPUT
-    ];
-
-    // Avoid depending on wildcards (which would also hide hidden files)
-    // All links, hidden files, and regular files should go into the tarball.
-    let findargs = vec!["OUTPUT/", "-type", "f", "-o", "-type", "l"];
-    debug!("find {}", findargs.join(" "));
-    let find_output = Command::new("find").args(&findargs).output()?;
-    let find_str = String::from_utf8_lossy(&find_output.stdout);
-
-    // append each file as an arg to the main tar process
-    for f in find_str.trim().split("\n") {
-        args.push(f.into())
-    }
-
-    // basically `tar czf component.tar --transform.. $(find OUTPUT -type f -o -type l)`:
-    debug!("tar {}", args.join(" "));
-    let s = Command::new("tar").args(&args).status()?;
-
-    if !s.success() {
-        return Err(CliError::SubprocessFailure(s.code().unwrap_or(1001)));
-    }
-    Ok(())
-}
-
 fn ensure_dir_exists_fresh(subdir: &str) -> io::Result<()> {
     let dir = Path::new(".").join(subdir);
     if dir.is_dir() {
@@ -78,43 +47,35 @@ fn ensure_dir_exists_fresh(subdir: &str) -> io::Result<()> {
     Ok(())
 }
 
-/// Helper to print the buildable components from the `Manifest`
-pub fn build_list(manifest: &Manifest) -> LalResult<()> {
-    for k in manifest.components.keys() {
-        println!("{}", k);
-    }
-    Ok(())
+/// Configurable build flags for `lal build`
+pub struct BuildOptions {
+    /// Component to build if specified
+    pub name: Option<String>,
+    /// Configuration to use for the component if specified
+    pub configuration: Option<String>,
+    /// Container to run the `./BUILD` script in
+    pub container: Container,
+    /// Create release tarball in `./ARTIFACT`
+    pub release: bool,
+    /// An explicit version to put in the lockfile
+    pub version: Option<String>,
+    /// An explicit sha changeset id to put in the lockfile
+    pub sha: Option<String>,
+    /// Ignore verify failures
+    pub force: bool,
+    /// Use the `simple` verify algorithm
+    pub simple_verify: bool,
 }
 
-/// Helper to print the available configurations for a buildable Component
-pub fn configuration_list(component: &str, manifest: &Manifest) -> LalResult<()> {
-     let component_settings = match manifest.components.get(component) {
-        Some(c) => c,
-        None => return Ok(()), // invalid component - but this is for completion
-    };
-    for c in &component_settings.configurations {
-        println!("{}", c);
-    }
-    Ok(())
-}
 
 /// Runs the `./BUILD` script in a container and packages artifacts.
-///
-/// Expects a pre-read `Manifest` file, a `Config` file, as well as a bunch of optional flags
-/// that the user may supply..
 ///
 /// The function performs basic sanity checks, before shelling out to `docker run`
 /// to perform the actual execution of the containerized `./BUILD` script.
 ///
-/// In release mode, tarballs and lockfiles are created in `./ARTIFACT/`.
 pub fn build(cfg: &Config,
              manifest: &Manifest,
-             name: Option<&str>,
-             configuration: Option<&str>,
-             release: bool,
-             version: Option<&str>,
-             strict: bool,
-             container: &Container,
+             opts: &BuildOptions,
              envname: String,
              printonly: bool)
              -> LalResult<()> {
@@ -125,28 +86,32 @@ pub fn build(cfg: &Config,
             e
         })?;
 
-    debug!("Version flag is {}", version.unwrap_or("unset"));
+    debug!("Version flag is {:?}", opts.version);
 
     // Verify INPUT
     let mut verify_failed = false;
-    if let Some(e) = verify(manifest, &envname).err() {
-        if strict {
+    if let Some(e) = verify(manifest, &envname, opts.simple_verify).err() {
+        if !opts.force {
             return Err(e);
         }
         verify_failed = true;
         warn!("Verify failed - build will fail on jenkins, but continuing");
     }
 
-    let component = name.unwrap_or(&manifest.name);
+
+    let component = opts.name.clone().unwrap_or_else(|| manifest.name.clone());
     debug!("Getting configurations for {}", component);
 
+    // A couple of matchups of configurations and components and sanity checks
+    // If verify passed then these won't fail, but verify is sometimes ignorable
+
     // find component details in components.NAME
-    let component_settings = match manifest.components.get(component) {
+    let component_settings = match manifest.components.get(&component) {
         Some(c) => c,
-        None => return Err(CliError::MissingComponent(component.to_string())),
+        None => return Err(CliError::MissingComponent(component)),
     };
-    let configuration_name: String = if let Some(c) = configuration {
-        c.to_string()
+    let configuration_name: String = if let Some(c) = opts.configuration.clone() {
+        c
     } else {
         component_settings.defaultConfig.clone()
     };
@@ -155,18 +120,19 @@ pub fn build(cfg: &Config,
         return Err(CliError::InvalidBuildConfiguration(ename));
     }
     let lockfile = try!(Lockfile::new(&component,
-                                      container,
+                                      &opts.container,
                                       &envname,
-                                      version,
+                                      opts.version.clone(),
                                       Some(&configuration_name))
         .set_default_env(manifest.environment.clone())
+        .attach_revision_id(opts.sha.clone())
         .populate_from_input());
 
     let lockpth = Path::new("./OUTPUT/lockfile.json");
-    lockfile.write(&lockpth, true)?; // always put a lockfile in OUTPUT at the start of a build
+    lockfile.write(lockpth, true)?; // always put a lockfile in OUTPUT at the start of a build
 
     let bpath = find_valid_build_script()?;
-    let cmd = vec![bpath, component.into(), configuration_name];
+    let cmd = vec![bpath, component.clone(), configuration_name];
 
     debug!("Build script is {:?}", cmd);
     if !printonly {
@@ -177,7 +143,7 @@ pub fn build(cfg: &Config,
         interactive: cfg.interactive,
         privileged: false,
     };
-    shell::docker_run(cfg, container, cmd, run_flags, printonly)?;
+    shell::docker_run(cfg, &opts.container, cmd, &run_flags, printonly)?;
 
     // Extra info and warnings for people who missed the leading ones (build is spammy)
     if verify_failed {
@@ -187,26 +153,19 @@ pub fn build(cfg: &Config,
         info!("Build succeeded with verified dependencies")
     }
     // environment is temporarily optional in manifest:
-    if let Some(ref mandated_env) = manifest.environment {
-        if &envname != mandated_env {
-            // default was set, and we used not that
-            warn!("Build was using non-default {} environment", envname);
-        }
-    } else {
-        // default was not set, impossible to tell if this was sane
-        warn!("Build was done using non-default {} environment", envname);
-        warn!("Please hardcode an environment inside manifest.json");
+    if envname != manifest.environment {
+        warn!("Build was using non-default {} environment", envname);
     }
 
-    if release && !printonly {
+    if opts.release && !printonly {
         trace!("Create ARTIFACT dir");
         ensure_dir_exists_fresh("ARTIFACT")?;
         trace!("Copy lockfile to ARTIFACT dir");
         fs::copy(&lockpth, Path::new("./ARTIFACT/lockfile.json"))?;
 
         trace!("Tar up OUTPUT into ARTIFACT/component.tar.gz");
-        let tarpth = Path::new("./ARTIFACT").join([component, ".tar.gz"].concat());
-        tar_output(&tarpth)?;
+        let tarpth = Path::new("./ARTIFACT").join([component, ".tar.gz".into()].concat());
+        output::tar(&tarpth)?;
     }
     Ok(())
 }

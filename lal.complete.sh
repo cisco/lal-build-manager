@@ -36,7 +36,7 @@ _lal()
     # special subcommand completions
     local special i
     for (( i=0; i < ${#words[@]}-1; i++ )); do
-        if [[ ${words[i]} == @(build|remove|rm|export|update|script|run|status|ls|query|shell|publish|env) ]]; then
+        if [[ ${words[i]} == @(build|remove|rm|export|init|update|script|run|status|ls|query|shell|publish|env|configure|help) ]]; then
             special=${words[i]}
         fi
     done
@@ -83,6 +83,12 @@ _lal()
                     COMPREPLY=($(compgen -W "$env_subs" -- "$cur"))
                 fi
                 ;;
+            init)
+                if [[ $prev = "init" ]]; then
+                    local -r envs="$(lal list-environments)"
+                    COMPREPLY=($(compgen -W "$envs" -- "$cur"))
+                fi
+                ;;
             status|ls)
                 [[ $in_lal_repo ]] || return 0
                 local -r ls_flags="-f --full -o --origin -t --time -h --help"
@@ -122,6 +128,24 @@ _lal()
                     COMPREPLY=($(compgen -W "$sh_flags" -- "$cur"))
                 fi
                 ;;
+            configure)
+                # figure out what type of lal installation we have
+                # and from that infer where the configs would be
+                local -r run_pth=$(realpath "$(which lal)")
+                local config_dir;
+                if [[ $run_pth == *target/debug/lal ]] || [[ $run_pth == *target/release/lal ]]; then
+                    # compiled lal => configs in the source dir (up from the target build dir)
+                    config_dir="${run_pth%/target/*}/configs"
+                else
+                    # musl release => configs in prefix/share/lal/configs
+                    config_dir="${run_pth%/bin/*}/share/lal/configs"
+                fi
+                local -r configs=$(find "$config_dir" -type f)
+                COMPREPLY=($(compgen -W "$configs" -- "$cur"))
+                ;;
+            help)
+                COMPREPLY=($(compgen -W "$subcommands" -- "$cur"))
+                ;;
             script|run)
                 [[ $in_lal_repo ]] || return 0
                 # locate the scripts in .lal/scripts
@@ -148,4 +172,3 @@ _lal()
     return 0
 } &&
 complete -F _lal lal
-

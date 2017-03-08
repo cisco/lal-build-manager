@@ -1,17 +1,16 @@
 use std::path::Path;
-use std::fs::File;
 
-use util::artifactory::upload_artifact;
-use super::{LalResult, CliError, Config, Lockfile};
+// Need both the struct and the trait
+use storage::Backend;
+use super::{LalResult, CliError, Lockfile};
 
-/// Publish a release build to artifactory
+/// Publish a release build to the storage backend
 ///
 /// Meant to be done after a `lal build -r <component>`
-/// and requires artifactory publish credentials in the local `Config`.
-pub fn publish(name: &str, cfg: &Config, env: &str) -> LalResult<()> {
+/// and requires publish credentials in the local `Config`.
+pub fn publish<T: Backend>(name: &str, backend: &T, env: Option<&str>) -> LalResult<()> {
     let artdir = Path::new("./ARTIFACT");
     let tarball = artdir.join(format!("{}.tar.gz", name));
-    let lockfile = artdir.join("lockfile.json");
     if !artdir.is_dir() || !tarball.exists() {
         return Err(CliError::MissingReleaseBuild);
     }
@@ -26,23 +25,20 @@ pub fn publish(name: &str, cfg: &Config, env: &str) -> LalResult<()> {
             CliError::MissingReleaseBuild
         })?;
 
-    let build_env = lock.environment
-        .ok_or_else(|| {
-            error!("Release build has no environment");
-            CliError::MissingReleaseBuild
-        })?;
-    assert_eq!(env, build_env); // for now
+    if lock.sha.is_none() {
+        warn!("Release build not done --with-sha=$(git rev-parse HEAD)");
+    }
 
+    if let Some(envu) = env {
+        // no accidental publishes to envs it wasn't built in!
+        if envu != lock.environment {
+            error!("Cannot publish {} built component to the {} environment", lock.environment, envu);
+            return Err(CliError::MissingReleaseBuild);
+        }
+    }
 
-    info!("Publishing {}={}", name, version);
-
-    let tar_uri = format!("{}/{}/{}.tar.gz", name, version, name);
-    let mut tarf = File::open(tarball)?;
-    upload_artifact(&cfg.artifactory, tar_uri, &mut tarf)?;
-
-    let mut lockf = File::open(lockfile)?;
-    let lf_uri = format!("{}/{}/lockfile.json", name, version);
-    upload_artifact(&cfg.artifactory, lf_uri, &mut lockf)?;
+    info!("Publishing {}={} to {}", name, version, env.unwrap_or("global"));
+    backend.upload_artifact_dir(name, version, env)?;
 
     Ok(())
 }

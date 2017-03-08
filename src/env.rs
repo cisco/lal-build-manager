@@ -1,58 +1,7 @@
 use std::process::Command;
-use std::fs;
-use std::io::prelude::{Read, Write};
-use std::path::Path;
 use std::vec::Vec;
-use serde_json;
 
-use {Container, Config, CliError, LalResult};
-
-/// Representation of .lalopts
-///
-/// This contains the currently supported, directory-wide, sticky options.
-#[derive(Serialize, Deserialize, Clone, Default)]
-pub struct StickyOptions {
-    /// Environment to be used implicitally instead of the default
-    pub env: Option<String>,
-}
-
-impl StickyOptions {
-    /// Initialize a StickyOptions with defaults
-    pub fn new() -> StickyOptions {
-        Default::default()
-    }
-    /// Read and deserialize a StickyOptions from `.lalopts`
-    pub fn read() -> LalResult<StickyOptions> {
-        let opts_path = Path::new(".lalopts");
-        if !opts_path.exists() {
-            return Ok(StickyOptions::default()); // everything off
-        }
-        let mut opts_data = String::new();
-        fs::File::open(&opts_path)?.read_to_string(&mut opts_data)?;
-        let res = serde_json::from_str(&opts_data)?;
-        Ok(res)
-    }
-
-    /// Overwrite `.lalopts` with current settings
-    pub fn write(&self, silent: bool) -> LalResult<()> {
-        let opts_path = Path::new(".lalopts");
-        let encoded = serde_json::to_string_pretty(self)?;
-
-        let mut f = fs::File::create(&opts_path)?;
-        write!(f, "{}\n", encoded)?;
-        if silent {
-            debug!("Wrote {}: \n{}", opts_path.display(), encoded);
-        } else {
-            info!("Wrote {}: \n{}", opts_path.display(), encoded);
-        }
-        Ok(())
-    }
-    /// Delete local `.lalopts`
-    pub fn delete_local() -> LalResult<()> {
-        let opts_path = Path::new(".lalopts");
-        Ok(fs::remove_file(&opts_path)?)
-    }
-}
+use super::{StickyOptions, LalResult, CliError, Container, Config};
 
 /// Pull the current environment from docker
 pub fn update(container: &Container, env: &str) -> LalResult<()> {

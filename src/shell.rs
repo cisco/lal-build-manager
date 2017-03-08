@@ -3,7 +3,7 @@ use std::env;
 use std::path::Path;
 use std::vec::Vec;
 
-use {Config, Container, CliError, LalResult};
+use super::{Config, Container, CliError, LalResult};
 
 /// Verifies that `id -u` and `id -g` are both 1000
 ///
@@ -52,7 +52,7 @@ pub struct DockerRunFlags {
 pub fn docker_run(cfg: &Config,
                   container: &Container,
                   command: Vec<String>,
-                  flags: DockerRunFlags,
+                  flags: &DockerRunFlags,
                   printonly: bool)
                   -> LalResult<()> {
     trace!("Finding home and cwd");
@@ -142,7 +142,7 @@ pub fn shell(cfg: &Config,
             bash.push(c.to_string())
         }
     }
-    docker_run(cfg, container, bash, flags, printonly)
+    docker_run(cfg, container, bash, &flags, printonly)
 }
 
 /// Runs a script in `.lal/scripts/` with supplied arguments in a docker shell
@@ -169,5 +169,5 @@ pub fn script(cfg: &Config,
     let cmd = vec!["bash".into(),
                    "-c".into(),
                    format!("source {}; main {}", pth.display(), args.join(" "))];
-    Ok(docker_run(cfg, &container, cmd, flags, false)?)
+    Ok(docker_run(cfg, container, cmd, &flags, false)?)
 }

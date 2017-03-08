@@ -42,33 +42,47 @@ extern crate filetime;
 extern crate rand;
 
 // re-exports
-pub use util::lockfile::{Lockfile, Container};
-pub use errors::{LalResult, CliError};
-pub use build::{build, build_list, configuration_list};
-pub use configure::{configure, env_list, Config, Mount, Artifactory};
-pub use init::{init, dep_list, Manifest, ComponentConfiguration};
+mod core;
+pub use core::*;
+
+mod storage;
+pub use storage::*;
+
+/// Env module for env subcommand (which has further subcommands)
+pub mod env;
+/// List module for all the list-* subcommands
+pub mod list;
+
+// lift most other pub functions into our libraries main scope
+// this avoids having to type lal::build::build in tests and main.rs
+pub use build::{build, BuildOptions};
+pub use configure::configure;
+pub use init::init;
 pub use shell::{shell, docker_run, script, DockerRunFlags};
-pub use install::{fetch, update, update_all, remove, export};
+pub use fetch::fetch;
+pub use update::{update, update_all};
+pub use remove::remove;
+pub use export::export;
 pub use status::status;
 pub use verify::verify;
-pub use cache::{stash, clean};
-pub use upgrade::upgrade_check;
+pub use stash::stash;
+pub use clean::clean;
+pub use upgrade::upgrade;
 pub use query::query;
-pub use env::StickyOptions;
 pub use publish::publish;
-/// Module to control a local `.lalopts` file
-pub mod env;
 
-mod util;
-mod errors;
 mod configure;
 mod init;
 mod shell;
 mod build;
 mod query;
-mod install;
+mod update;
+mod fetch;
+mod remove;
+mod export;
+mod clean;
 mod verify;
-mod cache;
+mod stash;
 mod status;
 mod upgrade;
 mod publish;

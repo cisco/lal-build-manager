@@ -10,8 +10,7 @@ use std::collections::{HashMap, BTreeMap};
 use std::collections::BTreeSet;
 use std::fmt;
 
-use errors::{CliError, LalResult};
-use util::input;
+use super::{CliError, LalResult, input};
 
 /// Representation of a docker container image
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -23,6 +22,7 @@ pub struct Container {
 }
 
 impl Container {
+    /// Container struct with latest tag
     pub fn latest(name: &str) -> Self {
         Container {
             name: name.into(),
@@ -75,9 +75,11 @@ pub struct Lockfile {
     /// Container and tag used to build
     pub container: Container,
     /// Name of the environment for the container at the time
-    pub environment: Option<String>,
+    pub environment: String,
     /// Name of the default environment set in the manifest
     pub defaultEnv: Option<String>,
+    /// Revision id from version control
+    pub sha: Option<String>,
     /// Version of the component built
     pub version: String,
     /// Version of the lal tool
@@ -102,24 +104,26 @@ impl Lockfile {
     pub fn new(name: &str,
                container: &Container,
                env: &str,
-               v: Option<&str>,
+               v: Option<String>,
                build_cfg: Option<&str>)
                -> Self {
         let def_version = format!("EXPERIMENTAL-{:x}", rand::random::<u64>());
         let time = UTC::now();
         Lockfile {
             name: name.to_string(),
-            version: v.unwrap_or(&def_version).to_string(),
+            version: v.unwrap_or(def_version),
             config: build_cfg.unwrap_or("release").to_string(),
             container: container.clone(),
             tool: env!("CARGO_PKG_VERSION").to_string(),
             built: Some(time.format("%Y-%m-%d %H:%M:%S").to_string()),
-            defaultEnv: None,
-            environment: Some(env.into()),
+            defaultEnv: Some(env.into()),
+            environment: env.into(),
             dependencies: BTreeMap::new(),
+            sha: None,
         }
     }
 
+    /// Opened lockfile at a path
     pub fn from_path(lock_path: &PathBuf, name: &str) -> LalResult<Self> {
         if !lock_path.exists() {
             return Err(CliError::MissingLockfile(name.to_string()));
@@ -151,15 +155,21 @@ impl Lockfile {
         let deps = input::analyze()?;
         for name in deps.keys() {
             trace!("Populating lockfile with {}", name);
-            let deplock = Lockfile::from_input_component(&name)?;
+            let deplock = Lockfile::from_input_component(name)?;
             self.dependencies.insert(name.clone(), deplock);
         }
         Ok(self)
     }
 
     /// Attach a default environment to the lockfile
-    pub fn set_default_env(mut self, default: Option<String>) -> Self {
-        self.defaultEnv = default;
+    pub fn set_default_env(mut self, default: String) -> Self {
+        self.defaultEnv = Some(default);
+        self
+    }
+
+    /// Attach a revision id from source control
+    pub fn attach_revision_id(mut self, sha: Option<String>) -> Self {
+        self.sha = sha;
         self
     }
 
@@ -188,8 +198,7 @@ impl Lockfile {
         if key == "version" {
             self.version.clone()
         } else if key == "environment" {
-            // old components were built for centos only - keeping this default
-            self.environment.clone().unwrap_or("centos".into())
+            self.environment.clone()
         } else {
             unreachable!("Only using get_value internally");
         }
@@ -232,9 +241,11 @@ impl Lockfile {
         acc
     }
 
+    /// List all used versions used of each dependency
     pub fn find_all_dependencies(&self) -> ValueUsage {
         self.find_all_values("version")
     }
+    /// List all used environments used of each dependency
     pub fn find_all_environments(&self) -> ValueUsage {
         self.find_all_values("environment")
     }

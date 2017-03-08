@@ -5,10 +5,11 @@ extern crate log;
 extern crate loggerv;
 
 extern crate lal;
-use lal::{LalResult, Config, Manifest, StickyOptions, Container};
+use lal::*;
 use clap::{Arg, App, AppSettings, SubCommand, ArgMatches};
 use std::process;
 use std::env;
+
 
 fn is_integer(v: String) -> Result<(), String> {
     if v.parse::<u32>().is_ok() {
@@ -27,59 +28,67 @@ fn result_exit<T>(name: &str, x: LalResult<T>) {
     process::exit(0);
 }
 
-// functions that work without a manifest, and thus with only partian env override ability
-fn handle_manifest_agnostic_cmds(args: &ArgMatches, cfg: &Config, env_partial: &str) {
+// functions that work without a manifest, and thus can run without a set env
+fn handle_manifest_agnostic_cmds(args: &ArgMatches,
+                                 cfg: &Config,
+                                 backend: &ArtifactoryBackend,
+                                 explicit_env: Option<&str>) {
     let res = if let Some(a) = args.subcommand_matches("export") {
-        lal::export(cfg,
+        lal::export(backend,
                     a.value_of("component").unwrap(),
                     a.value_of("output"),
-                    env_partial)
+                    explicit_env)
     } else if let Some(a) = args.subcommand_matches("query") {
-        lal::query(cfg, a.value_of("component").unwrap())
+        lal::query(backend, explicit_env, a.value_of("component").unwrap())
+    } else if let Some(a) = args.subcommand_matches("publish") {
+        lal::publish(a.value_of("component").unwrap(), backend, explicit_env)
+    } else if args.subcommand_matches("list-environments").is_some() {
+        lal::list::environments(cfg)
     } else {
         return ();
     };
     result_exit(args.subcommand_name().unwrap(), res);
 }
 
-fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Config) {
+// functions that need a manifest, but do not depend on environment values
+fn handle_environment_agnostic_cmds(args: &ArgMatches,
+                                    mf: &Manifest,
+                                    backend: &ArtifactoryBackend) {
     let res = if let Some(a) = args.subcommand_matches("status") {
         lal::status(mf,
                     a.is_present("full"),
                     a.is_present("origin"),
                     a.is_present("time"))
-    } else if let Some(_) = args.subcommand_matches("list-components") {
-        lal::build_list(mf)
+    } else if args.subcommand_matches("list-components").is_some() {
+        lal::list::buildables(mf)
     } else if let Some(a) = args.subcommand_matches("list-configurations") {
-        lal::configuration_list(a.value_of("component").unwrap(), mf)
-    } else if let Some(_) = args.subcommand_matches("list-environments") {
-        lal::env_list(cfg)
+        lal::list::configurations(a.value_of("component").unwrap(), mf)
     } else if let Some(a) = args.subcommand_matches("list-dependencies") {
-        lal::dep_list(mf, a.is_present("core"))
+        lal::list::dependencies(mf, a.is_present("core"))
     } else if let Some(a) = args.subcommand_matches("remove") {
         let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
         lal::remove(mf, xs, a.is_present("save"), a.is_present("savedev"))
     } else if let Some(a) = args.subcommand_matches("stash") {
-        lal::stash(cfg, mf, a.value_of("name").unwrap())
+        lal::stash(backend, mf, a.value_of("name").unwrap())
     } else {
         return ();
     };
     result_exit(args.subcommand_name().unwrap(), res);
 }
 
-fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Config, env: &str) {
+fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, backend: &ArtifactoryBackend, env: &str) {
     let res = if let Some(a) = args.subcommand_matches("update") {
-        let xs = a.values_of("components").unwrap().map(|s| s.to_string()).collect::<Vec<_>>();
+        let xs = a.values_of("components").unwrap().map(String::from).collect::<Vec<_>>();
         lal::update(mf,
-                    cfg,
+                    backend,
                     xs,
                     a.is_present("save"),
                     a.is_present("savedev"),
                     env)
     } else if let Some(a) = args.subcommand_matches("update-all") {
-        lal::update_all(mf, cfg, a.is_present("save"), a.is_present("dev"), env)
+        lal::update_all(mf, backend, a.is_present("save"), a.is_present("dev"), env)
     } else if let Some(a) = args.subcommand_matches("fetch") {
-        lal::fetch(mf, cfg, a.is_present("core"), env)
+        lal::fetch(mf, backend, a.is_present("core"), env)
     } else {
         return (); // not a network cmnd
     };
@@ -88,13 +97,12 @@ fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, cfg: &Config, env: &str
 
 fn handle_env_command(args: &ArgMatches,
                       cfg: &Config,
-                      env_: &str,
+                      env: &str,
                       stickies: &StickyOptions)
                       -> Container {
-    let env = if env_ == "default" { "centos".to_string() } else { env_.to_string() };
 
     // lookup associated container from
-    let container = cfg.get_container(Some(env.clone()))
+    let container = cfg.get_container(env.into())
         .map_err(|e| {
             error!("Environment error: {}", e);
             println!("Ensure that manifest.environment has a corresponding entry in ~/.lal/config");
@@ -104,12 +112,12 @@ fn handle_env_command(args: &ArgMatches,
 
     // resolve env updates and sticky options before main subcommands
     if let Some(a) = args.subcommand_matches("env") {
-        if let Some(_) = a.subcommand_matches("update") {
-            result_exit("env update", lal::env::update(&container, &env))
-        } else if let Some(_) = a.subcommand_matches("reset") {
-            // NB: if .lalopts.env points at an environment not in config
+        if a.subcommand_matches("update").is_some() {
+            result_exit("env update", lal::env::update(&container, env))
+        } else if a.subcommand_matches("reset").is_some() {
+            // NB: if .lal/opts.env points at an environment not in config
             // reset will fail.. possible to fix, but complects this file too much
-            // .lalopts writes are checked in lal::env::set anyway so this
+            // .lal/opts writes are checked in lal::env::set anyway so this
             // would be purely the users fault for editing it manually
             result_exit("env clear", lal::env::clear())
         } else if let Some(sa) = a.subcommand_matches("set") {
@@ -129,30 +137,24 @@ fn handle_env_command(args: &ArgMatches,
 fn handle_docker_cmds(args: &ArgMatches,
                       mf: &Manifest,
                       cfg: &Config,
-                      env_: &str,
+                      env: &str,
                       container: &Container) {
-    let env = if env_ == "default" { "centos".to_string() } else { env_.to_string() };
-    let res = if let Some(_) = args.subcommand_matches("verify") {
+    let res = if let Some(a) = args.subcommand_matches("verify") {
         // not really a docker related command, but it needs
         // the resolved env to verify consistent dependency usage
-        lal::verify(mf, &env)
-    } else if let Some(a) = args.subcommand_matches("publish") {
-        // ditto for publish, because it needs verify
-        lal::publish(a.value_of("component").unwrap(), cfg, &env)
+        lal::verify(mf, env, a.is_present("simple"))
     } else if let Some(a) = args.subcommand_matches("build") {
-        if a.is_present("strict") {
-            warn!("deprecation: build --strict is now default behaviour");
-        }
-        lal::build(cfg,
-                   mf,
-                   a.value_of("component"),
-                   a.value_of("configuration"),
-                   a.is_present("release"),
-                   a.value_of("with-version"),
-                   !a.is_present("force"),
-                   container,
-                   env,
-                   a.is_present("print"))
+        let bopts = BuildOptions {
+            name: a.value_of("component").map(String::from),
+            configuration: a.value_of("configuration").map(String::from),
+            release: a.is_present("release"),
+            version: a.value_of("with-version").map(String::from),
+            sha: a.value_of("with-sha").map(String::from),
+            container: container.clone(),
+            force: a.is_present("force"),
+            simple_verify: a.is_present("simple-verify"),
+        };
+        lal::build(cfg, mf, &bopts, env.into(), a.is_present("print"))
     } else if let Some(a) = args.subcommand_matches("shell") {
         let xs = if a.is_present("cmd") {
             Some(a.values_of("cmd").unwrap().collect::<Vec<_>>())
@@ -214,14 +216,14 @@ fn main() {
                 .short("c")
                 .takes_value(true)
                 .help("Build using a specific configuration (else will use defaultConfig)"))
+            .arg(Arg::with_name("simple-verify")
+                .short("s")
+                .long("simple-verify")
+                .help("Use verify --simple to check INPUT (allows stashed dependencies)"))
             .arg(Arg::with_name("force")
                 .long("force")
                 .short("f")
                 .help("Ignore verify error when using custom dependencies"))
-            .arg(Arg::with_name("strict")
-                .long("strict")
-                .short("s")
-                .help("DEPRECATED - block on verify (default behaviour)"))
             .arg(Arg::with_name("release")
                 .long("release")
                 .short("r")
@@ -230,7 +232,12 @@ fn main() {
                 .long("with-version")
                 .takes_value(true)
                 .requires("release")
-                .help("Configure lockfiles for a release with an explicit new version"))
+                .help("Configure lockfiles with an explicit version number"))
+            .arg(Arg::with_name("with-sha")
+                .long("with-sha")
+                .takes_value(true)
+                .requires("release")
+                .help("Configure lockfiles with an explicit sha"))
             .arg(Arg::with_name("print")
                 .long("print-only")
                 .conflicts_with("release")
@@ -251,7 +258,12 @@ fn main() {
                 .long("save-dev")
                 .conflicts_with("save")
                 .help("Save updated versions in devDependencies in the manifest")))
-        .subcommand(SubCommand::with_name("verify").about("verify consistency of INPUT"))
+        .subcommand(SubCommand::with_name("verify")
+            .arg(Arg::with_name("simple")
+                .short("s")
+                .long("simple")
+                .help("Allow stashed versions in this simpler verify algorithm"))
+            .about("verify consistency of INPUT"))
         .subcommand(SubCommand::with_name("status")
             .alias("ls")
             .arg(Arg::with_name("full")
@@ -302,7 +314,10 @@ fn main() {
                 .short("f")
                 .help("overwrites manifest if necessary")))
         .subcommand(SubCommand::with_name("configure")
-            .about("Creates a default lal config ~/.lal/"))
+            .about("Creates a default lal config ~/.lal/ from a defaults file")
+            .arg(Arg::with_name("file")
+                .required(true)
+                .help("An environments file to seed the config with")))
         .subcommand(SubCommand::with_name("export")
             .about("Fetch a raw tarball from artifactory")
             .arg(Arg::with_name("component")
@@ -405,36 +420,47 @@ fn main() {
     match env::var_os("SSL_CERT_FILE") {
         Some(val) => trace!("Using SSL_CERT_FILE set to {:?}", val),
         // By default point it to normal location (wont work for centos)
-        None =>  env::set_var("SSL_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt")
+        None => env::set_var("SSL_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt"),
     }
 
     // we have a subcommand because SubcommandRequiredElseHelp
     let subname = args.subcommand_name().unwrap();
 
     // Allow lal configure without assumptions
-    if let Some(_) = args.subcommand_matches("configure") {
-        result_exit("configure", lal::configure(true, true));
+    if let Some(a) = args.subcommand_matches("configure") {
+        result_exit("configure",
+                    lal::configure(true, true, a.value_of("file").unwrap()));
     }
 
     // Force config to exists before allowing remaining actions
     let config = Config::read()
         .map_err(|e| {
             error!("Configuration error: {}", e);
-            println!("Ensure you have run `lal configure` and that ~/.lal/config is valid json");
+            println!("If you just got upgraded use `lal configure <config>`");
+            // temporary information for what config is - since it's new in 3.0.0
+            println!("If this was your first >=3.0.0 upgrade:");
+            println!("- source ~/.bash_completion");
+            println!("- lal configure TAB-COMPLETE");
             process::exit(1);
         })
         .unwrap();
 
+    // Create a storage backend (something that implements storage/traits.rs)
+    let backend = match &config.backend {
+        &BackendConfiguration::Artifactory(ref art_cfg) => {
+            ArtifactoryBackend::new(&art_cfg, &config.cache)
+        }
+    };
+
     // Allow lal upgrade without manifest
-    if let Some(_) = args.subcommand_matches("upgrade") {
-        result_exit("upgrade", lal::upgrade_check(&config, false)); // explicit, verbose check
+    if args.subcommand_matches("upgrade").is_some() {
+        result_exit("upgrade", lal::upgrade(&backend, false)); // explicit, verbose check
     }
-    // Timed daily, silent upgrade check (if not using upgrade)
+    // Autoupgrade if enabled - runs once daily if enabled
     // also excluding all listers because they are used in autocomplete
-    if subname != "upgrade" && !subname.contains("list-") && config.upgrade_check_time() {
+    if config.autoupgrade && subname != "upgrade" && !subname.contains("list-") && config.upgrade_check_time() {
         debug!("Performing daily upgrade check");
-        // silent dry-run
-        let _ = lal::upgrade_check(&config, false).map_err(|e| {
+        let _ = lal::upgrade(&backend, false).map_err(|e| {
             error!("Daily upgrade check failed: {}", e);
             // don't halt here if this ever happens as it could break it for users
         });
@@ -453,7 +479,7 @@ fn main() {
                               a.value_of("environment").unwrap()));
     } else if let Some(a) = args.subcommand_matches("clean") {
         let days = a.value_of("days").unwrap().parse().unwrap();
-        result_exit("clean", lal::clean(&config, days));
+        result_exit("clean", lal::clean(&config.cache, days));
     }
 
     // Read .lalopts if it exists
@@ -466,15 +492,17 @@ fn main() {
         })
         .unwrap(); // we get a default empty options here otherwise
 
-    // Work out a partial env for manifest agnostic commands:
-    let env_early = if let Some(eflag) = args.value_of("environment") {
-        eflag.into()
-    } else if let Some(ref stickenv) = stickies.env {
-        stickenv.clone()
-    } else {
-        "default".into()
-    };
-    handle_manifest_agnostic_cmds(&args, &config, &env_early);
+    // Manifest agnostic commands need explicit environments to not look in global location
+    let explicit_env = args.value_of("environment");
+    if let Some(env) = explicit_env {
+        config.get_container(env.into())
+            .map_err(|e| {
+                error!("Environment error: {}", e);
+                process::exit(1)
+            })
+            .unwrap();
+    }
+    handle_manifest_agnostic_cmds(&args, &config, &backend, explicit_env);
 
     // Force manifest to exist before allowing remaining actions
     let manifest = Manifest::read()
@@ -486,38 +514,27 @@ fn main() {
         .unwrap();
 
     // Subcommands that are environment agnostic
-    handle_environment_agnostic_cmds(&args, &manifest, &config);
+    handle_environment_agnostic_cmds(&args, &manifest, &backend);
 
     // Force a valid container key configured in manifest and corr. value in config
-    // NB: --env overrides sticky env overrides manifest.env overrides centos
+    // NB: --env overrides sticky env overrides manifest.env
     let env = if let Some(eflag) = args.value_of("environment") {
         eflag.into()
     } else if let Some(ref stickenv) = stickies.env {
         stickenv.clone()
-    } else if let Some(ref menv) = manifest.environment {
-        menv.clone()
     } else {
-        // nothing specified - defaults inferred differently later on:
-        // - docker commands translate this to "centos"
-        // - network ones translate it to the default artifactory location
-        "default".into()
+        manifest.environment.clone()
     };
     let container = handle_env_command(&args, &config, &env, &stickies);
 
     // Warn users who are overriding the default for the main commands
-    if let Some(ref menv) = manifest.environment {
-        if *menv != env {
-            let sub = args.subcommand_name().unwrap();
-            warn!("Running {} command in non-default {} environment", sub, env);
-        }
-    } else {
-        warn!("Manifest is missing an environment value");
-        warn!("Please hardcode an environment inside manifest.json with a value from \
-               ~/.lal/config");
+    if env != manifest.environment {
+        let sub = args.subcommand_name().unwrap();
+        warn!("Running {} command in non-default {} environment", sub, env);
     }
 
     // Main subcommands
-    handle_network_cmds(&args, &manifest, &config, &env);
+    handle_network_cmds(&args, &manifest, &backend, &env);
     handle_docker_cmds(&args, &manifest, &config, &env, &container);
 
     unreachable!("Subcommand valid, but not implemented");

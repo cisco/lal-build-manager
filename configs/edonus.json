@@ -1,0 +1,45 @@
+{
+  "backend": {
+    "artifactory": {
+      "master": "https://engci-maven-master.cisco.com/artifactory",
+      "slave": "https://engci-maven.cisco.com/artifactory",
+      "release": "CME-release",
+      "vgroup": "CME-group",
+      "credentials": null
+    }
+  },
+  "environments": {
+    "centos": {
+      "name": "edonusdevelopers/centos_build",
+      "tag": "latest"
+    },
+    "py3": {
+      "name": "edonusdevelopers/py3_xenial",
+      "tag": "latest"
+    },
+    "rust": {
+      "name": "edonusdevelopers/muslrust",
+      "tag": "latest"
+    },
+    "transcoder": {
+      "name": "edonusdevelopers/mygdon-transcoder",
+      "tag": "latest"
+    },
+    "xenial": {
+      "name": "edonusdevelopers/build_xenial",
+      "tag": "latest"
+    }
+  },
+  "mounts": [
+    {
+      "src": "/mnt/tools",
+      "dest": "/tools",
+      "readonly": true
+    },
+    {
+      "src": "/mnt/build-files",
+      "dest": "/build-files",
+      "readonly": true
+    }
+  ]
+}
