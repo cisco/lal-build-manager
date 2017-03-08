@@ -6,4 +6,4 @@ ghp-import -n target/doc
 git push -qf "git@sqbu-github.cisco.com:Edonus/lal.git" gh-pages
 
 # NB: to iterate locally:
-# cargo doc && xdg-open target/doc/index.html
+# cargo doc && xdg-open target/doc/lal/index.html
