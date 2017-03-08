@@ -437,7 +437,11 @@ fn main() {
     let config = Config::read()
         .map_err(|e| {
             error!("Configuration error: {}", e);
-            println!("Ensure you have run `lal configure` and that ~/.lal/config is valid json");
+            println!("If you just got upgraded use `lal configure <config>`");
+            // temporary information for what config is - since it's new in 3.0.0
+            println!("If this was your first >=3.0.0 upgrade:");
+            println!("- source ~/.bash_completion");
+            println!("- lal configure TAB-COMPLETE");
             process::exit(1);
         })
         .unwrap();
