@@ -71,6 +71,7 @@ pub trait Backend {
 }
 
 /// A secondary trait that builds upon the Backend trait
+///
 /// This wraps the common fetch commands in a caching layer on the cache dir.
 pub trait CachedBackend {
     /// Retrieve the location to a cached published component (downloading if necessary)
