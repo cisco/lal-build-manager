@@ -15,11 +15,14 @@ Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) direct
 
 ```sh
 curl https://engci-maven.cisco.com/artifactory/CME-group/lal/latest/lal.tar | tar xz -C /usr/local
-lal configure
 echo "source /usr/local/share/lal/lal.complete.sh" >> ~/.bash_completion
+source ~/.bash_completion # or open new shell
+lal configure <site-config>
 ```
 
-Note that you will need to `sudo chown -R "$USER" /usr/local` to avoid using sudo on the tar side. Alternatively, install to another location and manage `$PATH` yourself.
+The `site-config` autocompletes on tab-press if you set up the bash completion correctly.
+
+Note that you will need to `sudo chown -R "$USER" /usr/local` if you want to use this as the install prefix because automatic upgrades will happen inside that folder. Alternatively, install to another location and manage `$PATH` yourself.
 
 When new versions are released, you will be told to re-run the `curl` command.
 
@@ -33,9 +36,12 @@ git clone git@sqbu-github.cisco.com:Edonus/lal.git && cd lal
 cargo build --release
 # install libssl-dev and curl (or distro equivalent) + `cargo clean` if build fails
 ln -sf $PWD/target/release/lal /usr/local/bin/lal
-lal configure
 echo "source $PWD/lal.complete.sh" >> ~/.bash_completion
+source ~/.bash_completion # or open new shell
+lal configure <site-config>
 ```
+
+The `site-config` autocompletes on tab-press if you set up the bash completion correctly.
 
 When new versions are released, you will be told to `git pull && cargo build --release`.
 
