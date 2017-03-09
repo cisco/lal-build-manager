@@ -32,12 +32,17 @@ pub fn publish<T: Backend>(name: &str, backend: &T, env: Option<&str>) -> LalRes
     if let Some(envu) = env {
         // no accidental publishes to envs it wasn't built in!
         if envu != lock.environment {
-            error!("Cannot publish {} built component to the {} environment", lock.environment, envu);
+            error!("Cannot publish {} built component to the {} environment",
+                   lock.environment,
+                   envu);
             return Err(CliError::MissingReleaseBuild);
         }
     }
 
-    info!("Publishing {}={} to {}", name, version, env.unwrap_or("global"));
+    info!("Publishing {}={} to {}",
+          name,
+          version,
+          env.unwrap_or("global"));
     backend.upload_artifact_dir(name, version, env)?;
 
     Ok(())

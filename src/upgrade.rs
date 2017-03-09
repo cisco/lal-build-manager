@@ -24,7 +24,7 @@ struct ExeInfo {
     /// Path to current_exe
     path: String,
     /// Best guess at install prefix based on path (only for static executables)
-    prefix: Option<String>,
+    prefix: Option<PathBuf>,
     /// Parsed semver version
     version: Version,
 }
@@ -38,7 +38,7 @@ fn identify_exe() -> LalResult<ExeInfo> {
     let pthstr: String = pth.to_str().unwrap().into();
     let prefix = if pthstr.contains("/bin/") {
         let v: Vec<&str> = pthstr.split("/bin/").collect();
-        if v.len() == 2 { Some(v[0].into()) } else { None }
+        if v.len() == 2 { Some(Path::new(v[0]).to_owned()) } else { None }
     } else {
         None
     };
@@ -76,23 +76,37 @@ fn verify_permissions(exe: &ExeInfo) -> LalResult<()> {
     Ok(())
 }
 
-fn overwrite_exe<T: Backend>(backend: &T, prefix: &str) -> LalResult<()> {
-    let dest = Path::new(prefix).join("lal.tar");
-    // start by attempting to download into the prefix - requires permissions:
-    backend.raw_download(&backend.get_lal_upgrade_url(), &dest)?;
-    let unpack_dest = Path::new(prefix);
-    extract_tarball(dest, unpack_dest.to_owned())?;
+fn validate_exe(exe: &ExeInfo, expected_ver: &Version) -> LalResult<()> {
+    let lal_output = Command::new(&exe.path).arg("-V").output()?;
+    let lal_str = String::from_utf8_lossy(&lal_output.stdout);
+    debug!("Output from lal -V: {}", lal_str.trim());
+    debug!("Expecting to find: {}", expected_ver.to_string());
+    if !lal_str.contains(&expected_ver.to_string()) {
+        let estr = format!("lal -V yielded {}", lal_str.trim());
+        return Err(CliError::UpgradeValidationFailure(estr));
+    }
+    debug!("New version validated");
     Ok(())
 }
 
-fn upgrade_exe<T: Backend>(backend: &T, exe: &ExeInfo) -> LalResult<()> {
+fn overwrite_exe<T: Backend>(backend: &T, exe: &ExeInfo, expected_ver: &Version) -> LalResult<()> {
+    let prefix = exe.prefix.clone().unwrap();
+    let dest = prefix.join("lal.tar");
+    // start by attempting to download into the prefix - requires permissions:
+    backend.raw_download(&backend.get_lal_upgrade_url(), &dest)?;
+    extract_tarball(dest, prefix)?;
+    validate_exe(exe, expected_ver)?;
+    Ok(())
+}
+
+fn upgrade_exe<T: Backend>(backend: &T, exe: &ExeInfo, expected_ver: &Version) -> LalResult<()> {
     let prefix = exe.prefix.clone().unwrap();
     // 0. sanity - could we actually upgrade if we tried?
-    verify_permissions(exe).map_err(|_| CliError::MissingPrefixPermissions(prefix.clone()))?;
-    debug!("Have permissions to write in {}", prefix);
+    verify_permissions(exe).map_err(|_| CliError::MissingPrefixPermissions(prefix.to_string_lossy().into()))?;
+    debug!("Have permissions to write in {}", prefix.display());
 
     // 1. rename current running executable to the same except _old suffix
-    let old_file = Path::new(&prefix).join("bin").join("_lal_old");
+    let old_file = prefix.join("bin").join("_lal_old");
     if old_file.is_file() {
         // remove previous upgrade backup
         fs::remove_file(&old_file)?;
@@ -100,7 +114,7 @@ fn upgrade_exe<T: Backend>(backend: &T, exe: &ExeInfo) -> LalResult<()> {
     fs::rename(&exe.path, &old_file)?; // need to undo this if we fail
     // NB: DO NOT INSERT CALLS THAT CAN FAIL HERE BEFORE THE OVERWRITE
     // 2. force dump lal tarball into exe.prefix - rollback if it failed
-    match overwrite_exe(backend, &prefix) {
+    match overwrite_exe(backend, exe, expected_ver) {
         Ok(_) => trace!("overwrite successful"),
         Err(e) => {
             // download could fail, tarball could potentially be corrupt?
@@ -137,8 +151,9 @@ pub fn upgrade<T: Backend>(backend: &T, silent: bool) -> LalResult<bool> {
         } else if exe.prefix.is_some() {
             // install lal in the prefix it's normally in
             info!("Upgrading...");
-            upgrade_exe(backend, &exe)?;
+            upgrade_exe(backend, &exe, &latest)?;
             info!("lal upgraded successfully to {} at {}", latest, exe.path);
+            println!("");
         } else {
             // static, but no good guess of where to install - let user decide:
             info!("Your version is prebuilt - please run");

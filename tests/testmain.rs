@@ -250,7 +250,8 @@ fn verify_checks<T: CachedBackend + Backend>(backend: &T) {
     let renv1 = lal::verify(&mf, "centos".into(), false);
     assert!(renv1.is_err(), "could not verify with wrong env");
     let renv2 = lal::verify(&mf, "centos".into(), true);
-    assert!(renv2.is_err(), "could not verify with wrong env - even with simple");
+    assert!(renv2.is_err(),
+            "could not verify with wrong env - even with simple");
 
     let gtest = Path::new(&env::current_dir().unwrap()).join("INPUT").join("gtest");
     // clean folders and verify it fails
@@ -364,8 +365,9 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
 
     // force will also work - even with stashed deps from wrong env
     let renv = lal::build(&cfg, &mf, &bopts, "rust".into(), false);
-    assert!(renv.is_err(), "cannot build with simple verify when wrong env");
-        if let Err(CliError::EnvironmentMismatch(_, compenv)) = renv {
+    assert!(renv.is_err(),
+            "cannot build with simple verify when wrong env");
+    if let Err(CliError::EnvironmentMismatch(_, compenv)) = renv {
         assert_eq!(compenv, "xenial"); // expected complaints about xenial env
     } else {
         println!("actual renv was {:?}", renv);

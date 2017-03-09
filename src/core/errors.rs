@@ -93,6 +93,8 @@ pub enum CliError {
     // upgrade error
     /// Failing to write to our current install prefix
     MissingPrefixPermissions(String),
+    /// Failing to validate latest lal version
+    UpgradeValidationFailure(String),
 }
 
 // Format implementation used when printing an error
@@ -183,6 +185,9 @@ impl fmt::Display for CliError {
                        "No write access in {} - consider chowning: `sudo chown -R $USER {}`",
                        s,
                        s)
+            }
+            CliError::UpgradeValidationFailure(ref s) => {
+                write!(f, "Failed to validate new lal version - rolling back ({})", s)
             }
         }
     }

@@ -458,7 +458,8 @@ fn main() {
     }
     // Autoupgrade if enabled - runs once daily if enabled
     // also excluding all listers because they are used in autocomplete
-    if config.autoupgrade && subname != "upgrade" && !subname.contains("list-") && config.upgrade_check_time() {
+    if config.autoupgrade && subname != "upgrade" && !subname.contains("list-") &&
+       config.upgrade_check_time() {
         debug!("Performing daily upgrade check");
         let _ = lal::upgrade(&backend, false).map_err(|e| {
             error!("Daily upgrade check failed: {}", e);
