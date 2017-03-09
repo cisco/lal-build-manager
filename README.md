@@ -22,7 +22,7 @@ lal configure <site-config> # use autocomplete to select config
 
 Note that you will need to `sudo chown -R "$USER" /usr/local` if you want to use this as the install prefix because automatic upgrades will happen inside that folder. Alternatively, install to another location and manage `$PATH` yourself.
 
-When new versions are released, you will be told to re-run the `curl` command.
+There will be a daily upgrade attempt that auto-upgrades your version if a new one was found.
 
 ### From source (<10 minutes)
 Get [stable rust](https://www.rust-lang.org/downloads.html) (inlined below), clone, build, install, and make it available:
