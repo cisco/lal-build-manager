@@ -76,6 +76,16 @@ fn verify_permissions(exe: &ExeInfo) -> LalResult<()> {
     Ok(())
 }
 
+fn overwrite_exe<T: Backend>(backend: &T, exe: &ExeInfo, expected_ver: &Version) -> LalResult<()> {
+    let prefix = exe.prefix.clone().unwrap();
+    let dest = prefix.join("lal.tar");
+    // start by attempting to download into the prefix - requires permissions:
+    backend.raw_download(&backend.get_lal_upgrade_url(), &dest)?;
+    extract_tarball(dest, prefix)?;
+    validate_exe(exe, expected_ver)?;
+    Ok(())
+}
+
 fn validate_exe(exe: &ExeInfo, expected_ver: &Version) -> LalResult<()> {
     let lal_output = Command::new(&exe.path).arg("-V").output()?;
     let lal_str = String::from_utf8_lossy(&lal_output.stdout);
@@ -86,16 +96,6 @@ fn validate_exe(exe: &ExeInfo, expected_ver: &Version) -> LalResult<()> {
         return Err(CliError::UpgradeValidationFailure(estr));
     }
     debug!("New version validated");
-    Ok(())
-}
-
-fn overwrite_exe<T: Backend>(backend: &T, exe: &ExeInfo, expected_ver: &Version) -> LalResult<()> {
-    let prefix = exe.prefix.clone().unwrap();
-    let dest = prefix.join("lal.tar");
-    // start by attempting to download into the prefix - requires permissions:
-    backend.raw_download(&backend.get_lal_upgrade_url(), &dest)?;
-    extract_tarball(dest, prefix)?;
-    validate_exe(exe, expected_ver)?;
     Ok(())
 }
 
@@ -128,11 +128,11 @@ fn upgrade_exe<T: Backend>(backend: &T, exe: &ExeInfo, expected_ver: &Version) -
 }
 
 
-/// Check for new versions of lal
+/// Check for and possibly upgrade lal when using musl releases
 ///
-/// This will just query for the latest version, and not install anything.
-/// If a newer version found (> in semver), then this is logged depending on mode.
-/// If run as part of the automatic update check, then it's silent.
+/// This will query for the latest version, and upgrade in the one possible case.
+/// If a newer version found (> in semver), and it's a static executable,
+/// then an executable upgrade is attempted from the new release url.
 pub fn upgrade<T: Backend>(backend: &T, silent: bool) -> LalResult<bool> {
     let latest = backend.get_latest_lal_version()?;
     let exe = identify_exe()?;
