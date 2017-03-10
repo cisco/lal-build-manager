@@ -156,7 +156,7 @@ pub fn upgrade<T: Backend>(backend: &T, silent: bool) -> LalResult<bool> {
             println!("");
         } else {
             // static, but no good guess of where to install - let user decide:
-            info!("Your version is prebuilt - please run");
+            info!("Your version is prebuilt but installed weirdly - please run:");
             info!("curl {} | tar xz -C /usr/local",
                   backend.get_lal_upgrade_url());
         }
