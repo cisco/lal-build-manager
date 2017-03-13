@@ -46,6 +46,7 @@ lalversion=$(grep version Cargo.toml | awk -F"\"" '{print $2}')
 buildurl="http://engci-maven.cisco.com/artifactory/api/storage/CME-release/lal"
 if curl -s "${buildurl}" | grep -q "$lalversion"; then
     echo "lal version already uploaded - stopping" # don't want to overwrite
+    rm -rf ARTIFACT # tests create a release build..
 else
   echo "Packaging new lal version"
   mkdir -p musl/bin
