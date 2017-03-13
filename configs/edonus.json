@@ -17,6 +17,10 @@
       "name": "edonusdevelopers/py3_xenial",
       "tag": "latest"
     },
+    "rust": {
+      "name": "edonusdevelopers/muslrust",
+      "tag": "latest"
+    },
     "transcoder": {
       "name": "edonusdevelopers/mygdon-transcoder",
       "tag": "latest"
