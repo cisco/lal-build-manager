@@ -436,11 +436,10 @@ fn main() {
     let config = Config::read()
         .map_err(|e| {
             error!("Configuration error: {}", e);
-            println!("If you just got upgraded use `lal configure <config>`");
-            // temporary information for what config is - since it's new in 3.0.0
-            println!("If this was your first >=3.0.0 upgrade:");
-            println!("- source ~/.bash_completion");
-            println!("- lal configure TAB-COMPLETE");
+            println!("");
+            println!("If you just got upgraded use `lal configure <site-config>`");
+            println!("Site configs are found in {{install_prefix}}/share/lal/configs/ \
+                      and should auto-complete");
             process::exit(1);
         })
         .unwrap();

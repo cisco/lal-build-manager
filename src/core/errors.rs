@@ -187,7 +187,9 @@ impl fmt::Display for CliError {
                        s)
             }
             CliError::UpgradeValidationFailure(ref s) => {
-                write!(f, "Failed to validate new lal version - rolling back ({})", s)
+                write!(f,
+                       "Failed to validate new lal version - rolling back ({})",
+                       s)
             }
         }
     }

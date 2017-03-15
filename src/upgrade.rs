@@ -102,7 +102,9 @@ fn validate_exe(exe: &ExeInfo, expected_ver: &Version) -> LalResult<()> {
 fn upgrade_exe<T: Backend>(backend: &T, exe: &ExeInfo, expected_ver: &Version) -> LalResult<()> {
     let prefix = exe.prefix.clone().unwrap();
     // 0. sanity - could we actually upgrade if we tried?
-    verify_permissions(exe).map_err(|_| CliError::MissingPrefixPermissions(prefix.to_string_lossy().into()))?;
+    verify_permissions(exe).map_err(|_|
+        CliError::MissingPrefixPermissions(prefix.to_string_lossy().into())
+    )?;
     debug!("Have permissions to write in {}", prefix.display());
 
     // 1. rename current running executable to the same except _old suffix

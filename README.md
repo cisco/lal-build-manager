@@ -3,9 +3,9 @@
 A dependency manager built around artifactory and docker. See the [spec](./SPEC.md) for background information.
 
 ## Prerequisites
-You need [docker](https://docs.docker.com/engine/installation/linux/) (minimum version 1.10), register an account with your username, then get someone to add the necessary credentials to your account.
+You need [docker](https://docs.docker.com/engine/installation/linux/) (minimum version 1.10), register an account with your username, then get someone to add the necessary credentials to your account on dockerhub.
 
-You will need access to the [edonusdevelopers group](https://hub.docker.com/r/edonusdevelopers/), and you need to have called `docker login` on the command line as well.
+In particular, your account will need access to the images in the [relevant config file](https://sqbu-github.cisco.com/Edonus/lal/tree/master/configs), and you need to have called `docker login` on the command line with this account.
 
 ## Installation
 Two ways to install, depending on whether you can be bothered to run the rust install script:
@@ -20,7 +20,7 @@ source ~/.bash_completion # or open new shell
 lal configure <site-config> # use autocomplete to select config
 ```
 
-Note that you will need to `sudo chown -R "$USER" /usr/local` if you want to use this as the install prefix because automatic upgrades will happen inside that folder. Alternatively, install to another location and manage `$PATH` yourself.
+Note that **you will need** to `sudo chown -R "$USER" /usr/local` first *if* you want to use this as the install prefix because automatic upgrades will happen inside that folder. Alternatively, install to another location and manage `$PATH` yourself.
 
 There will be a daily upgrade attempt that auto-upgrades your version if a new one was found.
 
