@@ -85,7 +85,7 @@ pub fn docker_run(cfg: &Config,
     args.push("--env=DISPLAY".into());
     args.push("--net=host".into());
     args.push("-v".into());
-    args.push("$HOME/.Xauthority:/home/lal/.Xauthority".into());
+    args.push(format!("{}/.Xauthority:/home/lal/.Xauthority", home.display()));
 
 
     if flags.privileged {
