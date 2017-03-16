@@ -78,6 +78,12 @@ pub fn docker_run(cfg: &Config,
     args.push("-v".into());
     args.push(format!("{}:/home/lal/volume", pwd.display()));
 
+    // X11 forwarding
+    // requires calling `xhost local:root` first
+    args.push("-v".into());
+    args.push("/tmp/.X11-unix:/tmp/.X11-unix".into());
+    args.push("--env=DISPLAY".into());
+
     if flags.privileged {
         args.push("--privileged".into())
     }
