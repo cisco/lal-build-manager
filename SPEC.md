@@ -279,7 +279,6 @@ docker run \
   -v $HOME/.gitconfig:/home/lal/.gitconfig \
   -v $PWD:/home/lal/volume \
   -w /home/lal/volume \
-  --net host \
   --user lal \
   -it ${SOME_CONTAINER} \
   /bin/bash
@@ -294,6 +293,23 @@ lal shell should allow passing in trailing arguments to run arbitrary commands:
 - `lal shell bash -c "cmd1; cmd2"` # multiple commands in one go
 - `lal shell --print-only` prints above command
 - `lal shell --print-only ./BUILD something` # prints what would have been done
+
+lal shell should also allow making it easy to forward the X11 socket:
+
+- `lal shell -X` # mounts `/tmp/.X11-unix`, `~/.Xauthority` and forwards the `DISPLAY` evar
+
+Host networking should be convenience flag:
+
+- `lal shell -n` # passes `--net=host` to docker.
+
+A combination of these two flags allows forwarding X through `ssh` and `lal`:
+
+```sh
+ssh -X somemachine # ssh with X11 forwarding
+lal sh -X -n xcalc # run xcalc and forward X11 all the way through ssh
+```
+
+The `X11` forwarding setup requires `xhost` installed, and also `xauth` installed if you need it through `ssh` as well. You may need to run `xhost local:docker` to allow docker to access X.
 
 Alias: `lal sh`
 

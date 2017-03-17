@@ -53,7 +53,7 @@ pub fn docker_run(cfg: &Config,
                   container: &Container,
                   command: Vec<String>,
                   flags: &DockerRunFlags,
-                  printonly: bool)
+                  modes: &ShellModes)
                   -> LalResult<()> {
     trace!("Finding home and cwd");
     let home = env::home_dir().unwrap(); // crash if no $HOME
@@ -79,13 +79,21 @@ pub fn docker_run(cfg: &Config,
     args.push(format!("{}:/home/lal/volume", pwd.display()));
 
     // X11 forwarding
-    // requires calling `xhost local:root` first
-    args.push("-v".into());
-    args.push("/tmp/.X11-unix".into());
-    args.push("--env=DISPLAY".into());
-    args.push("--net=host".into());
-    args.push("-v".into());
-    args.push(format!("{}/.Xauthority:/home/lal/.Xauthority", home.display()));
+    if modes.x11_forwarding {
+        // requires calling `xhost local:docker` first
+        args.push("-v".into());
+        args.push("/tmp/.X11-unix:/tmp/.X11-unix:ro".into());
+        args.push("--env=DISPLAY".into());
+        args.push("-v".into());
+        // xauth also needed for `ssh -X` through `lal -X`
+        args.push(format!("{}/.Xauthority:/home/lal/.Xauthority:ro", home.display()));
+        // QT compat
+         args.push("--env=QT_X11_NO_MITSHM=1".into());
+    }
+    if modes.host_networking {
+        // also needed for for `ssh -X` into `lal -X`
+        args.push("--net=host".into());
+    }
 
 
     if flags.privileged {
@@ -111,8 +119,17 @@ pub fn docker_run(cfg: &Config,
     }
 
     // run or print docker command
-    if printonly {
-        println!("docker {}", args.join(" "));
+    if modes.printonly {
+        print!("docker");
+        for arg in args {
+            if arg.contains(" ") {
+                // leave quoted args quoted
+                print!(" \"{}\"", arg);
+            } else {
+                print!(" {}", arg);
+            }
+        }
+        println!("");
     } else {
         trace!("Performing docker permission sanity check");
         let _ = permission_sanity_check().map_err(|e| {
@@ -129,17 +146,30 @@ pub fn docker_run(cfg: &Config,
     Ok(())
 }
 
+/// Various ways to invoke `docker_run`
+#[derive(Default)]
+pub struct ShellModes {
+    /// Just print the command used rather than do it
+    pub printonly: bool,
+    /// Attempt to forward the X11 socket and all it needs
+    pub x11_forwarding: bool,
+    /// Host networking
+    pub host_networking: bool,
+}
+
+
+
 /// Mounts and enters `.` in an interactive bash shell using the configured container.
 ///
 /// If a command vector is given, this is called non-interactively instead of /bin/bash
 /// You can thus do `lal shell ./BUILD target` or ``lal shell bash -c "cmd1; cmd2"`
 pub fn shell(cfg: &Config,
              container: &Container,
-             printonly: bool,
+             modes: &ShellModes,
              cmd: Option<Vec<&str>>,
              privileged: bool)
              -> LalResult<()> {
-    if !printonly {
+    if !modes.printonly {
         info!("Entering {}", container);
     }
     let flags = DockerRunFlags {
@@ -152,7 +182,7 @@ pub fn shell(cfg: &Config,
             bash.push(c.to_string())
         }
     }
-    docker_run(cfg, container, bash, &flags, printonly)
+    docker_run(cfg, container, bash, &flags, modes)
 }
 
 /// Runs a script in `.lal/scripts/` with supplied arguments in a docker shell
@@ -163,6 +193,7 @@ pub fn script(cfg: &Config,
               container: &Container,
               name: &str,
               args: Vec<&str>,
+              modes: &ShellModes,
               privileged: bool)
               -> LalResult<()> {
     let pth = Path::new(".").join(".lal").join("scripts").join(&name);
@@ -179,5 +210,5 @@ pub fn script(cfg: &Config,
     let cmd = vec!["bash".into(),
                    "-c".into(),
                    format!("source {}; main {}", pth.display(), args.join(" "))];
-    Ok(docker_run(cfg, container, cmd, &flags, false)?)
+    Ok(docker_run(cfg, container, cmd, &flags, modes)?)
 }

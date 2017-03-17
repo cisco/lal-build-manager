@@ -4,7 +4,7 @@ use std::io;
 
 use shell;
 use verify::verify;
-use super::{output, Lockfile, Manifest, Container, Config, LalResult, CliError, DockerRunFlags};
+use super::{output, Lockfile, Manifest, Container, Config, LalResult, CliError, DockerRunFlags, ShellModes};
 
 
 fn find_valid_build_script() -> LalResult<String> {
@@ -77,7 +77,7 @@ pub fn build(cfg: &Config,
              manifest: &Manifest,
              opts: &BuildOptions,
              envname: String,
-             printonly: bool)
+             modes: &ShellModes)
              -> LalResult<()> {
     // have a better warning on first file-io operation
     // if nfs mounts and stuff cause issues this usually catches it
@@ -135,7 +135,7 @@ pub fn build(cfg: &Config,
     let cmd = vec![bpath, component.clone(), configuration_name];
 
     debug!("Build script is {:?}", cmd);
-    if !printonly {
+    if !modes.printonly {
         info!("Running build script in {} container", envname);
     }
 
@@ -143,7 +143,7 @@ pub fn build(cfg: &Config,
         interactive: cfg.interactive,
         privileged: false,
     };
-    shell::docker_run(cfg, &opts.container, cmd, &run_flags, printonly)?;
+    shell::docker_run(cfg, &opts.container, cmd, &run_flags, modes)?;
 
     // Extra info and warnings for people who missed the leading ones (build is spammy)
     if verify_failed {
@@ -157,7 +157,7 @@ pub fn build(cfg: &Config,
         warn!("Build was using non-default {} environment", envname);
     }
 
-    if opts.release && !printonly {
+    if opts.release && !modes.printonly {
         trace!("Create ARTIFACT dir");
         ensure_dir_exists_fresh("ARTIFACT")?;
         trace!("Copy lockfile to ARTIFACT dir");
