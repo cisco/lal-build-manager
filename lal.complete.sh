@@ -61,7 +61,7 @@ _lal()
                     COMPREPLY=($(compgen -W "$configs" -- "$cur"))
                 else
                     # suggest flags
-                    local -r build_flags="-r --release -f --force -c --config -h --help --print-only"
+                    local -r build_flags="-r --release -f --force -c --config -h --help --X11 -X -n --net-host --print-only --simple-verify -s"
                     COMPREPLY=($(compgen -W "$build_flags" -- "$cur"))
                 fi
                 ;;
@@ -123,7 +123,7 @@ _lal()
             shell)
                 [[ $in_lal_repo ]] || return 0
                 # suggest flags
-                local -r sh_flags="-p --privileged -h --help --print-only"
+                local -r sh_flags="-p --privileged -h --help --print-only --X11 -X -n --net-host"
                 if [[ $prev = "shell" ]]; then
                     COMPREPLY=($(compgen -W "$sh_flags" -- "$cur"))
                 fi
@@ -150,7 +150,7 @@ _lal()
                 [[ $in_lal_repo ]] || return 0
                 # locate the scripts in .lal/scripts
                 local -r scripts="$(find "$PWD/.lal/scripts/" -maxdepth 1 -type f -printf "%f " 2> /dev/null)"
-                local -r second_args="${scripts} -p --privileged"
+                local -r second_args="${scripts} -p --privileged --X11 -X -n --net-host --print-only"
 
                 if [[ $prev == @(script|run) ]] || [[ $prev == -* ]]; then
                     COMPREPLY=($(compgen -W "$second_args" -- "$cur"))

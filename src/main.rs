@@ -154,16 +154,26 @@ fn handle_docker_cmds(args: &ArgMatches,
             force: a.is_present("force"),
             simple_verify: a.is_present("simple-verify"),
         };
-        lal::build(cfg, mf, &bopts, env.into(), a.is_present("print"))
+        let modes = ShellModes {
+            printonly: a.is_present("print"),
+            x11_forwarding: a.is_present("x11"),
+            host_networking: a.is_present("net-host"),
+        };
+        lal::build(cfg, mf, &bopts, env.into(), &modes)
     } else if let Some(a) = args.subcommand_matches("shell") {
         let xs = if a.is_present("cmd") {
             Some(a.values_of("cmd").unwrap().collect::<Vec<_>>())
         } else {
             None
         };
+        let modes = ShellModes {
+            printonly: a.is_present("print"),
+            x11_forwarding: a.is_present("x11"),
+            host_networking: a.is_present("net-host"),
+        };
         lal::shell(cfg,
                    container,
-                   a.is_present("print"),
+                   &modes,
                    xs,
                    a.is_present("privileged"))
     } else if let Some(a) = args.subcommand_matches("run") {
@@ -172,10 +182,16 @@ fn handle_docker_cmds(args: &ArgMatches,
         } else {
             vec![]
         };
+        let modes = ShellModes {
+            printonly: a.is_present("print"),
+            x11_forwarding: a.is_present("x11"),
+            host_networking: a.is_present("net-host"),
+        };
         lal::script(cfg,
                     container,
                     a.value_of("script").unwrap(),
                     xs,
+                    &modes,
                     a.is_present("privileged"))
     } else {
         return (); // no valid docker related command found
@@ -238,6 +254,14 @@ fn main() {
                 .takes_value(true)
                 .requires("release")
                 .help("Configure lockfiles with an explicit sha"))
+            .arg(Arg::with_name("x11")
+                .short("X")
+                .long("X11")
+                .help("Enable X11 forwarding (best effort)"))
+            .arg(Arg::with_name("net-host")
+                .short("n")
+                .long("net-host")
+                .help("Enable host networking"))
             .arg(Arg::with_name("print")
                 .long("print-only")
                 .conflicts_with("release")
@@ -286,6 +310,14 @@ fn main() {
                 .short("p")
                 .long("privileged")
                 .help("Run docker in privileged mode"))
+            .arg(Arg::with_name("x11")
+                .short("X")
+                .long("X11")
+                .help("Enable X11 forwarding (best effort)"))
+            .arg(Arg::with_name("net-host")
+                .short("n")
+                .long("net-host")
+                .help("Enable host networking"))
             .arg(Arg::with_name("print")
                 .long("print-only")
                 .help("Only print the docker run command and exit"))
@@ -297,6 +329,17 @@ fn main() {
             .arg(Arg::with_name("script")
                 .help("Name of the script file to be run")
                 .required(true))
+            .arg(Arg::with_name("x11")
+                .short("X")
+                .long("X11")
+                .help("Enable X11 forwarding (best effort)"))
+            .arg(Arg::with_name("net-host")
+                .short("n")
+                .long("net-host")
+                .help("Enable host networking"))
+            .arg(Arg::with_name("print")
+                .long("print-only")
+                .help("Only print the docker run command and exit"))
             .arg(Arg::with_name("privileged")
                 .short("p")
                 .long("privileged")

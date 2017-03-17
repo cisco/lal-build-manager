@@ -1,6 +1,5 @@
 extern crate lal;
 
-#[macro_use]
 extern crate log;
 extern crate loggerv;
 extern crate walkdir;
@@ -287,21 +286,23 @@ fn verify_checks<T: CachedBackend + Backend>(backend: &T) {
 fn shell_echo() {
     let cfg = Config::read().unwrap();
     let container = cfg.get_container("rust".into()).unwrap();
+    let modes = ShellModes::default();
     let r = lal::docker_run(&cfg,
                             &container,
                             vec!["echo".to_string(), "# echo from docker".to_string()],
                             &DockerRunFlags::default(),
-                            false);
+                            &modes);
     assert!(r.is_ok(), "shell echoed");
 }
 fn shell_permissions() {
     let cfg = Config::read().unwrap();
     let container = cfg.get_container("rust".into()).unwrap();
+    let modes = ShellModes::default();
     let r = lal::docker_run(&cfg,
                             &container,
                             vec!["touch".to_string(), "README.md".to_string()],
                             &DockerRunFlags::default(),
-                            false);
+                            &modes);
     assert!(r.is_ok(), "could touch files in container");
 }
 
@@ -331,8 +332,9 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
         force: false,
         simple_verify: false,
     };
+    let modes = ShellModes::default();
     // basic build works - all deps are global at right env
-    let r = lal::build(&cfg, &mf, &bopts, "xenial".into(), false);
+    let r = lal::build(&cfg, &mf, &bopts, "xenial".into(), &modes);
     assert!(r.is_ok(), "could perform a xenial build");
 
     // lal stash testmain
@@ -349,7 +351,7 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
     chk::is_ok(ru, "could update lal from stash");
 
     // basic build won't work now without simple verify
-    let r1 = lal::build(&cfg, &mf, &bopts, "xenial".into(), false);
+    let r1 = lal::build(&cfg, &mf, &bopts, "xenial".into(), &modes);
     assert!(r1.is_err(), "could not verify a new xenial build");
     if let Err(CliError::NonGlobalDependencies(nonglob)) = r1 {
         assert_eq!(nonglob, "lal");
@@ -359,12 +361,12 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
     }
 
     bopts.simple_verify = true;
-    let r2 = lal::build(&cfg, &mf, &bopts, "xenial".into(), false);
+    let r2 = lal::build(&cfg, &mf, &bopts, "xenial".into(), &modes);
     assert!(r2.is_ok(), "can build with stashed deps with simple verify");
 
 
     // force will also work - even with stashed deps from wrong env
-    let renv = lal::build(&cfg, &mf, &bopts, "rust".into(), false);
+    let renv = lal::build(&cfg, &mf, &bopts, "rust".into(), &modes);
     assert!(renv.is_err(),
             "cannot build with simple verify when wrong env");
     if let Err(CliError::EnvironmentMismatch(_, compenv)) = renv {
@@ -377,8 +379,17 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
     // settings that reflect lal build -f
     bopts.simple_verify = false;
     bopts.force = true;
-    let renv2 = lal::build(&cfg, &mf, &bopts, "rust".into(), false);
+    let renv2 = lal::build(&cfg, &mf, &bopts, "rust".into(), &modes);
     assert!(renv2.is_ok(), "could force build in different env");
+
+    // additionally do a build with printonly
+    let all_modes = ShellModes {
+        printonly: true,
+        x11_forwarding: true,
+        host_networking: true,
+    };
+    let printbuild = lal::build(&cfg, &mf, &bopts, "rust".into(), &all_modes);
+    assert!(printbuild.is_ok(), "saw docker run print with X11 mounts");
 }
 
 fn run_scripts() {
@@ -390,7 +401,8 @@ fn run_scripts() {
     }
     let cfg = Config::read().unwrap();
     let container = cfg.get_container("rust".into()).unwrap();
-    let r = lal::script(&cfg, &container, "subroutine", vec!["there", "mr"], false);
+    let modes = ShellModes::default();
+    let r = lal::script(&cfg, &container, "subroutine", vec!["there", "mr"], &modes, false);
     assert!(r.is_ok(), "could run subroutine script");
 }
 

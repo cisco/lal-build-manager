@@ -58,7 +58,7 @@ pub mod list;
 pub use build::{build, BuildOptions};
 pub use configure::configure;
 pub use init::init;
-pub use shell::{shell, docker_run, script, DockerRunFlags};
+pub use shell::{shell, docker_run, script, DockerRunFlags, ShellModes};
 pub use fetch::fetch;
 pub use update::{update, update_all};
 pub use remove::remove;
