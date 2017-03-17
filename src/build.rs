@@ -144,6 +144,9 @@ pub fn build(cfg: &Config,
         privileged: false,
     };
     shell::docker_run(cfg, &opts.container, cmd, &run_flags, modes)?;
+    if modes.printonly {
+        return Ok(()); // nothing else worth doing - warnings are pointless
+    }
 
     // Extra info and warnings for people who missed the leading ones (build is spammy)
     if verify_failed {
