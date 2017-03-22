@@ -89,6 +89,8 @@ pub enum CliError {
     MissingReleaseBuild,
     /// Config missing backend credentials
     MissingBackendCredentials,
+    /// Failed upload request to the backend
+    UploadFailure(String),
 
     // upgrade error
     /// Failing to write to our current install prefix
@@ -190,6 +192,9 @@ impl fmt::Display for CliError {
                 write!(f,
                        "Failed to validate new lal version - rolling back ({})",
                        s)
+            }
+            CliError::UploadFailure(ref up) => {
+                write!(f,"Upload failure: {}", up)
             }
         }
     }

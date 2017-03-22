@@ -120,8 +120,6 @@ fn upload_artifact(arti: &ArtifactoryConfig, uri: &str, f: &mut File) -> LalResu
         f.read_to_end(&mut buffer)?;
 
         let full_uri = format!("{}/{}/{}", arti.slave, arti.release, uri);
-        // NB: will crash if invalid credentials or network failures atm
-        // TODO: add better error handling
 
         let mut sha = sha1::Sha1::new();
         sha.update(&buffer);
@@ -132,21 +130,35 @@ fn upload_artifact(arti: &ArtifactoryConfig, uri: &str, f: &mut File) -> LalResu
         });
 
         // upload the artifact
+        info!("PUT {}", full_uri);
         let resp = client.put(&full_uri[..])
             .header(auth.clone())
             .body(&buffer[..])
             .send()?;
-        trace!("resp={:?}", resp);
-        assert_eq!(resp.status, StatusCode::Created);
+        debug!("resp={:?}", resp);
+        let respstr = format!("{} from PUT {}", resp.status, full_uri);
+        if resp.status != StatusCode::Created {
+            return Err(CliError::UploadFailure(respstr));
+        }
+        debug!("{}", respstr);
 
         // do another request to get the hash on artifactory
-        let reqsha = client.put(&full_uri[..])
+        // jfrog api does not allow do do both at once - and this also creates the md5 (somehow)
+        // this creates ${full_uri}.sha1 and ${full_uri}.md5 (although we just gave it the sha..)
+        // This `respsha` can fail if engci-maven becomes inconsistent. NotFound has been seen.
+        // And that makes no sense because the above must have returned Created to get here..
+        info!("PUT {} (X-Checksum-Sha1)", full_uri);
+        let respsha = client.put(&full_uri[..])
             .header(XCheckSumDeploy("true".into()))
             .header(XCheckSumSha1(sha.digest().to_string()))
             .header(auth)
             .send()?;
-        trace!("resp={:?}", reqsha);
-        assert_eq!(reqsha.status, StatusCode::Created);
+        debug!("respsha={:?}", respsha);
+        let respshastr = format!("{} from PUT {} (X-Checksum-Sha1)", respsha.status, full_uri);
+        if respsha.status != StatusCode::Created {
+            return Err(CliError::UploadFailure(respshastr));
+        }
+        debug!("{}", respshastr);
 
         Ok(())
     } else {
