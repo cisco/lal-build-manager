@@ -134,6 +134,35 @@ fn handle_env_command(args: &ArgMatches,
     container
 }
 
+#[cfg(feature = "upgrade")]
+fn handle_upgrade(args: &ArgMatches, cfg: &Config) {
+    // we have a subcommand because SubcommandRequiredElseHelp
+    let subname = args.subcommand_name().unwrap();
+
+    // Allow lal upgrade without manifest
+    if args.subcommand_matches("upgrade").is_some() {
+        result_exit("upgrade", lal::upgrade(false)); // explicit, verbose check
+    }
+
+    // Autoupgrade if enabled - runs once daily if enabled
+    // also excluding all listers because they are used in autocomplete
+    if cfg.autoupgrade && subname != "upgrade" && !subname.contains("list-") &&
+       cfg.upgrade_check_time() {
+        debug!("Performing daily upgrade check");
+        let _ = lal::upgrade(false).map_err(|e| {
+            error!("Daily upgrade check failed: {}", e);
+            // don't halt here if this ever happens as it could break it for users
+        });
+        let _ = cfg.clone().performed_upgrade().map_err(|e| {
+            error!("Daily upgrade check updating lastUpgrade failed: {}", e);
+            // Ditto
+        });
+        debug!("Upgrade check done - continuing to requested operation\n");
+    }
+}
+
+
+
 fn handle_docker_cmds(args: &ArgMatches,
                       mf: &Manifest,
                       cfg: &Config,
@@ -200,7 +229,7 @@ fn handle_docker_cmds(args: &ArgMatches,
 }
 
 fn main() {
-    let args = App::new("lal")
+    let mut app = App::new("lal")
         .version(crate_version!())
         .setting(AppSettings::VersionlessSubcommands)
         .setting(AppSettings::SubcommandRequiredElseHelp)
@@ -386,8 +415,6 @@ fn main() {
             .arg(Arg::with_name("name")
                 .required(true)
                 .help("Name used for current build")))
-        .subcommand(SubCommand::with_name("upgrade")
-            .about("Checks for a new version of lal manually"))
         .subcommand(SubCommand::with_name("remove")
             .alias("rm")
             .about("Remove specific dependencies from INPUT")
@@ -453,8 +480,14 @@ fn main() {
                 .short("c")
                 .long("core")
                 .help("Only list core dependencies"))
-            .about("list dependencies from the manifest"))
-        .get_matches();
+            .about("list dependencies from the manifest"));
+
+    if cfg!(feature = "upgrade") {
+        app = app.subcommand(SubCommand::with_name("upgrade")
+                    .about("Attempts to upgrade lal from artifactory"));
+    }
+
+    let args = app.get_matches();
 
     // by default, always show INFO messages for now (+1)
     loggerv::init_with_verbosity(args.occurrences_of("verbose") + 1).unwrap();
@@ -465,9 +498,6 @@ fn main() {
         // By default point it to normal location (wont work for centos)
         None => env::set_var("SSL_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt"),
     }
-
-    // we have a subcommand because SubcommandRequiredElseHelp
-    let subname = args.subcommand_name().unwrap();
 
     // Allow lal configure without assumptions
     if let Some(a) = args.subcommand_matches("configure") {
@@ -494,25 +524,9 @@ fn main() {
         }
     };
 
-    // Allow lal upgrade without manifest
-    if args.subcommand_matches("upgrade").is_some() {
-        result_exit("upgrade", lal::upgrade(false)); // explicit, verbose check
-    }
-    // Autoupgrade if enabled - runs once daily if enabled
-    // also excluding all listers because they are used in autocomplete
-    if config.autoupgrade && subname != "upgrade" && !subname.contains("list-") &&
-       config.upgrade_check_time() {
-        debug!("Performing daily upgrade check");
-        let _ = lal::upgrade(false).map_err(|e| {
-            error!("Daily upgrade check failed: {}", e);
-            // don't halt here if this ever happens as it could break it for users
-        });
-        let _ = config.clone().performed_upgrade().map_err(|e| {
-            error!("Daily upgrade check updating lastUpgrade failed: {}", e);
-            // Ditto
-        });
-        debug!("Upgrade check done - continuing to requested operation\n");
-    }
+    // Do upgrade checks or handle explicit `lal upgrade` here
+    #[cfg(feature = "upgrade")]
+    handle_upgrade(&args, &config);
 
     // Allow lal init / clean without manifest existing in PWD
     if let Some(a) = args.subcommand_matches("init") {

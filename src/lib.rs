@@ -67,7 +67,6 @@ pub use status::status;
 pub use verify::verify;
 pub use stash::stash;
 pub use clean::clean;
-pub use upgrade::upgrade;
 pub use query::query;
 pub use publish::publish;
 
@@ -84,5 +83,9 @@ mod clean;
 mod verify;
 mod stash;
 mod status;
-mod upgrade;
 mod publish;
+
+#[cfg(feature = "upgrade")]
+pub use upgrade::upgrade;
+#[cfg(feature = "upgrade")]
+mod upgrade;

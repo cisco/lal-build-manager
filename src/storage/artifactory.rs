@@ -5,8 +5,10 @@ use std::io::{Read, Write};
 use std::fs::File;
 use std::path::{Path, PathBuf};
 
-use serde_json;
+#[cfg(feature = "upgrade")]
 use semver::Version;
+
+use serde_json;
 use sha1;
 use hyper::{self, Client};
 use hyper::header::{Authorization, Basic};
@@ -280,6 +282,7 @@ fn get_tarball_uri(art_cfg: &ArtifactoryConfig,
 }
 
 /// Latest lal version - as seen on artifactory
+#[cfg(feature = "upgrade")]
 pub struct LatestLal {
     /// URL of the latest tarball
     pub url: String,
@@ -293,6 +296,7 @@ pub struct LatestLal {
 /// it is parsing the version as a `semver::Version` struct rather than a u32.
 /// This is used regardless of your used backend because we want people to use our
 /// main release of lal on CME-release on cisco artifactory at the moment.
+#[cfg(feature = "upgrade")]
 pub fn get_latest_lal_version() -> LalResult<LatestLal> {
     // canonical latest url - relies on ./build.musl.sh producing a good ARTIFACT dir
     let uri = "https://engci-maven-master.cisco.com/artifactory/api/storage/CME-release/lal";

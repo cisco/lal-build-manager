@@ -1,5 +1,5 @@
 use serde_json;
-use chrono::{Duration, UTC, DateTime};
+use chrono::{Duration, UTC};
 use std::path::{Path, PathBuf};
 use std::fs;
 use std::vec::Vec;
@@ -105,7 +105,7 @@ impl Config {
             cache: cachedir.into(),
             mounts: mounts, // the filtered defaults
             lastUpgrade: time.to_rfc3339(),
-            autoupgrade: true,
+            autoupgrade: cfg!(feature = "upgrade"),
             environments: defaults.environments,
             backend: defaults.backend,
             interactive: true,
@@ -128,12 +128,15 @@ impl Config {
         Ok(res)
     }
     /// Checks if it is time to perform an upgrade check
+    #[cfg(feature = "upgrade")]
     pub fn upgrade_check_time(&self) -> bool {
+        use chrono::DateTime;
         let last = self.lastUpgrade.parse::<DateTime<UTC>>().unwrap();
         let cutoff = UTC::now() - Duration::days(1);
         last < cutoff
     }
     /// Update the lastUpgrade time to avoid triggering it for another day
+    #[cfg(feature = "upgrade")]
     pub fn performed_upgrade(&mut self) -> LalResult<()> {
         self.lastUpgrade = UTC::now().to_rfc3339();
         Ok(self.write(true)?)
