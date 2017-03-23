@@ -1,5 +1,4 @@
 use std::path::PathBuf;
-use semver::Version;
 
 use core::LalResult;
 use super::ArtifactoryConfig;
@@ -56,11 +55,6 @@ pub trait Backend {
 
     /// Publish a release build (ARTIFACT dir) to a specific location
     fn upload_artifact_dir(&self, name: &str, version: u32, env: Option<&str>) -> LalResult<()>;
-
-    /// How to perform an upgrade check
-    fn get_latest_lal_version(&self) -> LalResult<Version>;
-    /// Where to fetch latest upgrade tarball
-    fn get_lal_upgrade_url(&self) -> String;
 
     /// Raw dowlnload of a url to a destination
     fn raw_download(&self, url: &str, dest: &PathBuf) -> LalResult<()>;

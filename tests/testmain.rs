@@ -106,7 +106,7 @@ fn main() {
     }
 
     i += 1;
-    upgrade_does_not_fail(&backend);
+    upgrade_does_not_fail();
     println!("ok {} upgrade_does_not_fail", i);
 
     i += 1;
@@ -415,8 +415,8 @@ fn status_on_experimentals() {
     assert!(r.is_err(), "status should complain at experimental deps");
 }
 
-fn upgrade_does_not_fail<T: CachedBackend + Backend>(backend: &T) {
-    let uc = lal::upgrade(backend, true);
+fn upgrade_does_not_fail() {
+    let uc = lal::upgrade(true);
     assert!(uc.is_ok(), "could perform upgrade check");
     let upgraded = uc.unwrap();
     assert!(!upgraded, "we never have upgrades in the tip source tree");

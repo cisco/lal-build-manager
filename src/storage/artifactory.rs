@@ -65,7 +65,7 @@ fn hyper_req(url: &str) -> LalResult<String> {
 }
 
 // simple request downloader
-fn download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
+pub fn http_download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
     debug!("GET {}", url);
     let client = Client::new();
     let mut res = client.get(url).send()?;
@@ -279,12 +279,23 @@ fn get_tarball_uri(art_cfg: &ArtifactoryConfig,
     }
 }
 
+/// Latest lal version - as seen on artifactory
+pub struct LatestLal {
+    /// URL of the latest tarball
+    pub url: String,
+    /// Semver::Version of the latest tarball
+    pub version: Version,
+}
+
 /// Entry point for `lal::upgrade`
 ///
 /// This mostly duplicates the behaviour in `get_storage_as_u32`, however,
 /// it is parsing the version as a `semver::Version` struct rather than a u32.
-fn find_latest_lal_version(art_cfg: &ArtifactoryConfig) -> LalResult<Version> {
-    let uri = format!("{}/api/storage/{}/lal", art_cfg.master, art_cfg.release);
+/// This is used regardless of your used backend because we want people to use our
+/// main release of lal on CME-release on cisco artifactory at the moment.
+pub fn get_latest_lal_version() -> LalResult<LatestLal> {
+    // canonical latest url - relies on ./build.musl.sh producing a good ARTIFACT dir
+    let uri = "https://engci-maven-master.cisco.com/artifactory/api/storage/CME-release/lal";
     debug!("GET {}", uri);
     let resp = hyper_req(&uri).map_err(|e| {
             warn!("Failed to GET {}: {}", uri, e);
@@ -301,13 +312,15 @@ fn find_latest_lal_version(art_cfg: &ArtifactoryConfig) -> LalResult<Version> {
         .max(); // Semver::Version implements an order
 
     if let Some(l) = latest {
-        Ok(l)
+        Ok(LatestLal {
+            version: l,
+            url: "https://engci-maven.cisco.com/artifactory/CME-group/lal/latest/lal.tar".into(),
+        })
     } else {
         warn!("Failed to parse version information from artifactory storage api for lal");
         Err(CliError::BackendFailure("No version information found on API".into()))
     }
 }
-
 
 use super::{Backend, Component};
 
@@ -372,21 +385,11 @@ impl Backend for ArtifactoryBackend {
         Ok(())
     }
 
-    fn get_latest_lal_version(&self) -> LalResult<Version> {
-        find_latest_lal_version(&self.config)
-    }
-
-    fn get_lal_upgrade_url(&self) -> String {
-        format!("{}/{}/lal/latest/lal.tar",
-                &self.config.slave,
-                &self.config.vgroup)
-    }
-
     fn get_cache_dir(&self) -> String {
         self.cache.clone()
     }
 
     fn raw_download(&self, url: &str, dest: &PathBuf) -> LalResult<()> {
-        download_to_path(url, dest)
+        http_download_to_path(url, dest)
     }
 }

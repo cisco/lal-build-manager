@@ -14,7 +14,8 @@ use std::path::{Path, PathBuf};
 use std::fs;
 use std::process::Command;
 
-use super::{LalResult, CliError, Backend};
+use super::{LalResult, CliError};
+use super::{http_download_to_path, get_latest_lal_version, LatestLal};
 
 struct ExeInfo {
     /// Whether ldd things its a dynamic executable
@@ -76,22 +77,19 @@ fn verify_permissions(exe: &ExeInfo) -> LalResult<()> {
     Ok(())
 }
 
-fn overwrite_exe<T: Backend>(backend: &T, exe: &ExeInfo, expected_ver: &Version) -> LalResult<()> {
+fn overwrite_exe(latest: &LatestLal, exe: &ExeInfo) -> LalResult<()> {
     let prefix = exe.prefix.clone().unwrap();
-    let dest = prefix.join("lal.tar");
-    // start by attempting to download into the prefix - requires permissions:
-    backend.raw_download(&backend.get_lal_upgrade_url(), &dest)?;
-    extract_tarball(dest, prefix)?;
-    validate_exe(exe, expected_ver)?;
+    extract_tarball(prefix.join("lal.tar"), prefix)?;
+    validate_exe(latest, exe)?;
     Ok(())
 }
 
-fn validate_exe(exe: &ExeInfo, expected_ver: &Version) -> LalResult<()> {
+fn validate_exe(latest: &LatestLal, exe: &ExeInfo) -> LalResult<()> {
     let lal_output = Command::new(&exe.path).arg("-V").output()?;
     let lal_str = String::from_utf8_lossy(&lal_output.stdout);
     debug!("Output from lal -V: {}", lal_str.trim());
-    debug!("Expecting to find: {}", expected_ver.to_string());
-    if !lal_str.contains(&expected_ver.to_string()) {
+    debug!("Expecting to find: {}", latest.version.to_string());
+    if !lal_str.contains(&latest.version.to_string()) {
         let estr = format!("lal -V yielded {}", lal_str.trim());
         return Err(CliError::UpgradeValidationFailure(estr));
     }
@@ -99,7 +97,7 @@ fn validate_exe(exe: &ExeInfo, expected_ver: &Version) -> LalResult<()> {
     Ok(())
 }
 
-fn upgrade_exe<T: Backend>(backend: &T, exe: &ExeInfo, expected_ver: &Version) -> LalResult<()> {
+fn upgrade_exe(latest: &LatestLal, exe: &ExeInfo) -> LalResult<()> {
     let prefix = exe.prefix.clone().unwrap();
     // 0. sanity - could we actually upgrade if we tried?
     verify_permissions(exe).map_err(|_|
@@ -113,13 +111,21 @@ fn upgrade_exe<T: Backend>(backend: &T, exe: &ExeInfo, expected_ver: &Version) -
         // remove previous upgrade backup
         fs::remove_file(&old_file)?;
     }
+    // 2. make sure we can download the tarball before starting
+    let tar_dest = prefix.join("lal.tar");
+    info!("Downloading tarball to {}", tar_dest.display());
+    http_download_to_path(&latest.url, &tar_dest)?;
+    info!("Backing up {} to {}", exe.path, old_file.display());
     fs::rename(&exe.path, &old_file)?; // need to undo this if we fail
     // NB: DO NOT INSERT CALLS THAT CAN FAIL HERE BEFORE THE OVERWRITE
-    // 2. force dump lal tarball into exe.prefix - rollback if it failed
-    match overwrite_exe(backend, exe, expected_ver) {
+    // 3. force dump lal tarball into exe.prefix - rollback if it failed
+    info!("Unpacking new version of lal into {}", prefix.display());
+    match overwrite_exe(latest, exe) {
+        // NB: This call takes a small amount of time - and can be aborted :/
+        // it is not an atomic operation, so recovery can unfortunately fail :|
         Ok(_) => trace!("overwrite successful"),
         Err(e) => {
-            // download could fail, tarball could potentially be corrupt?
+            // tarball could potentially fail to extract here
             warn!("lal upgrade failed - rolling back");
             warn!("Error: {}", e);
             fs::rename(&old_file, &exe.path)?; // better hope this works..
@@ -135,13 +141,13 @@ fn upgrade_exe<T: Backend>(backend: &T, exe: &ExeInfo, expected_ver: &Version) -
 /// This will query for the latest version, and upgrade in the one possible case.
 /// If a newer version found (> in semver), and it's a static executable,
 /// then an executable upgrade is attempted from the new release url.
-pub fn upgrade<T: Backend>(backend: &T, silent: bool) -> LalResult<bool> {
-    let latest = backend.get_latest_lal_version()?;
+pub fn upgrade(silent: bool) -> LalResult<bool> {
+    let latest = get_latest_lal_version()?;
     let exe = identify_exe()?;
 
-    if latest > exe.version {
+    if latest.version > exe.version {
         // New version found - always full output now
-        info!("A new version of lal is available: {}", latest);
+        info!("A new version of lal is available: {}", latest.version);
         info!("You are running {} at {}", exe.version, exe.path);
         println!("");
 
@@ -153,19 +159,18 @@ pub fn upgrade<T: Backend>(backend: &T, silent: bool) -> LalResult<bool> {
         } else if exe.prefix.is_some() {
             // install lal in the prefix it's normally in
             info!("Upgrading...");
-            upgrade_exe(backend, &exe, &latest)?;
-            info!("lal upgraded successfully to {} at {}", latest, exe.path);
+            upgrade_exe(&latest, &exe)?;
+            info!("lal upgraded successfully to {} at {}", latest.version, exe.path);
             println!("");
         } else {
             // static, but no good guess of where to install - let user decide:
             info!("Your version is prebuilt but installed weirdly - please run:");
-            info!("curl {} | tar xz -C /usr/local",
-                  backend.get_lal_upgrade_url());
+            info!("curl {} | tar xz -C /usr/local", latest.url);
         }
     } else if silent {
         debug!("You are running the latest version of lal");
     } else {
         info!("You are running the latest version of lal");
     }
-    Ok(latest > exe.version)
+    Ok(latest.version > exe.version)
 }
