@@ -38,6 +38,10 @@ run_tests() {
   rm -rf ARTIFACT
 }
 
+check_misc_targets() {
+  # Build version without autoupgrade
+  docker_run cargo build --no-default-features --verbose
+}
 
 build_lal_tarball() {
   docker_run cargo build --release --verbose
@@ -72,6 +76,7 @@ main() {
   # build in the currently available muslrust container
   local -r container="$(docker images -q edonusdevelopers/muslrust | head -n 1)"
   run_tests
+  check_misc_targets
   build_lal_tarball
   create_lal_upload
   rm lal.tar
