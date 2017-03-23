@@ -19,7 +19,7 @@ log = "0.3.5"
 loggerv = "0.1.0"
 rand = "0.3.14"
 regex = "0.1.55"
-semver = "0.2.3"
+semver = { version = "0.2.3", optional = true }
 serde = "0.9.5"
 serde_derive = "0.9.5"
 serde_json = "0.9.5"
@@ -29,7 +29,7 @@ walkdir = "1.0.7"
 
 [features]
 default = ["upgrade"]
-upgrade = []
+upgrade = ["semver"]
 
 [lib]
 name = "lal"

@@ -36,10 +36,11 @@ extern crate sha1;
 #[macro_use]
 extern crate log;
 extern crate walkdir;
-extern crate semver;
 extern crate chrono;
 extern crate filetime;
 extern crate rand;
+#[cfg(feature = "upgrade")]
+extern crate semver;
 
 // re-exports
 mod core;
