@@ -12,6 +12,7 @@ pub fn publish<T: Backend>(name: &str, backend: &T, env: Option<&str>) -> LalRes
     let artdir = Path::new("./ARTIFACT");
     let tarball = artdir.join(format!("{}.tar.gz", name));
     if !artdir.is_dir() || !tarball.exists() {
+        warn!("Missing: {}", tarball.display());
         return Err(CliError::MissingReleaseBuild);
     }
 
