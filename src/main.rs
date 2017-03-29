@@ -495,7 +495,7 @@ fn main() {
     // set ssl cert path early for hyper client
     match env::var_os("SSL_CERT_FILE") {
         Some(val) => trace!("Using SSL_CERT_FILE set to {:?}", val),
-        // By default point it to normal location (wont work for centos)
+        // By default point it to normal location (wont work for centos / osx)
         None => env::set_var("SSL_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt"),
     }
 

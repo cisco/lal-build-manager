@@ -139,6 +139,21 @@ cargo fmt # requires `cargo install rustfmt` and $HOME/.cargo/bin on $PATH
 rustup run nighthly cargo clippy # requires rustup.rs install of rust + nightly install of clippy
 ```
 
+## Build issues
+If libraries cannot be built, then upgrade `rustc` by running `rustup update stable`.
+
+- fatal error: 'openssl/hmac.h' file not found If you are on a GNU/Linux distribution (like Ubuntu), please install `libssl-dev`. If you are on OSX, please install openssl and check your OpenSSL configuration:
+
+```sh
+brew install openssl
+export SSL_CERT_FILE=/usr/local/etc/openssl/cert.pem # or wherever you have it
+export OPENSSL_INCLUDE_DIR=`brew --prefix openssl`/include
+export OPENSSL_LIB_DIR=`brew --prefix openssl`/lib
+export DEP_OPENSSL_INCLUDE=`brew --prefix openssl`/include
+```
+
+CentOS installs need setting `SSL_CERT_FILE` evar to something as well.
+
 ## Logging
 Configurable via flags before the subcommand:
 
