@@ -146,13 +146,21 @@ If libraries cannot be built, then upgrade `rustc` by running `rustup update sta
 
 ```sh
 brew install openssl
-export SSL_CERT_FILE=/usr/local/etc/openssl/cert.pem # or wherever you have it
 export OPENSSL_INCLUDE_DIR=`brew --prefix openssl`/include
 export OPENSSL_LIB_DIR=`brew --prefix openssl`/lib
-export DEP_OPENSSL_INCLUDE=`brew --prefix openssl`/include
+export DEP_OPENSSL_INCLUDE=`brew --prefix openssl`/include # should work without this
 ```
 
-CentOS installs need setting `SSL_CERT_FILE` evar to something as well.
+There's also a runtime lookup of certificates to do peer verification of certificates. This requires having set:
+
+```
+# OSX
+export SSL_CERT_FILE=/usr/local/etc/openssl/cert.pem
+# CentOS
+export SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt
+```
+
+This should be put in your `~/.bashrc` or `~/.bash_profile` as `lal` reads it on every run. Note that the default location is `/etc/ssl/certs/ca-certificates.crt` and that is correct for most linux distros.
 
 ## Logging
 Configurable via flags before the subcommand:
