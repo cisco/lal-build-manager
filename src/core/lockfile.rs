@@ -173,6 +173,12 @@ impl Lockfile {
         self
     }
 
+    /// Attach a name to the lockfile
+    pub fn set_name(mut self, name: &str) -> Self {
+        self.name = name.into();
+        self
+    }
+
     /// Write the current `Lockfile` struct to a Path
     pub fn write(&self, pth: &Path, silent: bool) -> LalResult<()> {
         let encoded = serde_json::to_string_pretty(self)?;
@@ -242,11 +248,117 @@ impl Lockfile {
     }
 
     /// List all used versions used of each dependency
-    pub fn find_all_dependencies(&self) -> ValueUsage {
+    pub fn find_all_dependency_versions(&self) -> ValueUsage {
         self.find_all_values("version")
     }
+
     /// List all used environments used of each dependency
     pub fn find_all_environments(&self) -> ValueUsage {
         self.find_all_values("environment")
     }
+
+    fn find_all_dependency_names_excluding_self(&self) -> ValueUsage {
+        let mut acc = HashMap::new();
+        for (name, dep) in &self.dependencies {
+            if !acc.contains_key(name) {
+                // it we haven't got it already, add it
+                let deps = dep.dependencies.iter().map(|(e,_)| e.clone()).collect::<BTreeSet<_>>();
+                acc.insert(name.clone(), deps);
+            }
+            dep.find_all_dependency_names(); // recurse
+        }
+        acc
+    }
+
+    /// List all dependency names used by each dependency
+    pub fn find_all_dependency_names(&self) -> ValueUsage {
+        let mut deps = self.find_all_dependency_names_excluding_self();
+        // add a special entry for self that depends on the union of all sets
+        let mut all_dependencies = BTreeSet::new();
+        for (name, set) in &deps {
+            // need to add both keys and entries (since the entries dont cover self)
+            all_dependencies.insert(name.clone());
+            for dep in set {
+                all_dependencies.insert(dep.clone());
+            }
+        }
+        deps.insert(self.name.clone(), all_dependencies);
+
+        deps
+    }
+}
+
+/// Reverse dependency methods
+///
+/// Similar to the above ones - requires a populated lockfile to make sense.
+impl Lockfile {
+    /// List all dependees for each dependency
+    pub fn get_reverse_deps(&self) -> ValueUsage {
+        let mut acc = HashMap::new();
+        // ensure the root node exists (matters for first iteration)
+        if !acc.contains_key(&self.name) {
+            // don't expand the tree further outside self
+            acc.insert(self.name.clone(), BTreeSet::new());
+        }
+
+        // for each entry in dependencies
+        for (main_name, dep) in &self.dependencies {
+            // ensure each entry from above exists in current accumulator
+            if !acc.contains_key(&dep.name) {
+                acc.insert(dep.name.clone(), BTreeSet::new());
+            }
+            {
+                // Only borrow as mutable once - so creating a temporary scope
+                let first_value_set = acc.get_mut(&dep.name).unwrap();
+                first_value_set.insert(self.name.clone());
+            }
+
+            // Recurse into its dependencies
+            trace!("Recursing into deps for {}, acc is {:?}", main_name, acc);
+
+            // merge results recursively
+            for (name, value_set) in dep.get_reverse_deps() {
+                trace!("Found revdeps for {} as {:?}", name, value_set);
+                // if we don't already have new entries, add them:
+                if !acc.contains_key(&name) {
+                    acc.insert(name.clone(), BTreeSet::new()); // blank first
+                }
+                // merge in values from recursion
+                let full_value_set = acc.get_mut(&name).unwrap(); // know this exists now
+                // union in values from recursion
+                for value in value_set {
+                    full_value_set.insert(value);
+                }
+            }
+        }
+        acc
+    }
+
+    /// List all dependees for a dependency transitively
+    pub fn get_reverse_deps_transitively_for(&self, component: String) -> BTreeSet<String> {
+        let revdeps = self.get_reverse_deps();
+        trace!("Got rev deps: {:?}", revdeps);
+        let mut res = BTreeSet::new();
+
+        if !revdeps.contains_key(&component) {
+            warn!("Could not find {} in the dependency tree for {}", component, self.name);
+            return res;
+        }
+
+        let mut new_to_check = vec![component];
+        while !new_to_check.is_empty() {
+            let mut next_check = vec![];
+            for name in new_to_check {
+                // get revdeps for it (must exist by construction)
+                for dep in revdeps.get(&name).unwrap() {
+                    res.insert(dep.clone());
+                    next_check.push(dep.clone());
+                }
+            }
+            new_to_check = next_check;
+        }
+        res
+    }
+
+
 }

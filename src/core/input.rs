@@ -22,8 +22,7 @@ fn read_partial_lockfile(component: &str) -> LalResult<PartialLock> {
     let mut lock_str = String::new();
     trace!("Deserializing lockfile for {}", component);
     File::open(&lock_path)?.read_to_string(&mut lock_str)?;
-    let res = serde_json::from_str(&lock_str)?;
-    Ok(res)
+    Ok(serde_json::from_str(&lock_str)?)
 }
 
 /// Simple INPUT analyzer for the lockfile generator and `analyze_full`
@@ -171,7 +170,7 @@ pub fn verify_global_versions(lf: &Lockfile, m: &Manifest) -> LalResult<()> {
 
 /// Strict requirement for verifier - dependency tree must be flat-equivalent
 pub fn verify_consistent_dependency_versions(lf: &Lockfile, m: &Manifest) -> LalResult<()> {
-    for (name, vers) in lf.find_all_dependencies() {
+    for (name, vers) in lf.find_all_dependency_versions() {
         debug!("Found version(s) for {} as {:?}", name, vers);
         assert!(vers.len() > 0, "found versions");
         if vers.len() != 1 && m.dependencies.contains_key(&name) {

@@ -70,6 +70,7 @@ pub use stash::stash;
 pub use clean::clean;
 pub use query::query;
 pub use publish::publish;
+pub use propagate::propagate;
 
 mod configure;
 mod init;
@@ -85,6 +86,7 @@ mod verify;
 mod stash;
 mod status;
 mod publish;
+mod propagate;
 
 #[cfg(feature = "upgrade")]
 pub use upgrade::upgrade;

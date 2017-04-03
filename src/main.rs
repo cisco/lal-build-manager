@@ -70,6 +70,8 @@ fn handle_environment_agnostic_cmds(args: &ArgMatches,
         lal::remove(mf, xs, a.is_present("save"), a.is_present("savedev"))
     } else if let Some(a) = args.subcommand_matches("stash") {
         lal::stash(backend, mf, a.value_of("name").unwrap())
+    } else if let Some(a) = args.subcommand_matches("propagate") {
+        lal::propagate(mf, a.value_of("component").unwrap())
     } else {
         return ();
     };
@@ -446,6 +448,11 @@ fn main() {
             .arg(Arg::with_name("component")
                 .required(true)
                 .help("Component name to search for")))
+        .subcommand(SubCommand::with_name("propagate")
+            .about("Show steps to propagate a version fully through the tree")
+            .arg(Arg::with_name("component")
+                .required(true)
+                .help("Component to propagate")))
         .subcommand(SubCommand::with_name("update-all")
             .about("Update all dependencies in the manifest")
             .arg(Arg::with_name("dev")
