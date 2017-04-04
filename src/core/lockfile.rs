@@ -270,19 +270,12 @@ impl Lockfile {
         acc
     }
 
-    /// List all dependency names used by each dependency
+    /// List all dependency names used by each dependency (not transitively)
     pub fn find_all_dependency_names(&self) -> ValueUsage {
         let mut deps = self.find_all_dependency_names_excluding_self();
         // add a special entry for self that depends on the union of all sets
-        let mut all_dependencies = BTreeSet::new();
-        for (name, set) in &deps {
-            // need to add both keys and entries (since the entries dont cover self)
-            all_dependencies.insert(name.clone());
-            for dep in set {
-                all_dependencies.insert(dep.clone());
-            }
-        }
-        deps.insert(self.name.clone(), all_dependencies);
+        let rootdeps = self.dependencies.iter().map(|(e,_)| e.clone()).collect::<BTreeSet<_>>();
+        deps.insert(self.name.clone(), rootdeps);
 
         deps
     }
@@ -359,6 +352,4 @@ impl Lockfile {
         }
         res
     }
-
-
 }

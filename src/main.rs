@@ -71,7 +71,7 @@ fn handle_environment_agnostic_cmds(args: &ArgMatches,
     } else if let Some(a) = args.subcommand_matches("stash") {
         lal::stash(backend, mf, a.value_of("name").unwrap())
     } else if let Some(a) = args.subcommand_matches("propagate") {
-        lal::propagate(mf, a.value_of("component").unwrap())
+        lal::propagate(mf, a.value_of("component").unwrap(), a.is_present("json"))
     } else {
         return ();
     };
@@ -452,7 +452,11 @@ fn main() {
             .about("Show steps to propagate a version fully through the tree")
             .arg(Arg::with_name("component")
                 .required(true)
-                .help("Component to propagate")))
+                .help("Component to propagate"))
+            .arg(Arg::with_name("json")
+                .short("j")
+                .long("json")
+                .help("Produce a machine readable instruction set")))
         .subcommand(SubCommand::with_name("update-all")
             .about("Update all dependencies in the manifest")
             .arg(Arg::with_name("dev")
