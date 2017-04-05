@@ -257,27 +257,21 @@ impl Lockfile {
         self.find_all_values("environment")
     }
 
-    fn find_all_dependency_names_excluding_self(&self) -> ValueUsage {
+    /// List all dependency names used by each dependency (not transitively)
+    pub fn find_all_dependency_names(&self) -> ValueUsage {
         let mut acc = HashMap::new();
+        // ensure root node exists (matters for first iteration)
+        if !acc.contains_key(&self.name) {
+            acc.insert(self.name.clone(), self.dependencies.keys().cloned().collect());
+        }
         for (name, dep) in &self.dependencies {
+            // handle each dependency once at the time we see it first
             if !acc.contains_key(name) {
-                // it we haven't got it already, add it
-                let deps = dep.dependencies.iter().map(|(e,_)| e.clone()).collect::<BTreeSet<_>>();
-                acc.insert(name.clone(), deps);
+                acc.insert(name.clone(), dep.dependencies.keys().cloned().collect());
             }
             dep.find_all_dependency_names(); // recurse
         }
         acc
-    }
-
-    /// List all dependency names used by each dependency (not transitively)
-    pub fn find_all_dependency_names(&self) -> ValueUsage {
-        let mut deps = self.find_all_dependency_names_excluding_self();
-        // add a special entry for self that depends on the union of all sets
-        let rootdeps = self.dependencies.iter().map(|(e,_)| e.clone()).collect::<BTreeSet<_>>();
-        deps.insert(self.name.clone(), rootdeps);
-
-        deps
     }
 }
 
@@ -338,17 +332,17 @@ impl Lockfile {
             return res;
         }
 
-        let mut new_to_check = vec![component];
-        while !new_to_check.is_empty() {
-            let mut next_check = vec![];
-            for name in new_to_check {
+        let mut current_cycle = vec![component];
+        while !current_cycle.is_empty() {
+            let mut next_cycle = vec![];
+            for name in current_cycle {
                 // get revdeps for it (must exist by construction)
                 for dep in &revdeps[&name] {
                     res.insert(dep.clone());
-                    next_check.push(dep.clone());
+                    next_cycle.push(dep.clone());
                 }
             }
-            new_to_check = next_check;
+            current_cycle = next_cycle;
         }
         res
     }

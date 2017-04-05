@@ -4,7 +4,7 @@ use super::{LalResult, Manifest, Lockfile};
 
 
 /// A single update
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize)]
 struct SingleUpdate {
     /// Where to update dependencies
     pub repo: String,
@@ -13,36 +13,36 @@ struct SingleUpdate {
 }
 
 /// A parallelizable update stage
-#[derive(Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Default)]
 struct UpdateStage {
     /// Updates to perform at this stage
     pub updates: Vec<SingleUpdate>
 }
 
 /// A set of sequential update steps
-#[derive(Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Default)]
 struct UpdateSequence {
     /// Update stages needed
     pub stages: Vec<UpdateStage>
 }
 
 fn compute_update_stages(lf: &Lockfile, component: &str) -> LalResult<UpdateSequence> {
-    // algorithm
-    // collect the list of everything we want to build in between root and component
+    // 1. collect the list of everything we want to build in between root and component
     let all_required = lf.get_reverse_deps_transitively_for(component.into());
-    let dependencies = lf.find_all_dependency_names();
+    let dependencies = lf.find_all_dependency_names(); // map String -> Set(names)
 
     debug!("Needs updating: {:?}", all_required);
     debug!("Dependency table: {:?}", dependencies);
 
+    // initialize mutables
     let mut result = UpdateSequence::default();
     let mut remaining = all_required.clone();
     // assume we already updated the component itself
-    let mut handled = vec![component.to_string()].into_iter().collect::<BTreeSet<_>>();
+    let mut handled = vec![component.to_string()].into_iter().collect();
 
+    // create update stages while there is something left to update
     while !remaining.is_empty() {
         let mut stage = UpdateStage::default();
-
         debug!("Remaining set: {:?}", remaining);
 
         for dep in remaining.clone() {
@@ -53,13 +53,11 @@ fn compute_update_stages(lf: &Lockfile, component: &str) -> LalResult<UpdateSequ
             let intersection = deps_for_name.intersection(&remaining).collect::<BTreeSet<_>>();
             debug!("Intersection: {:?}", intersection);
             if intersection.is_empty() {
-                // what to update is handled intersected with deps for this repo
-                let to_update = deps_for_name.intersection(&handled).cloned().collect::<Vec<_>>();
-                let update = SingleUpdate {
+                // what to update is `handled` intersected with deps for this repo
+                stage.updates.push(SingleUpdate {
                     repo: dep,
-                    dependencies: to_update,
-                };
-                stage.updates.push(update);
+                    dependencies: deps_for_name.intersection(&handled).cloned().collect(),
+                });
             }
         }
 
@@ -74,13 +72,13 @@ fn compute_update_stages(lf: &Lockfile, component: &str) -> LalResult<UpdateSequ
 }
 
 
-/// Outputs the update path to the current manifest
+/// Outputs the update path to the current manifest for a specific component
 ///
 /// Given a component to propagate to the current one in your working directory,
 /// work out how to propagate it through the dependency tree fully.
 ///
 /// This will produce a set of sequential steps, each set itself being parallelizable.
-/// The resulting steps can be executed in order to ensure `lal verify` is happy.
+/// The resulting update steps can be performed in order to ensure `lal verify` is happy.
 pub fn propagate(manifest: &Manifest, component: &str, json_output: bool) -> LalResult<()> {
     debug!("Calculating update path for {}", component);
 
