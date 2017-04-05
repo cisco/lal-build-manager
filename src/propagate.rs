@@ -93,7 +93,7 @@ pub fn propagate(manifest: &Manifest, component: &str, json_output: bool) -> Lal
 
     if json_output {
         let encoded = serde_json::to_string_pretty(&result)?;
-        print!("{}\n", encoded);
+        println!("{}", encoded);
     } else {
         println!("Assuming {} has been updated:", component);
         let mut i = 1;

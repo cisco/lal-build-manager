@@ -343,7 +343,7 @@ impl Lockfile {
             let mut next_check = vec![];
             for name in new_to_check {
                 // get revdeps for it (must exist by construction)
-                for dep in revdeps.get(&name).unwrap() {
+                for dep in &revdeps[&name] {
                     res.insert(dep.clone());
                     next_check.push(dep.clone());
                 }

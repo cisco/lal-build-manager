@@ -164,13 +164,11 @@ fn configure_yes() -> ArtifactoryBackend {
 
     let cfgu = cfg.unwrap();
 
-    let backend = match &cfgu.backend {
+    match &cfgu.backend {
         &BackendConfiguration::Artifactory(ref art_cfg) => {
-            ArtifactoryBackend::new(&art_cfg, &cfgu.cache)
+            ArtifactoryBackend::new(art_cfg, &cfgu.cache)
         }
-    };
-    backend
-
+    }
 }
 
 // Create manifest
