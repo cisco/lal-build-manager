@@ -301,7 +301,7 @@ pub fn get_latest_lal_version() -> LalResult<LatestLal> {
     // canonical latest url - relies on ./build.musl.sh producing a good ARTIFACT dir
     let uri = "https://engci-maven-master.cisco.com/artifactory/api/storage/CME-release/lal";
     debug!("GET {}", uri);
-    let resp = hyper_req(&uri).map_err(|e| {
+    let resp = hyper_req(uri).map_err(|e| {
             warn!("Failed to GET {}: {}", uri, e);
             CliError::BackendFailure("No version information found on API".into())
         })?;

@@ -8,11 +8,11 @@ _lal()
     local -r subcommands="build clean configure export fetch help init script run ls
                           query remove rm shell stash save status update upgrade verify
                           publish env list-components list-dependencies
-                          list-environments list-configurations"
+                          list-environments list-configurations propagate"
 
     local has_sub
     for (( i=0; i < ${#words[@]}-1; i++ )); do
-        if [[ ${words[i]} == @(build|clean|configure|export|script|fetch|help|init|remove|rm|script|run|query|shell|stash|save|status|ls|update|upgrade|verify|publish|env) ]]; then
+        if [[ ${words[i]} == @(build|clean|configure|export|script|propagate|fetch|help|init|remove|rm|script|run|query|shell|stash|save|status|ls|update|upgrade|verify|publish|env) ]]; then
             has_sub=1
         fi
     done
@@ -36,7 +36,7 @@ _lal()
     # special subcommand completions
     local special i
     for (( i=0; i < ${#words[@]}-1; i++ )); do
-        if [[ ${words[i]} == @(build|remove|rm|export|init|update|script|run|status|ls|query|shell|publish|env|configure|help) ]]; then
+        if [[ ${words[i]} == @(build|remove|rm|propagate|export|init|update|script|run|status|ls|query|shell|publish|env|configure|help) ]]; then
             special=${words[i]}
         fi
     done
@@ -115,6 +115,12 @@ _lal()
                 COMPREPLY=($(compgen -W "$components" -- "$cur"))
                 ;;
             remove|rm)
+                [[ $in_lal_repo ]] || return 0
+                # look in INPUT here, nothing else makes sense
+                local -r installed=$(find "$PWD/INPUT/" -maxdepth 1 -mindepth 1 -type d -printf "%f " 2> /dev/null)
+                COMPREPLY=($(compgen -W "$installed" -- "$cur"))
+                ;;
+            propagate)
                 [[ $in_lal_repo ]] || return 0
                 # look in INPUT here, nothing else makes sense
                 local -r installed=$(find "$PWD/INPUT/" -maxdepth 1 -mindepth 1 -type d -printf "%f " 2> /dev/null)

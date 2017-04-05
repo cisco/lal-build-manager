@@ -122,7 +122,7 @@ pub fn docker_run(cfg: &Config,
     if modes.printonly {
         print!("docker");
         for arg in args {
-            if arg.contains(" ") {
+            if arg.contains(' ') {
                 // leave quoted args quoted
                 print!(" \"{}\"", arg);
             } else {

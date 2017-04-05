@@ -173,6 +173,12 @@ impl Lockfile {
         self
     }
 
+    /// Attach a name to the lockfile
+    pub fn set_name(mut self, name: &str) -> Self {
+        self.name = name.into();
+        self
+    }
+
     /// Write the current `Lockfile` struct to a Path
     pub fn write(&self, pth: &Path, silent: bool) -> LalResult<()> {
         let encoded = serde_json::to_string_pretty(self)?;
@@ -242,11 +248,102 @@ impl Lockfile {
     }
 
     /// List all used versions used of each dependency
-    pub fn find_all_dependencies(&self) -> ValueUsage {
+    pub fn find_all_dependency_versions(&self) -> ValueUsage {
         self.find_all_values("version")
     }
+
     /// List all used environments used of each dependency
     pub fn find_all_environments(&self) -> ValueUsage {
         self.find_all_values("environment")
+    }
+
+    /// List all dependency names used by each dependency (not transitively)
+    pub fn find_all_dependency_names(&self) -> ValueUsage {
+        let mut acc = HashMap::new();
+        // ensure root node exists (matters for first iteration)
+        if !acc.contains_key(&self.name) {
+            acc.insert(self.name.clone(), self.dependencies.keys().cloned().collect());
+        }
+        for (name, dep) in &self.dependencies {
+            // handle each dependency once at the time we see it first
+            if !acc.contains_key(name) {
+                acc.insert(name.clone(), dep.dependencies.keys().cloned().collect());
+            }
+            dep.find_all_dependency_names(); // recurse
+        }
+        acc
+    }
+}
+
+/// Reverse dependency methods
+///
+/// Similar to the above ones - requires a populated lockfile to make sense.
+impl Lockfile {
+    /// List all dependees for each dependency
+    pub fn get_reverse_deps(&self) -> ValueUsage {
+        let mut acc = HashMap::new();
+        // ensure the root node exists (matters for first iteration)
+        if !acc.contains_key(&self.name) {
+            // don't expand the tree further outside self
+            acc.insert(self.name.clone(), BTreeSet::new());
+        }
+
+        // for each entry in dependencies
+        for (main_name, dep) in &self.dependencies {
+            // ensure each entry from above exists in current accumulator
+            if !acc.contains_key(&dep.name) {
+                acc.insert(dep.name.clone(), BTreeSet::new());
+            }
+            {
+                // Only borrow as mutable once - so creating a temporary scope
+                let first_value_set = acc.get_mut(&dep.name).unwrap();
+                first_value_set.insert(self.name.clone());
+            }
+
+            // Recurse into its dependencies
+            trace!("Recursing into deps for {}, acc is {:?}", main_name, acc);
+
+            // merge results recursively
+            for (name, value_set) in dep.get_reverse_deps() {
+                trace!("Found revdeps for {} as {:?}", name, value_set);
+                // if we don't already have new entries, add them:
+                if !acc.contains_key(&name) {
+                    acc.insert(name.clone(), BTreeSet::new()); // blank first
+                }
+                // merge in values from recursion
+                let full_value_set = acc.get_mut(&name).unwrap(); // know this exists now
+                // union in values from recursion
+                for value in value_set {
+                    full_value_set.insert(value);
+                }
+            }
+        }
+        acc
+    }
+
+    /// List all dependees for a dependency transitively
+    pub fn get_reverse_deps_transitively_for(&self, component: String) -> BTreeSet<String> {
+        let revdeps = self.get_reverse_deps();
+        trace!("Got rev deps: {:?}", revdeps);
+        let mut res = BTreeSet::new();
+
+        if !revdeps.contains_key(&component) {
+            warn!("Could not find {} in the dependency tree for {}", component, self.name);
+            return res;
+        }
+
+        let mut current_cycle = vec![component];
+        while !current_cycle.is_empty() {
+            let mut next_cycle = vec![];
+            for name in current_cycle {
+                // get revdeps for it (must exist by construction)
+                for dep in &revdeps[&name] {
+                    res.insert(dep.clone());
+                    next_cycle.push(dep.clone());
+                }
+            }
+            current_cycle = next_cycle;
+        }
+        res
     }
 }

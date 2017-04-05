@@ -153,7 +153,7 @@ pub fn upgrade(silent: bool) -> LalResult<bool> {
 
         if exe.dynamic {
             info!("Your version is built from source - please run (in source checkout):");
-            let build_flag = format!("{}", if exe.debug { "" } else { "--release" });
+            let build_flag = if exe.debug { "" } else { "--release" };
             info!("rustup update stable && git pull && cargo build {}",
                   build_flag);
         } else if exe.prefix.is_some() {
