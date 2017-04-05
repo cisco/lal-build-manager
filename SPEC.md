@@ -18,6 +18,7 @@
 - [`lal query`](#lal-query-component) - list versions of a component on artifactory
 - [`lal remove`](#lal-remove-components) - remove components from `INPUT` and `manifest.json`
 - [`lal publish`](#lal-publish) - publish release builds to artifactory
+- [`lal propagate`](#lal-propagate-component) - works out steps to propagate dependencies
 
 ## Manifest
 A per-repo file. Format looks like this (here annotated with illegal comments):
@@ -434,6 +435,41 @@ The uploaded artifact will in this case end up in two locations:
 Beause `lal update` and `lal fetch` always verify that components are found on the second location first (the global non-env specific bucket), it's important to upload the global environment artifact last (as a join step).
 
 This is largely irrelevant if you are only building one environment, but nevertheless we do require that you publish the place to both buckets, for clarity.
+
+#### lal propagate [component]
+Retraces a dependency tree in reverse to figure out steps needed to propagate a leaf dependency properly. This is useful for satisfying the full version strictness checks of `lal verify` in a large dependency tree (recall that we enforce a flat dependency tree).
+
+Given a component with the following example dependency tree:
+
+```sh
+~  mycomponent  master  ✔  lal ls -f
+mycomponent
+├── openssl
+├─┬ libcurl
+│ ├── c-ares
+│ └── openssl
+├─┬ cucumber-cpp (dev)
+│ └── gtest
+├── gtest (dev)
+├─┬ qt
+│ ├── openssl
+│ └── freetype
+└── zlib
+```
+
+If we need to propagate a new version of `openssl`, we need to do it in two stages:
+
+```sh
+ ~  mycomponent  master  ✔  lal propagate openssl
+Assuming openssl has been updated:
+Stage 1:
+- update [openssl] in libcurl
+- update [openssl] in qt
+Stage 2:
+- update [libcurl, openssl, qt] in mycomponent
+```
+
+Every step in each stage is paralellizable, but every stage must wait for the previous stage.
 
 ### Universal Options
 
