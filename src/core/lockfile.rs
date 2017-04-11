@@ -260,15 +260,11 @@ impl Lockfile {
     /// List all dependency names used by each dependency (not transitively)
     pub fn find_all_dependency_names(&self) -> ValueUsage {
         let mut acc = HashMap::new();
-        // ensure root node exists (matters for first iteration)
+        // ensure root node exists
         if !acc.contains_key(&self.name) {
             acc.insert(self.name.clone(), self.dependencies.keys().cloned().collect());
         }
-        for (name, dep) in &self.dependencies {
-            // handle each dependency once at the time we see it first
-            if !acc.contains_key(name) {
-                acc.insert(name.clone(), dep.dependencies.keys().cloned().collect());
-            }
+        for (_, dep) in &self.dependencies {
             // recurse and merge into parent acc:
             for (n, d) in dep.find_all_dependency_names() {
               if !acc.contains_key(&n) {
