@@ -39,7 +39,7 @@ fn handle_manifest_agnostic_cmds(args: &ArgMatches,
                     a.value_of("output"),
                     explicit_env)
     } else if let Some(a) = args.subcommand_matches("query") {
-        lal::query(backend, explicit_env, a.value_of("component").unwrap())
+        lal::query(backend, explicit_env, a.value_of("component").unwrap(), a.is_present("latest"))
     } else if let Some(a) = args.subcommand_matches("publish") {
         lal::publish(a.value_of("component").unwrap(), backend, explicit_env)
     } else if args.subcommand_matches("list-environments").is_some() {
@@ -445,6 +445,10 @@ fn main() {
                 .help("Number of days to serve as cutoff")))
         .subcommand(SubCommand::with_name("query")
             .about("Query for available versions on artifactory")
+            .arg(Arg::with_name("latest")
+                .long("latest")
+                .short("-l")
+                .help("Return latest version only"))
             .arg(Arg::with_name("component")
                 .required(true)
                 .help("Component name to search for")))
