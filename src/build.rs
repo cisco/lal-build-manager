@@ -19,9 +19,10 @@ fn find_valid_build_script() -> LalResult<String> {
             warn!("Using the default: .lal/BUILD");
         }
         bpath_new
-    } else {
-        trace!("No BUILD existing in .lal");
+    } else if bpath_old.exists() {
         bpath_old
+    } else {
+        return Err(CliError::MissingBuildScript);
     };
     trace!("Using BUILD script found in {}", bpath.display());
     // Need the string to construct a list of argument for docker run
