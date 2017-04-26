@@ -11,8 +11,10 @@ use semver::Version;
 use serde_json;
 use sha1;
 use hyper::{self, Client};
+use hyper::net::HttpsConnector;
 use hyper::header::{Authorization, Basic};
 use hyper::status::StatusCode;
+use hyper_native_tls::NativeTlsClient;
 
 use core::{CliError, LalResult};
 
@@ -56,7 +58,7 @@ struct ArtifactoryStorageResponse {
 
 // simple request body fetcher
 fn hyper_req(url: &str) -> LalResult<String> {
-    let client = Client::new();
+    let client = Client::with_connector(HttpsConnector::new(NativeTlsClient::new().unwrap()));
     let mut res = client.get(url).send()?;
     if res.status != hyper::Ok {
         return Err(CliError::BackendFailure(format!("GET request with {}", res.status)));
@@ -69,12 +71,11 @@ fn hyper_req(url: &str) -> LalResult<String> {
 // simple request downloader
 pub fn http_download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
     debug!("GET {}", url);
-    let client = Client::new();
+    let client = Client::with_connector(HttpsConnector::new(NativeTlsClient::new().unwrap()));
     let mut res = client.get(url).send()?;
     if res.status != hyper::Ok {
         return Err(CliError::BackendFailure(format!("GET request with {}", res.status)));
     }
-
     let mut buffer: Vec<u8> = Vec::new();
     res.read_to_end(&mut buffer)?;
     let mut f = File::create(save)?;

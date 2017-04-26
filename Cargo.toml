@@ -14,18 +14,22 @@ chrono = "0.2"
 clap = "2.11.2"
 filetime = "0.1"
 flate2 = "0.2"
-hyper = "0.9.10"
+hyper = "0.10.9"
+hyper-native-tls = "0.2.2"
 log = "0.3.5"
 loggerv = "0.1.0"
 rand = "0.3.14"
 regex = "0.1.55"
-semver = { version = "0.2.3", optional = true }
 serde = "0.9.5"
 serde_derive = "0.9.5"
 serde_json = "0.9.5"
 sha1 = "0.2.0"
 tar = "0.4.10"
 walkdir = "1.0.7"
+
+[dependencies.semver]
+optional = true
+version = "0.2.3"
 
 [features]
 default = ["upgrade"]
