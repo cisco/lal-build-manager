@@ -48,14 +48,27 @@ fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<()> 
     use tar::Archive;
     use flate2::read::GzDecoder;
 
-    let data = fs::File::open(tarname)?;
-    let decompressed = GzDecoder::new(data)?; // decoder reads data
-    let mut archive = Archive::new(decompressed); // Archive reads decoded
-
     let extract_path = Path::new("./INPUT").join(component);
     let _ = fs::remove_dir_all(&extract_path); // remove current dir if exists
     fs::create_dir_all(&extract_path)?;
-    archive.unpack(&extract_path)?;
+
+    // Open file, conditionally wrap a progress bar around the file reading
+    if cfg!(feature = "progress") {
+        #[cfg(feature = "progress")] {
+            use super::progress::ProgressReader;
+            let data = fs::File::open(tarname)?;
+            let progdata = ProgressReader::new(data)?;
+            let decompressed = GzDecoder::new(progdata)?; // decoder reads data (proxied)
+            let mut archive = Archive::new(decompressed); // Archive reads decoded
+            archive.unpack(&extract_path)?;
+        }
+    } else {
+        let data = fs::File::open(tarname)?;
+        let decompressed = GzDecoder::new(data)?; // decoder reads data
+        let mut archive = Archive::new(decompressed); // Archive reads decoded
+        archive.unpack(&extract_path)?;
+    };
+
     Ok(())
 }
 

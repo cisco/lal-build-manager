@@ -42,6 +42,8 @@ extern crate filetime;
 extern crate rand;
 #[cfg(feature = "upgrade")]
 extern crate semver;
+#[cfg(feature = "progress")]
+extern crate indicatif;
 
 // re-exports
 mod core;

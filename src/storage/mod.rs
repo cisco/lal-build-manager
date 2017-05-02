@@ -9,3 +9,6 @@ pub use self::artifactory::{LatestLal, get_latest_lal_version, http_download_to_
 mod traits;
 mod artifactory;
 mod download;
+
+#[cfg(feature = "progress")]
+mod progress;

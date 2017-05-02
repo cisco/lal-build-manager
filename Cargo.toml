@@ -31,9 +31,14 @@ walkdir = "1.0.7"
 optional = true
 version = "0.2.3"
 
+[dependencies.indicatif]
+optional = true
+version = "0.2.0"
+
 [features]
-default = ["upgrade"]
+default = ["upgrade", "progress"]
 upgrade = ["semver"]
+progress = ["indicatif"]
 
 [lib]
 name = "lal"
