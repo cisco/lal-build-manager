@@ -39,7 +39,7 @@ run_tests() {
 }
 
 check_misc_targets() {
-  # Build version without autoupgrade
+  # Build version without features
   docker_run cargo build --no-default-features --verbose
 }
 

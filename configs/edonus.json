@@ -28,6 +28,10 @@
     "xenial": {
       "name": "edonusdevelopers/build_xenial",
       "tag": "latest"
+    },
+    "zesty": {
+      "name": "edonusdevelopers/build_xenial",
+      "tag": "latest"
     }
   },
   "mounts": [
