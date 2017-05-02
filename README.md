@@ -31,6 +31,7 @@ Get [stable rust](https://www.rust-lang.org/downloads.html) (inlined below), clo
 curl https://sh.rustup.rs -sSf | sh
 # `rustup update stable` - to upgrade rust later
 git clone git@sqbu-github.cisco.com:Edonus/lal.git && cd lal
+# install libssl-dev and curl (or distro equivalent) + `cargo clean` if build fails
 cargo build --release
 ln -sf $PWD/target/release/lal /usr/local/bin/lal
 echo "source $PWD/lal.complete.sh" >> ~/.bash_completion
@@ -140,6 +141,26 @@ rustup run nighthly cargo clippy # requires rustup.rs install of rust + nightly 
 
 ## Build issues
 If libraries cannot be built, then upgrade `rustc` by running `rustup update stable`.
+
+- fatal error: 'openssl/hmac.h' file not found If you are on a GNU/Linux distribution (like Ubuntu), please install `libssl-dev`. If you are on OSX, please install openssl and check your OpenSSL configuration:
+
+```sh
+brew install openssl
+export OPENSSL_INCLUDE_DIR=`brew --prefix openssl`/include
+export OPENSSL_LIB_DIR=`brew --prefix openssl`/lib
+export DEP_OPENSSL_INCLUDE=`brew --prefix openssl`/include # should work without this
+```
+
+There's also a runtime lookup of certificates to do peer verification of certificates. This requires having set:
+
+```
+# OSX
+export SSL_CERT_FILE=/usr/local/etc/openssl/cert.pem
+# CentOS
+export SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt
+```
+
+This should be put in your `~/.bashrc` or `~/.bash_profile` as `lal` reads it on every run. Note that the default location is `/etc/ssl/certs/ca-certificates.crt` and that is correct for most linux distros.
 
 ## Logging
 Configurable via flags before the subcommand:
