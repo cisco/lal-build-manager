@@ -30,7 +30,7 @@
       "tag": "latest"
     },
     "zesty": {
-      "name": "edonusdevelopers/build_xenial",
+      "name": "edonusdevelopers/build_zesty",
       "tag": "latest"
     }
   },
