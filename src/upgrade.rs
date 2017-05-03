@@ -129,6 +129,7 @@ fn upgrade_exe(latest: &LatestLal, exe: &ExeInfo) -> LalResult<()> {
             warn!("lal upgrade failed - rolling back");
             warn!("Error: {}", e);
             fs::rename(&old_file, &exe.path)?; // better hope this works..
+            return Err(e);
         }
     }
 
