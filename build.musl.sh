@@ -58,7 +58,7 @@ build_lal_tarball() {
 
 create_lal_upload() {
   # Upload to a folder on artifactory equal to the Cargo.toml version
-  lalversion=$(grep version Cargo.toml | awk -F"\"" '{print $2}')
+  lalversion=$(grep version Cargo.toml | awk -F"\"" '{print $2}' | head -n 1)
   # But only if that folder doesn't already exist
   buildurl="http://engci-maven.cisco.com/artifactory/api/storage/CME-release/lal"
   if curl -s "${buildurl}" | grep -q "$lalversion"; then
