@@ -75,11 +75,11 @@ create_lal_upload() {
 main() {
   # build in the currently available muslrust container
   local -r container="$(docker images -q edonusdevelopers/muslrust | head -n 1)"
-  #run_tests
-  #check_misc_targets
+  run_tests
+  check_misc_targets
   build_lal_tarball
-  #create_lal_upload
-  #rm lal.tar
+  create_lal_upload
+  rm lal.tar
 }
 
 main
