@@ -33,7 +33,7 @@ version = "0.2.3"
 
 [dependencies.indicatif]
 optional = true
-version = "0.2.0"
+version = "0.3.3"
 
 [features]
 default = ["upgrade", "progress"]
