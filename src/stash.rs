@@ -30,7 +30,7 @@ pub fn stash<T: CachedBackend>(backend: &T, mf: &Manifest, name: &str) -> LalRes
     let lf_path = Path::new("OUTPUT").join("lockfile.json");
     let mut lf = Lockfile::from_path(&lf_path, &mf.name)?;
     lf.version = name.to_string();
-    lf.write(&lf_path, true)?;
+    lf.write(&lf_path)?;
 
     // main operation:
     backend.stash_output(&mf.name, name)?;

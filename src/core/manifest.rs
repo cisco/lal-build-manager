@@ -146,7 +146,7 @@ impl Manifest {
         trace!("Writing manifest in {}", self.location);
         let mut f = File::create(&self.location)?;
         write!(f, "{}\n", encoded)?;
-        info!("Wrote manifest in {}: \n{}", self.location, encoded);
+        debug!("Wrote manifest in {}: \n{}", self.location, encoded);
         Ok(())
     }
 

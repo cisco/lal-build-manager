@@ -24,7 +24,7 @@ pub fn set(opts_: &StickyOptions, cfg: &Config, env: &str) -> LalResult<()> {
     // mutate a temporary copy - lal binary is done after this function anyway
     let mut opts = opts_.clone();
     opts.env = Some(env.into());
-    opts.write(false)?;
+    opts.write()?;
     Ok(())
 }
 

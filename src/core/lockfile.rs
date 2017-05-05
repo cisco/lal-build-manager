@@ -180,15 +180,11 @@ impl Lockfile {
     }
 
     /// Write the current `Lockfile` struct to a Path
-    pub fn write(&self, pth: &Path, silent: bool) -> LalResult<()> {
+    pub fn write(&self, pth: &Path) -> LalResult<()> {
         let encoded = serde_json::to_string_pretty(self)?;
         let mut f = File::create(pth)?;
         write!(f, "{}\n", encoded)?;
-        if silent {
-            debug!("Wrote lockfile {}: \n{}", pth.display(), encoded);
-        } else {
-            info!("Wrote lockfile {}: \n{}", pth.display(), encoded);
-        }
+        debug!("Wrote lockfile {}: \n{}", pth.display(), encoded);
         Ok(())
     }
 }

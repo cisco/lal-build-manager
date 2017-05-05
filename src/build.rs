@@ -130,7 +130,7 @@ pub fn build(cfg: &Config,
         .populate_from_input());
 
     let lockpth = Path::new("./OUTPUT/lockfile.json");
-    lockfile.write(lockpth, true)?; // always put a lockfile in OUTPUT at the start of a build
+    lockfile.write(lockpth)?; // always put a lockfile in OUTPUT at the start of a build
 
     let bpath = find_valid_build_script()?;
     let cmd = vec![bpath, component.clone(), configuration_name];

@@ -33,8 +33,8 @@ impl StickyOptions {
         Ok(res)
     }
 
-    /// Overwrite `.lalopts` with current settings
-    pub fn write(&self, silent: bool) -> LalResult<()> {
+    /// Overwrite `.lal/opts` with current settings
+    pub fn write(&self) -> LalResult<()> {
         let pwd = env::current_dir()?;
         create_lal_subdir(&pwd)?; // create the `.lal` subdir if it's not there already
         let opts_path = Path::new(".lal/opts");
@@ -42,11 +42,7 @@ impl StickyOptions {
 
         let mut f = fs::File::create(&opts_path)?;
         write!(f, "{}\n", encoded)?;
-        if silent {
-            debug!("Wrote {}: \n{}", opts_path.display(), encoded);
-        } else {
-            info!("Wrote {}: \n{}", opts_path.display(), encoded);
-        }
+        debug!("Wrote {}: \n{}", opts_path.display(), encoded);
         Ok(())
     }
     /// Delete local `.lalopts`
