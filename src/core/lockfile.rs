@@ -257,15 +257,11 @@ impl Lockfile {
     pub fn find_all_dependency_names(&self) -> ValueUsage {
         let mut acc = HashMap::new();
         // ensure root node exists
-        if !acc.contains_key(&self.name) {
-            acc.insert(self.name.clone(), self.dependencies.keys().cloned().collect());
-        }
-        for (_, dep) in &self.dependencies {
+        acc.entry(self.name.clone()).or_insert_with(|| self.dependencies.keys().cloned().collect());
+        for dep in self.dependencies.values() {
             // recurse and merge into parent acc:
             for (n, d) in dep.find_all_dependency_names() {
-              if !acc.contains_key(&n) {
-                acc.insert(n, d);
-              }
+                acc.entry(n).or_insert(d);
             }
         }
         acc

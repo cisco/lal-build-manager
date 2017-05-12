@@ -81,7 +81,7 @@ pub fn http_download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
         #[cfg(feature = "progress")]
         {
             use indicatif::{ProgressBar, ProgressStyle};
-            let total_size = res.headers.get::<hyper::header::ContentLength>().unwrap().clone().0;
+            let total_size = res.headers.get::<hyper::header::ContentLength>().unwrap().0;
             let mut downloaded = 0;
             let mut buffer = [0; 1024*64];
             let mut f = File::create(save)?;
@@ -91,7 +91,7 @@ pub fn http_download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
 
             while downloaded < total_size {
                 let read = res.read(&mut buffer)?;
-                f.write(&mut buffer[0..read])?;
+                f.write_all(&buffer[0..read])?;
                 downloaded += read as u64;
                 pb.set_position(downloaded);
             }

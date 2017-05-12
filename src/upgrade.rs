@@ -54,7 +54,7 @@ fn identify_exe() -> LalResult<ExeInfo> {
 
 // basic tarball extractor
 // smaller than the INPUT extractor uses because it doesn't clear out anything
-fn extract_tarball(input: PathBuf, output: PathBuf) -> LalResult<()> {
+fn extract_tarball(input: PathBuf, output: &PathBuf) -> LalResult<()> {
     use tar::Archive;
     use flate2::read::GzDecoder;
 
@@ -79,7 +79,7 @@ fn verify_permissions(exe: &ExeInfo) -> LalResult<()> {
 
 fn overwrite_exe(latest: &LatestLal, exe: &ExeInfo) -> LalResult<()> {
     let prefix = exe.prefix.clone().unwrap();
-    extract_tarball(prefix.join("lal.tar"), prefix)?;
+    extract_tarball(prefix.join("lal.tar"), &prefix)?;
     validate_exe(latest, exe)?;
     Ok(())
 }

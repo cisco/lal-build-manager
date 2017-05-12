@@ -172,7 +172,7 @@ pub fn verify_global_versions(lf: &Lockfile, m: &Manifest) -> LalResult<()> {
 pub fn verify_consistent_dependency_versions(lf: &Lockfile, m: &Manifest) -> LalResult<()> {
     for (name, vers) in lf.find_all_dependency_versions() {
         debug!("Found version(s) for {} as {:?}", name, vers);
-        assert!(vers.len() > 0, "found versions");
+        assert!(!vers.is_empty(), "found versions");
         if vers.len() != 1 && m.dependencies.contains_key(&name) {
             warn!("Multiple version requirements on {} found in lockfile",
                   name.clone());
