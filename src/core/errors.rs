@@ -30,6 +30,8 @@ pub enum CliError {
     // status/verify errors
     /// Core dependencies missing in INPUT
     MissingDependencies,
+    /// Cyclical dependency loop found in INPUT
+    DependencyCycle(String),
     /// Dependency present at wrong version
     InvalidVersion(String),
     /// Extraneous dependencies in INPUT
@@ -127,6 +129,9 @@ impl fmt::Display for CliError {
             CliError::MissingDependencies => {
                 write!(f,
                        "Core dependencies missing in INPUT - try `lal fetch` first")
+            }
+            CliError::DependencyCycle(ref s) => {
+                write!(f, "Cyclical dependencies found for {} in INPUT", s)
             }
             CliError::InvalidVersion(ref s) => {
                 write!(f, "Dependency {} using incorrect version", s)

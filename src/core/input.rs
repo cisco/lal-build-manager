@@ -164,6 +164,10 @@ pub fn verify_global_versions(lf: &Lockfile, m: &Manifest) -> LalResult<()> {
                   vreq);
             return Err(CliError::InvalidVersion(name.clone()));
         }
+        // Prevent Cycles (enough to stop it at one manifest level)
+        if &m.name == name {
+            return Err(CliError::DependencyCycle(name.clone()))
+        }
     }
     Ok(())
 }
