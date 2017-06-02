@@ -14,7 +14,7 @@
       "tag": "latest"
     },
     "py3": {
-      "name": "edonusdevelopers/py3_xenial",
+      "name": "edonusdevelopers/build_python",
       "tag": "latest"
     },
     "rust": {
