@@ -135,8 +135,13 @@ pub fn build(cfg: &Config,
     let bpath = find_valid_build_script()?;
     let cmd = vec![bpath, component.clone(), configuration_name];
 
+    let mut modes_copy = (*modes).clone();
+    if let Some(v) = opts.version.clone() {
+        modes_copy.env_vars.push(format!("BUILD_VERSION={}", v));
+    }
+
     debug!("Build script is {:?}", cmd);
-    if !modes.printonly {
+    if !modes_copy.printonly {
         info!("Running build script in {} container", envname);
     }
 
@@ -144,8 +149,8 @@ pub fn build(cfg: &Config,
         interactive: cfg.interactive,
         privileged: false,
     };
-    shell::docker_run(cfg, &opts.container, cmd, &run_flags, modes)?;
-    if modes.printonly {
+    shell::docker_run(cfg, &opts.container, cmd, &run_flags, &modes_copy)?;
+    if modes_copy.printonly {
         return Ok(()); // nothing else worth doing - warnings are pointless
     }
 
@@ -161,7 +166,7 @@ pub fn build(cfg: &Config,
         warn!("Build was using non-default {} environment", envname);
     }
 
-    if opts.release && !modes.printonly {
+    if opts.release && !modes_copy.printonly {
         trace!("Create ARTIFACT dir");
         ensure_dir_exists_fresh("ARTIFACT")?;
         trace!("Copy lockfile to ARTIFACT dir");

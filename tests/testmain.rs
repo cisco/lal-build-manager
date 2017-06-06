@@ -385,6 +385,7 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
         printonly: true,
         x11_forwarding: true,
         host_networking: true,
+        env_vars: vec![],
     };
     let printbuild = lal::build(&cfg, &mf, &bopts, "rust".into(), &all_modes);
     assert!(printbuild.is_ok(), "saw docker run print with X11 mounts");
