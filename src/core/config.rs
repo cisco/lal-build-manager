@@ -79,19 +79,23 @@ impl ConfigDefaults {
 }
 
 fn volume_exists(name: &str) -> LalResult<bool> {
-    use std::process::Command;
-    // Check if it's a docker volume first
-    let volume_output = Command::new("docker").args(vec!["volume", "ls", "-q"]).output()?;
-    let volstr = String::from_utf8_lossy(&volume_output.stdout);
-    // Needs to exist locally:
-    if volstr.contains(name) {
+    // See if it's a path first:
+    let mount_path = Path::new(name);
+    if mount_path.exists() {
         return Ok(true);
     }
 
-    // Otherwise assume it's a path
-    let mount_path = Path::new(name);
-    // Needs to exist locally:
-    if mount_path.exists() {
+    // Otherwise, if it does not contain a slash
+    if !name.contains("/") {
+        use std::process::Command;
+        let volume_output = Command::new("docker").args(vec!["volume", "ls", "-q"]).output()?;
+        let volstr = String::from_utf8_lossy(&volume_output.stdout);
+        // If it exists, do nothing:
+        if volstr.contains(name) {
+            return Ok(true);
+        }
+        // Otherwise create it:
+        Command::new("docker").args(vec!["volume", "create", name]).output()?;
         return Ok(true);
     }
 
@@ -109,8 +113,8 @@ impl Config {
         let cachepath = lal_dir().join("cache");
         let cachedir = cachepath.as_path().to_str().unwrap();
 
-        // last update time
-        let time = UTC::now() - Duration::days(2);
+        // reset last update time
+        let time = UTC::now();
 
         // scan default mounts
         let mut mounts = vec![];
