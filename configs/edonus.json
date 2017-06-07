@@ -13,7 +13,7 @@
       "name": "edonusdevelopers/centos_build",
       "tag": "latest"
     },
-    "tools": {
+    "py3": {
       "name": "edonusdevelopers/build_python",
       "tag": "latest"
     },
