@@ -78,7 +78,7 @@ impl ConfigDefaults {
     }
 }
 
-fn volume_exists(name: &str) -> LalResult<bool> {
+fn validate_or_prepare_volume(name: &str) -> LalResult<bool> {
     // See if it's a path first:
     let mount_path = Path::new(name);
     if mount_path.exists() {
@@ -119,8 +119,9 @@ impl Config {
         // scan default mounts
         let mut mounts = vec![];
         for mount in defaults.mounts {
-            let exists = volume_exists(&mount.src).unwrap(); // crash here if this fails
-            if exists {
+            // Check src for pathiness or prepare a docker volume
+            // Crash if this fails (new-ish feature)
+            if validate_or_prepare_volume(&mount.src).unwrap() {
                 debug!("Configuring existing mount {}", mount.src);
                 mounts.push(mount.clone());
             }
