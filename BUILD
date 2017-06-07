@@ -42,7 +42,7 @@ create_artifact_folder() {
 
 main() {
   # build in the currently available muslrust container
-  set -ex
+  set -e
   if [[ $1 == "lal" ]]; then
     if [[ $2 == "no-features" ]]; then
       cargo build --no-default-features --verbose
@@ -67,6 +67,7 @@ main() {
     cargo build --test testmain
     cp ./target/x86_64-unknown-linux-musl/debug/testmain-* OUTPUT/
     rm -f OUTPUT/testmain-*.d
+    echo "Please backup your ~/.lal/config and run the testmain executable in OUTPUT"
   else
     echo "No such component $1 found"
     exit 2
