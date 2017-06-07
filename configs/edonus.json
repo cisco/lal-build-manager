@@ -13,7 +13,7 @@
       "name": "edonusdevelopers/centos_build",
       "tag": "latest"
     },
-    "py3": {
+    "tools": {
       "name": "edonusdevelopers/build_python",
       "tag": "latest"
     },
@@ -44,6 +44,11 @@
       "src": "/mnt/build-files",
       "dest": "/build-files",
       "readonly": true
+    },
+    {
+      "src": "cargo-cache",
+      "dest": "/home/lal/.cargo",
+      "readonly": false
     }
   ]
 }

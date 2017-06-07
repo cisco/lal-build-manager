@@ -78,6 +78,28 @@ impl ConfigDefaults {
     }
 }
 
+fn volume_exists(name: &str) -> LalResult<bool> {
+    use std::process::Command;
+    // Check if it's a docker volume first
+    let volume_output = Command::new("docker").args(vec!["volume", "ls", "-q"]).output()?;
+    let volstr = String::from_utf8_lossy(&volume_output.stdout);
+    // Needs to exist locally:
+    if volstr.contains(name) {
+        return Ok(true);
+    }
+
+    // Otherwise assume it's a path
+    let mount_path = Path::new(name);
+    // Needs to exist locally:
+    if mount_path.exists() {
+        return Ok(true);
+    }
+
+    // Otherwise, no
+    Ok(false)
+}
+
+
 impl Config {
     /// Initialize a Config with ConfigDefaults
     ///
@@ -93,9 +115,8 @@ impl Config {
         // scan default mounts
         let mut mounts = vec![];
         for mount in defaults.mounts {
-            let mount_path = Path::new(&mount.src);
-            // only add mount if the user actually has it locally
-            if mount_path.exists() {
+            let exists = volume_exists(&mount.src).unwrap();
+            if exists {
                 debug!("Configuring existing mount {}", mount.src);
                 mounts.push(mount.clone());
             }
