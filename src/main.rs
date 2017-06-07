@@ -188,8 +188,9 @@ fn handle_docker_cmds(args: &ArgMatches,
             printonly: a.is_present("print"),
             x11_forwarding: a.is_present("x11"),
             host_networking: a.is_present("net-host"),
+            env_vars: values_t!(a.values_of("env-var"), String).unwrap_or(vec![]),
         };
-        lal::build(cfg, mf, &bopts, env.into(), &modes)
+        lal::build(cfg, mf, &bopts, env.into(), modes)
     } else if let Some(a) = args.subcommand_matches("shell") {
         let xs = if a.is_present("cmd") {
             Some(a.values_of("cmd").unwrap().collect::<Vec<_>>())
@@ -200,6 +201,7 @@ fn handle_docker_cmds(args: &ArgMatches,
             printonly: a.is_present("print"),
             x11_forwarding: a.is_present("x11"),
             host_networking: a.is_present("net-host"),
+            env_vars: values_t!(a.values_of("env-var"), String).unwrap_or(vec![]),
         };
         lal::shell(cfg,
                    container,
@@ -216,6 +218,7 @@ fn handle_docker_cmds(args: &ArgMatches,
             printonly: a.is_present("print"),
             x11_forwarding: a.is_present("x11"),
             host_networking: a.is_present("net-host"),
+            env_vars: values_t!(a.values_of("env-var"), String).unwrap_or(vec![]),
         };
         lal::script(cfg,
                     container,
@@ -292,6 +295,12 @@ fn main() {
                 .short("n")
                 .long("net-host")
                 .help("Enable host networking"))
+            .arg(Arg::with_name("env-var")
+                .long("env-var")
+                .help("Set environment variables in the container")
+                .multiple(true)
+                .takes_value(true)
+                .number_of_values(1))
             .arg(Arg::with_name("print")
                 .long("print-only")
                 .conflicts_with("release")
@@ -348,6 +357,12 @@ fn main() {
                 .short("n")
                 .long("net-host")
                 .help("Enable host networking"))
+            .arg(Arg::with_name("env-var")
+                .long("env-var")
+                .help("Set environment variables in the container")
+                .multiple(true)
+                .takes_value(true)
+                .number_of_values(1))
             .arg(Arg::with_name("print")
                 .long("print-only")
                 .help("Only print the docker run command and exit"))
@@ -367,6 +382,12 @@ fn main() {
                 .short("n")
                 .long("net-host")
                 .help("Enable host networking"))
+            .arg(Arg::with_name("env-var")
+                .long("env-var")
+                .help("Set environment variables in the container")
+                .multiple(true)
+                .takes_value(true)
+                .number_of_values(1))
             .arg(Arg::with_name("print")
                 .long("print-only")
                 .help("Only print the docker run command and exit"))

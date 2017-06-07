@@ -90,7 +90,9 @@ pub fn docker_run(cfg: &Config,
         // also needed for for `ssh -X` into `lal -X`
         args.push("--net=host".into());
     }
-
+    for var in modes.env_vars.clone() {
+        args.push(format!("--env={}", var));
+    }
 
     if flags.privileged {
         args.push("--privileged".into())
@@ -143,7 +145,7 @@ pub fn docker_run(cfg: &Config,
 }
 
 /// Various ways to invoke `docker_run`
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct ShellModes {
     /// Just print the command used rather than do it
     pub printonly: bool,
@@ -151,6 +153,8 @@ pub struct ShellModes {
     pub x11_forwarding: bool,
     /// Host networking
     pub host_networking: bool,
+    /// Environment variables
+    pub env_vars: Vec<String>,
 }
 
 
@@ -168,6 +172,7 @@ pub fn shell(cfg: &Config,
     if !modes.printonly {
         info!("Entering {}", container);
     }
+
     let flags = DockerRunFlags {
         interactive: cmd.is_none() || cfg.interactive,
         privileged: privileged,

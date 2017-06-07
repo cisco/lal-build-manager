@@ -332,7 +332,7 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
     };
     let modes = ShellModes::default();
     // basic build works - all deps are global at right env
-    let r = lal::build(&cfg, &mf, &bopts, "xenial".into(), &modes);
+    let r = lal::build(&cfg, &mf, &bopts, "xenial".into(), modes.clone());
     assert!(r.is_ok(), "could perform a xenial build");
 
     // lal stash testmain
@@ -349,7 +349,7 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
     chk::is_ok(ru, "could update lal from stash");
 
     // basic build won't work now without simple verify
-    let r1 = lal::build(&cfg, &mf, &bopts, "xenial".into(), &modes);
+    let r1 = lal::build(&cfg, &mf, &bopts, "xenial".into(), modes.clone());
     assert!(r1.is_err(), "could not verify a new xenial build");
     if let Err(CliError::NonGlobalDependencies(nonglob)) = r1 {
         assert_eq!(nonglob, "lal");
@@ -359,12 +359,12 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
     }
 
     bopts.simple_verify = true;
-    let r2 = lal::build(&cfg, &mf, &bopts, "xenial".into(), &modes);
+    let r2 = lal::build(&cfg, &mf, &bopts, "xenial".into(), modes.clone());
     assert!(r2.is_ok(), "can build with stashed deps with simple verify");
 
 
     // force will also work - even with stashed deps from wrong env
-    let renv = lal::build(&cfg, &mf, &bopts, "rust".into(), &modes);
+    let renv = lal::build(&cfg, &mf, &bopts, "rust".into(), modes.clone());
     assert!(renv.is_err(),
             "cannot build with simple verify when wrong env");
     if let Err(CliError::EnvironmentMismatch(_, compenv)) = renv {
@@ -377,7 +377,7 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
     // settings that reflect lal build -f
     bopts.simple_verify = false;
     bopts.force = true;
-    let renv2 = lal::build(&cfg, &mf, &bopts, "rust".into(), &modes);
+    let renv2 = lal::build(&cfg, &mf, &bopts, "rust".into(), modes.clone());
     assert!(renv2.is_ok(), "could force build in different env");
 
     // additionally do a build with printonly
@@ -385,8 +385,9 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
         printonly: true,
         x11_forwarding: true,
         host_networking: true,
+        env_vars: vec![],
     };
-    let printbuild = lal::build(&cfg, &mf, &bopts, "rust".into(), &all_modes);
+    let printbuild = lal::build(&cfg, &mf, &bopts, "rust".into(), all_modes);
     assert!(printbuild.is_ok(), "saw docker run print with X11 mounts");
 }
 
