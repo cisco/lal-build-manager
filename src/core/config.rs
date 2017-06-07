@@ -119,7 +119,7 @@ impl Config {
         // scan default mounts
         let mut mounts = vec![];
         for mount in defaults.mounts {
-            let exists = volume_exists(&mount.src).unwrap();
+            let exists = volume_exists(&mount.src).unwrap(); // crash here if this fails
             if exists {
                 debug!("Configuring existing mount {}", mount.src);
                 mounts.push(mount.clone());
