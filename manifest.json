@@ -1,0 +1,23 @@
+{
+  "name": "lal",
+  "environment": "rust",
+  "components": {
+    "lal": {
+      "defaultConfig": "artifactory",
+      "configurations": [
+        "artifactory",
+        "release",
+        "debug",
+        "no-features"
+      ]
+    },
+    "lal-unit-tests": {
+      "defaultConfig": "debug",
+      "configurations": [
+        "debug"
+      ]
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

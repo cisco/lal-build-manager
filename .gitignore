@@ -1,7 +1,6 @@
 target
 *.rs.bk
 INPUT
-manifest.json
 lal.coreos.tar
 lal.musl.tar
 OUTPUT
