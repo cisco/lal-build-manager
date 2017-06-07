@@ -57,7 +57,6 @@ pub fn docker_run(cfg: &Config,
                   -> LalResult<()> {
     trace!("Finding home and cwd");
     let home = env::home_dir().unwrap(); // crash if no $HOME
-    let git_cfg = Path::new(&home).join(".gitconfig");
     let pwd = env::current_dir().unwrap();
 
     // construct arguments vector
@@ -71,10 +70,7 @@ pub fn docker_run(cfg: &Config,
                           if mount.readonly { ":ro" } else { "" });
         args.push(mnt);
     }
-    trace!(" - mounting {}", git_cfg.display());
     trace!(" - mounting {}", pwd.display());
-    args.push("-v".into());
-    args.push(format!("{}:/home/lal/.gitconfig:ro", git_cfg.display()));
     args.push("-v".into());
     args.push(format!("{}:/home/lal/volume", pwd.display()));
 

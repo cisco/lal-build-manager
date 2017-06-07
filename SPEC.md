@@ -277,7 +277,6 @@ lal shell should simply run:
 
 ```sh
 docker run \
-  -v $HOME/.gitconfig:/home/lal/.gitconfig \
   -v $PWD:/home/lal/volume \
   -w /home/lal/volume \
   --user lal \
