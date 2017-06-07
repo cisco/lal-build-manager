@@ -190,7 +190,7 @@ fn handle_docker_cmds(args: &ArgMatches,
             host_networking: a.is_present("net-host"),
             env_vars: values_t!(a.values_of("env-var"), String).unwrap_or(vec![]),
         };
-        lal::build(cfg, mf, &bopts, env.into(), &modes)
+        lal::build(cfg, mf, &bopts, env.into(), modes)
     } else if let Some(a) = args.subcommand_matches("shell") {
         let xs = if a.is_present("cmd") {
             Some(a.values_of("cmd").unwrap().collect::<Vec<_>>())

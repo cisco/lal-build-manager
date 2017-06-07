@@ -78,8 +78,10 @@ pub fn build(cfg: &Config,
              manifest: &Manifest,
              opts: &BuildOptions,
              envname: String,
-             modes: &ShellModes)
+             _modes: ShellModes)
              -> LalResult<()> {
+    let mut modes = _modes;
+
     // have a better warning on first file-io operation
     // if nfs mounts and stuff cause issues this usually catches it
     ensure_dir_exists_fresh("OUTPUT").map_err(|e| {
@@ -135,13 +137,12 @@ pub fn build(cfg: &Config,
     let bpath = find_valid_build_script()?;
     let cmd = vec![bpath, component.clone(), configuration_name];
 
-    let mut modes_copy = (*modes).clone();
     if let Some(v) = opts.version.clone() {
-        modes_copy.env_vars.push(format!("BUILD_VERSION={}", v));
+        modes.env_vars.push(format!("BUILD_VERSION={}", v));
     }
 
     debug!("Build script is {:?}", cmd);
-    if !modes_copy.printonly {
+    if !modes.printonly {
         info!("Running build script in {} container", envname);
     }
 
@@ -149,8 +150,8 @@ pub fn build(cfg: &Config,
         interactive: cfg.interactive,
         privileged: false,
     };
-    shell::docker_run(cfg, &opts.container, cmd, &run_flags, &modes_copy)?;
-    if modes_copy.printonly {
+    shell::docker_run(cfg, &opts.container, cmd, &run_flags, &modes)?;
+    if modes.printonly {
         return Ok(()); // nothing else worth doing - warnings are pointless
     }
 
@@ -166,7 +167,7 @@ pub fn build(cfg: &Config,
         warn!("Build was using non-default {} environment", envname);
     }
 
-    if opts.release && !modes_copy.printonly {
+    if opts.release && !modes.printonly {
         trace!("Create ARTIFACT dir");
         ensure_dir_exists_fresh("ARTIFACT")?;
         trace!("Copy lockfile to ARTIFACT dir");
