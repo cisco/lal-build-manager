@@ -78,10 +78,11 @@ impl ConfigDefaults {
     }
 }
 
-fn validate_or_prepare_volume(name: &str) -> LalResult<bool> {
+fn check_mount(name: &str) -> LalResult<bool> {
     // See if it's a path first:
     let mount_path = Path::new(name);
     if mount_path.exists() {
+        debug!("Configuring existing mount {}", name);
         return Ok(true);
     }
 
@@ -92,14 +93,14 @@ fn validate_or_prepare_volume(name: &str) -> LalResult<bool> {
         let volstr = String::from_utf8_lossy(&volume_output.stdout);
         // If it exists, do nothing:
         if volstr.contains(name) {
+            debug!("Configuring existing volume {}", name);
             return Ok(true);
         }
-        // Otherwise create it:
-        Command::new("docker").args(vec!["volume", "create", name]).output()?;
-        return Ok(true);
+        // Otherwise warn
+        warn!("Discarding missing docker volume {}", name);
+    } else {
+        warn!("Discarding missing mount {}", name);
     }
-
-    // Otherwise, no
     Ok(false)
 }
 
@@ -121,8 +122,7 @@ impl Config {
         for mount in defaults.mounts {
             // Check src for pathiness or prepare a docker volume
             // Crash if this fails (new-ish feature)
-            if validate_or_prepare_volume(&mount.src).unwrap() {
-                debug!("Configuring existing mount {}", mount.src);
+            if check_mount(&mount.src).unwrap() {
                 mounts.push(mount.clone());
             }
         }
@@ -175,11 +175,10 @@ impl Config {
 
         let mut f = fs::File::create(&cfg_path)?;
         write!(f, "{}\n", encoded)?;
-        if silent {
-            debug!("Wrote config {}: \n{}", cfg_path.display(), encoded);
-        } else {
-            info!("Wrote config {}: \n{}", cfg_path.display(), encoded);
+        if !silent {
+            info!("Wrote config to {}", cfg_path.display());
         }
+        debug!("Wrote config {}: \n{}", cfg_path.display(), encoded);
         Ok(())
     }
 
