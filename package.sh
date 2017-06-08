@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# THIS SCRIPT SHOULD BE INVOKED BY CI INSTEAD OF lal publish
+# This is because lal intentionally uses semver.
+
+
 # If you have done `lal build lal --release`
 # It will convert the standard release structure of ARTIFACT:
 #

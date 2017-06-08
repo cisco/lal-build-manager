@@ -24,7 +24,6 @@ main() {
     if [[ $2 == "slim" ]]; then
       cargo build --no-default-features --release --verbose
       cp ./target/x86_64-unknown-linux-musl/debug/lal OUTPUT/bin/
-      cp
     elif [[ $2 == "release" ]]; then
       cargo build
       cp ./target/x86_64-unknown-linux-musl/release/lal OUTPUT/bin/
