@@ -8,7 +8,7 @@
         "artifactory",
         "release",
         "debug",
-        "no-features"
+        "slim"
       ]
     },
     "lal-unit-tests": {

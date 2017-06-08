@@ -44,11 +44,11 @@ main() {
   # build in the currently available muslrust container
   set -e
   if [[ $1 == "lal" ]]; then
-    if [[ $2 == "no-features" ]]; then
-      cargo build --no-default-features --verbose
+    if [[ $2 == "slim" ]]; then
+      cargo build --no-default-features --release --verbose
       cp ./target/x86_64-unknown-linux-musl/debug/lal OUTPUT/
     elif [[ $2 == "release" ]]; then
-      cargo build --release
+      cargo build --release --verbose
       cp ./target/x86_64-unknown-linux-musl/release/lal OUTPUT/
     elif [[ $2 == "debug" ]]; then
       cargo build
