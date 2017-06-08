@@ -12,53 +12,27 @@ run_tests() {
   ./OUTPUT/testmain-*
 }
 
-package_lal_tarball() {
-  mkdir -p musl/bin
-  mkdir -p musl/share/lal/configs
-  cp target/x86_64-unknown-linux-musl/release/lal musl/bin
-  cp lal.complete* musl/share/lal/
-  cp configs/* musl/share/lal/configs/
-  tar czf lal.tar -C musl .
-  rm -rf musl/
-  echo "Created lal tarball with contents:"
-  tar tvf lal.tar
-}
-
-create_artifact_folder() {
-  # Upload to a folder on artifactory equal to the Cargo.toml version
-  lalversion=$(grep version Cargo.toml | awk -F"\"" '{print $2}' | head -n 1)
-  # But only if that folder doesn't already exist
-  buildurl="http://engci-maven.cisco.com/artifactory/api/storage/CME-release/lal"
-  if curl -s "${buildurl}" | grep -q "$lalversion"; then
-      echo "lal version already uploaded - stopping" # don't want to overwrite
-  else
-    echo "Packaging new lal version"
-    mkdir "ARTIFACT/${lalversion}" -p
-    cp lal.tar "ARTIFACT/${lalversion}/"
-    # Update the latest package
-    cp "ARTIFACT/${lalversion}" "ARTIFACT/latest" -R
-  fi
-}
-
 main() {
   # build in the currently available muslrust container
   set -e
   if [[ $1 == "lal" ]]; then
+    mkdir -p OUTPUT/{bin,share/lal/configs}
+    cp configs/* OUTPUT/share/lal/configs/
+    cp lal.complete* OUTPUT/share/lal/
     if [[ $2 == "slim" ]]; then
       cargo build --no-default-features --release --verbose
-      cp ./target/x86_64-unknown-linux-musl/debug/lal OUTPUT/
+      cp ./target/x86_64-unknown-linux-musl/debug/lal OUTPUT/bin/
+      cp
     elif [[ $2 == "release" ]]; then
-      cargo build --release --verbose
-      cp ./target/x86_64-unknown-linux-musl/release/lal OUTPUT/
+      cargo build
+      cp ./target/x86_64-unknown-linux-musl/release/lal OUTPUT/bin/
     elif [[ $2 == "debug" ]]; then
       cargo build
-      cp ./target/x86_64-unknown-linux-musl/debug/lal OUTPUT/
+      cp ./target/x86_64-unknown-linux-musl/debug/lal OUTPUT/bin/
     elif [[ $2 == "artifactory" ]]; then
       cargo build --release
-      # different versioning of lal, so create ARTIFACT folder manually
-      package_lal_tarball
-      create_artifact_folder
-      rm lal.tar
+      cp ./target/x86_64-unknown-linux-musl/release/lal OUTPUT/bin/
+      echo "Please run ./package.sh if uploading to artifactory"
     else
       echo "No such configuration $2 found"
       exit 2

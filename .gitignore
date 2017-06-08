@@ -1,9 +1,7 @@
 target
 *.rs.bk
-INPUT
 lal.coreos.tar
 lal.musl.tar
 OUTPUT
 lal.tar
 ARTIFACT
-.lal

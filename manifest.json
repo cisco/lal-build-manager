@@ -3,9 +3,8 @@
   "environment": "rust",
   "components": {
     "lal": {
-      "defaultConfig": "artifactory",
+      "defaultConfig": "release",
       "configurations": [
-        "artifactory",
         "release",
         "debug",
         "slim"
