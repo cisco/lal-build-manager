@@ -42,6 +42,13 @@ fn init_ssl() {
 fn main() {
     init_ssl();
 
+    // Do all lal tests in a subdir as it messes with the manifest
+    let tmp = Path::new(".").join("testtmp");
+    if !tmp.is_dir() {
+        fs::create_dir(&tmp).unwrap();
+    }
+    assert!(env::set_current_dir(tmp).is_ok());
+
     // init_with_verbosity(0).unwrap();
     let has_docker = true;
     let num_tests = if has_docker { 15 } else { 11 };
@@ -156,7 +163,7 @@ fn configure_yes() -> ArtifactoryBackend {
     let config = Config::read();
     assert!(config.is_err(), "no config at this point");
 
-    let r = lal::configure(true, false, "configs/edonus.json");
+    let r = lal::configure(true, false, "../configs/edonus.json");
     assert!(r.is_ok(), "configure succeeded");
 
     let cfg = Config::read();
@@ -178,6 +185,7 @@ fn init_force() {
     let m1 = Manifest::read();
     assert!(m1.is_err(), "no manifest at this point");
 
+    // Creates a manifest in the testtmp directory
     let m2 = lal::init(&cfg, false, "rust");
     assert!(m2.is_ok(), "could init without force param");
 
@@ -313,7 +321,7 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
         let mut f = File::create("./BUILD").unwrap();
         // Rust check in there to verify we can build in a rust container
         write!(f,
-               "#!/bin/bash\nset -e\nwhich rustc\necho hi > OUTPUT/test.txt\n")
+               "#!/bin/bash\nset -e\nwhich rustc\necho hi > test.txt\n")
             .unwrap();
         Command::new("chmod").arg("+x").arg("BUILD").output().unwrap();
     } // scope ensures file is not busy before lal::build
@@ -321,7 +329,7 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
 
     // we'll try with various build options further down with various deps
     let mut bopts = BuildOptions {
-        name: Some("lal".into()),
+        name: Some("testtmp".into()),
         configuration: Some("release".into()),
         container: container,
         release: true,
@@ -335,24 +343,24 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
     let r = lal::build(&cfg, &mf, &bopts, "xenial".into(), modes.clone());
     assert!(r.is_ok(), "could perform a xenial build");
 
-    // lal stash testmain
-    let rs = lal::stash(backend, &mf, "testmain");
+    // lal stash blah
+    let rs = lal::stash(backend, &mf, "blah");
     assert!(rs.is_ok(), "could stash lal build artifact");
 
-    // lal update lal=testmain
+    // lal update testtmp=blah
     let ru = lal::update(&mf,
                          backend,
-                         vec!["lal=testmain".to_string()],
+                         vec!["testtmp=blah".to_string()],
                          false,
                          false,
                          "garbage"); // env not relevant for stash
-    chk::is_ok(ru, "could update lal from stash");
+    chk::is_ok(ru, "could update testtmp from stash");
 
     // basic build won't work now without simple verify
     let r1 = lal::build(&cfg, &mf, &bopts, "xenial".into(), modes.clone());
     assert!(r1.is_err(), "could not verify a new xenial build");
     if let Err(CliError::NonGlobalDependencies(nonglob)) = r1 {
-        assert_eq!(nonglob, "lal");
+        assert_eq!(nonglob, "testtmp");
     } else {
         println!("actual r1 was {:?}", r1);
         assert!(false);
@@ -454,19 +462,19 @@ fn clean_check() {
 }
 
 fn export_check<T: CachedBackend + Backend>(backend: &T) {
-    let r = lal::export(backend, "gtest=6", Some("tests"), None);
+    let tmp = Path::new(".").join("blah");
+    if !tmp.is_dir() {
+        fs::create_dir(&tmp).unwrap();
+    }
+    let r = lal::export(backend, "gtest=6", Some("blah"), None);
     assert!(r.is_ok(), "could export global gtest=6 into subdir");
 
     let r2 = lal::export(backend, "libcurl", None, Some("xenial"));
     assert!(r2.is_ok(), "could export latest libcurl into PWD");
 
-    let gtest = Path::new(&env::current_dir().unwrap()).join("tests").join("gtest.tar.gz");
+    let gtest = Path::new(".").join("blah").join("gtest.tar.gz");
     assert!(gtest.is_file(), "gtest was copied correctly");
 
-    let libcurl = Path::new(&env::current_dir().unwrap()).join("libcurl.tar.gz");
+    let libcurl = Path::new(".").join("libcurl.tar.gz");
     assert!(libcurl.is_file(), "libcurl was copied correctly");
-
-    // clean up
-    fs::remove_file(&gtest).unwrap();
-    fs::remove_file(&libcurl).unwrap();
 }

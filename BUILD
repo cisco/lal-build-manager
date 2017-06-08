@@ -9,7 +9,9 @@ run_tests() {
     [ -f bupconfig ] && mv bupconfig ~/.lal/config
   }
   trap restore_config EXIT
+  export RUST_BACKTRACE=full
   ./OUTPUT/testmain-*
+  restore_config
 }
 
 main() {
@@ -41,7 +43,7 @@ main() {
     cargo build --test testmain
     cp ./target/x86_64-unknown-linux-musl/debug/testmain-* OUTPUT/
     rm -f OUTPUT/testmain-*.d
-    echo "Please backup your ~/.lal/config and run the testmain executable in OUTPUT"
+    echo "Please 'source BUILD' and 'run_tests'"
   else
     echo "No such component $1 found"
     exit 2

@@ -41,6 +41,17 @@ lal configure <site-config> # use autocomplete to select config
 
 When new versions are released, you will be told to `git pull && cargo build --release`.
 
+### With lal (future upgrades)
+This will upgrade an installation done from an artifactory download (as an original boostrap), and it will upgrade any future upgrade that used this setup.
+
+```sh
+git clone git@sqbu-github.cisco.com:Edonus/lal.git && cd lal
+lal build --release
+tar xzf ARTIFACT/lal.tar.gz -C /usr/local
+```
+
+Note that if you configured autocomplete, it is still configured.
+
 ## Usage
 Illustrated via common workflow examples below:
 
@@ -128,9 +139,18 @@ When making changes:
 
 ```sh
 cargo build
-lal subcommand ..args # check that your thing is good
+./target/debug/lal subcommand ..args # check that your thing is good
 cargo test # write tests
 ```
+
+Note that the tests overwrite your `~/.lal/config` so you may find the `run_tests` function in `BUILD` useful. You can alternatively:
+
+```sh
+source BUILD
+lal build lal-unit-tests && run_tests
+```
+
+We can't run the `lal-unit-tests` with `lal` because the test executable invokes `docker`.
 
 Good practices before comitting (not mandatory):
 
