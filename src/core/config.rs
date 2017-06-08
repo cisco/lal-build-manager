@@ -178,7 +178,7 @@ impl Config {
         if !silent {
             info!("Wrote config to {}", cfg_path.display());
         }
-        debug!("Wrote config {}: \n{}", cfg_path.display(), encoded);
+        debug!("Wrote config \n{}", encoded);
         Ok(())
     }
 
