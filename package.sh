@@ -25,11 +25,13 @@
 #
 # crates.io may become the canonical one in the future if it is open sourced.
 
-create_artifact_folder() {
+mutate_artifact_folder() {
+  local -r lalversion=$(grep version Cargo.toml | awk -F"\"" '{print $2}' | head -n 1)
   # Guard on version not existing
   buildurl="http://engci-maven.cisco.com/artifactory/api/storage/CME-release/lal"
   if curl -s "${buildurl}" | grep -q "$lalversion"; then
       echo "lal version already uploaded - stopping" # don't want to overwrite
+      # don't want to upload anything accidentally - jenkins is dumb
       rm -rf ARTIFACT/
   else
     echo "Packaging new lal version"
@@ -40,16 +42,17 @@ create_artifact_folder() {
   fi
 }
 
+
 main() {
   set -e
   if [ ! -f ARTIFACT/lal.tar.gz ]; then
     echo "No release build of lal found"
+    rm -rf ARTIFACT # just in case
     exit 2
   fi
   echo "Found release build with:"
   tar tvf ARTIFACT/lal.tar.gz
-  local -r lalversion=$(grep version Cargo.toml | awk -F"\"" '{print $2}' | head -n 1)
-  create_artifact_folder
+  mutate_artifact_folder
 }
 
 main "$@"
