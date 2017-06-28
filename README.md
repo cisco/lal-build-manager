@@ -50,7 +50,9 @@ lal build --release
 tar xzf ARTIFACT/lal.tar.gz -C /usr/local
 ```
 
-Note that if you configured autocomplete, it is still configured. You can also build a slim version of lal without autoupgrade this way (because you are upgrading yourself). Just replace the build with `lal build -c slim --release` above.
+You can also build a slim version of lal without autoupgrade this way (because you are upgrading yourself). Just replace the build with `lal build -c slim --release` above.
+
+Note that if you configured autocomplete, it is still configured.
 
 ## Usage
 Illustrated via common workflow examples below:
