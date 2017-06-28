@@ -141,6 +141,11 @@ impl Config {
     /// Read and deserialize a Config from ~/.lal/config
     pub fn read() -> LalResult<Config> {
         let cfg_path = lal_dir().join("config");
+        Config::read_from(cfg_path)
+    }
+
+    /// Read and deserialize a Config from an arbitrary Path (public for tests)
+    pub fn read_from(cfg_path: PathBuf) -> LalResult<Config> {
         if !cfg_path.exists() {
             return Err(CliError::MissingConfig);
         }
@@ -153,6 +158,7 @@ impl Config {
         }
         Ok(res)
     }
+
     /// Checks if it is time to perform an upgrade check
     #[cfg(feature = "upgrade")]
     pub fn upgrade_check_time(&self) -> bool {
@@ -170,7 +176,11 @@ impl Config {
     /// Overwrite `~/.lal/config` with serialized data from this struct
     pub fn write(&self, silent: bool) -> LalResult<()> {
         let cfg_path = lal_dir().join("config");
+        self.write_to(silent, cfg_path)
+    }
 
+    /// Overwrite a config at an arbitrary Path (public for tests)
+    pub fn write_to(&self, silent: bool, cfg_path: PathBuf) -> LalResult<()> {
         let encoded = serde_json::to_string_pretty(self)?;
 
         let mut f = fs::File::create(&cfg_path)?;

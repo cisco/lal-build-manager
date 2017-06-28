@@ -25,7 +25,7 @@ main() {
   fi
   if [[ $1 == "lal" ]]; then
     mkdir -p OUTPUT/{bin,share/lal/configs}
-    cp configs/* OUTPUT/share/lal/configs/
+    cp configs/*.json OUTPUT/share/lal/configs/
     cp lal.complete* OUTPUT/share/lal/
     if [[ $2 == "slim" ]]; then
       (set -x; cargo build --no-default-features --release)
