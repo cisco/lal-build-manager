@@ -17,6 +17,12 @@ run_tests() {
 main() {
   # build in the currently available muslrust container
   set -e
+  if [ ! -d ~/.cargo/registry ]; then
+    echo "Ensure you have created a cargo-cache docker volume to speed up subsequent builds"
+    echo "If this is your first build, this is normal"
+    echo "Otherwise, please 'docker volume create cargo-cache' and ensure it is specified in your lal config"
+    echo "Continuing from blank cache..."
+  fi
   if [[ $1 == "lal" ]]; then
     mkdir -p OUTPUT/{bin,share/lal/configs}
     cp configs/* OUTPUT/share/lal/configs/
