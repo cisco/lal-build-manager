@@ -22,18 +22,14 @@ main() {
     cp configs/* OUTPUT/share/lal/configs/
     cp lal.complete* OUTPUT/share/lal/
     if [[ $2 == "slim" ]]; then
-      cargo build --no-default-features --release --verbose
-      cp ./target/x86_64-unknown-linux-musl/debug/lal OUTPUT/bin/
+      (set -x; cargo build --no-default-features --release)
+      cp ./target/x86_64-unknown-linux-musl/release/lal OUTPUT/bin/
     elif [[ $2 == "release" ]]; then
-      cargo build
+      (set -x; cargo build --release)
       cp ./target/x86_64-unknown-linux-musl/release/lal OUTPUT/bin/
     elif [[ $2 == "debug" ]]; then
-      cargo build
+      (set -x; cargo build)
       cp ./target/x86_64-unknown-linux-musl/debug/lal OUTPUT/bin/
-    elif [[ $2 == "artifactory" ]]; then
-      cargo build --release
-      cp ./target/x86_64-unknown-linux-musl/release/lal OUTPUT/bin/
-      echo "Please run ./package.sh if uploading to artifactory"
     else
       echo "No such configuration $2 found"
       exit 2

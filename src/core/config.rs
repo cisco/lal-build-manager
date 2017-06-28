@@ -1,5 +1,5 @@
 use serde_json;
-use chrono::{Duration, UTC};
+use chrono::UTC;
 use std::path::{Path, PathBuf};
 use std::fs;
 use std::vec::Vec;
@@ -156,7 +156,7 @@ impl Config {
     /// Checks if it is time to perform an upgrade check
     #[cfg(feature = "upgrade")]
     pub fn upgrade_check_time(&self) -> bool {
-        use chrono::DateTime;
+        use chrono::{Duration, DateTime};
         let last = self.lastUpgrade.parse::<DateTime<UTC>>().unwrap();
         let cutoff = UTC::now() - Duration::days(1);
         last < cutoff
