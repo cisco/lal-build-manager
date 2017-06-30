@@ -11,13 +11,16 @@ use super::{Container, LalResult, CliError};
 use storage::BackendConfiguration;
 
 
-// helper
-fn lal_dir() -> PathBuf {
-    // unwrapping things that really must succeed here
-    let home = env::home_dir().unwrap();
+/// Master override for where the .lal config lives
+pub fn config_dir() -> PathBuf {
+    // Either we have LAL_CONFIG_HOME evar, or HOME
+    let home = if let Ok(lh) = env::var("LAL_CONFIG_HOME") {
+        Path::new(&lh).to_owned()
+    } else {
+        env::home_dir().unwrap()
+    };
     Path::new(&home).join(".lal")
 }
-
 
 /// Docker volume mount representation
 #[derive(Serialize, Deserialize, Clone)]
@@ -111,7 +114,7 @@ impl Config {
     /// This will locate you homedir, and set last update check 2 days in the past.
     /// Thus, with a blank default config, you will always trigger an upgrade check.
     pub fn new(defaults: ConfigDefaults) -> Config {
-        let cachepath = lal_dir().join("cache");
+        let cachepath = config_dir().join("cache");
         let cachedir = cachepath.as_path().to_str().unwrap();
 
         // reset last update time
@@ -140,12 +143,7 @@ impl Config {
 
     /// Read and deserialize a Config from ~/.lal/config
     pub fn read() -> LalResult<Config> {
-        let cfg_path = lal_dir().join("config");
-        Config::read_from(cfg_path)
-    }
-
-    /// Read and deserialize a Config from an arbitrary Path (public for tests)
-    pub fn read_from(cfg_path: PathBuf) -> LalResult<Config> {
+        let cfg_path = config_dir().join("config");
         if !cfg_path.exists() {
             return Err(CliError::MissingConfig);
         }
@@ -173,14 +171,10 @@ impl Config {
         self.lastUpgrade = UTC::now().to_rfc3339();
         Ok(self.write(true)?)
     }
+
     /// Overwrite `~/.lal/config` with serialized data from this struct
     pub fn write(&self, silent: bool) -> LalResult<()> {
-        let cfg_path = lal_dir().join("config");
-        self.write_to(silent, cfg_path)
-    }
-
-    /// Overwrite a config at an arbitrary Path (public for tests)
-    pub fn write_to(&self, silent: bool, cfg_path: PathBuf) -> LalResult<()> {
+        let cfg_path = config_dir().join("config");
         let encoded = serde_json::to_string_pretty(self)?;
 
         let mut f = fs::File::create(&cfg_path)?;

@@ -5,7 +5,7 @@ extern crate loggerv;
 extern crate walkdir;
 
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::fs::{self, File};
 use std::process::Command;
 use std::io::prelude::*;
@@ -47,7 +47,10 @@ fn main() {
     if !tmp.is_dir() {
         fs::create_dir(&tmp).unwrap();
     }
+    // Ensure we are can do everything in there before continuing
     assert!(env::set_current_dir(tmp).is_ok());
+    // dump config and artifacts under the current temp directory
+    env::set_var("LAL_CONFIG_HOME", ".");
 
     // init_with_verbosity(0).unwrap();
     let has_docker = true;
@@ -124,15 +127,9 @@ fn main() {
     clean_check();
     println!("ok {} clean_check", i);
 }
-
-fn lal_dir() -> PathBuf {
-    let home = env::home_dir().unwrap();
-    Path::new(&home).join(".lal/")
-}
-
 // Start from scratch
 fn kill_laldir() {
-    let ldir = lal_dir();
+    let ldir = config_dir();
     if ldir.is_dir() {
         fs::remove_dir_all(&ldir).unwrap();
     }
@@ -202,7 +199,7 @@ fn init_force() {
 // Tests need to be run in a directory with a manifest
 // and ~/.lal + config must exist
 fn has_config_and_manifest() {
-    let ldir = lal_dir();
+    let ldir = config_dir();
     assert!(ldir.is_dir(), "have laldir");
 
     let cfg = Config::read();
@@ -340,6 +337,8 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
     };
     let modes = ShellModes::default();
     // basic build works - all deps are global at right env
+    // NB: BUILD calls `which rustc`
+    // if cargo-cache volume is set up badly, it can interfere with ~/.cargo
     let r = lal::build(&cfg, &mf, &bopts, "xenial".into(), modes.clone());
     assert!(r.is_ok(), "could perform a xenial build");
 

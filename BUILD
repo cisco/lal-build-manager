@@ -28,13 +28,13 @@ main() {
     cp configs/*.json OUTPUT/share/lal/configs/
     cp lal.complete* OUTPUT/share/lal/
     if [[ $2 == "slim" ]]; then
-      (set -x; cargo build --no-default-features --release)
+      (set -x; cargo build --no-default-features --release --verbose)
       cp ./target/x86_64-unknown-linux-musl/release/lal OUTPUT/bin/
     elif [[ $2 == "release" ]]; then
-      (set -x; cargo build --release)
+      (set -x; cargo build --release --verbose)
       cp ./target/x86_64-unknown-linux-musl/release/lal OUTPUT/bin/
     elif [[ $2 == "debug" ]]; then
-      (set -x; cargo build)
+      (set -x; cargo build --verbose)
       cp ./target/x86_64-unknown-linux-musl/debug/lal OUTPUT/bin/
     else
       echo "No such configuration $2 found"
