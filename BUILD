@@ -1,19 +1,5 @@
 #!/bin/bash
 
-
-run_tests() {
-  # ensure we don't overwrite your config
-  # back it up, then restore on EXIT
-  [ -f ~/.lal/config ] && cp ~/.lal/config ./bupconfig
-  restore_config() {
-    [ -f bupconfig ] && mv bupconfig ~/.lal/config
-  }
-  trap restore_config EXIT
-  export RUST_BACKTRACE=full
-  ./OUTPUT/testmain-*
-  restore_config
-}
-
 main() {
   # build in the currently available muslrust container
   set -e
@@ -44,7 +30,7 @@ main() {
     cargo build --test testmain
     cp ./target/x86_64-unknown-linux-musl/debug/testmain-* OUTPUT/
     rm -f OUTPUT/testmain-*.d
-    echo "Please 'source BUILD' and 'run_tests'"
+    echo "Please run the testmain executable in ./OUTPUT/"
   else
     echo "No such component $1 found"
     exit 2
