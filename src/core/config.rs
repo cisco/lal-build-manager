@@ -1,5 +1,5 @@
 use serde_json;
-use chrono::{Duration, UTC};
+use chrono::UTC;
 use std::path::{Path, PathBuf};
 use std::fs;
 use std::vec::Vec;
@@ -11,13 +11,16 @@ use super::{Container, LalResult, CliError};
 use storage::BackendConfiguration;
 
 
-// helper
-fn lal_dir() -> PathBuf {
-    // unwrapping things that really must succeed here
-    let home = env::home_dir().unwrap();
+/// Master override for where the .lal config lives
+pub fn config_dir() -> PathBuf {
+    // Either we have LAL_CONFIG_HOME evar, or HOME
+    let home = if let Ok(lh) = env::var("LAL_CONFIG_HOME") {
+        Path::new(&lh).to_owned()
+    } else {
+        env::home_dir().unwrap()
+    };
     Path::new(&home).join(".lal")
 }
-
 
 /// Docker volume mount representation
 #[derive(Serialize, Deserialize, Clone)]
@@ -78,25 +81,51 @@ impl ConfigDefaults {
     }
 }
 
+fn check_mount(name: &str) -> LalResult<bool> {
+    // See if it's a path first:
+    let mount_path = Path::new(name);
+    if mount_path.exists() {
+        debug!("Configuring existing mount {}", name);
+        return Ok(true);
+    }
+
+    // Otherwise, if it does not contain a slash
+    if !name.contains("/") {
+        use std::process::Command;
+        let volume_output = Command::new("docker").args(vec!["volume", "ls", "-q"]).output()?;
+        let volstr = String::from_utf8_lossy(&volume_output.stdout);
+        // If it exists, do nothing:
+        if volstr.contains(name) {
+            debug!("Configuring existing volume {}", name);
+            return Ok(true);
+        }
+        // Otherwise warn
+        warn!("Discarding missing docker volume {}", name);
+    } else {
+        warn!("Discarding missing mount {}", name);
+    }
+    Ok(false)
+}
+
+
 impl Config {
     /// Initialize a Config with ConfigDefaults
     ///
     /// This will locate you homedir, and set last update check 2 days in the past.
     /// Thus, with a blank default config, you will always trigger an upgrade check.
     pub fn new(defaults: ConfigDefaults) -> Config {
-        let cachepath = lal_dir().join("cache");
+        let cachepath = config_dir().join("cache");
         let cachedir = cachepath.as_path().to_str().unwrap();
 
-        // last update time
-        let time = UTC::now() - Duration::days(2);
+        // reset last update time
+        let time = UTC::now();
 
         // scan default mounts
         let mut mounts = vec![];
         for mount in defaults.mounts {
-            let mount_path = Path::new(&mount.src);
-            // only add mount if the user actually has it locally
-            if mount_path.exists() {
-                debug!("Configuring existing mount {}", mount.src);
+            // Check src for pathiness or prepare a docker volume
+            // Crash if this fails (new-ish feature)
+            if check_mount(&mount.src).unwrap() {
                 mounts.push(mount.clone());
             }
         }
@@ -114,7 +143,7 @@ impl Config {
 
     /// Read and deserialize a Config from ~/.lal/config
     pub fn read() -> LalResult<Config> {
-        let cfg_path = lal_dir().join("config");
+        let cfg_path = config_dir().join("config");
         if !cfg_path.exists() {
             return Err(CliError::MissingConfig);
         }
@@ -127,10 +156,11 @@ impl Config {
         }
         Ok(res)
     }
+
     /// Checks if it is time to perform an upgrade check
     #[cfg(feature = "upgrade")]
     pub fn upgrade_check_time(&self) -> bool {
-        use chrono::DateTime;
+        use chrono::{Duration, DateTime};
         let last = self.lastUpgrade.parse::<DateTime<UTC>>().unwrap();
         let cutoff = UTC::now() - Duration::days(1);
         last < cutoff
@@ -141,19 +171,18 @@ impl Config {
         self.lastUpgrade = UTC::now().to_rfc3339();
         Ok(self.write(true)?)
     }
+
     /// Overwrite `~/.lal/config` with serialized data from this struct
     pub fn write(&self, silent: bool) -> LalResult<()> {
-        let cfg_path = lal_dir().join("config");
-
+        let cfg_path = config_dir().join("config");
         let encoded = serde_json::to_string_pretty(self)?;
 
         let mut f = fs::File::create(&cfg_path)?;
         write!(f, "{}\n", encoded)?;
-        if silent {
-            debug!("Wrote config {}: \n{}", cfg_path.display(), encoded);
-        } else {
-            info!("Wrote config {}: \n{}", cfg_path.display(), encoded);
+        if !silent {
+            info!("Wrote config to {}", cfg_path.display());
         }
+        debug!("Wrote config \n{}", encoded);
         Ok(())
     }
 

@@ -1,12 +1,10 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::fs;
-use std::env;
 
-use super::{LalResult, Config, ConfigDefaults};
+use super::{LalResult, Config, ConfigDefaults, config_dir};
 
 fn create_lal_dir() -> LalResult<PathBuf> {
-    let home = env::home_dir().unwrap();
-    let laldir = Path::new(&home).join(".lal");
+    let laldir = config_dir();
     if !laldir.is_dir() {
         fs::create_dir(&laldir)?;
     }

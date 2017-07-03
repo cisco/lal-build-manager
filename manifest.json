@@ -1,0 +1,22 @@
+{
+  "name": "lal",
+  "environment": "rust",
+  "components": {
+    "lal": {
+      "defaultConfig": "release",
+      "configurations": [
+        "release",
+        "debug",
+        "slim"
+      ]
+    },
+    "lal-unit-tests": {
+      "defaultConfig": "debug",
+      "configurations": [
+        "debug"
+      ]
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

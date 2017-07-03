@@ -44,6 +44,11 @@
       "src": "/mnt/build-files",
       "dest": "/build-files",
       "readonly": true
+    },
+    {
+      "src": "cargo-cache",
+      "dest": "/home/lal/.cargo",
+      "readonly": false
     }
   ]
 }

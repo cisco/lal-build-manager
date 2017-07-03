@@ -1,11 +1,8 @@
 target
 *.rs.bk
-INPUT
-manifest.json
 lal.coreos.tar
 lal.musl.tar
-BUILD
 OUTPUT
 lal.tar
 ARTIFACT
-.lal
+testtmp
