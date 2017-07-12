@@ -322,7 +322,7 @@ pub struct LatestLal {
 /// main release of lal on CME-release on cisco artifactory at the moment.
 #[cfg(feature = "upgrade")]
 pub fn get_latest_lal_version() -> LalResult<LatestLal> {
-    // canonical latest url - relies on ./build.musl.sh producing a good ARTIFACT dir
+    // canonical latest url
     let uri = "https://engci-maven-master.cisco.com/artifactory/api/storage/CME-release/lal";
     debug!("GET {}", uri);
     let resp = hyper_req(uri).map_err(|e| {
@@ -341,8 +341,8 @@ pub fn get_latest_lal_version() -> LalResult<LatestLal> {
 
     if let Some(l) = latest {
         Ok(LatestLal {
-            version: l,
-            url: "https://engci-maven.cisco.com/artifactory/CME-group/lal/latest/lal.tar".into(),
+            version: l.clone(),
+            url: format!("https://engci-maven.cisco.com/artifactory/CME-group/lal/{}/lal.tar", l),
         })
     } else {
         warn!("Failed to parse version information from artifactory storage api for lal");
