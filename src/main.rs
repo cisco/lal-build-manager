@@ -574,12 +574,12 @@ fn main() {
         result_exit("clean", lal::clean(&config.cache, days));
     }
 
-    // Read .lalopts if it exists
+    // Read .lal/opts if it exists
     let stickies = StickyOptions::read()
         .map_err(|e| {
             // Should not happen unless people are mucking with it manually
             error!("Options error: {}", e);
-            println!(".lalopts must be valid json");
+            println!(".lal/opts must be valid json");
             process::exit(1);
         })
         .unwrap(); // we get a default empty options here otherwise

@@ -136,7 +136,7 @@ Every repository is required to specify the name of one of the specified environ
 
 The `upgradeCheck` value is updated automatically by `lal upgrade`.
 
-## .lalopts
+## .lal/opts
 A per-repo temporary file primarily for `lal env` that overrides the current environment.
 
 ```json
@@ -197,7 +197,7 @@ Extra flags:
 Alias: `lal ls`
 
 #### lal env [environment]
-Subcommand that controls the current environment. This is a sticky, repo-wide setting stored in `$PWD/.lalopts` when working with non-standard environments.
+Subcommand that controls the current environment. This is a sticky, repo-wide setting stored in `$PWD/.lal/opts` when working with non-standard environments.
 
 
 ```sh
@@ -205,7 +205,7 @@ $ lal env
 default
 # every lal command will defer to `manifest.json` for environment settings
 
-$ lal env set xenial # writes { "environment": "xenial" } to .lalopts
+$ lal env set xenial # writes { "environment": "xenial" } to .lal/opts
 $ lal env update # invokes docker pull of the xenial image
 # now every lal command will warn if `manifest.environment != lal env`
 $ lal fetch # fetches from xenial
@@ -213,7 +213,7 @@ $ lal build # build using xenial components
 $ lal shell # enters xenial shell
 $ lal run unit-test websocket_server_test 5 asan # runs unit test in xenial shell
 
-$ lal env reset # deletes .lalopts if it exists
+$ lal env reset # deletes `.lal/opts` if it exists
 
 # lal now behaves as usual, doing all commands in the described environment in manifest.json
 ```
@@ -484,7 +484,7 @@ lal -v fetch # fetch with debug! messages
 lal -vv build # build with debug! and trace! messages
 ```
 
-The `--env` flag will override the default environment in both `manifest.environment` and `.lalopts` for the current command:
+The `--env` flag will override the default environment in both `manifest.environment` and `.lal/opts` for the current command:
 
 ```sh
 lal --env xenial fetch

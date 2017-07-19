@@ -45,7 +45,7 @@ impl StickyOptions {
         debug!("Wrote {}: \n{}", opts_path.display(), encoded);
         Ok(())
     }
-    /// Delete local `.lalopts`
+    /// Delete local `.lal/opts`
     pub fn delete_local() -> LalResult<()> {
         let opts_path = Path::new(".lal/opts");
         Ok(fs::remove_file(&opts_path)?)
