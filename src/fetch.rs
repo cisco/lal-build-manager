@@ -15,7 +15,7 @@ fn clean_input() {
 ///
 /// This will read, and HTTP GET all the dependencies at the specified versions.
 /// If the `core` bool is set, then `devDependencies` are not installed.
-pub fn fetch<T: CachedBackend>(manifest: &Manifest,
+pub fn fetch<T: CachedBackend + ?Sized>(manifest: &Manifest,
                                backend: &T,
                                core: bool,
                                env: &str)

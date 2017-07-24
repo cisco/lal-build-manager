@@ -5,7 +5,7 @@ use storage::CachedBackend;
 use super::LalResult;
 
 /// Export a specific component from the storage backend
-pub fn export<T: CachedBackend>(backend: &T,
+pub fn export<T: CachedBackend + ?Sized>(backend: &T,
                                 comp: &str,
                                 output: Option<&str>,
                                 env: Option<&str>)

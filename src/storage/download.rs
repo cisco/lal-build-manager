@@ -4,11 +4,11 @@ use std::path::{Path, PathBuf};
 use storage::{Backend, CachedBackend, Component};
 use core::{CliError, LalResult, output};
 
-fn is_cached<T: Backend>(backend: &T, name: &str, version: u32, env: Option<&str>) -> bool {
+fn is_cached<T: Backend + ?Sized>(backend: &T, name: &str, version: u32, env: Option<&str>) -> bool {
     get_cache_dir(backend, name, version, env).is_dir()
 }
 
-fn get_cache_dir<T: Backend>(backend: &T, name: &str, version: u32, env: Option<&str>) -> PathBuf {
+fn get_cache_dir<T: Backend + ?Sized>(backend: &T, name: &str, version: u32, env: Option<&str>) -> PathBuf {
     let cache = backend.get_cache_dir();
     let pth = Path::new(&cache);
     match env {
@@ -19,7 +19,7 @@ fn get_cache_dir<T: Backend>(backend: &T, name: &str, version: u32, env: Option<
         .join(version.to_string())
 }
 
-fn store_tarball<T: Backend>(backend: &T,
+fn store_tarball<T: Backend + ?Sized>(backend: &T,
                              name: &str,
                              version: u32,
                              env: Option<&str>)
@@ -79,7 +79,7 @@ fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<()> 
 ///
 /// Most subcommands should be OK with just using this trait rather than using
 /// `Backend` directly as this does the stuff you normally would want done.
-impl<T> CachedBackend for T
+impl<T: ?Sized> CachedBackend for T
     where T: Backend
 {
     /// Locate a proper component, downloading it and caching if necessary

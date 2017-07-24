@@ -9,6 +9,7 @@ use lal::*;
 use clap::{Arg, App, AppSettings, SubCommand, ArgMatches};
 use std::process;
 use std::env;
+use std::ops::Deref;
 
 fn is_integer(v: String) -> Result<(), String> {
     if v.parse::<u32>().is_ok() {
@@ -30,7 +31,7 @@ fn result_exit<T>(name: &str, x: LalResult<T>) {
 // functions that work without a manifest, and thus can run without a set env
 fn handle_manifest_agnostic_cmds(args: &ArgMatches,
                                  cfg: &Config,
-                                 backend: &ArtifactoryBackend,
+                                 backend: &Backend,
                                  explicit_env: Option<&str>) {
     let res = if let Some(a) = args.subcommand_matches("export") {
         lal::export(backend,
@@ -52,7 +53,7 @@ fn handle_manifest_agnostic_cmds(args: &ArgMatches,
 // functions that need a manifest, but do not depend on environment values
 fn handle_environment_agnostic_cmds(args: &ArgMatches,
                                     mf: &Manifest,
-                                    backend: &ArtifactoryBackend) {
+                                    backend: &Backend) {
     let res = if let Some(a) = args.subcommand_matches("status") {
         lal::status(mf,
                     a.is_present("full"),
@@ -77,7 +78,7 @@ fn handle_environment_agnostic_cmds(args: &ArgMatches,
     result_exit(args.subcommand_name().unwrap(), res);
 }
 
-fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, backend: &ArtifactoryBackend, env: &str) {
+fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, backend: &Backend, env: &str) {
     let res = if let Some(a) = args.subcommand_matches("update") {
         let xs = a.values_of("components").unwrap().map(String::from).collect::<Vec<_>>();
         lal::update(mf,
@@ -553,9 +554,9 @@ fn main() {
         .unwrap();
 
     // Create a storage backend (something that implements storage/traits.rs)
-    let backend = match &config.backend {
+    let backend: Box<Backend> = match &config.backend {
         &BackendConfiguration::Artifactory(ref art_cfg) => {
-            ArtifactoryBackend::new(&art_cfg, &config.cache)
+            Box::new(ArtifactoryBackend::new(&art_cfg, &config.cache))
         }
     };
 
@@ -594,7 +595,7 @@ fn main() {
             })
             .unwrap();
     }
-    handle_manifest_agnostic_cmds(&args, &config, &backend, explicit_env);
+    handle_manifest_agnostic_cmds(&args, &config, backend.deref(), explicit_env);
 
     // Force manifest to exist before allowing remaining actions
     let manifest = Manifest::read()
@@ -606,7 +607,7 @@ fn main() {
         .unwrap();
 
     // Subcommands that are environment agnostic
-    handle_environment_agnostic_cmds(&args, &manifest, &backend);
+    handle_environment_agnostic_cmds(&args, &manifest, backend.deref());
 
     // Force a valid container key configured in manifest and corr. value in config
     // NB: --env overrides sticky env overrides manifest.env
@@ -626,7 +627,7 @@ fn main() {
     }
 
     // Main subcommands
-    handle_network_cmds(&args, &manifest, &backend, &env);
+    handle_network_cmds(&args, &manifest, backend.deref(), &env);
     handle_docker_cmds(&args, &manifest, &config, &env, &container);
 
     unreachable!("Subcommand valid, but not implemented");

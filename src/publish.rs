@@ -8,7 +8,7 @@ use super::{LalResult, CliError, Lockfile};
 ///
 /// Meant to be done after a `lal build -r <component>`
 /// and requires publish credentials in the local `Config`.
-pub fn publish<T: Backend>(name: &str, backend: &T, env: Option<&str>) -> LalResult<()> {
+pub fn publish<T: Backend + ?Sized>(name: &str, backend: &T, env: Option<&str>) -> LalResult<()> {
     let artdir = Path::new("./ARTIFACT");
     let tarball = artdir.join(format!("{}.tar.gz", name));
     if !artdir.is_dir() || !tarball.exists() {
