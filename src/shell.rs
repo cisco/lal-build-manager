@@ -8,8 +8,8 @@ use super::{Config, Container, CliError, LalResult};
 /// Verifies that `id -u` and `id -g` are both 1000
 ///
 /// Docker user namespaces are not properly supported by our setup,
-/// so for builds to work sanely, user ids and group ids should match a standard
-/// linux setup and in particular, match the first user in a normal container.
+/// so for builds to work with the default containers, user ids and group ids
+/// should match a defined linux setup of 1000:1000.
 fn permission_sanity_check() -> LalResult<()> {
     let uid_output = Command::new("id").arg("-u").output()?;
     let uid_str = String::from_utf8_lossy(&uid_output.stdout);
@@ -26,6 +26,13 @@ fn permission_sanity_check() -> LalResult<()> {
     Ok(())
 }
 
+/// Gets the ID of a docker container
+///
+/// Uses the `docker images` command to find the image ID of the specified
+/// container.
+/// Will return a trimmed String containing the image ID requested, wrapped in
+/// a Result::Ok, or CliError::DockerImageNotFound wrapped in a Result::Err if
+/// docker images returns no output.
 fn get_docker_image_id(container: &Container) -> LalResult<String> {
     let image_id_output = Command::new("docker")
                                   .arg("images")
@@ -39,6 +46,11 @@ fn get_docker_image_id(container: &Container) -> LalResult<String> {
     }
 }
 
+/// Pulls a docker container
+///
+/// Uses `docker pull` to pull the specified container from the docker repository.
+/// Returns Ok(()) if the command is successful, Err(CliError::SubprocessFailure)
+/// otherwise.
 fn pull_docker_image(container: &Container) -> LalResult<()> {
     let s = Command::new("docker")
                  .arg("pull")
@@ -50,11 +62,14 @@ fn pull_docker_image(container: &Container) -> LalResult<()> {
     Ok(())
 }
 
+/// Builds a docker container
+///
+/// Uses `docker build` to build a docker container with the specified
+/// instructions. It uses the --tag option to tag it with the given information.
+/// Returns Ok(()) if the command is successful, Err(CliError::SubprocessFailure)
+/// otherwise.
 fn build_docker_image(container: &Container, instructions: Vec<String>) -> LalResult<()> {
     let instruction_strings = instructions.join("\\n");
-    warn!("{}", instruction_strings);
-                    warn!("echo -e '{}' | docker build --tag {} -",
-                                 instruction_strings, container);
     let s = Command::new("bash")
                     .arg("-c")
                     .arg(format!("echo -e '{}' | docker build --tag {} -",
@@ -148,8 +163,6 @@ pub fn docker_run(cfg: &Config,
         Some(c) => c,
         None => container.clone()
     };
-
-    warn!("{:?}", container);
 
     trace!("Finding home and cwd");
     let home = env::home_dir().unwrap(); // crash if no $HOME
