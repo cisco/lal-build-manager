@@ -26,6 +26,46 @@ fn permission_sanity_check() -> LalResult<()> {
     Ok(())
 }
 
+fn get_docker_image_id(container: &Container) -> LalResult<String> {
+    let image_id_output = Command::new("docker")
+                                  .arg("images")
+                                  .arg("-q")
+                                  .arg(format!("{}:{}", container.name, container.tag))
+                                  .output()?;
+    let image_id_str: String = String::from_utf8_lossy(&image_id_output.stdout).trim().into();
+    match image_id_str.len() {
+        0 => Err(CliError::DockerImageNotFound(format!("{}", container))),
+        _ => Ok(image_id_str.into())
+    }
+}
+
+fn pull_docker_image(container: &Container) -> LalResult<()> {
+    let s = Command::new("docker")
+                 .arg("pull")
+                 .arg(format!("{}", container))
+                 .status()?;
+    if !s.success() {
+        return Err(CliError::SubprocessFailure(s.code().unwrap_or(1001)));
+    };
+    Ok(())
+}
+
+fn build_docker_image(container: &Container, instructions: Vec<String>) -> LalResult<()> {
+    let instruction_strings = instructions.join("\\n");
+    warn!("{}", instruction_strings);
+                    warn!("echo -e '{}' | docker build --tag {} -",
+                                 instruction_strings, container);
+    let s = Command::new("bash")
+                    .arg("-c")
+                    .arg(format!("echo -e '{}' | docker build --tag {} -",
+                                 instruction_strings, container))
+                    .status()?;
+    if !s.success() {
+        return Err(CliError::SubprocessFailure(s.code().unwrap_or(1001)));
+    };
+    Ok(())
+}
+
 /// Flags for docker run that vary for different use cases
 ///
 /// `interactive` should be on by default, but machine accounts should turn this off
@@ -55,39 +95,56 @@ pub fn docker_run(cfg: &Config,
                   -> LalResult<()> {
     trace!("Performing docker permission sanity check");
 
-    let mut new_container: Option<Container> = None;
+    let mut modified_container_option: Option<Container> = None;
 
     if let Err(e) = permission_sanity_check() {
         match e {
             CliError::DockerPermissionSafety(_, u, g) => {
-                warn!("TODO: create appropriate image for user {}:{}", u, g);
-                new_container = Some(Container {
+                info!("Using appropriate container for user {}:{}", u, g);
+                // Find image id of regular docker container
+                // We might have to pull it
+                let image_id: String = match get_docker_image_id(container) {
+                    Ok(id) => id,
+                    Err(_) => {
+                        pull_docker_image(container)?;
+                        get_docker_image_id(container)?
+                    }
+                };
+
+                // Produce name and tag of modified container
+                let modified_container = Container {
                     name: format!("{}-u{}_g{}", container.name, u, g),
-                    tag: container.tag.clone().into(),
-                });
-                let args = vec![
-                    "-c".into(),
-                    format!("echo -e 'FROM {}:{}\\n\
-                                      USER root\\n\
-                                      RUN groupmod -g {} lal\\n\
-                                      RUN usermod -u {} lal\\n\
-                                      USER lal\\n' | \
-                             docker build --tag {}:{} -",
-                             container.name, container.tag, // FROM line
-                             g, // RUN groupmod line
-                             u, // RUN usermod line
-                             new_container.as_ref().unwrap().name, new_container.as_ref().unwrap().tag // docker build line
-                    )
-                ];
-                warn!("{:?}", args);
-                let s = Command::new("bash").args(&args).status()?;
+                    tag: format!("from_{}", image_id),
+                };
+
+                info!("Using container {}", modified_container);
+
+                // Try to find image id of modified container
+                // If we fail we need to build it
+                match get_docker_image_id(&modified_container) {
+                    Ok(id) => {
+                        info!("Found container {}, image id is {}",
+                              modified_container, id);
+                    },
+                    Err(_) => {
+                        let instructions: Vec<String> = vec![
+                            format!("FROM {}", container),
+                            "USER root".into(),
+                            format!("RUN groupmod -g {} lal && usermod -u {} lal", g, u),
+                            "USER lal".into()
+                        ];
+                        info!("Attempting to build container {}...", modified_container);
+                        build_docker_image(&modified_container, instructions)?;
+                    }
+                };
+                modified_container_option = Some(modified_container);
             },
             _ => error!("Unexpected error {:?}", e),
         }
     };
 
     // Shadow container here
-    let container = match new_container {
+    let container = match modified_container_option {
         Some(c) => c,
         None => container.clone()
     };

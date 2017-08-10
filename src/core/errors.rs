@@ -81,6 +81,8 @@ pub enum CliError {
     SubprocessFailure(i32),
     /// Docker permission gate
     DockerPermissionSafety(String, u32, u32),
+    /// Docker image not found
+    DockerImageNotFound(String),
 
     // fetch/update failures
     /// Unspecified install failure
@@ -186,6 +188,7 @@ impl fmt::Display for CliError {
             CliError::DockerPermissionSafety(ref s, u, g) => {
                 write!(f, "ID mismatch inside and outside docker - {}; UID and GID are {}:{}", s, u, g)
             }
+            CliError::DockerImageNotFound(ref s) => write!(f, "Could not find docker image {}", s),
             CliError::InstallFailure => write!(f, "Install failed"),
             CliError::BackendFailure(ref s) => write!(f, "Backend - {}", s),
             CliError::MissingReleaseBuild => write!(f, "Missing release build"),
