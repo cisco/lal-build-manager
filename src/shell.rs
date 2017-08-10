@@ -95,6 +95,51 @@ pub struct DockerRunFlags {
     pub privileged: bool,
 }
 
+/// Fixes up docker container for use with given uid and gid
+///
+/// Returns a container derived from the one passed as an argument, with the `lal`
+/// user having its uid and gid modified to match the ones passed.
+/// The container is built if necessary (e.g. new base container from upstream)
+fn fixup_docker_container(container: &Container, u: u32, g: u32) -> LalResult<Container> {
+    info!("Using appropriate container for user {}:{}", u, g);
+    // Find image id of regular docker container
+    // We might have to pull it
+    let image_id: String = match get_docker_image_id(container) {
+        Ok(id) => id,
+        Err(_) => {
+            pull_docker_image(container)?;
+            get_docker_image_id(container)?
+        }
+    };
+
+    // Produce name and tag of modified container
+    let modified_container = Container {
+        name: format!("{}-u{}_g{}", container.name, u, g),
+        tag: format!("from_{}", image_id),
+    };
+
+    info!("Using container {}", modified_container);
+
+    // Try to find image id of modified container
+    // If we fail we need to build it
+    match get_docker_image_id(&modified_container) {
+        Ok(id) => {
+            info!("Found container {}, image id is {}",
+                  modified_container, id);
+        },
+        Err(_) => {
+            let instructions: Vec<String> = vec![
+                format!("FROM {}", container),
+                "USER root".into(),
+                format!("RUN groupmod -g {} lal && usermod -u {} lal", g, u),
+                "USER lal".into()
+            ];
+            info!("Attempting to build container {}...", modified_container);
+            build_docker_image(&modified_container, instructions)?;
+        }
+    };
+    return Ok(modified_container);
+}
 
 /// Runs an arbitrary command in the configured docker environment
 ///
@@ -108,53 +153,17 @@ pub fn docker_run(cfg: &Config,
                   flags: &DockerRunFlags,
                   modes: &ShellModes)
                   -> LalResult<()> {
-    trace!("Performing docker permission sanity check");
 
     let mut modified_container_option: Option<Container> = None;
 
+    trace!("Performing docker permission sanity check");
     if let Err(e) = permission_sanity_check() {
         match e {
             CliError::DockerPermissionSafety(_, u, g) => {
-                info!("Using appropriate container for user {}:{}", u, g);
-                // Find image id of regular docker container
-                // We might have to pull it
-                let image_id: String = match get_docker_image_id(container) {
-                    Ok(id) => id,
-                    Err(_) => {
-                        pull_docker_image(container)?;
-                        get_docker_image_id(container)?
-                    }
-                };
-
-                // Produce name and tag of modified container
-                let modified_container = Container {
-                    name: format!("{}-u{}_g{}", container.name, u, g),
-                    tag: format!("from_{}", image_id),
-                };
-
-                info!("Using container {}", modified_container);
-
-                // Try to find image id of modified container
-                // If we fail we need to build it
-                match get_docker_image_id(&modified_container) {
-                    Ok(id) => {
-                        info!("Found container {}, image id is {}",
-                              modified_container, id);
-                    },
-                    Err(_) => {
-                        let instructions: Vec<String> = vec![
-                            format!("FROM {}", container),
-                            "USER root".into(),
-                            format!("RUN groupmod -g {} lal && usermod -u {} lal", g, u),
-                            "USER lal".into()
-                        ];
-                        info!("Attempting to build container {}...", modified_container);
-                        build_docker_image(&modified_container, instructions)?;
-                    }
-                };
-                modified_container_option = Some(modified_container);
+                modified_container_option = Some(
+                    fixup_docker_container(container, u, g)?);
             },
-            _ => error!("Unexpected error {:?}", e),
+            x => { return Err(x); }
         }
     };
 
