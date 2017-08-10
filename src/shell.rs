@@ -14,15 +14,13 @@ fn permission_sanity_check() -> LalResult<()> {
     let uid_output = Command::new("id").arg("-u").output()?;
     let uid_str = String::from_utf8_lossy(&uid_output.stdout);
     let uid = uid_str.trim().parse::<u32>().unwrap(); // trust `id -u` is sane
-    if uid != 1000 {
-        return Err(CliError::DockerPermissionSafety(format!("UID is {}, not 1000", uid)));
-    }
 
     let gid_output = Command::new("id").arg("-g").output()?;
     let gid_str = String::from_utf8_lossy(&gid_output.stdout);
     let gid = gid_str.trim().parse::<u32>().unwrap(); // trust `id -g` is sane
-    if gid != 1000 {
-        return Err(CliError::DockerPermissionSafety(format!("GID is {}, not 1000", gid)));
+
+    if (uid != 1000) | (gid != 1000) {
+        return Err(CliError::DockerPermissionSafety(format!("UID and GID are not 1000:1000"), uid, gid));
     }
 
     Ok(())
@@ -55,6 +53,47 @@ pub fn docker_run(cfg: &Config,
                   flags: &DockerRunFlags,
                   modes: &ShellModes)
                   -> LalResult<()> {
+    trace!("Performing docker permission sanity check");
+
+    let mut new_container: Option<Container> = None;
+
+    if let Err(e) = permission_sanity_check() {
+        match e {
+            CliError::DockerPermissionSafety(_, u, g) => {
+                warn!("TODO: create appropriate image for user {}:{}", u, g);
+                new_container = Some(Container {
+                    name: format!("{}-u{}_g{}", container.name, u, g),
+                    tag: container.tag.clone().into(),
+                });
+                let args = vec![
+                    "-c".into(),
+                    format!("echo -e 'FROM {}:{}\\n\
+                                      USER root\\n\
+                                      RUN groupmod -g {} lal\\n\
+                                      RUN usermod -u {} lal\\n\
+                                      USER lal\\n' | \
+                             docker build --tag {}:{} -",
+                             container.name, container.tag, // FROM line
+                             g, // RUN groupmod line
+                             u, // RUN usermod line
+                             new_container.as_ref().unwrap().name, new_container.as_ref().unwrap().tag // docker build line
+                    )
+                ];
+                warn!("{:?}", args);
+                let s = Command::new("bash").args(&args).status()?;
+            },
+            _ => error!("Unexpected error {:?}", e),
+        }
+    };
+
+    // Shadow container here
+    let container = match new_container {
+        Some(c) => c,
+        None => container.clone()
+    };
+
+    warn!("{:?}", container);
+
     trace!("Finding home and cwd");
     let home = env::home_dir().unwrap(); // crash if no $HOME
     let pwd = env::current_dir().unwrap();
