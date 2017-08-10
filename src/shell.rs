@@ -238,12 +238,7 @@ pub fn docker_run(cfg: &Config,
         }
         println!("");
     } else {
-        trace!("Performing docker permission sanity check");
-        let _ = permission_sanity_check().map_err(|e| {
-            warn!("{}", e);
-            warn!("You will likely have permission issues");
-        }); // keep going, but with a warning if it failed
-        trace!("Permissions verified, entering docker");
+        trace!("Entering docker");
         let s = Command::new("docker").args(&args).status()?;
         trace!("Exited docker");
         if !s.success() {
