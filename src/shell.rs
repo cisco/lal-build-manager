@@ -34,6 +34,7 @@ fn permission_sanity_check() -> LalResult<()> {
 /// a Result::Ok, or CliError::DockerImageNotFound wrapped in a Result::Err if
 /// docker images returns no output.
 fn get_docker_image_id(container: &Container) -> LalResult<String> {
+    trace!("Using docker images to find ID of container {}", container);
     let image_id_output = Command::new("docker")
                                   .arg("images")
                                   .arg("-q")
@@ -41,8 +42,14 @@ fn get_docker_image_id(container: &Container) -> LalResult<String> {
                                   .output()?;
     let image_id_str: String = String::from_utf8_lossy(&image_id_output.stdout).trim().into();
     match image_id_str.len() {
-        0 => Err(CliError::DockerImageNotFound(container.to_string())),
-        _ => Ok(image_id_str.into())
+        0 => {
+            trace!("Could not find ID");
+            Err(CliError::DockerImageNotFound(container.to_string()))
+        },
+        _ => {
+            trace!("Found ID {}", image_id_str);
+            Ok(image_id_str.into())
+        }
     }
 }
 
@@ -53,13 +60,16 @@ fn get_docker_image_id(container: &Container) -> LalResult<String> {
 /// if `docker pull` fails or is interrupted by a signal, Err(CliError::Io) if the
 /// command status() call fails for a different reason.
 fn pull_docker_image(container: &Container) -> LalResult<()> {
+    trace!("Pulling container {}", container);
     let s = Command::new("docker")
                     .arg("pull")
                     .arg(container.to_string())
                     .status()?;
     if !s.success() {
+        trace!("Pull failed");
         return Err(CliError::SubprocessFailure(s.code().unwrap_or(1001)));
     };
+    trace!("Pull succeeded");
     Ok(())
 }
 
@@ -71,7 +81,9 @@ fn pull_docker_image(container: &Container) -> LalResult<()> {
 /// if `bash -c` fails or is interrupted by a signal, Err(CliError::Io) if the
 /// command status() call fails for a different reason.
 fn build_docker_image(container: &Container, instructions: Vec<String>) -> LalResult<()> {
+    trace!("Building docker image for {}", container);
     let instruction_strings = instructions.join("\\n");
+    trace!("Build instructions: \n{}", instruction_strings);
     // More safety
     let instruction_strings = instruction_strings.replace("'", "'\\''");
     let s = Command::new("bash")
@@ -80,8 +92,10 @@ fn build_docker_image(container: &Container, instructions: Vec<String>) -> LalRe
                                  instruction_strings, container))
                     .status()?;
     if !s.success() {
+        trace!("Build failed");
         return Err(CliError::SubprocessFailure(s.code().unwrap_or(1001)));
     };
+    trace!("Build succeeded");
     Ok(())
 }
 
@@ -139,6 +153,7 @@ fn fixup_docker_container(container: &Container, u: u32, g: u32) -> LalResult<Co
             build_docker_image(&modified_container, instructions)?;
         }
     };
+    trace!("Fixup for user {}:{} succeeded", u, g);
     Ok(modified_container)
 }
 
