@@ -8,23 +8,94 @@ use super::{Config, Container, CliError, LalResult};
 /// Verifies that `id -u` and `id -g` are both 1000
 ///
 /// Docker user namespaces are not properly supported by our setup,
-/// so for builds to work sanely, user ids and group ids should match a standard
-/// linux setup and in particular, match the first user in a normal container.
+/// so for builds to work with the default containers, user ids and group ids
+/// should match a defined linux setup of 1000:1000.
 fn permission_sanity_check() -> LalResult<()> {
     let uid_output = Command::new("id").arg("-u").output()?;
     let uid_str = String::from_utf8_lossy(&uid_output.stdout);
     let uid = uid_str.trim().parse::<u32>().unwrap(); // trust `id -u` is sane
-    if uid != 1000 {
-        return Err(CliError::DockerPermissionSafety(format!("UID is {}, not 1000", uid)));
-    }
 
     let gid_output = Command::new("id").arg("-g").output()?;
     let gid_str = String::from_utf8_lossy(&gid_output.stdout);
     let gid = gid_str.trim().parse::<u32>().unwrap(); // trust `id -g` is sane
-    if gid != 1000 {
-        return Err(CliError::DockerPermissionSafety(format!("GID is {}, not 1000", gid)));
+
+    if uid != 1000 || gid != 1000 {
+        return Err(CliError::DockerPermissionSafety(format!("UID and GID are not 1000:1000"), uid, gid));
     }
 
+    Ok(())
+}
+
+/// Gets the ID of a docker container
+///
+/// Uses the `docker images` command to find the image ID of the specified
+/// container.
+/// Will return a trimmed String containing the image ID requested, wrapped in
+/// a Result::Ok, or CliError::DockerImageNotFound wrapped in a Result::Err if
+/// docker images returns no output.
+fn get_docker_image_id(container: &Container) -> LalResult<String> {
+    trace!("Using docker images to find ID of container {}", container);
+    let image_id_output = Command::new("docker")
+                                  .arg("images")
+                                  .arg("-q")
+                                  .arg(container.to_string())
+                                  .output()?;
+    let image_id_str: String = String::from_utf8_lossy(&image_id_output.stdout).trim().into();
+    match image_id_str.len() {
+        0 => {
+            trace!("Could not find ID");
+            Err(CliError::DockerImageNotFound(container.to_string()))
+        },
+        _ => {
+            trace!("Found ID {}", image_id_str);
+            Ok(image_id_str.into())
+        }
+    }
+}
+
+/// Pulls a docker container
+///
+/// Uses `docker pull` to pull the specified container from the docker repository.
+/// Returns Ok(()) if the command is successful, Err(CliError::SubprocessFailure)
+/// if `docker pull` fails or is interrupted by a signal, Err(CliError::Io) if the
+/// command status() call fails for a different reason.
+fn pull_docker_image(container: &Container) -> LalResult<()> {
+    trace!("Pulling container {}", container);
+    let s = Command::new("docker")
+                    .arg("pull")
+                    .arg(container.to_string())
+                    .status()?;
+    if !s.success() {
+        trace!("Pull failed");
+        return Err(CliError::SubprocessFailure(s.code().unwrap_or(1001)));
+    };
+    trace!("Pull succeeded");
+    Ok(())
+}
+
+/// Builds a docker container
+///
+/// Uses `docker build` to build a docker container with the specified
+/// instructions. It uses the --tag option to tag it with the given information.
+/// Returns Ok(()) if the command is successful, Err(CliError::SubprocessFailure)
+/// if `bash -c` fails or is interrupted by a signal, Err(CliError::Io) if the
+/// command status() call fails for a different reason.
+fn build_docker_image(container: &Container, instructions: Vec<String>) -> LalResult<()> {
+    trace!("Building docker image for {}", container);
+    let instruction_strings = instructions.join("\\n");
+    trace!("Build instructions: \n{}", instruction_strings);
+    // More safety
+    let instruction_strings = instruction_strings.replace("'", "'\\''");
+    let s = Command::new("bash")
+                    .arg("-c")
+                    .arg(format!("echo -e '{}' | docker build --tag {} -",
+                                 instruction_strings, container))
+                    .status()?;
+    if !s.success() {
+        trace!("Build failed");
+        return Err(CliError::SubprocessFailure(s.code().unwrap_or(1001)));
+    };
+    trace!("Build succeeded");
     Ok(())
 }
 
@@ -42,6 +113,49 @@ pub struct DockerRunFlags {
     pub privileged: bool,
 }
 
+/// Fixes up docker container for use with given uid and gid
+///
+/// Returns a container derived from the one passed as an argument, with the `lal`
+/// user having its uid and gid modified to match the ones passed.
+/// The container is built if necessary (e.g. new base container from upstream)
+fn fixup_docker_container(container: &Container, u: u32, g: u32) -> LalResult<Container> {
+    info!("Using appropriate container for user {}:{}", u, g);
+    // Find image id of regular docker container
+    // We might have to pull it
+    let image_id = get_docker_image_id(container).or_else(|_| {
+            pull_docker_image(container)?;
+            get_docker_image_id(container)
+            })?;
+
+    // Produce name and tag of modified container
+    let modified_container = Container {
+        name: format!("{}-u{}_g{}", container.name, u, g),
+        tag: format!("from_{}", image_id),
+    };
+
+    info!("Using container {}", modified_container);
+
+    // Try to find image id of modified container
+    // If we fail we need to build it
+    match get_docker_image_id(&modified_container) {
+        Ok(id) => {
+            info!("Found container {}, image id is {}",
+                  modified_container, id);
+        },
+        Err(_) => {
+            let instructions: Vec<String> = vec![
+                format!("FROM {}", container),
+                "USER root".into(),
+                format!("RUN groupmod -g {} lal && usermod -u {} lal", g, u),
+                "USER lal".into()
+            ];
+            info!("Attempting to build container {}...", modified_container);
+            build_docker_image(&modified_container, instructions)?;
+        }
+    };
+    trace!("Fixup for user {}:{} succeeded", u, g);
+    Ok(modified_container)
+}
 
 /// Runs an arbitrary command in the configured docker environment
 ///
@@ -55,6 +169,27 @@ pub fn docker_run(cfg: &Config,
                   flags: &DockerRunFlags,
                   modes: &ShellModes)
                   -> LalResult<()> {
+
+    let mut modified_container_option: Option<Container> = None;
+
+    trace!("Performing docker permission sanity check");
+    if let Err(e) = permission_sanity_check() {
+        match e {
+            CliError::DockerPermissionSafety(_, u, g) => {
+                if u == 0 {
+                    // Do not run as root
+                    return Err(CliError::DockerPermissionSafety("Cannot run container as root user".into(), u, g));
+                }
+                modified_container_option = Some(
+                    fixup_docker_container(container, u, g)?);
+            },
+            x => { return Err(x); }
+        }
+    };
+
+    // Shadow container here
+    let container = modified_container_option.as_ref().unwrap_or(container);
+
     trace!("Finding home and cwd");
     let home = env::home_dir().unwrap(); // crash if no $HOME
     let pwd = env::current_dir().unwrap();
@@ -129,12 +264,7 @@ pub fn docker_run(cfg: &Config,
         }
         println!("");
     } else {
-        trace!("Performing docker permission sanity check");
-        let _ = permission_sanity_check().map_err(|e| {
-            warn!("{}", e);
-            warn!("You will likely have permission issues");
-        }); // keep going, but with a warning if it failed
-        trace!("Permissions verified, entering docker");
+        trace!("Entering docker");
         let s = Command::new("docker").args(&args).status()?;
         trace!("Exited docker");
         if !s.success() {
