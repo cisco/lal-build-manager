@@ -19,7 +19,7 @@ fn permission_sanity_check() -> LalResult<()> {
     let gid_str = String::from_utf8_lossy(&gid_output.stdout);
     let gid = gid_str.trim().parse::<u32>().unwrap(); // trust `id -g` is sane
 
-    if (uid != 1000) | (gid != 1000) {
+    if uid != 1000 || gid != 1000 {
         return Err(CliError::DockerPermissionSafety(format!("UID and GID are not 1000:1000"), uid, gid));
     }
 
@@ -37,11 +37,11 @@ fn get_docker_image_id(container: &Container) -> LalResult<String> {
     let image_id_output = Command::new("docker")
                                   .arg("images")
                                   .arg("-q")
-                                  .arg(format!("{}:{}", container.name, container.tag))
+                                  .arg(container.to_string())
                                   .output()?;
     let image_id_str: String = String::from_utf8_lossy(&image_id_output.stdout).trim().into();
     match image_id_str.len() {
-        0 => Err(CliError::DockerImageNotFound(format!("{}", container))),
+        0 => Err(CliError::DockerImageNotFound(container.to_string())),
         _ => Ok(image_id_str.into())
     }
 }
@@ -50,12 +50,13 @@ fn get_docker_image_id(container: &Container) -> LalResult<String> {
 ///
 /// Uses `docker pull` to pull the specified container from the docker repository.
 /// Returns Ok(()) if the command is successful, Err(CliError::SubprocessFailure)
-/// otherwise.
+/// if `docker pull` fails or is interrupted by a signal, Err(CliError::Io) if the
+/// command status() call fails for a different reason.
 fn pull_docker_image(container: &Container) -> LalResult<()> {
     let s = Command::new("docker")
-                 .arg("pull")
-                 .arg(format!("{}", container))
-                 .status()?;
+                    .arg("pull")
+                    .arg(container.to_string())
+                    .status()?;
     if !s.success() {
         return Err(CliError::SubprocessFailure(s.code().unwrap_or(1001)));
     };
@@ -67,9 +68,12 @@ fn pull_docker_image(container: &Container) -> LalResult<()> {
 /// Uses `docker build` to build a docker container with the specified
 /// instructions. It uses the --tag option to tag it with the given information.
 /// Returns Ok(()) if the command is successful, Err(CliError::SubprocessFailure)
-/// otherwise.
+/// if `bash -c` fails or is interrupted by a signal, Err(CliError::Io) if the
+/// command status() call fails for a different reason.
 fn build_docker_image(container: &Container, instructions: Vec<String>) -> LalResult<()> {
     let instruction_strings = instructions.join("\\n");
+    // More safety
+    let instruction_strings = instruction_strings.replace("'", "'\\''");
     let s = Command::new("bash")
                     .arg("-c")
                     .arg(format!("echo -e '{}' | docker build --tag {} -",
@@ -104,13 +108,10 @@ fn fixup_docker_container(container: &Container, u: u32, g: u32) -> LalResult<Co
     info!("Using appropriate container for user {}:{}", u, g);
     // Find image id of regular docker container
     // We might have to pull it
-    let image_id: String = match get_docker_image_id(container) {
-        Ok(id) => id,
-        Err(_) => {
+    let image_id = get_docker_image_id(container).or_else(|_| {
             pull_docker_image(container)?;
-            get_docker_image_id(container)?
-        }
-    };
+            get_docker_image_id(container)
+            })?;
 
     // Produce name and tag of modified container
     let modified_container = Container {
@@ -138,7 +139,7 @@ fn fixup_docker_container(container: &Container, u: u32, g: u32) -> LalResult<Co
             build_docker_image(&modified_container, instructions)?;
         }
     };
-    return Ok(modified_container);
+    Ok(modified_container)
 }
 
 /// Runs an arbitrary command in the configured docker environment
@@ -168,10 +169,7 @@ pub fn docker_run(cfg: &Config,
     };
 
     // Shadow container here
-    let container = match modified_container_option {
-        Some(c) => c,
-        None => container.clone()
-    };
+    let container = modified_container_option.as_ref().unwrap_or(container);
 
     trace!("Finding home and cwd");
     let home = env::home_dir().unwrap(); // crash if no $HOME
