@@ -176,6 +176,10 @@ pub fn docker_run(cfg: &Config,
     if let Err(e) = permission_sanity_check() {
         match e {
             CliError::DockerPermissionSafety(_, u, g) => {
+                if u == 0 {
+                    // Do not run as root
+                    return Err(CliError::DockerPermissionSafety("Cannot run container as root user".into(), u, g));
+                }
                 modified_container_option = Some(
                     fixup_docker_container(container, u, g)?);
             },
