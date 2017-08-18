@@ -9,10 +9,6 @@
     }
   },
   "environments": {
-    "centos": {
-      "name": "edonusdevelopers/centos_build",
-      "tag": "latest"
-    },
     "py3": {
       "name": "edonusdevelopers/build_python",
       "tag": "latest"
