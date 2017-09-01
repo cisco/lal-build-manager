@@ -209,7 +209,7 @@ fn has_config_and_manifest() {
     chk::is_ok(Manifest::read(), "could read manifest");
 
     // There is no INPUT yet, but we have no dependencies, so this should work:
-    let r = lal::verify(&manifest.unwrap(), "centos".into(), false);
+    let r = lal::verify(&manifest.unwrap(), "xenial".into(), false);
     chk::is_ok(r, "could verify after install");
 }
 
@@ -249,9 +249,9 @@ fn verify_checks<T: CachedBackend + Backend>(backend: &T) {
     let r = lal::verify(&mf, "xenial".into(), false);
     assert!(r.is_ok(), "could verify after install");
 
-    let renv1 = lal::verify(&mf, "centos".into(), false);
+    let renv1 = lal::verify(&mf, "zesty".into(), false);
     assert!(renv1.is_err(), "could not verify with wrong env");
-    let renv2 = lal::verify(&mf, "centos".into(), true);
+    let renv2 = lal::verify(&mf, "zesty".into(), true);
     assert!(renv2.is_err(),
             "could not verify with wrong env - even with simple");
 
