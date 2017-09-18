@@ -28,6 +28,10 @@
     "zesty": {
       "name": "edonusdevelopers/build_zesty",
       "tag": "latest"
+    },
+    "artful": {
+      "name": "edonusdevelopers/build_artful",
+      "tag": "latest"
     }
   },
   "mounts": [
