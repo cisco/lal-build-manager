@@ -14,7 +14,7 @@ Two ways to install, depending on whether you can be bothered to run the rust in
 Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) directly from [artifactory](https://engci-maven.cisco.com/artifactory/CME-group/lal/):
 
 ```sh
-curl -sSL https://engci-maven.cisco.com/artifactory/CME-group/lal/3.4.1/lal.tar | tar xz -C /usr/local
+curl -sSL https://engci-maven.cisco.com/artifactory/CME-group/lal/3.4.2/lal.tar | tar xz -C /usr/local
 echo "source /usr/local/share/lal/lal.complete.sh" >> ~/.bash_completion
 source ~/.bash_completion # or open new shell
 lal configure <site-config> # use autocomplete to select config
