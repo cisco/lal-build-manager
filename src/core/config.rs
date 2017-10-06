@@ -51,6 +51,9 @@ pub struct Config {
     pub mounts: Vec<Mount>,
     /// Force inteactive shells
     pub interactive: bool,
+    // Optional minimum version restriction of lal
+    //pub minimum_lal: Option<String>,
+
 }
 
 /// Representation of a configuration defaults file

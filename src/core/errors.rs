@@ -26,6 +26,8 @@ pub enum CliError {
     MissingComponent(String),
     /// Manifest cannot be overwritten without forcing
     ManifestExists,
+    /// Executable we shell out to is missing
+    ExecutableMissing(String),
 
     // status/verify errors
     /// Core dependencies missing in INPUT
@@ -122,6 +124,9 @@ impl fmt::Display for CliError {
             CliError::MissingManifest => {
                 write!(f,
                        "No manifest.json found - are you at repository toplevel?")
+            }
+            CliError::ExecutableMissing(ref s) => {
+                write!(f, "Please ensure you have `{}` installed on your system first.", s)
             }
             CliError::MissingConfig => write!(f, "No ~/.lal/config found"),
             CliError::MissingComponent(ref s) => {
