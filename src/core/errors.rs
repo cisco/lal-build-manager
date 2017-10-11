@@ -32,6 +32,8 @@ pub enum CliError {
     OutdatedLal(String, String),
     /// Missing SSL certificates
     MissingSslCerts(String),
+    /// Root user encountered
+    UnmappableRootUser,
 
     // status/verify errors
     /// Core dependencies missing in INPUT
@@ -137,6 +139,9 @@ impl fmt::Display for CliError {
             }
             CliError::MissingSslCerts(ref s) => {
                 write!(f, "Missing SSL certificates at `{}`", s)
+            }
+            CliError::UnmappableRootUser => {
+                write!(f, "Root user is not supported for lal builds")
             }
             CliError::MissingConfig => write!(f, "No ~/.lal/config found"),
             CliError::MissingComponent(ref s) => {

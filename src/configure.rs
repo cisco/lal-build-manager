@@ -119,6 +119,22 @@ fn lal_version_check(minlal: &str) -> LalResult<()> {
     }
 }
 
+fn non_root_sanity() -> LalResult<()> {
+    let uid_output = Command::new("id").arg("-u").output()?;
+    let uid_str = String::from_utf8_lossy(&uid_output.stdout);
+    let uid = uid_str.trim().parse::<u32>().unwrap(); // trust `id -u` is sane
+
+    if uid == 0 {
+        warn!("Running lal as root user not allowed");
+        warn!("Builds remap your user id to a corresponding one inside a build environment");
+        warn!("This is at the moment incompatible with the root user");
+        warn!("Try again without sudo, or if you are root, create a proper build user");
+        Err(CliError::UnmappableRootUser)
+    } else {
+        Ok(())
+    }
+}
+
 fn create_lal_dir() -> LalResult<PathBuf> {
     let laldir = config_dir();
     if !laldir.is_dir() {
@@ -142,6 +158,7 @@ pub fn configure(save: bool, interactive: bool, defaults: &str) -> LalResult<Con
     docker_version_check()?;
     kernel_sanity()?;
     ssl_cert_sanity()?;
+    non_root_sanity()?;
 
     let def = ConfigDefaults::read(defaults)?;
 
