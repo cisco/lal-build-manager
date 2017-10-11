@@ -30,6 +30,8 @@ pub enum CliError {
     ExecutableMissing(String),
     /// lal version required by config is too old
     OutdatedLal(String, String),
+    /// Missing SSL certificates
+    MissingSslCerts(String),
 
     // status/verify errors
     /// Core dependencies missing in INPUT
@@ -132,6 +134,9 @@ impl fmt::Display for CliError {
             }
             CliError::OutdatedLal(ref o, ref n) => {
                 write!(f, "Your version of lal `{}` is too old (<{}). Please `lal upgrade`.", o, n)
+            }
+            CliError::MissingSslCerts(ref s) => {
+                write!(f, "Missing SSL certificates at `{}`", s)
             }
             CliError::MissingConfig => write!(f, "No ~/.lal/config found"),
             CliError::MissingComponent(ref s) => {

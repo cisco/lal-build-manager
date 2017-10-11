@@ -1,11 +1,12 @@
 use std::path::{Path, PathBuf};
 use std::fs;
+use std::env;
 use std::process::Command;
 use semver::Version;
 
 use super::{LalResult, Config, ConfigDefaults, CliError, config_dir};
 
-fn exists(exe: &str) -> LalResult<()> {
+fn executable_on_path(exe: &str) -> LalResult<()> {
     trace!("Verifying executable {}", exe);
     let s = Command::new("which")
                     .arg(exe)
@@ -82,6 +83,31 @@ fn docker_version_check() -> LalResult<()> {
     Ok(())
 }
 
+fn ssl_cert_sanity() -> LalResult<()> {
+    // SSL_CERT_FILE is overridden by main.rs for the benefit of musl built openssl
+    // so be a little careful if it was actually set by user, or by main.rs
+    let default_cert = "/etc/ssl/certs/ca-certificates.crt";
+    let sslpath = env::var_os("SSL_CERT_FILE").unwrap_or_else(|| default_cert.into());
+    let sslcerts = Path::new(&sslpath);
+    trace!("Lookind for SSL certificates at {}", sslcerts.display());
+    if !sslcerts.exists() {
+        warn!("CA certificates missing - you will encounter ssl errors");
+        if &sslpath == default_cert {
+            warn!("Please ensure you have the standard ca-certificates package");
+            warn!("Alternatively set the SSL_CERT_FILE in you shell to prevent certificate errors");
+            warn!("This is usually needed on OSX / older unsupported linux distos");
+        } else {
+            warn!("You are overriding SSL_CERT_FILE to point to a file that does not exist");
+            warn!("Try /etc/ssl/certs/ca-certificates.crt on ubuntu");
+            warn!("Try /usr/local/etc/openssl/cert.pem on darwin");
+        }
+        Err(CliError::MissingSslCerts(format!("{}", sslcerts.display())))
+    } else {
+        trace!("Found valid SSL certificate bundle at {}", sslcerts.display());
+        Ok(())
+    }
+}
+
 fn lal_version_check(minlal: &str) -> LalResult<()> {
     let current = Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
     let req = Version::parse(minlal).unwrap();
@@ -107,24 +133,15 @@ fn create_lal_dir() -> LalResult<PathBuf> {
 /// A defaults file must be supplied to seed the new config with defined environments
 pub fn configure(save: bool, interactive: bool, defaults: &str) -> LalResult<Config> {
     let _ = create_lal_dir()?;
-
-    let sslcerts = Path::new("/etc/ssl/certs/ca-certificates.crt");
-    if !sslcerts.exists() {
-        warn!("Standard SSL certificates package missing");
-        warn!("Please ensure you have the standard ca-certificates package");
-        warn!("Alternatively set the SSL_CERT_FILE in you shell to prevent certificate errors");
-        warn!("This is usually needed on OSX / CentOS");
-    } else {
-        trace!("Found valid SSL certificate bundle at {}", sslcerts.display());
-    }
     // TODO: root id check
 
     for exe in ["docker", "tar", "touch", "id", "find", "mkdir", "chmod"].into_iter() {
-        exists(exe)?;
+        executable_on_path(exe)?;
     }
     docker_sanity()?;
     docker_version_check()?;
     kernel_sanity()?;
+    ssl_cert_sanity()?;
 
     let def = ConfigDefaults::read(defaults)?;
 
