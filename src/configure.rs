@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::fs;
 use std::process::Command;
+use semver::Version;
 
 use super::{LalResult, Config, ConfigDefaults, CliError, config_dir};
 
@@ -25,6 +26,16 @@ fn docker_sanity() -> LalResult<()> {
     Ok(())
 }
 
+fn lal_version_check(minlal: &str) -> LalResult<()> {
+    let current = Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
+    let req = Version::parse(minlal).unwrap();
+    if current < req {
+        Err(CliError::OutdatedLal(current.to_string(), req.to_string()))
+    } else {
+        debug!("Minimum lal requirement of {} satisfied ({})", req.to_string(), current.to_string());
+        Ok(())
+    }
+}
 
 fn create_lal_dir() -> LalResult<PathBuf> {
     let laldir = config_dir();
@@ -46,7 +57,14 @@ pub fn configure(save: bool, interactive: bool, defaults: &str) -> LalResult<Con
     }
     docker_sanity()?;
 
-    let mut cfg = Config::new(ConfigDefaults::read(defaults)?);
+    let def = ConfigDefaults::read(defaults)?;
+
+    // Enforce minimum_lal version check here if it's set in the defaults file
+    if let Some(minlal) = def.minimum_lal.clone() {
+        lal_version_check(&minlal)?;
+    }
+
+    let mut cfg = Config::new(def);
     cfg.interactive = interactive; // need to override default for tests
     if save {
         cfg.write(false)?;

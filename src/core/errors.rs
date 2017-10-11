@@ -28,6 +28,8 @@ pub enum CliError {
     ManifestExists,
     /// Executable we shell out to is missing
     ExecutableMissing(String),
+    /// lal version required by config is too old
+    OutdatedLal(String, String),
 
     // status/verify errors
     /// Core dependencies missing in INPUT
@@ -127,6 +129,9 @@ impl fmt::Display for CliError {
             }
             CliError::ExecutableMissing(ref s) => {
                 write!(f, "Please ensure you have `{}` installed on your system first.", s)
+            }
+            CliError::OutdatedLal(ref o, ref n) => {
+                write!(f, "Your version of lal `{}` is too old (<{}). Please `lal upgrade`.", o, n)
             }
             CliError::MissingConfig => write!(f, "No ~/.lal/config found"),
             CliError::MissingComponent(ref s) => {

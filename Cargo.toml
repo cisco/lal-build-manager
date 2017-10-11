@@ -26,10 +26,7 @@ serde_json = "0.9.5"
 sha1 = "0.2.0"
 tar = "0.4.10"
 walkdir = "1.0.7"
-
-[dependencies.semver]
-optional = true
-version = "0.2.3"
+semver = "0.2.3"
 
 [dependencies.indicatif]
 optional = true
@@ -37,7 +34,7 @@ version = "0.3.3"
 
 [features]
 default = ["upgrade", "progress"]
-upgrade = ["semver"]
+upgrade = []
 progress = ["indicatif"]
 
 [lib]
