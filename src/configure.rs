@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::fs;
 use std::process::Command;
 use semver::Version;
@@ -56,6 +56,16 @@ pub fn configure(save: bool, interactive: bool, defaults: &str) -> LalResult<Con
         exists(exe)?;
     }
     docker_sanity()?;
+
+    let sslcerts = Path::new("/etc/ssl/certs/ca-certificates.crt");
+    if !sslcerts.exists() {
+        warn!("Standard SSL certificates package missing");
+        warn!("Please ensure you have the standard ca-certificates package");
+        warn!("Alternatively set the SSL_CERT_FILE in you shell to prevent certificate errors");
+        warn!("This is usually needed on OSX / CentOS");
+    } else {
+        trace!("Found valid SSL certificate bundle at {}", sslcerts.display());
+    }
 
     let def = ConfigDefaults::read(defaults)?;
 
