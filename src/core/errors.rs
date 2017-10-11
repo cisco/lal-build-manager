@@ -26,6 +26,14 @@ pub enum CliError {
     MissingComponent(String),
     /// Manifest cannot be overwritten without forcing
     ManifestExists,
+    /// Executable we shell out to is missing
+    ExecutableMissing(String),
+    /// lal version required by config is too old
+    OutdatedLal(String, String),
+    /// Missing SSL certificates
+    MissingSslCerts(String),
+    /// Root user encountered
+    UnmappableRootUser,
 
     // status/verify errors
     /// Core dependencies missing in INPUT
@@ -122,6 +130,18 @@ impl fmt::Display for CliError {
             CliError::MissingManifest => {
                 write!(f,
                        "No manifest.json found - are you at repository toplevel?")
+            }
+            CliError::ExecutableMissing(ref s) => {
+                write!(f, "Please ensure you have `{}` installed on your system first.", s)
+            }
+            CliError::OutdatedLal(ref o, ref n) => {
+                write!(f, "Your version of lal `{}` is too old (<{}). Please `lal upgrade`.", o, n)
+            }
+            CliError::MissingSslCerts(ref s) => {
+                write!(f, "Missing SSL certificates at `{}`", s)
+            }
+            CliError::UnmappableRootUser => {
+                write!(f, "Root user is not supported for lal builds")
             }
             CliError::MissingConfig => write!(f, "No ~/.lal/config found"),
             CliError::MissingComponent(ref s) => {

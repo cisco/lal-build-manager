@@ -51,6 +51,8 @@ pub struct Config {
     pub mounts: Vec<Mount>,
     /// Force inteactive shells
     pub interactive: bool,
+    /// Minimum version restriction of lal enforced by this config
+    pub minimum_lal: Option<String>,
 }
 
 /// Representation of a configuration defaults file
@@ -64,6 +66,8 @@ pub struct ConfigDefaults {
     pub environments: BTreeMap<String, Container>,
     /// Extra volume mounts to be set for the container
     pub mounts: Vec<Mount>,
+    /// Optional minimum version restriction of lal
+    pub minimum_lal: Option<String>,
 }
 
 impl ConfigDefaults {
@@ -137,6 +141,7 @@ impl Config {
             autoupgrade: cfg!(feature = "upgrade"),
             environments: defaults.environments,
             backend: defaults.backend,
+            minimum_lal: defaults.minimum_lal,
             interactive: true,
         }
     }
