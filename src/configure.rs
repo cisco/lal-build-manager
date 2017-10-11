@@ -26,6 +26,29 @@ fn docker_sanity() -> LalResult<()> {
     Ok(())
 }
 
+fn kernel_sanity() -> LalResult<()> {
+    let req = Version { major: 4, minor: 4, patch: 0, pre: vec![], build: vec![] };
+    let uname_output = Command::new("uname").arg("-r").output()?;
+    let uname = String::from_utf8_lossy(&uname_output.stdout);
+    match uname.trim().parse::<Version>() {
+        Ok(ver) => {
+            debug!("Found linux kernel version {}", ver);
+            if ver < req {
+                warn!("Your Linux kernel {} is very old", ver.to_string());
+                warn!("A kernel >= {} is highly recommended on Linux systems", req.to_string())
+            } else {
+                debug!("Minimum kernel requirement of {} satisfied ({})", req.to_string(), ver.to_string());
+            }
+        }
+        Err(e) => {
+            // NB: Darwin would enter here..
+            warn!("Failed to parse kernel version from `uname -r`: {}", e);
+            warn!("Note that a kernel version of 4.4 is expected on linux");
+        }
+    }
+    Ok(()) // don't block on this atm to not break OSX
+}
+
 fn lal_version_check(minlal: &str) -> LalResult<()> {
     let current = Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
     let req = Version::parse(minlal).unwrap();
@@ -52,11 +75,6 @@ fn create_lal_dir() -> LalResult<PathBuf> {
 pub fn configure(save: bool, interactive: bool, defaults: &str) -> LalResult<Config> {
     let _ = create_lal_dir()?;
 
-    for exe in ["docker", "tar", "touch", "id", "find", "mkdir", "chmod"].into_iter() {
-        exists(exe)?;
-    }
-    docker_sanity()?;
-
     let sslcerts = Path::new("/etc/ssl/certs/ca-certificates.crt");
     if !sslcerts.exists() {
         warn!("Standard SSL certificates package missing");
@@ -66,6 +84,13 @@ pub fn configure(save: bool, interactive: bool, defaults: &str) -> LalResult<Con
     } else {
         trace!("Found valid SSL certificate bundle at {}", sslcerts.display());
     }
+    // TODO: root id check
+
+    for exe in ["docker", "tar", "touch", "id", "find", "mkdir", "chmod"].into_iter() {
+        exists(exe)?;
+    }
+    docker_sanity()?;
+    kernel_sanity()?;
 
     let def = ConfigDefaults::read(defaults)?;
 
