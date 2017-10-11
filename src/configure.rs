@@ -49,6 +49,39 @@ fn kernel_sanity() -> LalResult<()> {
     Ok(()) // don't block on this atm to not break OSX
 }
 
+fn docker_version_check() -> LalResult<()> {
+    // docker-ce changes to different version scheme, but still semver >= 1.13
+    let req = Version { major: 1, minor: 12, patch: 0, pre: vec![], build: vec![] };
+    // NB: this is nicer: `docker version -f "{{ .Server.Version }}"`
+    // but it doesn't work on the old versions we wnat to prevent..
+    let dver_output = Command::new("docker").arg("--version").output()?;
+    let dverstr = String::from_utf8_lossy(&dver_output.stdout);
+    trace!("docker version string {}", dverstr);
+    let dverary = dverstr.trim().split(" ").collect::<Vec<_>>();
+    if dverary.len() < 3 {
+        warn!("Failed to parse docker version: ({})", dverstr);
+        return Ok(()); // assume it's a really weird docker
+    }
+    let mut dver = dverary[2].to_string(); // third entry is the semver version
+    dver.pop(); // remove trailing comma (even if it goes, this parses)
+    match dver.parse::<Version>() {
+        Ok(ver) => {
+            debug!("Found docker version {}", ver);
+            if ver < req {
+                warn!("Your docker version {} is very old", ver.to_string());
+                warn!("A docker version >= {} is highly recommended", req.to_string())
+            } else {
+                debug!("Minimum docker requirement of {} satisfied ({})", req.to_string(), ver.to_string());
+            }
+        }
+        Err(e) => {
+            warn!("Failed to parse docker version from `docker --version`: {}", e);
+            warn!("Note that a docker version >= 1.12 is expected");
+        }
+    }
+    Ok(())
+}
+
 fn lal_version_check(minlal: &str) -> LalResult<()> {
     let current = Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
     let req = Version::parse(minlal).unwrap();
@@ -90,6 +123,7 @@ pub fn configure(save: bool, interactive: bool, defaults: &str) -> LalResult<Con
         exists(exe)?;
     }
     docker_sanity()?;
+    docker_version_check()?;
     kernel_sanity()?;
 
     let def = ConfigDefaults::read(defaults)?;
