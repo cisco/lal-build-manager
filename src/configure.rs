@@ -151,7 +151,7 @@ pub fn configure(save: bool, interactive: bool, defaults: &str) -> LalResult<Con
     let _ = create_lal_dir()?;
     // TODO: root id check
 
-    for exe in ["docker", "tar", "touch", "id", "find", "mkdir", "chmod"].into_iter() {
+    for exe in ["docker", "tar", "touch", "id", "find", "mkdir", "chmod", "uname"].into_iter() {
         executable_on_path(exe)?;
     }
     docker_sanity()?;
