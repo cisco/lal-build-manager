@@ -50,7 +50,7 @@ fn main() {
     // Ensure we are can do everything in there before continuing
     assert!(env::set_current_dir(tmp).is_ok());
     // dump config and artifacts under the current temp directory
-    env::set_var("LAL_CONFIG_HOME", ".");
+    env::set_var("LAL_CONFIG_HOME", env::current_dir().unwrap());
 
     // init_with_verbosity(0).unwrap();
     let has_docker = true;
