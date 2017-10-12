@@ -21,24 +21,38 @@ fn executable_on_path(exe: &str) -> LalResult<()> {
 
 fn docker_sanity() -> LalResult<()> {
     let dinfo_output = Command::new("docker").arg("info").output()?;
-    let _ = String::from_utf8_lossy(&dinfo_output.stdout);
-    // TODO: Can grep for CPUs, RAM, storage driver, if in the config
-    // TODO: check
+    let doutstr = String::from_utf8_lossy(&dinfo_output.stdout);
+    if doutstr.contains("aufs") {
+        warn!("Your storage driver is AUFS - this is known to have build issues");
+        warn!("Please change your storage driver to overlay2 or devicemapper");
+        warn!("Consult https://docs.docker.com/engine/userguide/storagedriver/ for info");
+    }
+    // TODO: Can grep for CPUs, RAM  if in the config perhaps?
     Ok(())
 }
 
 fn kernel_sanity() -> LalResult<()> {
-    let req = Version { major: 4, minor: 4, patch: 0, pre: vec![], build: vec![] };
+    use semver::Identifier;
+    // NB: ubuntu's use of linux kernel is not completely semver
+    // the pre numbers does not indicate a prerelease, but rather fixes
+    // thus 4.4.0-93 on ubuntu is semver LESS than semver 4.4.0
+    // We thus restrict to be > 4.4.0-0-0 instead (>= number of pre-identifiers)
+    let req = Version { major: 4, minor: 4, patch: 0,
+        pre: vec![Identifier::Numeric(0), Identifier::Numeric(0)],
+        build: vec![],
+    };
     let uname_output = Command::new("uname").arg("-r").output()?;
     let uname = String::from_utf8_lossy(&uname_output.stdout);
     match uname.trim().parse::<Version>() {
         Ok(ver) => {
             debug!("Found linux kernel version {}", ver);
-            if ver < req {
+            trace!("found major {} minor {} patch {} - prelen {}", ver.major, ver.minor, ver.patch, ver.pre.len());
+            trace!("req major {} minor {} patch {} - prelen {}", req.major, req.minor, req.patch, req.pre.len());
+            if ver >= req {
+                debug!("Minimum kernel requirement of {} satisfied ({})", req.to_string(), ver.to_string());
+            } else {
                 warn!("Your Linux kernel {} is very old", ver.to_string());
                 warn!("A kernel >= {} is highly recommended on Linux systems", req.to_string())
-            } else {
-                debug!("Minimum kernel requirement of {} satisfied ({})", req.to_string(), ver.to_string());
             }
         }
         Err(e) => {
@@ -140,6 +154,10 @@ fn create_lal_dir() -> LalResult<PathBuf> {
     if !laldir.is_dir() {
         fs::create_dir(&laldir)?;
     }
+    let histfile = Path::new(&laldir).join("history");
+    if !histfile.exists() {
+        fs::File::create(histfile)?;
+    }
     Ok(laldir)
 }
 
@@ -151,7 +169,7 @@ pub fn configure(save: bool, interactive: bool, defaults: &str) -> LalResult<Con
     let _ = create_lal_dir()?;
     // TODO: root id check
 
-    for exe in ["docker", "tar", "touch", "id", "find", "mkdir", "chmod"].into_iter() {
+    for exe in ["docker", "tar", "touch", "id", "find", "mkdir", "chmod", "uname"].into_iter() {
         executable_on_path(exe)?;
     }
     docker_sanity()?;

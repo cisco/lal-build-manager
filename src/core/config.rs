@@ -10,15 +10,18 @@ use std::env;
 use super::{Container, LalResult, CliError};
 use storage::BackendConfiguration;
 
-
-/// Master override for where the .lal config lives
-pub fn config_dir() -> PathBuf {
+fn find_home_dir() -> PathBuf {
     // Either we have LAL_CONFIG_HOME evar, or HOME
-    let home = if let Ok(lh) = env::var("LAL_CONFIG_HOME") {
+    if let Ok(lh) = env::var("LAL_CONFIG_HOME") {
         Path::new(&lh).to_owned()
     } else {
         env::home_dir().unwrap()
-    };
+    }
+}
+
+/// Master override for where the .lal config lives
+pub fn config_dir() -> PathBuf {
+    let home = find_home_dir();
     Path::new(&home).join(".lal")
 }
 
@@ -85,12 +88,14 @@ impl ConfigDefaults {
     }
 }
 
-fn check_mount(name: &str) -> LalResult<bool> {
+fn check_mount(name: &str) -> LalResult<String> {
     // See if it's a path first:
-    let mount_path = Path::new(name);
+    let home = find_home_dir();
+    let src = name.to_string().replace("~", &home.to_string_lossy());
+    let mount_path = Path::new(&src);
     if mount_path.exists() {
-        debug!("Configuring existing mount {}", name);
-        return Ok(true);
+        debug!("Configuring existing mount {}", &src);
+        return Ok(src.clone()); // pass along the real source
     }
 
     // Otherwise, if it does not contain a slash
@@ -101,14 +106,15 @@ fn check_mount(name: &str) -> LalResult<bool> {
         // If it exists, do nothing:
         if volstr.contains(name) {
             debug!("Configuring existing volume {}", name);
-            return Ok(true);
+            return Ok(name.into());
         }
         // Otherwise warn
         warn!("Discarding missing docker volume {}", name);
+        Err(CliError::MissingMount(name.into()))
     } else {
-        warn!("Discarding missing mount {}", name);
+        warn!("Discarding missing mount {}", src);
+        Err(CliError::MissingMount(src.clone()))
     }
-    Ok(false)
 }
 
 
@@ -128,9 +134,15 @@ impl Config {
         let mut mounts = vec![];
         for mount in defaults.mounts {
             // Check src for pathiness or prepare a docker volume
-            // Crash if this fails (new-ish feature)
-            if check_mount(&mount.src).unwrap() {
-                mounts.push(mount.clone());
+            match check_mount(&mount.src) {
+                Ok(src) => {
+                    let mut mountnew = mount.clone();
+                    mountnew.src = src; // update potentially mapped source
+                    mounts.push(mountnew);
+                }
+                Err(e) => {
+                    debug!("Ignoring mount check error {}", e)
+                }
             }
         }
 
