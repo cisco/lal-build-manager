@@ -32,17 +32,27 @@ fn docker_sanity() -> LalResult<()> {
 }
 
 fn kernel_sanity() -> LalResult<()> {
-    let req = Version { major: 4, minor: 4, patch: 0, pre: vec![], build: vec![] };
+    use semver::Identifier;
+    // NB: ubuntu's use of linux kernel is not completely semver
+    // the pre numbers does not indicate a prerelease, but rather fixes
+    // thus 4.4.0-93 on ubuntu is semver LESS than semver 4.4.0
+    // We thus restrict to be > 4.4.0-0-0 instead (>= number of pre-identifiers)
+    let req = Version { major: 4, minor: 4, patch: 0,
+        pre: vec![Identifier::Numeric(0), Identifier::Numeric(0)],
+        build: vec![],
+    };
     let uname_output = Command::new("uname").arg("-r").output()?;
     let uname = String::from_utf8_lossy(&uname_output.stdout);
     match uname.trim().parse::<Version>() {
         Ok(ver) => {
             debug!("Found linux kernel version {}", ver);
-            if ver < req {
+            trace!("found major {} minor {} patch {} - prelen {}", ver.major, ver.minor, ver.patch, ver.pre.len());
+            trace!("req major {} minor {} patch {} - prelen {}", req.major, req.minor, req.patch, req.pre.len());
+            if ver >= req {
+                debug!("Minimum kernel requirement of {} satisfied ({})", req.to_string(), ver.to_string());
+            } else {
                 warn!("Your Linux kernel {} is very old", ver.to_string());
                 warn!("A kernel >= {} is highly recommended on Linux systems", req.to_string())
-            } else {
-                debug!("Minimum kernel requirement of {} satisfied ({})", req.to_string(), ver.to_string());
             }
         }
         Err(e) => {
