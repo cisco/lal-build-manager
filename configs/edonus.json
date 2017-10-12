@@ -36,6 +36,11 @@
   },
   "mounts": [
     {
+      "src": "~/.lal_history",
+      "dest": "/home/lal/.bash_history",
+      "readonly": false
+    },
+    {
       "src": "/mnt/tools",
       "dest": "/tools",
       "readonly": true

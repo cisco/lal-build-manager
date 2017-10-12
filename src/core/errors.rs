@@ -34,6 +34,8 @@ pub enum CliError {
     MissingSslCerts(String),
     /// Root user encountered
     UnmappableRootUser,
+    /// Missing predefined mount
+    MissingMount(String),
 
     // status/verify errors
     /// Core dependencies missing in INPUT
@@ -142,6 +144,9 @@ impl fmt::Display for CliError {
             }
             CliError::UnmappableRootUser => {
                 write!(f, "Root user is not supported for lal builds")
+            }
+            CliError::MissingMount(ref s) => {
+                write!(f, "Missing mount {}", s)
             }
             CliError::MissingConfig => write!(f, "No ~/.lal/config found"),
             CliError::MissingComponent(ref s) => {

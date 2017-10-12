@@ -17,6 +17,7 @@ Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) direct
 curl -sSL https://engci-maven.cisco.com/artifactory/CME-group/lal/3.5.0/lal.tar | tar xz -C /usr/local
 echo "source /usr/local/share/lal/lal.complete.sh" >> ~/.bash_completion
 source ~/.bash_completion # or open new shell
+touch ~/.lal_history # for history in lal shell
 lal configure <site-config> # use autocomplete to select config
 ```
 
@@ -36,6 +37,7 @@ cargo build --release
 ln -sf $PWD/target/release/lal /usr/local/bin/lal
 echo "source $PWD/lal.complete.sh" >> ~/.bash_completion
 source ~/.bash_completion # or open new shell
+touch ~/.lal_history # for history in lal shell
 lal configure <site-config> # use autocomplete to select config
 ```
 
