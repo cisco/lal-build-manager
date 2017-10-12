@@ -21,9 +21,13 @@ fn executable_on_path(exe: &str) -> LalResult<()> {
 
 fn docker_sanity() -> LalResult<()> {
     let dinfo_output = Command::new("docker").arg("info").output()?;
-    let _ = String::from_utf8_lossy(&dinfo_output.stdout);
-    // TODO: Can grep for CPUs, RAM, storage driver, if in the config
-    // TODO: check
+    let doutstr = String::from_utf8_lossy(&dinfo_output.stdout);
+    if doutstr.contains("aufs") {
+        warn!("Your storage driver is AUFS - this is known to have build issues");
+        warn!("Please change your storage driver to overlay2 or devicemapper");
+        warn!("Consult https://docs.docker.com/engine/userguide/storagedriver/ for info");
+    }
+    // TODO: Can grep for CPUs, RAM  if in the config perhaps?
     Ok(())
 }
 
