@@ -144,6 +144,7 @@ fn create_lal_dir() -> LalResult<PathBuf> {
     if !laldir.is_dir() {
         fs::create_dir(&laldir)?;
     }
+    fs::File::create(Path::new(&laldir).join("history"))?;
     Ok(laldir)
 }
 
