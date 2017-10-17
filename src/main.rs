@@ -3,12 +3,12 @@ extern crate clap;
 #[macro_use]
 extern crate log;
 extern crate loggerv;
+extern crate openssl_probe;
 
 extern crate lal;
 use lal::*;
 use clap::{Arg, App, AppSettings, SubCommand, ArgMatches};
 use std::process;
-use std::env;
 use std::ops::Deref;
 
 fn is_integer(v: String) -> Result<(), String> {
@@ -528,18 +528,14 @@ fn main() {
     // by default, always show INFO messages for now (+1)
     loggerv::init_with_verbosity(args.occurrences_of("verbose") + 1).unwrap();
 
-    // set ssl cert path early for hyper client
-    match env::var_os("SSL_CERT_FILE") {
-        Some(val) => trace!("Using SSL_CERT_FILE set to {:?}", val),
-        // By default point it to normal location (wont work for centos / osx)
-        None => env::set_var("SSL_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt"),
-    }
-
     // Allow lal configure without assumptions
     if let Some(a) = args.subcommand_matches("configure") {
         result_exit("configure",
                     lal::configure(true, true, a.value_of("file").unwrap()));
     }
+
+    // Detect and set SSL_CERT evars more intelligently (after configure)
+    openssl_probe::init_ssl_cert_env_vars();
 
     // Force config to exists before allowing remaining actions
     let config = Config::read()

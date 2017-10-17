@@ -8,6 +8,10 @@ doc = false
 name = "lal"
 path = "src/main.rs"
 
+[[test]]
+harness = false
+name = "testmain"
+
 [dependencies]
 ansi_term = "0.7.2"
 chrono = "0.2"
@@ -18,29 +22,29 @@ hyper = "0.10.9"
 hyper-native-tls = "0.2.2"
 log = "0.3.5"
 loggerv = "0.4.0"
+openssl-probe = "0.1.1"
 rand = "0.3.14"
 regex = "0.1.55"
+semver = "0.2.3"
 serde = "0.9.5"
 serde_derive = "0.9.5"
 serde_json = "0.9.5"
 sha1 = "0.2.0"
 tar = "0.4.10"
 walkdir = "1.0.7"
-semver = "0.2.3"
 
 [dependencies.indicatif]
 optional = true
 version = "0.3.3"
 
 [features]
-default = ["upgrade", "progress"]
-upgrade = []
+default = [
+    "upgrade",
+    "progress",
+]
 progress = ["indicatif"]
+upgrade = []
 
 [lib]
 name = "lal"
 path = "src/lib.rs"
-
-[[test]]
-harness = false
-name = "testmain"

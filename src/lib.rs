@@ -26,6 +26,7 @@
 #[macro_use]
 extern crate hyper;
 extern crate hyper_native_tls;
+extern crate openssl_probe;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;

@@ -31,7 +31,7 @@ pub enum CliError {
     /// lal version required by config is too old
     OutdatedLal(String, String),
     /// Missing SSL certificates
-    MissingSslCerts(String),
+    MissingSslCerts,
     /// Root user encountered
     UnmappableRootUser,
     /// Missing predefined mount
@@ -139,8 +139,8 @@ impl fmt::Display for CliError {
             CliError::OutdatedLal(ref o, ref n) => {
                 write!(f, "Your version of lal `{}` is too old (<{}). Please `lal upgrade`.", o, n)
             }
-            CliError::MissingSslCerts(ref s) => {
-                write!(f, "Missing SSL certificates at `{}`", s)
+            CliError::MissingSslCerts => {
+                write!(f, "Missing SSL certificates")
             }
             CliError::UnmappableRootUser => {
                 write!(f, "Root user is not supported for lal builds")
