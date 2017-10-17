@@ -534,9 +534,6 @@ fn main() {
                     lal::configure(true, true, a.value_of("file").unwrap()));
     }
 
-    // Detect and set SSL_CERT evars more intelligently (after configure)
-    openssl_probe::init_ssl_cert_env_vars();
-
     // Force config to exists before allowing remaining actions
     let config = Config::read()
         .map_err(|e| {
@@ -555,6 +552,13 @@ fn main() {
             Box::new(ArtifactoryBackend::new(&art_cfg, &config.cache))
         }
     };
+
+    // Ensure SSL knows where to look for certs before using httpS via the backend
+    if let Some(sc) = args.subcommand_name() {
+        if ["update", "fetch", "query", "export", "publish", "update-all"].iter().any(|x| x == &sc) {
+            openssl_probe::init_ssl_cert_env_vars();
+        }
+    }
 
     // Do upgrade checks or handle explicit `lal upgrade` here
     #[cfg(feature = "upgrade")]
