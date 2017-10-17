@@ -14,7 +14,7 @@ Two ways to install, depending on whether you can be bothered to run the rust in
 Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) directly from [artifactory](https://engci-maven.cisco.com/artifactory/CME-group/lal/):
 
 ```sh
-curl -sSL https://engci-maven.cisco.com/artifactory/CME-group/lal/3.5.0/lal.tar | tar xz -C /usr/local
+curl -sSL https://engci-maven.cisco.com/artifactory/CME-group/lal/3.7.0/lal.tar | tar xz -C /usr/local
 echo "source /usr/local/share/lal/lal.complete.sh" >> ~/.bash_completion
 source ~/.bash_completion # or open new shell
 lal configure <site-config> # use autocomplete to select config
@@ -172,7 +172,11 @@ export OPENSSL_LIB_DIR=`brew --prefix openssl`/lib
 export DEP_OPENSSL_INCLUDE=`brew --prefix openssl`/include # should work without this
 ```
 
-There's also a runtime lookup of certificates to do peer verification of certificates. This requires having set:
+## Runtime issues
+### SSL Certificates
+The lookup of SSL certificates to do peer verification can fail if they are missing or in a non-standard location. The search is done via the [openssl-probe crate](https://github.com/alexcrichton/openssl-probe/blob/master/src/lib.rs).
+
+Although this shouldn't be necessary anymore; you can also override the search yourself by pointing to the certificates explicitly:
 
 ```
 # OSX
@@ -181,7 +185,11 @@ export SSL_CERT_FILE=/usr/local/etc/openssl/cert.pem
 export SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt
 ```
 
-This should be put in your `~/.bashrc` or `~/.bash_profile` as `lal` reads it on every run. Note that the default location is `/etc/ssl/certs/ca-certificates.crt` and that is correct for most linux distros.
+
+This should be put in your `~/.bashrc` or `~/.bash_profile` as `lal` reads it on every run. Note that the normal location is `/etc/ssl/certs/ca-certificates.crt` for most modern linux distros.
+
+### Docker permission denieds
+You need to have performed `docker login`, and your user must have been added to the correct group on dockerhub by someone in charge before you can pull build environments.
 
 ## Logging
 Configurable via flags before the subcommand:

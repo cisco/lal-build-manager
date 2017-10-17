@@ -98,27 +98,27 @@ fn docker_version_check() -> LalResult<()> {
 }
 
 fn ssl_cert_sanity() -> LalResult<()> {
-    // SSL_CERT_FILE is overridden by main.rs for the benefit of musl built openssl
-    // so be a little careful if it was actually set by user, or by main.rs
-    let default_cert = "/etc/ssl/certs/ca-certificates.crt";
-    let sslpath = env::var_os("SSL_CERT_FILE").unwrap_or_else(|| default_cert.into());
-    let sslcerts = Path::new(&sslpath);
-    trace!("Lookind for SSL certificates at {}", sslcerts.display());
-    if !sslcerts.exists() {
-        warn!("CA certificates missing - you will encounter ssl errors");
-        if &sslpath == default_cert {
-            warn!("Please ensure you have the standard ca-certificates package");
-            warn!("Alternatively set the SSL_CERT_FILE in you shell to prevent certificate errors");
-            warn!("This is usually needed on OSX / older unsupported linux distos");
-        } else {
-            warn!("You are overriding SSL_CERT_FILE to point to a file that does not exist");
-            warn!("Try /etc/ssl/certs/ca-certificates.crt on ubuntu");
-            warn!("Try /usr/local/etc/openssl/cert.pem on darwin");
-        }
-        Err(CliError::MissingSslCerts(format!("{}", sslcerts.display())))
-    } else {
-        trace!("Found valid SSL certificate bundle at {}", sslcerts.display());
+    // SSL_CERT_FILE are overridden by openssl_probe in main.rs
+    // BUT this happens AFTER lal configure
+    // evars are currently empty (unless set manually) - so we can provide debug here
+    let is_overridden = env::var_os("SSL_CERT_FILE").is_some();
+    use openssl_probe;
+    let proberes = openssl_probe::probe();
+    if let Some(cert) = proberes.cert_dir {
+        debug!("Using SSL_CERT_DIR as {}", cert.display());
+    }
+    if let Some(cert) = proberes.cert_file.clone() {
+        debug!("Using SSL_CERT_FILE as {}", cert.display());
         Ok(())
+    } else {
+        if is_overridden {
+            warn!("SSL_CERT_FILE overridden by user");
+            warn!("This should generally not be necessary any more");
+        }
+        warn!("CA certificates bundle appears to be missing - you will encounter ssl errors");
+        warn!("Please ensure you have the standard ca-certificates package");
+        warn!("Alternatively you can the SSL_CERT_FILE in you shell to a non-standard location");
+        Err(CliError::MissingSslCerts)
     }
 }
 
