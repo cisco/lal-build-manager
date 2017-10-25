@@ -17,16 +17,8 @@
       "name": "edonusdevelopers/muslrust",
       "tag": "latest"
     },
-    "transcoder": {
-      "name": "edonusdevelopers/mygdon-transcoder",
-      "tag": "latest"
-    },
     "xenial": {
       "name": "edonusdevelopers/build_xenial",
-      "tag": "latest"
-    },
-    "zesty": {
-      "name": "edonusdevelopers/build_zesty",
       "tag": "latest"
     },
     "artful": {
@@ -43,11 +35,6 @@
     {
       "src": "/mnt/tools",
       "dest": "/tools",
-      "readonly": true
-    },
-    {
-      "src": "/mnt/build-files",
-      "dest": "/build-files",
       "readonly": true
     },
     {

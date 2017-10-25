@@ -1,37 +1,25 @@
-# lal dependency manager [![build Status](https://engci-jenkins-gpk.cisco.com/jenkins/buildStatus/icon?job=team_CME/lal)](https://engci-jenkins-gpk.cisco.com/jenkins/job/team_CME/job/lal/)
+# lal dependency manager
 
-A dependency manager built around artifactory and docker. See the [spec](./SPEC.md) for background information.
+A dependency manager built around artifactory and docker. Intended for C++ projects that lack a good module system, by making it easy to set up a system of versioned, pre-compiled releases that are all built in the same docker environment.
 
-## Prerequisites
-You need [docker](https://docs.docker.com/engine/installation/linux/) (minimum version 1.10), register an account with your username, then get someone to add the necessary credentials to your account on dockerhub.
+See the [spec](./SPEC.md) for background information.
 
-In particular, your account will need access to the images in the [relevant config file](https://sqbu-github.cisco.com/Edonus/lal/tree/master/configs), and you need to have called `docker login` on the command line with this account.
+## Prerequisites (devs)
+You need [docker](https://docs.docker.com/engine/installation/linux/) (minimum version 1.12), logged into the group with access to your docker images in the [relevant config file](./configs).
 
-## Installation
-Two ways to install, depending on whether you can be bothered to run the rust install script:
+## Prerequisites (ops)
+A set of docker images as outlined in the [relevant config file](./configs), all built to include a `lal` user and available to docker logged in devs (see below)
 
-### Precompiled releases (instant)
-Fetch the static binaries compiled with [musl](http://www.musl-libc.org/) directly from [artifactory](https://engci-maven.cisco.com/artifactory/CME-group/lal/):
+CI setup to build and upload releases of master as outlined further below.
 
-```sh
-curl -sSL https://engci-maven.cisco.com/artifactory/CME-group/lal/3.7.0/lal.tar | tar xz -C /usr/local
-echo "source /usr/local/share/lal/lal.complete.sh" >> ~/.bash_completion
-source ~/.bash_completion # or open new shell
-lal configure <site-config> # use autocomplete to select config
-```
+A configured backend in same config file, distrubuted with lal to your devs.
 
-Note that **you will need** to `sudo chown -R "$USER" /usr/local` first *if* you want to use this as the install prefix because automatic upgrades will happen inside that folder. Alternatively, install to another location and manage `$PATH` yourself.
-
-There will be a daily upgrade attempt that auto-upgrades your version if a new one was found.
-
-### From source (<10 minutes)
-Get [stable rust](https://www.rust-lang.org/downloads.html) (inlined below), clone, build, install, and make it available:
+## Building
+Get [rust](https://www.rust-lang.org/downloads.html) (inlined below), clone, build, install, and make it available:
 
 ```sh
 curl https://sh.rustup.rs -sSf | sh
 # `rustup update stable` - to upgrade rust later
-git clone git@sqbu-github.cisco.com:Edonus/lal.git && cd lal
-# install libssl-dev and curl (or distro equivalent) + `cargo clean` if build fails
 cargo build --release
 ln -sf $PWD/target/release/lal /usr/local/bin/lal
 echo "source $PWD/lal.complete.sh" >> ~/.bash_completion
@@ -39,77 +27,22 @@ source ~/.bash_completion # or open new shell
 lal configure <site-config> # use autocomplete to select config
 ```
 
-When new versions are released, you will be told to `git pull && cargo build --release`.
-
-### With lal (future upgrades)
-This will upgrade an installation done from an artifactory download (as an original boostrap), and it will upgrade any future upgrade that used this setup.
-
-```sh
-git clone git@sqbu-github.cisco.com:Edonus/lal.git && cd lal
-lal build --release
-tar xzf ARTIFACT/lal.tar.gz -C /usr/local
-```
-
-You can also build a slim version of lal without autoupgrade this way (because you are upgrading yourself). Just replace the build with `lal build -c slim --release` above.
-
-Note that if you configured autocomplete, it is still configured.
+If you want to release static binaries of these to developers, you can build lal on CI via [clux/muslrust](https://github.com/clux/muslrust). This takes away the need to install rust for developers, and if you use the `upgrade` feature, you can set up automatic upgrades.
 
 ## Usage
 Illustrated via common workflow examples below:
 
-### Install and Update
-Installing pinned versions and building:
-
-```sh
-git clone git@sqbu-github.cisco.com:Edonus/media-engine
-cd media-engine
-lal fetch
-# for canonical build
-lal build
-# for experimental
-lal shell
-docker> ./local_script
-```
-
-Updating dependencies:
-(This example presumes ciscossl has independently been updated to version 6 and is ready to be used elsewhere.)
-
-```sh
-lal update ciscossl=6 --save
-lal build # check it builds with new version
-git commit manifest.json -m "updated ciscossl to version 6"
-git push
-```
-
-### Reusing Builds
-Using stashed dependencies:
-
-```sh
-git clone git@sqbu-github.cisco.com:Edonus/ciscossl
-cd ciscossl
-# edit
-lal build
-lal stash asan
-cd ../media-engine
-lal update ciscossl=asan # update named version (always from stash)
-lal build -s
-```
-
-This workflow allows building multiple components simultaneously, and `lal status` provides safeguards and information on what dependencies you are using. Note that while doing this, you will receive warnings that you are using non-canonical dependencies.
-
-### Creating a new version
-Designed to be handled by jenkins on each push to master (ideally through validated merge). Jenkins should create your numeric tag and upload the build output to artifactory. This behaviour is handled in [jenkins-config](https://sqbu-github.cisco.com/Edonus/jenkins-config).
+- [build / fetch](https://asciinema.org/a/3udzvbettco6sx44mbn238x0v)
+- [custom dependencies](https://asciinema.org/a/c9v790m4euh190ladaqzfdc43)
+- [scripts](https://asciinema.org/a/a3xmki0iz5j0am2vv780p41xa)
 
 ### Creating a new component
-Create a git repo, `lal init` it, then update deps and verify it builds.
+
+Create a git repo, lal init it, then update deps and verify it builds.
 
 ```sh
-mkdir newcomponent
-cd newcomponent
 lal init xenial # create manifest for a xenial component
-git init
-git remote add origin git@sqbu-github.cisco.com:Edonus/newcomponent.git
-git add manifest.json
+git add .lal/
 git commit -m "init newcomponent"
 # add some dependencies to manifest
 lal update gtest --save-dev
@@ -121,12 +54,24 @@ git commit -a -m "inital working version"
 git push -u origin master
 ```
 
-The last changeset will be tagged by jenkins if it succeeds. These have been done in two changesets here for clarity, but they could be done  in the same change.
+The last changeset should be tagged by CI, and `lal publish`'d if it succeeds.
 
-Note that to set up jenkins jobs and commit hooks you need to follow usage instructions on [github-config](https://sqbu-github.cisco.com/Edonus/github-config#usage), and then [jenkins-config](https://sqbu-github.cisco.com/Edonus/jenkins-config#usage).
+### Creating a new version
+Designed to be handled by CI on each push to master (ideally through validated merge). CI should create your numeric tag and upload the build output to artifactory.  See the [spec](./SPEC.md) for full info.
 
 ## Docker Image
 The `build` and `shell` commands will use `docker run` on a configured image. The only condition we require of docker images is that they have a `lal` user added.
+
+Normally, this is sufficient in a docker image to satisfy constraints:
+
+```
+RUN useradd -ms /bin/bash lal -G sudo && \
+    echo "%sudo ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+VOLUME ["/home/lal/volume"]
+```
+
+Note that `sudo` is not necessary, but sometimes convenient.
 
 We will use this user inside the container to run build scripts. By default this works best if the `id` of the host user is 1000:1000, but if it is not, then lal will create a slightly modified version of the image that matches the user id and group id for your host system.
 
@@ -140,36 +85,28 @@ When making changes:
 
 ```sh
 cargo build
-./target/debug/lal subcommand ..args # check that your thing is good
+lal subcommand ..args # check that your thing is good
 cargo test # write tests
 ```
-
-Note that the tests overwrite your `~/.lal/config` so you may find the `run_tests` function in `BUILD` useful. You can alternatively:
-
-```sh
-source BUILD
-lal build lal-unit-tests && run_tests
-```
-
-We can't run the `lal-unit-tests` with `lal` because the test executable invokes `docker`.
 
 Good practices before comitting (not mandatory):
 
 ```sh
 cargo fmt # requires `cargo install rustfmt` and $HOME/.cargo/bin on $PATH
-rustup run nighthly cargo clippy # requires rustup.rs install of rust + nightly install of clippy
+rustup run nighthly cargo clippy # requires nightly install of clippy
 ```
 
 ## Build issues
 If libraries cannot be built, then upgrade `rustc` by running `rustup update stable`.
 
+- missing ssl: install distro equivalent of `libssl-dev` then `cargo clean`
 - fatal error: 'openssl/hmac.h' file not found If you are on a GNU/Linux distribution (like Ubuntu), please install `libssl-dev`. If you are on OSX, please install openssl and check your OpenSSL configuration:
 
 ```sh
 brew install openssl
 export OPENSSL_INCLUDE_DIR=`brew --prefix openssl`/include
 export OPENSSL_LIB_DIR=`brew --prefix openssl`/lib
-export DEP_OPENSSL_INCLUDE=`brew --prefix openssl`/include # should work without this
+export DEP_OPENSSL_INCLUDE=`brew --prefix openssl`/include
 ```
 
 ## Runtime issues
@@ -201,4 +138,5 @@ lal -vv fetch # all output
 ```
 
 ### Influences
-Terms used herein reference [so you want to write a package manager](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#.rlvjqxc4r) (long read).
+Main inspirations were [cargo](https://github.com/rust-lang/cargo) and [npm](https://github.com/npm/npm).
+A useful reference for the terms used throughout: [so you want to write a package manager](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#.rlvjqxc4r) (long read).
