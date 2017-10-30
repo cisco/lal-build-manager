@@ -2,6 +2,8 @@
 authors = ["Eirik Albrigtsen <ealbrigt@cisco.com>"]
 name = "lal"
 version = "3.7.0"
+description = "A language-agnostic build system and dependency manager"
+license = "MIT"
 
 [[bin]]
 doc = false
