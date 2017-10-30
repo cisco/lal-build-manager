@@ -152,7 +152,8 @@ pub fn verify_global_versions(lf: &Lockfile, m: &Manifest) -> LalResult<()> {
                 CliError::NonGlobalDependencies(name.clone())
             })?;
         // also ensure it matches the version in the manifest
-        let vreq = *all_deps.get(name)
+        let vreq = *all_deps
+            .get(name)
             .ok_or_else(|| {
                 // This is a first level dependency - it should be in the manifest
                 CliError::ExtraneousDependencies(name.clone())
@@ -166,7 +167,7 @@ pub fn verify_global_versions(lf: &Lockfile, m: &Manifest) -> LalResult<()> {
         }
         // Prevent Cycles (enough to stop it at one manifest level)
         if &m.name == name {
-            return Err(CliError::DependencyCycle(name.clone()))
+            return Err(CliError::DependencyCycle(name.clone()));
         }
     }
     Ok(())
@@ -181,7 +182,8 @@ pub fn verify_consistent_dependency_versions(lf: &Lockfile, m: &Manifest) -> Lal
             warn!("Multiple version requirements on {} found in lockfile",
                   name.clone());
             warn!("If you are trying to propagate {0} into the tree, \
-                    you need to follow `lal propagate {0}`", name);
+                    you need to follow `lal propagate {0}`",
+                  name);
             return Err(CliError::MultipleVersions(name.clone()));
         }
     }

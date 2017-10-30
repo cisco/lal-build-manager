@@ -16,9 +16,7 @@ pub enum BackendConfiguration {
 
 /// Artifactory is the default backend
 impl Default for BackendConfiguration {
-    fn default() -> Self {
-        BackendConfiguration::Artifactory(ArtifactoryConfig::default())
-    }
+    fn default() -> Self { BackendConfiguration::Artifactory(ArtifactoryConfig::default()) }
 }
 
 
@@ -47,11 +45,12 @@ pub trait Backend {
 
     /// Get the tarball url of a `Component` in a backend location
     /// If no version is given, return latest
-    fn get_tarball_url(&self,
-                       name: &str,
-                       version: Option<u32>,
-                       loc: Option<&str>)
-                       -> LalResult<Component>;
+    fn get_tarball_url(
+        &self,
+        name: &str,
+        version: Option<u32>,
+        loc: Option<&str>,
+    ) -> LalResult<Component>;
 
     /// Publish a release build (ARTIFACT dir) to a specific location
     fn upload_artifact_dir(&self, name: &str, version: u32, env: Option<&str>) -> LalResult<()>;
@@ -69,21 +68,23 @@ pub trait Backend {
 /// This wraps the common fetch commands in a caching layer on the cache dir.
 pub trait CachedBackend {
     /// Retrieve the location to a cached published component (downloading if necessary)
-    fn retrieve_published_component(&self,
-                                    name: &str,
-                                    version: Option<u32>,
-                                    env: Option<&str>)
-                                    -> LalResult<(PathBuf, Component)>;
+    fn retrieve_published_component(
+        &self,
+        name: &str,
+        version: Option<u32>,
+        env: Option<&str>,
+    ) -> LalResult<(PathBuf, Component)>;
 
     /// Retrieve the location to a stashed component
     fn retrieve_stashed_component(&self, name: &str, code: &str) -> LalResult<PathBuf>;
 
     /// Retrieve and unpack a cached component in INPUT
-    fn unpack_published_component(&self,
-                                  name: &str,
-                                  version: Option<u32>,
-                                  env: Option<&str>)
-                                  -> LalResult<Component>;
+    fn unpack_published_component(
+        &self,
+        name: &str,
+        version: Option<u32>,
+        env: Option<&str>,
+    ) -> LalResult<Component>;
 
     /// Retrieve and unpack a stashed component to INPUT
     fn unpack_stashed_component(&self, name: &str, code: &str) -> LalResult<()>;

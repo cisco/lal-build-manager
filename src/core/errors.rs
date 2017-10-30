@@ -134,20 +134,19 @@ impl fmt::Display for CliError {
                        "No manifest.json found - are you at repository toplevel?")
             }
             CliError::ExecutableMissing(ref s) => {
-                write!(f, "Please ensure you have `{}` installed on your system first.", s)
+                write!(f,
+                       "Please ensure you have `{}` installed on your system first.",
+                       s)
             }
             CliError::OutdatedLal(ref o, ref n) => {
-                write!(f, "Your version of lal `{}` is too old (<{}). Please `lal upgrade`.", o, n)
+                write!(f,
+                       "Your version of lal `{}` is too old (<{}). Please `lal upgrade`.",
+                       o,
+                       n)
             }
-            CliError::MissingSslCerts => {
-                write!(f, "Missing SSL certificates")
-            }
-            CliError::UnmappableRootUser => {
-                write!(f, "Root user is not supported for lal builds")
-            }
-            CliError::MissingMount(ref s) => {
-                write!(f, "Missing mount {}", s)
-            }
+            CliError::MissingSslCerts => write!(f, "Missing SSL certificates"),
+            CliError::UnmappableRootUser => write!(f, "Root user is not supported for lal builds"),
+            CliError::MissingMount(ref s) => write!(f, "Missing mount {}", s),
             CliError::MissingConfig => write!(f, "No ~/.lal/config found"),
             CliError::MissingComponent(ref s) => {
                 write!(f, "Component '{}' not found in manifest", s)
@@ -193,9 +192,7 @@ impl fmt::Display for CliError {
             CliError::BuildScriptNotExecutable(ref s) => {
                 write!(f, "BUILD script at {} is not executable", s)
             }
-            CliError::MissingBuildScript => {
-                write!(f, "No `BUILD` script found")
-            }
+            CliError::MissingBuildScript => write!(f, "No `BUILD` script found"),
             CliError::MissingScript(ref s) => {
                 write!(f, "Missing script '{}' in local folder .lal/scripts/", s)
             }
@@ -211,7 +208,11 @@ impl fmt::Display for CliError {
             }
             CliError::SubprocessFailure(n) => write!(f, "Process exited with {}", n),
             CliError::DockerPermissionSafety(ref s, u, g) => {
-                write!(f, "ID mismatch inside and outside docker - {}; UID and GID are {}:{}", s, u, g)
+                write!(f,
+                       "ID mismatch inside and outside docker - {}; UID and GID are {}:{}",
+                       s,
+                       u,
+                       g)
             }
             CliError::DockerImageNotFound(ref s) => write!(f, "Could not find docker image {}", s),
             CliError::InstallFailure => write!(f, "Install failed"),
@@ -231,30 +232,22 @@ impl fmt::Display for CliError {
                        "Failed to validate new lal version - rolling back ({})",
                        s)
             }
-            CliError::UploadFailure(ref up) => {
-                write!(f,"Upload failure: {}", up)
-            }
+            CliError::UploadFailure(ref up) => write!(f, "Upload failure: {}", up),
         }
     }
 }
 
 // Allow io and json errors to be converted to `CliError` in a try! without map_err
 impl From<io::Error> for CliError {
-    fn from(err: io::Error) -> CliError {
-        CliError::Io(err)
-    }
+    fn from(err: io::Error) -> CliError { CliError::Io(err) }
 }
 
 impl From<hyper::Error> for CliError {
-    fn from(err: hyper::Error) -> CliError {
-        CliError::Hype(err)
-    }
+    fn from(err: hyper::Error) -> CliError { CliError::Hype(err) }
 }
 
 impl From<serde_json::error::Error> for CliError {
-    fn from(err: serde_json::error::Error) -> CliError {
-        CliError::Parse(err)
-    }
+    fn from(err: serde_json::error::Error) -> CliError { CliError::Parse(err) }
 }
 
 /// Type alias to stop having to type out `CliError` everywhere.

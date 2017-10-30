@@ -29,17 +29,22 @@ fn result_exit<T>(name: &str, x: LalResult<T>) {
 }
 
 // functions that work without a manifest, and thus can run without a set env
-fn handle_manifest_agnostic_cmds(args: &ArgMatches,
-                                 cfg: &Config,
-                                 backend: &Backend,
-                                 explicit_env: Option<&str>) {
+fn handle_manifest_agnostic_cmds(
+    args: &ArgMatches,
+    cfg: &Config,
+    backend: &Backend,
+    explicit_env: Option<&str>,
+) {
     let res = if let Some(a) = args.subcommand_matches("export") {
         lal::export(backend,
                     a.value_of("component").unwrap(),
                     a.value_of("output"),
                     explicit_env)
     } else if let Some(a) = args.subcommand_matches("query") {
-        lal::query(backend, explicit_env, a.value_of("component").unwrap(), a.is_present("latest"))
+        lal::query(backend,
+                   explicit_env,
+                   a.value_of("component").unwrap(),
+                   a.is_present("latest"))
     } else if let Some(a) = args.subcommand_matches("publish") {
         lal::publish(a.value_of("component").unwrap(), backend, explicit_env)
     } else if args.subcommand_matches("list-environments").is_some() {
@@ -51,9 +56,7 @@ fn handle_manifest_agnostic_cmds(args: &ArgMatches,
 }
 
 // functions that need a manifest, but do not depend on environment values
-fn handle_environment_agnostic_cmds(args: &ArgMatches,
-                                    mf: &Manifest,
-                                    backend: &Backend) {
+fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, backend: &Backend) {
     let res = if let Some(a) = args.subcommand_matches("status") {
         lal::status(mf,
                     a.is_present("full"),
@@ -97,11 +100,12 @@ fn handle_network_cmds(args: &ArgMatches, mf: &Manifest, backend: &Backend, env:
     result_exit(args.subcommand_name().unwrap(), res)
 }
 
-fn handle_env_command(args: &ArgMatches,
-                      cfg: &Config,
-                      env: &str,
-                      stickies: &StickyOptions)
-                      -> Container {
+fn handle_env_command(
+    args: &ArgMatches,
+    cfg: &Config,
+    env: &str,
+    stickies: &StickyOptions,
+) -> Container {
 
     // lookup associated container from
     let container = cfg.get_container(env.into())
@@ -149,7 +153,8 @@ fn handle_upgrade(args: &ArgMatches, cfg: &Config) {
     // Autoupgrade if enabled - runs once daily if enabled
     // also excluding all listers because they are used in autocomplete
     if cfg.autoupgrade && subname != "upgrade" && !subname.contains("list-") &&
-       cfg.upgrade_check_time() {
+        cfg.upgrade_check_time()
+    {
         debug!("Performing daily upgrade check");
         let _ = lal::upgrade(false).map_err(|e| {
             error!("Daily upgrade check failed: {}", e);
@@ -165,11 +170,13 @@ fn handle_upgrade(args: &ArgMatches, cfg: &Config) {
 
 
 
-fn handle_docker_cmds(args: &ArgMatches,
-                      mf: &Manifest,
-                      cfg: &Config,
-                      env: &str,
-                      container: &Container) {
+fn handle_docker_cmds(
+    args: &ArgMatches,
+    mf: &Manifest,
+    cfg: &Config,
+    env: &str,
+    container: &Container,
+) {
     let res = if let Some(a) = args.subcommand_matches("verify") {
         // not really a docker related command, but it needs
         // the resolved env to verify consistent dependency usage
@@ -204,11 +211,7 @@ fn handle_docker_cmds(args: &ArgMatches,
             host_networking: a.is_present("net-host"),
             env_vars: values_t!(a.values_of("env-var"), String).unwrap_or(vec![]),
         };
-        lal::shell(cfg,
-                   container,
-                   &modes,
-                   xs,
-                   a.is_present("privileged"))
+        lal::shell(cfg, container, &modes, xs, a.is_present("privileged"))
     } else if let Some(a) = args.subcommand_matches("run") {
         let xs = if a.is_present("parameters") {
             a.values_of("parameters").unwrap().collect::<Vec<_>>()
@@ -520,7 +523,7 @@ fn main() {
 
     if cfg!(feature = "upgrade") {
         app = app.subcommand(SubCommand::with_name("upgrade")
-                    .about("Attempts to upgrade lal from artifactory"));
+                                 .about("Attempts to upgrade lal from artifactory"));
     }
 
     let args = app.get_matches();
@@ -557,8 +560,7 @@ fn main() {
     openssl_probe::init_ssl_cert_env_vars();
 
     // Do upgrade checks or handle explicit `lal upgrade` here
-    #[cfg(feature = "upgrade")]
-    handle_upgrade(&args, &config);
+    #[cfg(feature = "upgrade")] handle_upgrade(&args, &config);
 
     // Allow lal init / clean without manifest existing in PWD
     if let Some(a) = args.subcommand_matches("init") {
@@ -584,7 +586,8 @@ fn main() {
     // Manifest agnostic commands need explicit environments to not look in global location
     let explicit_env = args.value_of("environment");
     if let Some(env) = explicit_env {
-        config.get_container(env.into())
+        config
+            .get_container(env.into())
             .map_err(|e| {
                 error!("Environment error: {}", e);
                 process::exit(1)

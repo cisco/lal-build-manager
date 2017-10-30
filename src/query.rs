@@ -8,8 +8,7 @@ pub fn query(backend: &Backend, env: Option<&str>, component: &str, last: bool) 
     if last {
         let ver = backend.get_latest_version(component, env)?;
         println!("{}", ver);
-    }
-    else {
+    } else {
         let vers = backend.get_versions(component, env)?;
         for v in vers {
             println!("{}", v);

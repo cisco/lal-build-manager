@@ -1,5 +1,14 @@
-chain_base_indent = "tabbed"
-chain_indent = "tabbed"
-single_line_if_else_max_width = 80
+chain_indent = "block"
+fn_call_style = "visual"
+closure_block_indent_threshold = 0
+fn_single_line = true
+array_layout = "block"
+
+max_width = 100
+single_line_if_else_max_width = 90
+chain_one_line_max = 90
+
+newline_style = "unix"
+
 write_mode = "overwrite"
 use_try_shorthand = true

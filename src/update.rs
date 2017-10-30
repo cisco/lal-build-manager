@@ -9,13 +9,14 @@ use super::{LalResult, Manifest};
 /// If installation was successful, the fetched tarballs are unpacked into `./INPUT`.
 /// If one `save` or `savedev` was set, the fetched versions are also updated in the
 /// manifest. This provides an easy way to not have to deal with strict JSON manually.
-pub fn update<T: CachedBackend + ?Sized>(manifest: &Manifest,
-                                backend: &T,
-                                components: Vec<String>,
-                                save: bool,
-                                savedev: bool,
-                                env: &str)
-                                -> LalResult<()> {
+pub fn update<T: CachedBackend + ?Sized>(
+    manifest: &Manifest,
+    backend: &T,
+    components: Vec<String>,
+    save: bool,
+    savedev: bool,
+    env: &str,
+) -> LalResult<()> {
     debug!("Update specific deps: {:?}", components);
 
     let mut error = None;
@@ -84,12 +85,13 @@ pub fn update<T: CachedBackend + ?Sized>(manifest: &Manifest,
 /// This will pass all dependencies or devDependencies to update.
 /// If the save flag is set, then the manifest will be updated correctly.
 /// I.e. dev updates will update only the dev portions of the manifest.
-pub fn update_all<T: CachedBackend + ?Sized>(manifest: &Manifest,
-                                    backend: &T,
-                                    save: bool,
-                                    dev: bool,
-                                    env: &str)
-                                    -> LalResult<()> {
+pub fn update_all<T: CachedBackend + ?Sized>(
+    manifest: &Manifest,
+    backend: &T,
+    save: bool,
+    dev: bool,
+    env: &str,
+) -> LalResult<()> {
     let deps: Vec<String> = if dev {
         manifest.devDependencies.keys().cloned().collect()
     } else {

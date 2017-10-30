@@ -8,14 +8,16 @@ use super::{LalResult, Config, ConfigDefaults, CliError, config_dir};
 
 fn executable_on_path(exe: &str) -> LalResult<()> {
     trace!("Verifying executable {}", exe);
-    let s = Command::new("which")
-                    .arg(exe)
-                    .output()?;
+    let s = Command::new("which").arg(exe).output()?;
     if !s.status.success() {
-        debug!("Failed to find {}: {}", exe, String::from_utf8_lossy(&s.stderr).trim());
+        debug!("Failed to find {}: {}",
+               exe,
+               String::from_utf8_lossy(&s.stderr).trim());
         return Err(CliError::ExecutableMissing(exe.into()));
     };
-    debug!("Found {} at {}", exe, String::from_utf8_lossy(&s.stdout).trim());
+    debug!("Found {} at {}",
+           exe,
+           String::from_utf8_lossy(&s.stdout).trim());
     Ok(())
 }
 
@@ -37,7 +39,10 @@ fn kernel_sanity() -> LalResult<()> {
     // the pre numbers does not indicate a prerelease, but rather fixes
     // thus 4.4.0-93 on ubuntu is semver LESS than semver 4.4.0
     // We thus restrict to be > 4.4.0-0-0 instead (>= number of pre-identifiers)
-    let req = Version { major: 4, minor: 4, patch: 0,
+    let req = Version {
+        major: 4,
+        minor: 4,
+        patch: 0,
         pre: vec![Identifier::Numeric(0), Identifier::Numeric(0)],
         build: vec![],
     };
@@ -46,13 +51,24 @@ fn kernel_sanity() -> LalResult<()> {
     match uname.trim().parse::<Version>() {
         Ok(ver) => {
             debug!("Found linux kernel version {}", ver);
-            trace!("found major {} minor {} patch {} - prelen {}", ver.major, ver.minor, ver.patch, ver.pre.len());
-            trace!("req major {} minor {} patch {} - prelen {}", req.major, req.minor, req.patch, req.pre.len());
+            trace!("found major {} minor {} patch {} - prelen {}",
+                   ver.major,
+                   ver.minor,
+                   ver.patch,
+                   ver.pre.len());
+            trace!("req major {} minor {} patch {} - prelen {}",
+                   req.major,
+                   req.minor,
+                   req.patch,
+                   req.pre.len());
             if ver >= req {
-                debug!("Minimum kernel requirement of {} satisfied ({})", req.to_string(), ver.to_string());
+                debug!("Minimum kernel requirement of {} satisfied ({})",
+                       req.to_string(),
+                       ver.to_string());
             } else {
                 warn!("Your Linux kernel {} is very old", ver.to_string());
-                warn!("A kernel >= {} is highly recommended on Linux systems", req.to_string())
+                warn!("A kernel >= {} is highly recommended on Linux systems",
+                      req.to_string())
             }
         }
         Err(e) => {
@@ -66,7 +82,13 @@ fn kernel_sanity() -> LalResult<()> {
 
 fn docker_version_check() -> LalResult<()> {
     // docker-ce changes to different version scheme, but still semver >= 1.13
-    let req = Version { major: 1, minor: 12, patch: 0, pre: vec![], build: vec![] };
+    let req = Version {
+        major: 1,
+        minor: 12,
+        patch: 0,
+        pre: vec![],
+        build: vec![],
+    };
     // NB: this is nicer: `docker version -f "{{ .Server.Version }}"`
     // but it doesn't work on the old versions we wnat to prevent..
     let dver_output = Command::new("docker").arg("--version").output()?;
@@ -84,13 +106,17 @@ fn docker_version_check() -> LalResult<()> {
             debug!("Found docker version {}", ver);
             if ver < req {
                 warn!("Your docker version {} is very old", ver.to_string());
-                warn!("A docker version >= {} is highly recommended", req.to_string())
+                warn!("A docker version >= {} is highly recommended",
+                      req.to_string())
             } else {
-                debug!("Minimum docker requirement of {} satisfied ({})", req.to_string(), ver.to_string());
+                debug!("Minimum docker requirement of {} satisfied ({})",
+                       req.to_string(),
+                       ver.to_string());
             }
         }
         Err(e) => {
-            warn!("Failed to parse docker version from `docker --version`: {}", e);
+            warn!("Failed to parse docker version from `docker --version`: {}",
+                  e);
             warn!("Note that a docker version >= 1.12 is expected");
         }
     }
@@ -128,7 +154,9 @@ fn lal_version_check(minlal: &str) -> LalResult<()> {
     if current < req {
         Err(CliError::OutdatedLal(current.to_string(), req.to_string()))
     } else {
-        debug!("Minimum lal requirement of {} satisfied ({})", req.to_string(), current.to_string());
+        debug!("Minimum lal requirement of {} satisfied ({})",
+               req.to_string(),
+               current.to_string());
         Ok(())
     }
 }
@@ -169,7 +197,17 @@ pub fn configure(save: bool, interactive: bool, defaults: &str) -> LalResult<Con
     let _ = create_lal_dir()?;
     // TODO: root id check
 
-    for exe in ["docker", "tar", "touch", "id", "find", "mkdir", "chmod", "uname"].into_iter() {
+    for exe in [
+        "docker",
+        "tar",
+        "touch",
+        "id",
+        "find",
+        "mkdir",
+        "chmod",
+        "uname",
+    ].into_iter()
+    {
         executable_on_path(exe)?;
     }
     docker_sanity()?;

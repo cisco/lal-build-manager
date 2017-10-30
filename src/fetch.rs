@@ -15,11 +15,12 @@ fn clean_input() {
 ///
 /// This will read, and HTTP GET all the dependencies at the specified versions.
 /// If the `core` bool is set, then `devDependencies` are not installed.
-pub fn fetch<T: CachedBackend + ?Sized>(manifest: &Manifest,
-                               backend: &T,
-                               core: bool,
-                               env: &str)
-                               -> LalResult<()> {
+pub fn fetch<T: CachedBackend + ?Sized>(
+    manifest: &Manifest,
+    backend: &T,
+    core: bool,
+    env: &str,
+) -> LalResult<()> {
     debug!("Installing dependencies{}",
            if !core { " and devDependencies" } else { "" });
 
@@ -33,7 +34,8 @@ pub fn fetch<T: CachedBackend + ?Sized>(manifest: &Manifest,
     let mut extraneous = vec![]; // stuff we should remove
 
     // figure out what we have already
-    let lf = Lockfile::default().populate_from_input()
+    let lf = Lockfile::default()
+        .populate_from_input()
         .map_err(|e| {
             // Guide users a bit if they did something dumb - see #77
             warn!("Populating INPUT data failed - your INPUT may be corrupt");
@@ -66,20 +68,20 @@ pub fn fetch<T: CachedBackend + ?Sized>(manifest: &Manifest,
         let cmponent_dir = Path::new("./INPUT").join(&k);
         if cmponent_dir.is_dir() {
             // Don't think this can fail, but we are dealing with NFS
-            fs::remove_dir_all(&cmponent_dir).map_err(|e| {
+            fs::remove_dir_all(&cmponent_dir)
+                .map_err(|e| {
                     warn!("Failed to remove INPUT/{} - {}", k, e);
                     warn!("Please clean out your INPUT folder yourself to avoid corruption");
                     e
                 })?;
         }
 
-        let _ = backend.unpack_published_component(&k, Some(v), Some(env))
-            .map_err(|e| {
-                warn!("Failed to completely install {} ({})", k, e);
-                // likely symlinks inside tarball that are being dodgy
-                // this is why we clean_input
-                err = Some(e);
-            });
+        let _ = backend.unpack_published_component(&k, Some(v), Some(env)).map_err(|e| {
+            warn!("Failed to completely install {} ({})", k, e);
+            // likely symlinks inside tarball that are being dodgy
+            // this is why we clean_input
+            err = Some(e);
+        });
     }
 
     // remove extraneous deps

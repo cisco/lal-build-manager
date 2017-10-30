@@ -38,7 +38,7 @@ impl<R: Read + Seek> ProgressReader<R> {
         rdr.seek(SeekFrom::Start(0))?;
         let pb = ProgressBar::new(len);
         pb.set_style(ProgressStyle::default_bar()
-            .template("{bar:40.green/black} {bytes}/{total_bytes} ({eta})"));
+                         .template("{bar:40.green/black} {bytes}/{total_bytes} ({eta})"));
         Ok(ProgressReader { rdr, pb })
     }
 }

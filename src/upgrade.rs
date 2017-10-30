@@ -44,12 +44,12 @@ fn identify_exe() -> LalResult<ExeInfo> {
         None
     };
     Ok(ExeInfo {
-        dynamic: is_dynamic,
-        debug: pthstr.contains("debug"), // cheap check for compiled versions
-        path: pthstr,
-        prefix: prefix,
-        version: Version::parse(env!("CARGO_PKG_VERSION")).unwrap(),
-    })
+           dynamic: is_dynamic,
+           debug: pthstr.contains("debug"), // cheap check for compiled versions
+           path: pthstr,
+           prefix: prefix,
+           version: Version::parse(env!("CARGO_PKG_VERSION")).unwrap(),
+       })
 }
 
 // basic tarball extractor
@@ -100,9 +100,8 @@ fn validate_exe(latest: &LatestLal, exe: &ExeInfo) -> LalResult<()> {
 fn upgrade_exe(latest: &LatestLal, exe: &ExeInfo) -> LalResult<()> {
     let prefix = exe.prefix.clone().unwrap();
     // 0. sanity - could we actually upgrade if we tried?
-    verify_permissions(exe).map_err(|_|
-        CliError::MissingPrefixPermissions(prefix.to_string_lossy().into())
-    )?;
+    verify_permissions(exe)
+        .map_err(|_| CliError::MissingPrefixPermissions(prefix.to_string_lossy().into()))?;
     debug!("Have permissions to write in {}", prefix.display());
 
     // 1. rename current running executable to the same except _old suffix
@@ -161,7 +160,9 @@ pub fn upgrade(silent: bool) -> LalResult<bool> {
             // install lal in the prefix it's normally in
             info!("Upgrading...");
             upgrade_exe(&latest, &exe)?;
-            info!("lal upgraded successfully to {} at {}", latest.version, exe.path);
+            info!("lal upgraded successfully to {} at {}",
+                  latest.version,
+                  exe.path);
             println!("");
         } else {
             // static, but no good guess of where to install - let user decide:

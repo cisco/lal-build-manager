@@ -83,11 +83,11 @@ pub fn http_download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
             use indicatif::{ProgressBar, ProgressStyle};
             let total_size = res.headers.get::<hyper::header::ContentLength>().unwrap().0;
             let mut downloaded = 0;
-            let mut buffer = [0; 1024*64];
+            let mut buffer = [0; 1024 * 64];
             let mut f = File::create(save)?;
             let pb = ProgressBar::new(total_size);
-             pb.set_style(ProgressStyle::default_bar()
-                .template("{bar:40.yellow/black} {bytes}/{total_bytes} ({eta})"));
+            pb.set_style(ProgressStyle::default_bar()
+                             .template("{bar:40.yellow/black} {bytes}/{total_bytes} ({eta})"));
 
             while downloaded < total_size {
                 let read = res.read(&mut buffer)?;
@@ -114,7 +114,8 @@ pub fn http_download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
 fn get_storage_versions(uri: &str) -> LalResult<Vec<u32>> {
     debug!("GET {}", uri);
 
-    let resp = hyper_req(uri).map_err(|e| {
+    let resp = hyper_req(uri)
+        .map_err(|e| {
             warn!("Failed to GET {}: {}", uri, e);
             CliError::BackendFailure("No version information found on API".into())
         })?;
@@ -151,16 +152,13 @@ fn upload_artifact(arti: &ArtifactoryConfig, uri: &str, f: &mut File) -> LalResu
         sha.update(&buffer);
 
         let auth = Authorization(Basic {
-            username: creds.username,
-            password: Some(creds.password),
-        });
+                                     username: creds.username,
+                                     password: Some(creds.password),
+                                 });
 
         // upload the artifact
         info!("PUT {}", full_uri);
-        let resp = client.put(&full_uri[..])
-            .header(auth.clone())
-            .body(&buffer[..])
-            .send()?;
+        let resp = client.put(&full_uri[..]).header(auth.clone()).body(&buffer[..]).send()?;
         debug!("resp={:?}", resp);
         let respstr = format!("{} from PUT {}", resp.status, full_uri);
         if resp.status != StatusCode::Created {
@@ -174,7 +172,8 @@ fn upload_artifact(arti: &ArtifactoryConfig, uri: &str, f: &mut File) -> LalResu
         // This `respsha` can fail if engci-maven becomes inconsistent. NotFound has been seen.
         // And that makes no sense because the above must have returned Created to get here..
         info!("PUT {} (X-Checksum-Sha1)", full_uri);
-        let respsha = client.put(&full_uri[..])
+        let respsha = client
+            .put(&full_uri[..])
             .header(XCheckSumDeploy("true".into()))
             .header(XCheckSumSha1(sha.digest().to_string()))
             .header(auth)
@@ -215,11 +214,12 @@ fn get_dependency_url_default(art_cfg: &ArtifactoryConfig, name: &str, version: 
 }
 
 // The URL for a component tarball under the one of the environment trees
-fn get_dependency_env_url(art_cfg: &ArtifactoryConfig,
-                          name: &str,
-                          version: u32,
-                          env: &str)
-                          -> String {
+fn get_dependency_env_url(
+    art_cfg: &ArtifactoryConfig,
+    name: &str,
+    version: u32,
+    env: &str,
+) -> String {
     let tar_url = format!("{}/{}/env/{}/{}/{}/{}.tar.gz",
                           art_cfg.slave,
                           art_cfg.vgroup,
@@ -232,11 +232,12 @@ fn get_dependency_env_url(art_cfg: &ArtifactoryConfig,
     tar_url
 }
 
-fn get_dependency_url(art_cfg: &ArtifactoryConfig,
-                      name: &str,
-                      version: u32,
-                      env: Option<&str>)
-                      -> String {
+fn get_dependency_url(
+    art_cfg: &ArtifactoryConfig,
+    name: &str,
+    version: u32,
+    env: Option<&str>,
+) -> String {
     if let Some(e) = env {
         get_dependency_env_url(art_cfg, name, version, e)
     } else {
@@ -245,10 +246,11 @@ fn get_dependency_url(art_cfg: &ArtifactoryConfig,
     }
 }
 
-fn get_dependency_url_latest(art_cfg: &ArtifactoryConfig,
-                             name: &str,
-                             env: Option<&str>)
-                             -> LalResult<Component> {
+fn get_dependency_url_latest(
+    art_cfg: &ArtifactoryConfig,
+    name: &str,
+    env: Option<&str>,
+) -> LalResult<Component> {
     let url = format!("{}/api/storage/{}/{}",
                       art_cfg.master,
                       art_cfg.release,
@@ -257,18 +259,19 @@ fn get_dependency_url_latest(art_cfg: &ArtifactoryConfig,
 
     debug!("Found latest version as {}", v);
     Ok(Component {
-        tarball: get_dependency_url(art_cfg, name, v, env),
-        version: v,
-        name: name.into(),
-    })
+           tarball: get_dependency_url(art_cfg, name, v, env),
+           version: v,
+           name: name.into(),
+       })
 }
 
 // This queries the API for the default location
 // if a default exists, then all our current multi-builds must exist
-fn get_latest_versions(art_cfg: &ArtifactoryConfig,
-                       name: &str,
-                       env: Option<&str>)
-                       -> LalResult<Vec<u32>> {
+fn get_latest_versions(
+    art_cfg: &ArtifactoryConfig,
+    name: &str,
+    env: Option<&str>,
+) -> LalResult<Vec<u32>> {
     let url = match env {
         Some(e) => {
             format!("{}/api/storage/{}/{}/{}/{}",
@@ -289,17 +292,18 @@ fn get_latest_versions(art_cfg: &ArtifactoryConfig,
 }
 
 /// Main entry point for install
-fn get_tarball_uri(art_cfg: &ArtifactoryConfig,
-                   name: &str,
-                   version: Option<u32>,
-                   env: Option<&str>)
-                   -> LalResult<Component> {
+fn get_tarball_uri(
+    art_cfg: &ArtifactoryConfig,
+    name: &str,
+    version: Option<u32>,
+    env: Option<&str>,
+) -> LalResult<Component> {
     if let Some(v) = version {
         Ok(Component {
-            tarball: get_dependency_url(art_cfg, name, v, env),
-            version: v,
-            name: name.into(),
-        })
+               tarball: get_dependency_url(art_cfg, name, v, env),
+               version: v,
+               name: name.into(),
+           })
     } else {
         get_dependency_url_latest(art_cfg, name, env)
     }
@@ -325,7 +329,8 @@ pub fn get_latest_lal_version() -> LalResult<LatestLal> {
     // canonical latest url
     let uri = "https://engci-maven-master.cisco.com/artifactory/api/storage/CME-release/lal";
     debug!("GET {}", uri);
-    let resp = hyper_req(uri).map_err(|e| {
+    let resp = hyper_req(uri)
+        .map_err(|e| {
             warn!("Failed to GET {}: {}", uri, e);
             CliError::BackendFailure("No version information found on API".into())
         })?;
@@ -341,9 +346,10 @@ pub fn get_latest_lal_version() -> LalResult<LatestLal> {
 
     if let Some(l) = latest {
         Ok(LatestLal {
-            version: l.clone(),
-            url: format!("https://engci-maven.cisco.com/artifactory/CME-group/lal/{}/lal.tar", l),
-        })
+               version: l.clone(),
+               url: format!("https://engci-maven.cisco.com/artifactory/CME-group/lal/{}/lal.tar",
+                            l),
+           })
     } else {
         warn!("Failed to parse version information from artifactory storage api for lal");
         Err(CliError::BackendFailure("No version information found on API".into()))
@@ -384,11 +390,12 @@ impl Backend for ArtifactoryBackend {
         Ok(latest.version)
     }
 
-    fn get_tarball_url(&self,
-                       name: &str,
-                       version: Option<u32>,
-                       loc: Option<&str>)
-                       -> LalResult<Component> {
+    fn get_tarball_url(
+        &self,
+        name: &str,
+        version: Option<u32>,
+        loc: Option<&str>,
+    ) -> LalResult<Component> {
         get_tarball_uri(&self.config, name, version, loc)
     }
 
@@ -400,8 +407,7 @@ impl Backend for ArtifactoryBackend {
         let lockfile = artdir.join("lockfile.json");
 
         // uri prefix if specific env upload
-        let prefix = env.map(|s| format!("env/{}/", s))
-            .unwrap_or_else(|| "".into());
+        let prefix = env.map(|s| format!("env/{}/", s)).unwrap_or_else(|| "".into());
 
         let tar_uri = format!("{}{}/{}/{}.tar.gz", prefix, name, version, name);
         let mut tarf = File::open(tarball)?;
@@ -413,9 +419,7 @@ impl Backend for ArtifactoryBackend {
         Ok(())
     }
 
-    fn get_cache_dir(&self) -> String {
-        self.cache.clone()
-    }
+    fn get_cache_dir(&self) -> String { self.cache.clone() }
 
     fn raw_download(&self, url: &str, dest: &PathBuf) -> LalResult<()> {
         http_download_to_path(url, dest)

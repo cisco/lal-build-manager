@@ -51,7 +51,7 @@ pub struct Manifest {
     pub devDependencies: BTreeMap<String, u32>,
 
     /// Internal path of this manifest
-    #[serde(skip_serializing,skip_deserializing)]
+    #[serde(skip_serializing, skip_deserializing)]
     location: String,
 }
 
@@ -63,9 +63,7 @@ pub enum ManifestLocation {
     LalSubfolder,
 }
 impl Default for ManifestLocation {
-    fn default() -> ManifestLocation {
-        ManifestLocation::LalSubfolder
-    }
+    fn default() -> ManifestLocation { ManifestLocation::LalSubfolder }
 }
 impl ManifestLocation {
     /// Generate path for Manifest assuming pwd is the root
@@ -123,9 +121,7 @@ impl Manifest {
         deps
     }
     /// Read a manifest file in PWD
-    pub fn read() -> LalResult<Manifest> {
-        Ok(Manifest::read_from(&Path::new(".").to_path_buf())?)
-    }
+    pub fn read() -> LalResult<Manifest> { Ok(Manifest::read_from(&Path::new(".").to_path_buf())?) }
 
     /// Read a manifest file in an arbitrary path
     pub fn read_from(pwd: &PathBuf) -> LalResult<Manifest> {

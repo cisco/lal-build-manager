@@ -140,9 +140,7 @@ impl Config {
                     mountnew.src = src; // update potentially mapped source
                     mounts.push(mountnew);
                 }
-                Err(e) => {
-                    debug!("Ignoring mount check error {}", e)
-                }
+                Err(e) => debug!("Ignoring mount check error {}", e),
             }
         }
 

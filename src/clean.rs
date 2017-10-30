@@ -9,16 +9,14 @@ use super::LalResult;
 
 // helper for `lal::clean`
 fn clean_in_dir(cutoff: DateTime<UTC>, dirs: WalkDir) -> LalResult<()> {
-    let drs = dirs.into_iter()
-        .filter_map(|e| e.ok())
-        .filter(|e| e.path().is_dir());
+    let drs = dirs.into_iter().filter_map(|e| e.ok()).filter(|e| e.path().is_dir());
 
     for d in drs {
         let pth = d.path();
         trace!("Checking {}", pth.to_str().unwrap());
         let mtime = FileTime::from_last_modification_time(&d.metadata().unwrap());
         let mtimedate = UTC.ymd(1970, 1, 1).and_hms(0, 0, 0) +
-                        Duration::seconds(mtime.seconds_relative_to_1970() as i64);
+            Duration::seconds(mtime.seconds_relative_to_1970() as i64);
 
         trace!("Found {} with mtime {}", pth.to_str().unwrap(), mtimedate);
         if mtimedate < cutoff {

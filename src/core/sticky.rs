@@ -18,9 +18,7 @@ pub struct StickyOptions {
 
 impl StickyOptions {
     /// Initialize a StickyOptions with defaults
-    pub fn new() -> StickyOptions {
-        Default::default()
-    }
+    pub fn new() -> StickyOptions { Default::default() }
     /// Read and deserialize a StickyOptions from `.lal/opts`
     pub fn read() -> LalResult<StickyOptions> {
         let opts_path = Path::new(".lal/opts");

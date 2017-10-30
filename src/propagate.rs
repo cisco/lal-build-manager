@@ -9,21 +9,21 @@ struct SingleUpdate {
     /// Where to update dependencies
     pub repo: String,
     /// Dependencies to update
-    pub dependencies: Vec<String>
+    pub dependencies: Vec<String>,
 }
 
 /// A parallelizable update stage
 #[derive(Serialize, Default)]
 struct UpdateStage {
     /// Updates to perform at this stage
-    pub updates: Vec<SingleUpdate>
+    pub updates: Vec<SingleUpdate>,
 }
 
 /// A set of sequential update steps
 #[derive(Serialize, Default)]
 struct UpdateSequence {
     /// Update stages needed
-    pub stages: Vec<UpdateStage>
+    pub stages: Vec<UpdateStage>,
 }
 
 fn compute_update_stages(lf: &Lockfile, component: &str) -> LalResult<UpdateSequence> {
@@ -55,9 +55,12 @@ fn compute_update_stages(lf: &Lockfile, component: &str) -> LalResult<UpdateSequ
             if intersection.is_empty() {
                 // what to update is `handled` intersected with deps for this repo
                 stage.updates.push(SingleUpdate {
-                    repo: dep,
-                    dependencies: deps_for_name.intersection(&handled).cloned().collect(),
-                });
+                                       repo: dep,
+                                       dependencies: deps_for_name
+                                           .intersection(&handled)
+                                           .cloned()
+                                           .collect(),
+                                   });
             }
         }
 
@@ -83,9 +86,7 @@ pub fn propagate(manifest: &Manifest, component: &str, json_output: bool) -> Lal
     debug!("Calculating update path for {}", component);
 
     // TODO: allow taking a custom lockfile to be used outside a repo.
-    let lf = Lockfile::default()
-        .set_name(&manifest.name)
-        .populate_from_input()?;
+    let lf = Lockfile::default().set_name(&manifest.name).populate_from_input()?;
 
     let result = compute_update_stages(&lf, component)?;
 
@@ -98,7 +99,9 @@ pub fn propagate(manifest: &Manifest, component: &str, json_output: bool) -> Lal
         for stage in result.stages {
             println!("Stage {}:", i);
             for update in stage.updates {
-                println!("- update [{}] in {}", update.dependencies.join(", "), update.repo);
+                println!("- update [{}] in {}",
+                         update.dependencies.join(", "),
+                         update.repo);
             }
             i += 1;
         }

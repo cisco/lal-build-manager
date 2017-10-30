@@ -228,7 +228,11 @@ fn update_save<T: CachedBackend + Backend>(backend: &T) {
 
     // three main deps (and re-read manifest to avoid overwriting devedps)
     let mf2 = Manifest::read().unwrap();
-    let updates = vec!["libyaml".to_string(), "yajl".to_string(), "libwebsockets".to_string()];
+    let updates = vec![
+        "libyaml".to_string(),
+        "yajl".to_string(),
+        "libwebsockets".to_string(),
+    ];
     let ri = lal::update(&mf2, backend, updates, true, false, "xenial");
     chk::is_ok(ri, "could update libyaml and save");
 
@@ -317,9 +321,7 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
     {
         let mut f = File::create("./BUILD").unwrap();
         // Rust check in there to verify we can build in a rust container
-        write!(f,
-               "#!/bin/bash\nset -e\nwhich rustc\necho hi > test.txt\n")
-            .unwrap();
+        write!(f, "#!/bin/bash\nset -e\nwhich rustc\necho hi > test.txt\n").unwrap();
         Command::new("chmod").arg("+x").arg("BUILD").output().unwrap();
     } // scope ensures file is not busy before lal::build
 
@@ -408,7 +410,12 @@ fn run_scripts() {
     let cfg = Config::read().unwrap();
     let container = cfg.get_container("rust".into()).unwrap();
     let modes = ShellModes::default();
-    let r = lal::script(&cfg, &container, "subroutine", vec!["there", "mr"], &modes, false);
+    let r = lal::script(&cfg,
+                        &container,
+                        "subroutine",
+                        vec!["there", "mr"],
+                        &modes,
+                        false);
     assert!(r.is_ok(), "could run subroutine script");
 }
 

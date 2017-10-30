@@ -32,9 +32,7 @@ impl Container {
 }
 
 impl fmt::Display for Container {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}:{}", self.name, self.tag)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{}:{}", self.name, self.tag) }
 }
 
 /// Convenience default for functions that require Lockfile inspection
@@ -92,21 +90,20 @@ pub struct Lockfile {
 
 /// Generates a temporary empty lockfile for internal analysis
 impl Default for Lockfile {
-    fn default() -> Self {
-        Lockfile::new("templock", &Container::default(), "none", None, None)
-    }
+    fn default() -> Self { Lockfile::new("templock", &Container::default(), "none", None, None) }
 }
 
 impl Lockfile {
     /// Initialize an empty Lockfile with defaults
     ///
     /// If no version is given, the version is EXPERIMENTAL-{randhex} for Colony.
-    pub fn new(name: &str,
-               container: &Container,
-               env: &str,
-               v: Option<String>,
-               build_cfg: Option<&str>)
-               -> Self {
+    pub fn new(
+        name: &str,
+        container: &Container,
+        env: &str,
+        v: Option<String>,
+        build_cfg: Option<&str>,
+    ) -> Self {
         let def_version = format!("EXPERIMENTAL-{:x}", rand::random::<u64>());
         let time = UTC::now();
         Lockfile {
@@ -244,20 +241,17 @@ impl Lockfile {
     }
 
     /// List all used versions used of each dependency
-    pub fn find_all_dependency_versions(&self) -> ValueUsage {
-        self.find_all_values("version")
-    }
+    pub fn find_all_dependency_versions(&self) -> ValueUsage { self.find_all_values("version") }
 
     /// List all used environments used of each dependency
-    pub fn find_all_environments(&self) -> ValueUsage {
-        self.find_all_values("environment")
-    }
+    pub fn find_all_environments(&self) -> ValueUsage { self.find_all_values("environment") }
 
     /// List all dependency names used by each dependency (not transitively)
     pub fn find_all_dependency_names(&self) -> ValueUsage {
         let mut acc = HashMap::new();
         // ensure root node exists
-        acc.entry(self.name.clone()).or_insert_with(|| self.dependencies.keys().cloned().collect());
+        acc.entry(self.name.clone())
+            .or_insert_with(|| self.dependencies.keys().cloned().collect());
         for dep in self.dependencies.values() {
             // recurse and merge into parent acc:
             for (n, d) in dep.find_all_dependency_names() {
@@ -321,7 +315,9 @@ impl Lockfile {
         let mut res = BTreeSet::new();
 
         if !revdeps.contains_key(&component) {
-            warn!("Could not find {} in the dependency tree for {}", component, self.name);
+            warn!("Could not find {} in the dependency tree for {}",
+                  component,
+                  self.name);
             return res;
         }
 

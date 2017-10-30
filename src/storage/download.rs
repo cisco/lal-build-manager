@@ -4,26 +4,36 @@ use std::path::{Path, PathBuf};
 use storage::{Backend, CachedBackend, Component};
 use core::{CliError, LalResult, output};
 
-fn is_cached<T: Backend + ?Sized>(backend: &T, name: &str, version: u32, env: Option<&str>) -> bool {
+fn is_cached<T: Backend + ?Sized>(
+    backend: &T,
+    name: &str,
+    version: u32,
+    env: Option<&str>,
+) -> bool {
     get_cache_dir(backend, name, version, env).is_dir()
 }
 
-fn get_cache_dir<T: Backend + ?Sized>(backend: &T, name: &str, version: u32, env: Option<&str>) -> PathBuf {
+fn get_cache_dir<T: Backend + ?Sized>(
+    backend: &T,
+    name: &str,
+    version: u32,
+    env: Option<&str>,
+) -> PathBuf {
     let cache = backend.get_cache_dir();
     let pth = Path::new(&cache);
     match env {
-            None => pth.join("globals"),
-            Some(e) => pth.join("environments").join(e),
-        }
-        .join(name)
+        None => pth.join("globals"),
+        Some(e) => pth.join("environments").join(e),
+    }.join(name)
         .join(version.to_string())
 }
 
-fn store_tarball<T: Backend + ?Sized>(backend: &T,
-                             name: &str,
-                             version: u32,
-                             env: Option<&str>)
-                             -> Result<(), CliError> {
+fn store_tarball<T: Backend + ?Sized>(
+    backend: &T,
+    name: &str,
+    version: u32,
+    env: Option<&str>,
+) -> Result<(), CliError> {
     // 1. mkdir -p cacheDir/$name/$version
     let destdir = get_cache_dir(backend, name, version, env);
     if !destdir.is_dir() {
@@ -54,7 +64,8 @@ fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<()> 
 
     // Open file, conditionally wrap a progress bar around the file reading
     if cfg!(feature = "progress") {
-        #[cfg(feature = "progress")] {
+        #[cfg(feature = "progress")]
+        {
             use super::progress::ProgressReader;
             let data = fs::File::open(tarname)?;
             let progdata = ProgressReader::new(data)?;
@@ -80,14 +91,16 @@ fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<()> 
 /// Most subcommands should be OK with just using this trait rather than using
 /// `Backend` directly as this does the stuff you normally would want done.
 impl<T: ?Sized> CachedBackend for T
-    where T: Backend
+where
+    T: Backend,
 {
     /// Locate a proper component, downloading it and caching if necessary
-    fn retrieve_published_component(&self,
-                                    name: &str,
-                                    version: Option<u32>,
-                                    env: Option<&str>)
-                                    -> LalResult<(PathBuf, Component)> {
+    fn retrieve_published_component(
+        &self,
+        name: &str,
+        version: Option<u32>,
+        env: Option<&str>,
+    ) -> LalResult<(PathBuf, Component)> {
         trace!("Locate component {}", name);
 
         let component = self.get_tarball_url(name, version, env)?;
@@ -108,11 +121,12 @@ impl<T: ?Sized> CachedBackend for T
     }
 
     // basic functionality for `fetch`/`update`
-    fn unpack_published_component(&self,
-                                  name: &str,
-                                  version: Option<u32>,
-                                  env: Option<&str>)
-                                  -> LalResult<Component> {
+    fn unpack_published_component(
+        &self,
+        name: &str,
+        version: Option<u32>,
+        env: Option<&str>,
+    ) -> LalResult<Component> {
         let (tarname, component) = self.retrieve_published_component(name, version, env)?;
 
         debug!("Unpacking tarball {} for {}",
@@ -146,10 +160,7 @@ impl<T: ?Sized> CachedBackend for T
 
     // helper for `stash`
     fn stash_output(&self, name: &str, code: &str) -> LalResult<()> {
-        let destdir = Path::new(&self.get_cache_dir())
-            .join("stash")
-            .join(name)
-            .join(code);
+        let destdir = Path::new(&self.get_cache_dir()).join("stash").join(name).join(code);
         debug!("Creating {:?}", destdir);
         fs::create_dir_all(&destdir)?;
 

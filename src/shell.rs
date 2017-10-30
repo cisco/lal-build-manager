@@ -20,7 +20,9 @@ fn permission_sanity_check() -> LalResult<()> {
     let gid = gid_str.trim().parse::<u32>().unwrap(); // trust `id -g` is sane
 
     if uid != 1000 || gid != 1000 {
-        return Err(CliError::DockerPermissionSafety(format!("UID and GID are not 1000:1000"), uid, gid));
+        return Err(CliError::DockerPermissionSafety(format!("UID and GID are not 1000:1000"),
+                                                    uid,
+                                                    gid));
     }
 
     Ok(())
@@ -35,17 +37,14 @@ fn permission_sanity_check() -> LalResult<()> {
 /// docker images returns no output.
 fn get_docker_image_id(container: &Container) -> LalResult<String> {
     trace!("Using docker images to find ID of container {}", container);
-    let image_id_output = Command::new("docker")
-                                  .arg("images")
-                                  .arg("-q")
-                                  .arg(container.to_string())
-                                  .output()?;
+    let image_id_output =
+        Command::new("docker").arg("images").arg("-q").arg(container.to_string()).output()?;
     let image_id_str: String = String::from_utf8_lossy(&image_id_output.stdout).trim().into();
     match image_id_str.len() {
         0 => {
             trace!("Could not find ID");
             Err(CliError::DockerImageNotFound(container.to_string()))
-        },
+        }
         _ => {
             trace!("Found ID {}", image_id_str);
             Ok(image_id_str.into())
@@ -61,10 +60,7 @@ fn get_docker_image_id(container: &Container) -> LalResult<String> {
 /// command status() call fails for a different reason.
 fn pull_docker_image(container: &Container) -> LalResult<()> {
     trace!("Pulling container {}", container);
-    let s = Command::new("docker")
-                    .arg("pull")
-                    .arg(container.to_string())
-                    .status()?;
+    let s = Command::new("docker").arg("pull").arg(container.to_string()).status()?;
     if !s.success() {
         trace!("Pull failed");
         return Err(CliError::SubprocessFailure(s.code().unwrap_or(1001)));
@@ -87,10 +83,11 @@ fn build_docker_image(container: &Container, instructions: Vec<String>) -> LalRe
     // More safety
     let instruction_strings = instruction_strings.replace("'", "'\\''");
     let s = Command::new("bash")
-                    .arg("-c")
-                    .arg(format!("echo -e '{}' | docker build --tag {} -",
-                                 instruction_strings, container))
-                    .status()?;
+        .arg("-c")
+        .arg(format!("echo -e '{}' | docker build --tag {} -",
+                     instruction_strings,
+                     container))
+        .status()?;
     if !s.success() {
         trace!("Build failed");
         return Err(CliError::SubprocessFailure(s.code().unwrap_or(1001)));
@@ -122,10 +119,11 @@ fn fixup_docker_container(container: &Container, u: u32, g: u32) -> LalResult<Co
     info!("Using appropriate container for user {}:{}", u, g);
     // Find image id of regular docker container
     // We might have to pull it
-    let image_id = get_docker_image_id(container).or_else(|_| {
+    let image_id = get_docker_image_id(container)
+        .or_else(|_| {
             pull_docker_image(container)?;
             get_docker_image_id(container)
-            })?;
+        })?;
 
     // Produce name and tag of modified container
     let modified_container = Container {
@@ -139,16 +137,16 @@ fn fixup_docker_container(container: &Container, u: u32, g: u32) -> LalResult<Co
     // If we fail we need to build it
     match get_docker_image_id(&modified_container) {
         Ok(id) => {
-            info!("Found container {}, image id is {}",
-                  modified_container, id);
-        },
+            info!("Found container {}, image id is {}", modified_container, id);
+        }
         Err(_) => {
-            let instructions: Vec<String> = vec![
-                format!("FROM {}", container),
-                "USER root".into(),
-                format!("RUN groupmod -g {} lal && usermod -u {} lal", g, u),
-                "USER lal".into()
-            ];
+            let instructions: Vec<String> =
+                vec![
+                    format!("FROM {}", container),
+                    "USER root".into(),
+                    format!("RUN groupmod -g {} lal && usermod -u {} lal", g, u),
+                    "USER lal".into(),
+                ];
             info!("Attempting to build container {}...", modified_container);
             build_docker_image(&modified_container, instructions)?;
         }
@@ -163,12 +161,13 @@ fn fixup_docker_container(container: &Container, u: u32, g: u32) -> LalResult<Co
 /// and absorb the `Stdio` supplied by this `Command`.
 ///
 /// This is the most general function, used by both `lal build` and `lal shell`.
-pub fn docker_run(cfg: &Config,
-                  container: &Container,
-                  command: Vec<String>,
-                  flags: &DockerRunFlags,
-                  modes: &ShellModes)
-                  -> LalResult<()> {
+pub fn docker_run(
+    cfg: &Config,
+    container: &Container,
+    command: Vec<String>,
+    flags: &DockerRunFlags,
+    modes: &ShellModes,
+) -> LalResult<()> {
 
     let mut modified_container_option: Option<Container> = None;
 
@@ -178,12 +177,16 @@ pub fn docker_run(cfg: &Config,
             CliError::DockerPermissionSafety(_, u, g) => {
                 if u == 0 {
                     // Do not run as root
-                    return Err(CliError::DockerPermissionSafety("Cannot run container as root user".into(), u, g));
+                    return Err(CliError::DockerPermissionSafety("Cannot run container as root user"
+                                                                    .into(),
+                                                                u,
+                                                                g));
                 }
-                modified_container_option = Some(
-                    fixup_docker_container(container, u, g)?);
-            },
-            x => { return Err(x); }
+                modified_container_option = Some(fixup_docker_container(container, u, g)?);
+            }
+            x => {
+                return Err(x);
+            }
         }
     };
 
@@ -219,7 +222,7 @@ pub fn docker_run(cfg: &Config,
         // xauth also needed for `ssh -X` through `lal -X`
         args.push(format!("{}/.Xauthority:/home/lal/.Xauthority:ro", home.display()));
         // QT compat
-         args.push("--env=QT_X11_NO_MITSHM=1".into());
+        args.push("--env=QT_X11_NO_MITSHM=1".into());
     }
     if modes.host_networking {
         // also needed for for `ssh -X` into `lal -X`
@@ -293,12 +296,13 @@ pub struct ShellModes {
 ///
 /// If a command vector is given, this is called non-interactively instead of /bin/bash
 /// You can thus do `lal shell ./BUILD target` or ``lal shell bash -c "cmd1; cmd2"`
-pub fn shell(cfg: &Config,
-             container: &Container,
-             modes: &ShellModes,
-             cmd: Option<Vec<&str>>,
-             privileged: bool)
-             -> LalResult<()> {
+pub fn shell(
+    cfg: &Config,
+    container: &Container,
+    modes: &ShellModes,
+    cmd: Option<Vec<&str>>,
+    privileged: bool,
+) -> LalResult<()> {
     if !modes.printonly {
         info!("Entering {}", container);
     }
@@ -320,13 +324,14 @@ pub fn shell(cfg: &Config,
 ///
 /// This is a convenience helper for running things that aren't builds.
 /// E.g. `lal run my-large-test RUNONLY=foo`
-pub fn script(cfg: &Config,
-              container: &Container,
-              name: &str,
-              args: Vec<&str>,
-              modes: &ShellModes,
-              privileged: bool)
-              -> LalResult<()> {
+pub fn script(
+    cfg: &Config,
+    container: &Container,
+    name: &str,
+    args: Vec<&str>,
+    modes: &ShellModes,
+    privileged: bool,
+) -> LalResult<()> {
     let pth = Path::new(".").join(".lal").join("scripts").join(&name);
     if !pth.exists() {
         return Err(CliError::MissingScript(name.into()));
@@ -338,8 +343,10 @@ pub fn script(cfg: &Config,
     };
 
     // Simply run the script by adding on the arguments
-    let cmd = vec!["bash".into(),
-                   "-c".into(),
-                   format!("source {}; main {}", pth.display(), args.join(" "))];
+    let cmd = vec![
+        "bash".into(),
+        "-c".into(),
+        format!("source {}; main {}", pth.display(), args.join(" ")),
+    ];
     Ok(docker_run(cfg, container, cmd, &flags, modes)?)
 }

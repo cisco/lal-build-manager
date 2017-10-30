@@ -5,11 +5,12 @@ use storage::CachedBackend;
 use super::LalResult;
 
 /// Export a specific component from the storage backend
-pub fn export<T: CachedBackend + ?Sized>(backend: &T,
-                                comp: &str,
-                                output: Option<&str>,
-                                env: Option<&str>)
-                                -> LalResult<()> {
+pub fn export<T: CachedBackend + ?Sized>(
+    backend: &T,
+    comp: &str,
+    output: Option<&str>,
+    env: Option<&str>,
+) -> LalResult<()> {
     let dir = output.unwrap_or(".");
 
     info!("Export {} {} to {}", env.unwrap_or("global"), comp, dir);

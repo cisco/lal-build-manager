@@ -26,12 +26,14 @@ fn version_string(lf: Option<&Lockfile>, show_ver: bool, show_time: bool) -> ANS
     }
 }
 
-fn status_recurse(dep: &str,
-                  lf: &Lockfile,
-                  n: usize,
-                  parent_indent: Vec<bool>,
-                  show_ver: bool,
-                  show_time: bool) {
+fn status_recurse(
+    dep: &str,
+    lf: &Lockfile,
+    n: usize,
+    parent_indent: Vec<bool>,
+    show_ver: bool,
+    show_time: bool,
+) {
     assert_eq!(dep, &lf.name);
     let len = lf.dependencies.len();
     for (i, (k, sublock)) in lf.dependencies.iter().enumerate() {
@@ -93,7 +95,7 @@ pub fn status(manifest: &Manifest, full: bool, show_ver: bool, show_time: bool) 
         // list children in --full mode
         // NB: missing deps will not be populatable
         let has_children = full && !dep.missing &&
-                           !&lf.dependencies[&dep.name].dependencies.is_empty();
+            !&lf.dependencies[&dep.name].dependencies.is_empty();
         let fork_char = if has_children { "┬" } else { "─" };
         let is_last = i == len - 1;
         let turn_char = if is_last { "└" } else { "├" };
