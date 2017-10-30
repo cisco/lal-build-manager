@@ -96,6 +96,8 @@ cargo fmt # requires `cargo install rustfmt` and $HOME/.cargo/bin on $PATH
 rustup run nighthly cargo clippy # requires nightly install of clippy
 ```
 
+Note that if you have a rust environment set up in your lal config, you can actually `lal build lal` (which will use the provided `manifest.json` and `BUILD` file).
+
 ## Build issues
 If libraries cannot be built, then upgrade `rustc` by running `rustup update stable`.
 
