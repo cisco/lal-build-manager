@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `tar` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, tar">
+
+    <title>tar - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc mod">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'>Crate tar</p><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'tar', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Crate <a class="mod" href=''>tar</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/tar/lib.rs.html#1-68' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>A library for reading and writing TAR archives</p>
+
+<p>This library provides utilities necessary to manage <a href="http://en.wikipedia.org/wiki/Tar_%28computing%29">TAR archives</a>
+abstracted over a reader or writer. Great strides are taken to ensure that
+an archive is never required to be fully resident in memory, and all objects
+provide largely a streaming interface to read bytes from.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Archive.html"
+                                  title='struct tar::Archive'>Archive</a></td>
+                           <td class='docblock-short'>
+                                <p>A top-level representation of an archive file.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Builder.html"
+                                  title='struct tar::Builder'>Builder</a></td>
+                           <td class='docblock-short'>
+                                <p>A structure for building archives</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Entries.html"
+                                  title='struct tar::Entries'>Entries</a></td>
+                           <td class='docblock-short'>
+                                <p>An iterator over the entries of an archive.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Entry.html"
+                                  title='struct tar::Entry'>Entry</a></td>
+                           <td class='docblock-short'>
+                                <p>A read-only view into an entry of an archive.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.GnuExtSparseHeader.html"
+                                  title='struct tar::GnuExtSparseHeader'>GnuExtSparseHeader</a></td>
+                           <td class='docblock-short'>
+                                <p>Representation of the entry found to represent extended GNU sparse files.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.GnuHeader.html"
+                                  title='struct tar::GnuHeader'>GnuHeader</a></td>
+                           <td class='docblock-short'>
+                                <p>Representation of the header of an entry in an archive</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.GnuSparseHeader.html"
+                                  title='struct tar::GnuSparseHeader'>GnuSparseHeader</a></td>
+                           <td class='docblock-short'>
+                                <p>Description of the header of a spare entry.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Header.html"
+                                  title='struct tar::Header'>Header</a></td>
+                           <td class='docblock-short'>
+                                <p>Representation of the header of an entry in an archive</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.OldHeader.html"
+                                  title='struct tar::OldHeader'>OldHeader</a></td>
+                           <td class='docblock-short'>
+                                <p>Representation of the header of an entry in an archive</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.PaxExtension.html"
+                                  title='struct tar::PaxExtension'>PaxExtension</a></td>
+                           <td class='docblock-short'>
+                                <p>A key/value pair corresponding to a pax extension.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.PaxExtensions.html"
+                                  title='struct tar::PaxExtensions'>PaxExtensions</a></td>
+                           <td class='docblock-short'>
+                                <p>An iterator over the pax extensions in an archive entry.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.UstarHeader.html"
+                                  title='struct tar::UstarHeader'>UstarHeader</a></td>
+                           <td class='docblock-short'>
+                                <p>Representation of the header of an entry in an archive</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.EntryType.html"
+                                  title='enum tar::EntryType'>EntryType</a></td>
+                           <td class='docblock-short'>
+                                <p>Indicate for the type of file described by a header.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.HeaderMode.html"
+                                  title='enum tar::HeaderMode'>HeaderMode</a></td>
+                           <td class='docblock-short'>
+                                <p>Declares the information that should be included when filling a Header
+from filesystem metadata.</p>
+                           </td>
+                       </tr></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "tar";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

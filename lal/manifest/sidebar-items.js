@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ManifestLocation","An enum to clarify intent"]],"fn":[["create_lal_subdir","A startup helper used in a few places"]],"struct":[["ComponentConfiguration","Representation of a value of the manifest.components hash"],["Manifest","Representation of `manifest.json`"]]});

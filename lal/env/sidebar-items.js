@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["clear","Clears the local .lal/opts file"],["set","Creates and sets the environment in the local .lal/opts file"],["update","Pull the current environment from docker"]]});

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Term` struct in crate `indicatif`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Term">
+
+    <title>indicatif::Term - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'>Struct Term</p><div class="block items"><ul><li><a href="#methods">Methods</a></li><li><a href="#implementations">Trait Implementations</a></li></ul></div><p class='location'><a href='index.html'>indicatif</a></p><script>window.sidebarCurrent = {name: 'Term', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>indicatif</a>::<wbr><a class="struct" href=''>Term</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/indicatif/term/mod.rs.html#17-20' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Term { /* fields omitted */ }</pre><div class='docblock'><p>Abstraction around a terminal.</p>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><code>impl <a class="struct" href="../indicatif/struct.Term.html" title="struct indicatif::Term">Term</a></code><a href='#impl' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/term/mod.rs.html#22-155' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.stdout' class="method"><span id='stdout.v' class='invisible'><code>fn <a href='#method.stdout' class='fnname'>stdout</a>() -&gt; <a class="struct" href="../indicatif/struct.Term.html" title="struct indicatif::Term">Term</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/term/mod.rs.html#25-30' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Return a new unbuffered terminal</p>
+</div><h4 id='method.stderr' class="method"><span id='stderr.v' class='invisible'><code>fn <a href='#method.stderr' class='fnname'>stderr</a>() -&gt; <a class="struct" href="../indicatif/struct.Term.html" title="struct indicatif::Term">Term</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/term/mod.rs.html#34-39' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Return a new unbuffered terminal to stderr</p>
+</div><h4 id='method.buffered_stdout' class="method"><span id='buffered_stdout.v' class='invisible'><code>fn <a href='#method.buffered_stdout' class='fnname'>buffered_stdout</a>() -&gt; <a class="struct" href="../indicatif/struct.Term.html" title="struct indicatif::Term">Term</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/term/mod.rs.html#42-47' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Return a new buffered terminal</p>
+</div><h4 id='method.buffered_stderr' class="method"><span id='buffered_stderr.v' class='invisible'><code>fn <a href='#method.buffered_stderr' class='fnname'>buffered_stderr</a>() -&gt; <a class="struct" href="../indicatif/struct.Term.html" title="struct indicatif::Term">Term</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/term/mod.rs.html#50-55' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Return a new buffered terminal to stderr</p>
+</div><h4 id='method.write_line' class="method"><span id='write_line.v' class='invisible'><code>fn <a href='#method.write_line' class='fnname'>write_line</a>(&amp;self, s: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">()</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/term/mod.rs.html#66-78' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Writes a string to the terminal and adds a newline.</p>
+</div><h4 id='method.flush' class="method"><span id='flush.v' class='invisible'><code>fn <a href='#method.flush' class='fnname'>flush</a>(&amp;self) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">()</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/term/mod.rs.html#81-93' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Flushes</p>
+</div><h4 id='method.is_term' class="method"><span id='is_term.v' class='invisible'><code>fn <a href='#method.is_term' class='fnname'>is_term</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/term/mod.rs.html#96-98' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Checks if the terminal is indeed a terminal.</p>
+</div><h4 id='method.size' class="method"><span id='size.v' class='invisible'><code>fn <a href='#method.size' class='fnname'>size</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u16.html">u16</a>, <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u16.html">u16</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/term/mod.rs.html#102-104' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the terminal size or gets sensible defaults.</p>
+</div><h4 id='method.size_checked' class="method"><span id='size_checked.v' class='invisible'><code>fn <a href='#method.size_checked' class='fnname'>size_checked</a>(&amp;self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u16.html">u16</a>, <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u16.html">u16</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/term/mod.rs.html#110-112' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the terminal size in rows and columns.</p>
+
+<p>If the size cannot be reliably determined None is returned.</p>
+</div><h4 id='method.move_cursor_up' class="method"><span id='move_cursor_up.v' class='invisible'><code>fn <a href='#method.move_cursor_up' class='fnname'>move_cursor_up</a>(&amp;self, n: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">()</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/term/mod.rs.html#115-117' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Moves the cursor up <code>n</code> lines</p>
+</div><h4 id='method.move_cursor_down' class="method"><span id='move_cursor_down.v' class='invisible'><code>fn <a href='#method.move_cursor_down' class='fnname'>move_cursor_down</a>(&amp;self, n: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">()</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/term/mod.rs.html#120-122' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Moves the cursor down <code>n</code> lines</p>
+</div><h4 id='method.clear_line' class="method"><span id='clear_line.v' class='invisible'><code>fn <a href='#method.clear_line' class='fnname'>clear_line</a>(&amp;self) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">()</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/term/mod.rs.html#125-127' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Clears the current line.</p>
+</div><h4 id='method.clear_last_lines' class="method"><span id='clear_last_lines.v' class='invisible'><code>fn <a href='#method.clear_last_lines' class='fnname'>clear_last_lines</a>(&amp;self, n: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">()</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/term/mod.rs.html#130-138' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Clear the last <code>n</code> lines.</p>
+</div></div>
+            <h2 id='implementations' class='small-section-header'>
+              Trait Implementations<a href='#implementations' class='anchor'></a>
+            </h2>
+        <h3 id='impl-AsRawFd' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/std/sys/imp/ext/io/trait.AsRawFd.html" title="trait std::sys::imp::ext::io::AsRawFd">AsRawFd</a> for <a class="struct" href="../indicatif/struct.Term.html" title="struct indicatif::Term">Term</a></code><a href='#impl-AsRawFd' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/term/mod.rs.html#166-175' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.as_raw_fd' class="method"><span id='as_raw_fd.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/std/sys/imp/ext/io/trait.AsRawFd.html#tymethod.as_raw_fd' class='fnname'>as_raw_fd</a>(&amp;self) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/sys/imp/ext/io/type.RawFd.html" title="type std::sys::imp::ext::io::RawFd">RawFd</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/term/mod.rs.html#168-174' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Extracts the raw file descriptor. <a href="https://doc.rust-lang.org/nightly/std/sys/imp/ext/io/trait.AsRawFd.html#tymethod.as_raw_fd">Read more</a></p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "indicatif";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

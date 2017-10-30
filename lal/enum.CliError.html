@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `CliError` enum in crate `lal`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, CliError">
+
+    <title>lal::CliError - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc enum">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'>Enum CliError</p><div class="block items"><ul><li><a href="#variants">Variants</a></li><li><a href="#implementations">Trait Implementations</a></li></ul></div><p class='location'><a href='index.html'>lal</a></p><script>window.sidebarCurrent = {name: 'CliError', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Enum <a href='index.html'>lal</a>::<wbr><a class="enum" href=''>CliError</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/lal/core/errors.rs.html#12-116' title='goto source code'>[src]</a></span></h1>
+<pre class='rust enum'>pub enum CliError {
+    Io(<a class="struct" href="https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html" title="struct std::io::error::Error">Error</a>),
+    Parse(<a class="struct" href="../serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>),
+    Hype(<a class="enum" href="../hyper/error/enum.Error.html" title="enum hyper::error::Error">Error</a>),
+    MissingManifest,
+    MissingConfig,
+    MissingComponent(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    ManifestExists,
+    ExecutableMissing(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    OutdatedLal(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>,&nbsp;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    MissingSslCerts,
+    UnmappableRootUser,
+    MissingMount(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    MissingDependencies,
+    DependencyCycle(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    InvalidVersion(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    ExtraneousDependencies(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    MissingLockfile(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    MultipleVersions(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    MultipleEnvironments(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    EnvironmentMismatch(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>,&nbsp;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    NonGlobalDependencies(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    MissingEnvironment(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    InvalidEnvironment,
+    InvalidBuildConfiguration(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    BuildScriptNotExecutable(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    MissingBuildScript,
+    MissingScript(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    MissingTarball,
+    MissingBuild,
+    InvalidStashName(<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>),
+    MissingStashArtifact(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    SubprocessFailure(<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.i32.html">i32</a>),
+    DockerPermissionSafety(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>,&nbsp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>,&nbsp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>),
+    DockerImageNotFound(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    InstallFailure,
+    BackendFailure(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    MissingReleaseBuild,
+    MissingBackendCredentials,
+    UploadFailure(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    MissingPrefixPermissions(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    UpgradeValidationFailure(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+}</pre><div class='docblock'><p>The one and only error type for the lal library</p>
+
+<p>Every command will raise one of these on failure, and these is some reuse between
+commands for these errors. <code>Result&lt;T, CliError&gt;</code> is effectively the safety net
+that every single advanced call goes through to avoid <code>panic!</code></p>
+</div><h2 id='variants' class='variants small-section-header'>
+                   Variants<a href='#variants' class='anchor'></a></h2>
+<span id='variant.Io' class='variant'><span id='Io.v' class='invisible'><code>Io(<a class="struct" href="https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html" title="struct std::io::error::Error">Error</a>)</code></span></span><div class='docblock'><p>Errors propagated from <code>std::fs</code></p>
+</div><span id='variant.Parse' class='variant'><span id='Parse.v' class='invisible'><code>Parse(<a class="struct" href="../serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>)</code></span></span><div class='docblock'><p>Errors propagated from <code>serde_json</code></p>
+</div><span id='variant.Hype' class='variant'><span id='Hype.v' class='invisible'><code>Hype(<a class="enum" href="../hyper/error/enum.Error.html" title="enum hyper::error::Error">Error</a>)</code></span></span><div class='docblock'><p>Errors propagated from <code>hyper</code></p>
+</div><span id='variant.MissingManifest' class='variant'><span id='MissingManifest.v' class='invisible'><code>MissingManifest</code></span></span><div class='docblock'><p>Manifest file not found in working directory</p>
+</div><span id='variant.MissingConfig' class='variant'><span id='MissingConfig.v' class='invisible'><code>MissingConfig</code></span></span><div class='docblock'><p>Config not found in ~/.lal</p>
+</div><span id='variant.MissingComponent' class='variant'><span id='MissingComponent.v' class='invisible'><code>MissingComponent(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Component not found in manifest</p>
+</div><span id='variant.ManifestExists' class='variant'><span id='ManifestExists.v' class='invisible'><code>ManifestExists</code></span></span><div class='docblock'><p>Manifest cannot be overwritten without forcing</p>
+</div><span id='variant.ExecutableMissing' class='variant'><span id='ExecutableMissing.v' class='invisible'><code>ExecutableMissing(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Executable we shell out to is missing</p>
+</div><span id='variant.OutdatedLal' class='variant'><span id='OutdatedLal.v' class='invisible'><code>OutdatedLal(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>,&nbsp;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>lal version required by config is too old</p>
+</div><span id='variant.MissingSslCerts' class='variant'><span id='MissingSslCerts.v' class='invisible'><code>MissingSslCerts</code></span></span><div class='docblock'><p>Missing SSL certificates</p>
+</div><span id='variant.UnmappableRootUser' class='variant'><span id='UnmappableRootUser.v' class='invisible'><code>UnmappableRootUser</code></span></span><div class='docblock'><p>Root user encountered</p>
+</div><span id='variant.MissingMount' class='variant'><span id='MissingMount.v' class='invisible'><code>MissingMount(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Missing predefined mount</p>
+</div><span id='variant.MissingDependencies' class='variant'><span id='MissingDependencies.v' class='invisible'><code>MissingDependencies</code></span></span><div class='docblock'><p>Core dependencies missing in INPUT</p>
+</div><span id='variant.DependencyCycle' class='variant'><span id='DependencyCycle.v' class='invisible'><code>DependencyCycle(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Cyclical dependency loop found in INPUT</p>
+</div><span id='variant.InvalidVersion' class='variant'><span id='InvalidVersion.v' class='invisible'><code>InvalidVersion(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Dependency present at wrong version</p>
+</div><span id='variant.ExtraneousDependencies' class='variant'><span id='ExtraneousDependencies.v' class='invisible'><code>ExtraneousDependencies(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Extraneous dependencies in INPUT</p>
+</div><span id='variant.MissingLockfile' class='variant'><span id='MissingLockfile.v' class='invisible'><code>MissingLockfile(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>No lockfile found for a component in INPUT</p>
+</div><span id='variant.MultipleVersions' class='variant'><span id='MultipleVersions.v' class='invisible'><code>MultipleVersions(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Multiple versions of a component was involved in this build</p>
+</div><span id='variant.MultipleEnvironments' class='variant'><span id='MultipleEnvironments.v' class='invisible'><code>MultipleEnvironments(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Multiple environments was used to build a component</p>
+</div><span id='variant.EnvironmentMismatch' class='variant'><span id='EnvironmentMismatch.v' class='invisible'><code>EnvironmentMismatch(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>,&nbsp;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Environment for a component did not match our expected environment</p>
+</div><span id='variant.NonGlobalDependencies' class='variant'><span id='NonGlobalDependencies.v' class='invisible'><code>NonGlobalDependencies(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Custom versions are stashed in INPUT which will not fly on Jenkins</p>
+</div><span id='variant.MissingEnvironment' class='variant'><span id='MissingEnvironment.v' class='invisible'><code>MissingEnvironment(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Specified environment is not present in the main config</p>
+</div><span id='variant.InvalidEnvironment' class='variant'><span id='InvalidEnvironment.v' class='invisible'><code>InvalidEnvironment</code></span></span><div class='docblock'><p>Default environment explicitly specified</p>
+</div><span id='variant.InvalidBuildConfiguration' class='variant'><span id='InvalidBuildConfiguration.v' class='invisible'><code>InvalidBuildConfiguration(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Build configurations does not match manifest or user input</p>
+</div><span id='variant.BuildScriptNotExecutable' class='variant'><span id='BuildScriptNotExecutable.v' class='invisible'><code>BuildScriptNotExecutable(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>BUILD script not executable</p>
+</div><span id='variant.MissingBuildScript' class='variant'><span id='MissingBuildScript.v' class='invisible'><code>MissingBuildScript</code></span></span><div class='docblock'><p>BUILD script not found</p>
+</div><span id='variant.MissingScript' class='variant'><span id='MissingScript.v' class='invisible'><code>MissingScript(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Script not found in local .lal/scripts/ directory</p>
+</div><span id='variant.MissingTarball' class='variant'><span id='MissingTarball.v' class='invisible'><code>MissingTarball</code></span></span><div class='docblock'><p>Failed to find a tarball after fetching from artifactory</p>
+</div><span id='variant.MissingBuild' class='variant'><span id='MissingBuild.v' class='invisible'><code>MissingBuild</code></span></span><div class='docblock'><p>Failed to find build artifacts in OUTPUT after a build or before stashing</p>
+</div><span id='variant.InvalidStashName' class='variant'><span id='InvalidStashName.v' class='invisible'><code>InvalidStashName(<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>)</code></span></span><div class='docblock'><p>Invalid integer name used with lal stash</p>
+</div><span id='variant.MissingStashArtifact' class='variant'><span id='MissingStashArtifact.v' class='invisible'><code>MissingStashArtifact(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Failed to find stashed artifact in the lal cache</p>
+</div><span id='variant.SubprocessFailure' class='variant'><span id='SubprocessFailure.v' class='invisible'><code>SubprocessFailure(<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.i32.html">i32</a>)</code></span></span><div class='docblock'><p>Shell errors from docker subprocess</p>
+</div><span id='variant.DockerPermissionSafety' class='variant'><span id='DockerPermissionSafety.v' class='invisible'><code>DockerPermissionSafety(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>,&nbsp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>,&nbsp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>)</code></span></span><div class='docblock'><p>Docker permission gate</p>
+</div><span id='variant.DockerImageNotFound' class='variant'><span id='DockerImageNotFound.v' class='invisible'><code>DockerImageNotFound(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Docker image not found</p>
+</div><span id='variant.InstallFailure' class='variant'><span id='InstallFailure.v' class='invisible'><code>InstallFailure</code></span></span><div class='docblock'><p>Unspecified install failure</p>
+</div><span id='variant.BackendFailure' class='variant'><span id='BackendFailure.v' class='invisible'><code>BackendFailure(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Fetch failure related to backend</p>
+</div><span id='variant.MissingReleaseBuild' class='variant'><span id='MissingReleaseBuild.v' class='invisible'><code>MissingReleaseBuild</code></span></span><div class='docblock'><p>Missing release build</p>
+</div><span id='variant.MissingBackendCredentials' class='variant'><span id='MissingBackendCredentials.v' class='invisible'><code>MissingBackendCredentials</code></span></span><div class='docblock'><p>Config missing backend credentials</p>
+</div><span id='variant.UploadFailure' class='variant'><span id='UploadFailure.v' class='invisible'><code>UploadFailure(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Failed upload request to the backend</p>
+</div><span id='variant.MissingPrefixPermissions' class='variant'><span id='MissingPrefixPermissions.v' class='invisible'><code>MissingPrefixPermissions(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Failing to write to our current install prefix</p>
+</div><span id='variant.UpgradeValidationFailure' class='variant'><span id='UpgradeValidationFailure.v' class='invisible'><code>UpgradeValidationFailure(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Failing to validate latest lal version</p>
+</div>
+            <h2 id='implementations' class='small-section-header'>
+              Trait Implementations<a href='#implementations' class='anchor'></a>
+            </h2>
+        <h3 id='impl-Debug' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug">Debug</a> for <a class="enum" href="../lal/enum.CliError.html" title="enum lal::CliError">CliError</a></code><a href='#impl-Debug' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/errors.rs.html#11' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class="method"><span id='fmt.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/errors.rs.html#11' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 id='impl-Display' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html" title="trait core::fmt::Display">Display</a> for <a class="enum" href="../lal/enum.CliError.html" title="enum lal::CliError">CliError</a></code><a href='#impl-Display' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/errors.rs.html#119-238' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt-1' class="method"><span id='fmt.v-1' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/errors.rs.html#120-237' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter. <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#tymethod.fmt">Read more</a></p>
+</div></div><h3 id='impl-From&lt;Error&gt;' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.From.html" title="trait core::convert::From">From</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html" title="struct std::io::error::Error">Error</a>&gt; for <a class="enum" href="../lal/enum.CliError.html" title="enum lal::CliError">CliError</a></code><a href='#impl-From&lt;Error&gt;' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/errors.rs.html#241-243' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.from' class="method"><span id='from.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#tymethod.from' class='fnname'>from</a>(err: <a class="struct" href="https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html" title="struct std::io::error::Error">Error</a>) -&gt; <a class="enum" href="../lal/enum.CliError.html" title="enum lal::CliError">CliError</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/errors.rs.html#242' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Performs the conversion.</p>
+</div></div><h3 id='impl-From&lt;Error&gt;-1' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.From.html" title="trait core::convert::From">From</a>&lt;<a class="enum" href="../hyper/error/enum.Error.html" title="enum hyper::error::Error">Error</a>&gt; for <a class="enum" href="../lal/enum.CliError.html" title="enum lal::CliError">CliError</a></code><a href='#impl-From&lt;Error&gt;-1' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/errors.rs.html#245-247' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.from-1' class="method"><span id='from.v-1' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#tymethod.from' class='fnname'>from</a>(err: <a class="enum" href="../hyper/error/enum.Error.html" title="enum hyper::error::Error">Error</a>) -&gt; <a class="enum" href="../lal/enum.CliError.html" title="enum lal::CliError">CliError</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/errors.rs.html#246' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Performs the conversion.</p>
+</div></div><h3 id='impl-From&lt;Error&gt;-2' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.From.html" title="trait core::convert::From">From</a>&lt;<a class="struct" href="../serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>&gt; for <a class="enum" href="../lal/enum.CliError.html" title="enum lal::CliError">CliError</a></code><a href='#impl-From&lt;Error&gt;-2' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/errors.rs.html#249-251' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.from-2' class="method"><span id='from.v-2' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#tymethod.from' class='fnname'>from</a>(err: <a class="struct" href="../serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>) -&gt; <a class="enum" href="../lal/enum.CliError.html" title="enum lal::CliError">CliError</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/errors.rs.html#250' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Performs the conversion.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "lal";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

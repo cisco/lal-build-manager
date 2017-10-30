@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `indicatif` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, indicatif">
+
+    <title>indicatif - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc mod">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'>Crate indicatif</p><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#functions">Functions</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'indicatif', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Crate <a class="mod" href=''>indicatif</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/indicatif/lib.rs.html#1-181' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>indicatif is a library for Rust that helps you build command line
+interfaces that report progress to users.  It comes with various
+tools and utilities for formatting anything that indicates progress.</p>
+
+<p>Platform support:</p>
+
+<ul>
+<li>Linux</li>
+<li>OS X</li>
+<li>Windows (colors require Windows 10)</li>
+</ul>
+
+<h1 id='crate-contents' class='section-header'><a href='#crate-contents'>Crate Contents</a></h1>
+<ul>
+<li><strong>Progress bars</strong>
+
+<ul>
+<li><a href="struct.ProgressBar.html"><code>ProgressBar</code></a> for bars and spinners</li>
+<li><a href="struct.MultiProgress.html"><code>MultiProgress</code></a> for multiple bars</li>
+</ul></li>
+<li><strong>Terminal support</strong>
+
+<ul>
+<li><a href="struct.Term.html"><code>Term</code></a> for controlling the terminal</li>
+<li><a href="fn.user_attended.html"><code>user_attended</code></a> for checking if there is a terminal</li>
+<li><a href="fn.measure_text_width.html"><code>measure_text_width</code></a> for calculating text width</li>
+</ul></li>
+<li><strong>Colors and Styling</strong>
+
+<ul>
+<li><a href="fn.colors_enabled.html"><code>colors_enabled</code></a> for checking if colors are on</li>
+<li><a href="fn.set_colors_enabled.html"><code>set_colors_enabled</code></a> for turning colors off and on</li>
+<li><a href="fn.strip_ansi_codes.html"><code>strip_ansi_codes</code></a> for stripping ANSI codes from a string</li>
+<li><a href="fn.style.html"><code>style</code></a> / <a href="struct.Style.html"><code>Style</code></a> for coloring stuff</li>
+</ul></li>
+<li><strong>Data Formatting</strong>
+
+<ul>
+<li><a href="struct.HumanBytes.html"><code>HumanBytes</code></a> for formatting bytes</li>
+<li><a href="struct.HumanDuration.html"><code>HumanDuration</code></a> for formatting durations</li>
+</ul></li>
+</ul>
+
+<h1 id='progress-bars-and-spinners' class='section-header'><a href='#progress-bars-and-spinners'>Progress Bars and Spinners</a></h1>
+<p>indicatif comes with a <code>ProgressBar</code> type that support both bounded
+progress bar uses as well as unbounded &quot;spinner&quot; type progress reports.
+Progress bars are <code>Sync</code> and <code>Send</code> objects which means that they are
+internally locked and can be passed from thread to thread.</p>
+
+<p>Additionally a <code>MultiProgress</code> utility is provided that can manage
+rendering multiple progress bars at once (eg: for instance from
+multiple threads).</p>
+
+<p>To wet your appetite, this is what this can look like:</p>
+
+<p><img src="https://github.com/mitsuhiko/indicatif/raw/master/screenshots/yarn.gif?raw=true" width="60%"></p>
+
+<p>Progress bars are manually advanced and by default draw to stdout.
+When you are done the progress bar can be finished either visibly
+(eg: the progress bar stays on the screen) or cleared (the progress
+bar will be removed).</p>
+
+<pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">indicatif</span>::<span class="ident">ProgressBar</span>;
+
+<span class="kw">let</span> <span class="ident">bar</span> <span class="op">=</span> <span class="ident">ProgressBar</span>::<span class="ident">new</span>(<span class="number">1000</span>);
+<span class="kw">for</span> _ <span class="kw">in</span> <span class="number">0</span>..<span class="number">1000</span> {
+    <span class="ident">bar</span>.<span class="ident">inc</span>(<span class="number">1</span>);
+    <span class="comment">// ...</span>
+}
+<span class="ident">bar</span>.<span class="ident">finish</span>();</pre>
+
+<p>General progress bar behaviors:</p>
+
+<ul>
+<li>if a non terminal is detected the progress bar will be completely
+hidden.  This makes piping programs to logfiles make sense out of
+the box.</li>
+<li>progress bars should be explicitly finished to reset the rendering
+for others.  Either by also clearing them or by replacing them with
+a new message / retaining the current message.</li>
+<li>the default template renders neither message nor prefix.</li>
+</ul>
+
+<h1 id='templates' class='section-header'><a href='#templates'>Templates</a></h1>
+<p>Progress bars can be styled with simple format strings similar to the
+ones in Rust itself.  The format for a placeholder is <code>{key:options}</code>
+where the <code>options</code> part is optional.  If provided the format is this:</p>
+
+<pre><code class="language-text">[&lt;^&gt;]           for an optional alignment specification
+WIDTH           an optional width as positive integer
+!               an optional exclamation mark to enable truncation
+.STYLE          an optional dot separated style string
+/STYLE          an optional dot separated alternative style string
+</code></pre>
+
+<p>For the style component see <code>Styled::from_dotted_str</code> for more
+information.</p>
+
+<p>Some examples for templates:</p>
+
+<pre><code class="language-text">[{elapsed_precise}] {bar:40.cyan/blue} {pos:&gt;7}/{len:7} {msg}
+</code></pre>
+
+<p>This sets a progress bar that is 40 characters wide and has cyan
+as primary style color and blue as alternative style color.
+Alternative styles are currently only used for progress bars.</p>
+
+<p>Example configuration:</p>
+
+<pre class="rust rust-example-rendered">
+<span class="ident">bar</span>.<span class="ident">set_style</span>(<span class="ident">ProgressStyle</span>::<span class="ident">default_bar</span>()
+    .<span class="ident">template</span>(<span class="string">&quot;[{elapsed_precise}] {bar:40.cyan/blue} {pos:&gt;7}/{len:7} {msg}&quot;</span>)
+    .<span class="ident">progress_chars</span>(<span class="string">&quot;##-&quot;</span>));</pre>
+
+<p>The following keys exist:</p>
+
+<ul>
+<li><code>bar</code>: renders a progress bar. By default 20 characters wide.  The
+style string is used to color the elapsed part, the alternative
+style is used for the bar that is yet to render.</li>
+<li><code>wide_bar</code>: like <code>bar</code> but always fills the remaining space.</li>
+<li><code>spinner</code>: renders the spinner (current tick char)</li>
+<li><code>prefix</code>: renders the prefix set on the progress bar.</li>
+<li><code>msg</code>: renders the currently set message on the progress bar.</li>
+<li><code>pos</code>: renders the current position of the bar as integer</li>
+<li><code>len</code>: renders the total length of the bar as integer</li>
+<li><code>bytes</code>: renders the current position of the bar as bytes.</li>
+<li><code>total_bytes</code>: renders the total length of the bar as bytes.</li>
+<li><code>elapsed_precise</code>: renders the elapsed time as <code>HH:MM:SS</code>.</li>
+<li><code>elapased</code>: renders the elapsed time as <code>42s</code>, <code>1m</code> etc.</li>
+<li><code>eta_precise</code>: the remaining time (like <code>elapsed_precise</code>).</li>
+<li><code>eta</code>: the remaining time (like <code>elapsed</code>).</li>
+</ul>
+
+<p>The design of the progress bar can be altered with the integrated
+template functionality.  The template can be set by changing a
+<code>ProgressStyle</code> and attaching it to the progress bar.</p>
+
+<h1 id='terminal-access' class='section-header'><a href='#terminal-access'>Terminal Access</a></h1>
+<p>The library provides a basic abstraction over working with terminals
+through the <code>Term</code> object.  For instance you can use it to move
+cursors or clear contents.</p>
+
+<h1 id='colors-and-styles' class='section-header'><a href='#colors-and-styles'>Colors and Styles</a></h1>
+<p><code>indicatif</code> uses <code>clicolors-control</code> to control colors.  It also
+provides higher level wrappers for styling text and other things
+that can be displayed with the <code>style</code> function.</p>
+
+<p>Example usage:</p>
+
+<pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">indicatif</span>::<span class="ident">style</span>;
+
+<span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;This is {} neat&quot;</span>, <span class="ident">style</span>(<span class="string">&quot;fo&quot;</span>).<span class="ident">cyan</span>());</pre>
+
+<h1 id='human-readable-formatting' class='section-header'><a href='#human-readable-formatting'>Human Readable Formatting</a></h1>
+<p>There are some formatting wrappers for showing elapsed time and
+file sizes for human users:</p>
+
+<pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">time</span>::<span class="ident">Instant</span>;
+<span class="kw">use</span> <span class="ident">indicatif</span>::{<span class="ident">HumanDuration</span>, <span class="ident">HumanBytes</span>};
+
+<span class="kw">let</span> <span class="ident">started</span> <span class="op">=</span> <span class="ident">Instant</span>::<span class="ident">now</span>();
+<span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;The file is {} large&quot;</span>, <span class="ident">HumanBytes</span>(<span class="ident">file</span>.<span class="ident">size</span>));
+<span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;The script took {}&quot;</span>, <span class="ident">HumanDuration</span>(<span class="ident">started</span>.<span class="ident">elapsed</span>()));</pre>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.FormattedDuration.html"
+                                  title='struct indicatif::FormattedDuration'>FormattedDuration</a></td>
+                           <td class='docblock-short'>
+                                <p>Wraps an std duration for human basic formatting.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.HumanBytes.html"
+                                  title='struct indicatif::HumanBytes'>HumanBytes</a></td>
+                           <td class='docblock-short'>
+                                <p>Formats bytes for human readability</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.HumanDuration.html"
+                                  title='struct indicatif::HumanDuration'>HumanDuration</a></td>
+                           <td class='docblock-short'>
+                                <p>Wraps an std duration for human readable formatting.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.MultiProgress.html"
+                                  title='struct indicatif::MultiProgress'>MultiProgress</a></td>
+                           <td class='docblock-short'>
+                                <p>Manages multiple progress bars from different threads.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.ProgressBar.html"
+                                  title='struct indicatif::ProgressBar'>ProgressBar</a></td>
+                           <td class='docblock-short'>
+                                <p>A progress bar or spinner.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.ProgressDrawTarget.html"
+                                  title='struct indicatif::ProgressDrawTarget'>ProgressDrawTarget</a></td>
+                           <td class='docblock-short'>
+                                <p>Target for draw operations</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.ProgressStyle.html"
+                                  title='struct indicatif::ProgressStyle'>ProgressStyle</a></td>
+                           <td class='docblock-short'>
+                                <p>Controls the rendering style of progress bars.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Style.html"
+                                  title='struct indicatif::Style'>Style</a></td>
+                           <td class='docblock-short'>
+                                <p>A stored style that can be applied.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.StyledObject.html"
+                                  title='struct indicatif::StyledObject'>StyledObject</a></td>
+                           <td class='docblock-short'>
+                                <p>A formatting wrapper that can be styled for a terminal.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Term.html"
+                                  title='struct indicatif::Term'>Term</a></td>
+                           <td class='docblock-short'>
+                                <p>Abstraction around a terminal.</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.Attribute.html"
+                                  title='enum indicatif::Attribute'>Attribute</a></td>
+                           <td class='docblock-short'>
+                                <p>A terminal style attribute.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.Color.html"
+                                  title='enum indicatif::Color'>Color</a></td>
+                           <td class='docblock-short'>
+                                <p>A terminal color.</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.colors_enabled.html"
+                                  title='fn indicatif::colors_enabled'>colors_enabled</a></td>
+                           <td class='docblock-short'>
+                                <p>Returns <code>true</code> if colors should be enabled.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.measure_text_width.html"
+                                  title='fn indicatif::measure_text_width'>measure_text_width</a></td>
+                           <td class='docblock-short'>
+                                <p>Measure the width of a string in terminal characters.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.set_colors_enabled.html"
+                                  title='fn indicatif::set_colors_enabled'>set_colors_enabled</a></td>
+                           <td class='docblock-short'>
+                                <p>Forces colorization on or off.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.strip_ansi_codes.html"
+                                  title='fn indicatif::strip_ansi_codes'>strip_ansi_codes</a></td>
+                           <td class='docblock-short'>
+                                <p>Helper function to strip ansi codes.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.style.html"
+                                  title='fn indicatif::style'>style</a></td>
+                           <td class='docblock-short'>
+                                <p>Wraps an object for formatting for styling.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.user_attended.html"
+                                  title='fn indicatif::user_attended'>user_attended</a></td>
+                           <td class='docblock-short'>
+                                <p>A fast way to check if the application has a user attended.</p>
+                           </td>
+                       </tr></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "indicatif";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

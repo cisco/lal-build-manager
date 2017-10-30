@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `lal` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, lal">
+
+    <title>lal - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc mod">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'>Crate lal</p><div class="block items"><ul><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li><li><a href="#types">Type Definitions</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'lal', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Crate <a class="mod" href=''>lal</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/lal/lib.rs.html#1-91' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>This is the rust doc for the <code>lal</code> <em>library</em> - what the <code>lal</code> <em>binary</em>
+depends on to do all the work. This documentation is likely only of use to you
+if you need to know the internals of <code>lal</code> for figuring out how to modify it.</p>
+
+<h2 id='testing' class='section-header'><a href='#testing'>Testing</a></h2>
+<p>The library contains all the logic because the binary is only an argument parser,
+and elaborate decision making engine to log, call one of the libraries functions,
+then simply <code>process::exit</code>.
+Tests do not cover the binary part, because these failures would be trivially
+detectable, and also require a subprocess type of testing. Tests instead
+cover a couple of common use flows through the library.</p>
+
+<h2 id='dependencies' class='section-header'><a href='#dependencies'>Dependencies</a></h2>
+<p>This tool depends on the rust ecosystem and their crates. Dependencies referenced
+explicitly or implicitly is listed on the left of this page.</p>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="env/index.html"
+                                  title='mod lal::env'>env</a></td>
+                           <td class='docblock-short'>
+                                <p>Env module for env subcommand (which has further subcommands)</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="input/index.html"
+                                  title='mod lal::input'>input</a></td>
+                           <td class='docblock-short'>
+                                <p>Simple INPUT folder analyzer module can be used directly</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="list/index.html"
+                                  title='mod lal::list'>list</a></td>
+                           <td class='docblock-short'>
+                                <p>List module for all the list-* subcommands</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="manifest/index.html"
+                                  title='mod lal::manifest'>manifest</a></td>
+                           <td class='docblock-short'>
+                                <p>Manifest module can be used directly</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="output/index.html"
+                                  title='mod lal::output'>output</a></td>
+                           <td class='docblock-short'>
+                                <p>Simple OUTPUT folder helper module</p>
+                           </td>
+                       </tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.ArtifactoryBackend.html"
+                                  title='struct lal::ArtifactoryBackend'>ArtifactoryBackend</a></td>
+                           <td class='docblock-short'>
+                                <p>Everything we need for Artifactory to implement the Backend trait</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.ArtifactoryConfig.html"
+                                  title='struct lal::ArtifactoryConfig'>ArtifactoryConfig</a></td>
+                           <td class='docblock-short'>
+                                <p>Static Artifactory locations</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.BuildOptions.html"
+                                  title='struct lal::BuildOptions'>BuildOptions</a></td>
+                           <td class='docblock-short'>
+                                <p>Configurable build flags for <code>lal build</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Component.html"
+                                  title='struct lal::Component'>Component</a></td>
+                           <td class='docblock-short'>
+                                <p>The basic definition of a component as it exists online</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.ComponentConfiguration.html"
+                                  title='struct lal::ComponentConfiguration'>ComponentConfiguration</a></td>
+                           <td class='docblock-short'>
+                                <p>Representation of a value of the manifest.components hash</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Config.html"
+                                  title='struct lal::Config'>Config</a></td>
+                           <td class='docblock-short'>
+                                <p>Representation of <code>~/.lal/config</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.ConfigDefaults.html"
+                                  title='struct lal::ConfigDefaults'>ConfigDefaults</a></td>
+                           <td class='docblock-short'>
+                                <p>Representation of a configuration defaults file</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Container.html"
+                                  title='struct lal::Container'>Container</a></td>
+                           <td class='docblock-short'>
+                                <p>Representation of a docker container image</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Credentials.html"
+                                  title='struct lal::Credentials'>Credentials</a></td>
+                           <td class='docblock-short'>
+                                <p>Artifactory credentials</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.DockerRunFlags.html"
+                                  title='struct lal::DockerRunFlags'>DockerRunFlags</a></td>
+                           <td class='docblock-short'>
+                                <p>Flags for docker run that vary for different use cases</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.LatestLal.html"
+                                  title='struct lal::LatestLal'>LatestLal</a></td>
+                           <td class='docblock-short'>
+                                <p>Latest lal version - as seen on artifactory</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Lockfile.html"
+                                  title='struct lal::Lockfile'>Lockfile</a></td>
+                           <td class='docblock-short'>
+                                <p>Representation of <code>lockfile.json</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Manifest.html"
+                                  title='struct lal::Manifest'>Manifest</a></td>
+                           <td class='docblock-short'>
+                                <p>Representation of <code>manifest.json</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Mount.html"
+                                  title='struct lal::Mount'>Mount</a></td>
+                           <td class='docblock-short'>
+                                <p>Docker volume mount representation</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.ShellModes.html"
+                                  title='struct lal::ShellModes'>ShellModes</a></td>
+                           <td class='docblock-short'>
+                                <p>Various ways to invoke <code>docker_run</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.StickyOptions.html"
+                                  title='struct lal::StickyOptions'>StickyOptions</a></td>
+                           <td class='docblock-short'>
+                                <p>Representation of .lal/opts</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.BackendConfiguration.html"
+                                  title='enum lal::BackendConfiguration'>BackendConfiguration</a></td>
+                           <td class='docblock-short'>
+                                <p>An enum struct for the currently configured <code>Backend</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.CliError.html"
+                                  title='enum lal::CliError'>CliError</a></td>
+                           <td class='docblock-short'>
+                                <p>The one and only error type for the lal library</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.ManifestLocation.html"
+                                  title='enum lal::ManifestLocation'>ManifestLocation</a></td>
+                           <td class='docblock-short'>
+                                <p>An enum to clarify intent</p>
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.Backend.html"
+                                  title='trait lal::Backend'>Backend</a></td>
+                           <td class='docblock-short'>
+                                <p>Properties a storage backend of artifacts should have</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.CachedBackend.html"
+                                  title='trait lal::CachedBackend'>CachedBackend</a></td>
+                           <td class='docblock-short'>
+                                <p>A secondary trait that builds upon the Backend trait</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.build.html"
+                                  title='fn lal::build'>build</a></td>
+                           <td class='docblock-short'>
+                                <p>Runs the <code>./BUILD</code> script in a container and packages artifacts.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.clean.html"
+                                  title='fn lal::clean'>clean</a></td>
+                           <td class='docblock-short'>
+                                <p>Clean old artifacts in cache directory</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.config_dir.html"
+                                  title='fn lal::config_dir'>config_dir</a></td>
+                           <td class='docblock-short'>
+                                <p>Master override for where the .lal config lives</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.configure.html"
+                                  title='fn lal::configure'>configure</a></td>
+                           <td class='docblock-short'>
+                                <p>Create  <code>~/.lal/config</code> with defaults</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.docker_run.html"
+                                  title='fn lal::docker_run'>docker_run</a></td>
+                           <td class='docblock-short'>
+                                <p>Runs an arbitrary command in the configured docker environment</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.export.html"
+                                  title='fn lal::export'>export</a></td>
+                           <td class='docblock-short'>
+                                <p>Export a specific component from the storage backend</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.fetch.html"
+                                  title='fn lal::fetch'>fetch</a></td>
+                           <td class='docblock-short'>
+                                <p>Fetch all dependencies from <code>manifest.json</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.get_latest_lal_version.html"
+                                  title='fn lal::get_latest_lal_version'>get_latest_lal_version</a></td>
+                           <td class='docblock-short'>
+                                <p>Entry point for <code>lal::upgrade</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.http_download_to_path.html"
+                                  title='fn lal::http_download_to_path'>http_download_to_path</a></td>
+                           <td class='docblock-short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.init.html"
+                                  title='fn lal::init'>init</a></td>
+                           <td class='docblock-short'>
+                                <p>Generates a blank manifest in the current directory</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.propagate.html"
+                                  title='fn lal::propagate'>propagate</a></td>
+                           <td class='docblock-short'>
+                                <p>Outputs the update path to the current manifest for a specific component</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.publish.html"
+                                  title='fn lal::publish'>publish</a></td>
+                           <td class='docblock-short'>
+                                <p>Publish a release build to the storage backend</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.query.html"
+                                  title='fn lal::query'>query</a></td>
+                           <td class='docblock-short'>
+                                <p>Prints a list of versions associated with a component</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.remove.html"
+                                  title='fn lal::remove'>remove</a></td>
+                           <td class='docblock-short'>
+                                <p>Remove specific components from <code>./INPUT</code> and the manifest.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.script.html"
+                                  title='fn lal::script'>script</a></td>
+                           <td class='docblock-short'>
+                                <p>Runs a script in <code>.lal/scripts/</code> with supplied arguments in a docker shell</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.shell.html"
+                                  title='fn lal::shell'>shell</a></td>
+                           <td class='docblock-short'>
+                                <p>Mounts and enters <code>.</code> in an interactive bash shell using the configured container.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.stash.html"
+                                  title='fn lal::stash'>stash</a></td>
+                           <td class='docblock-short'>
+                                <p>Saves current build <code>./OUTPUT</code> to the local cache under a specific name</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.status.html"
+                                  title='fn lal::status'>status</a></td>
+                           <td class='docblock-short'>
+                                <p>Prints a fancy dependency tree of <code>./INPUT</code> to stdout.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.update.html"
+                                  title='fn lal::update'>update</a></td>
+                           <td class='docblock-short'>
+                                <p>Update specific dependencies outside the manifest</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.update_all.html"
+                                  title='fn lal::update_all'>update_all</a></td>
+                           <td class='docblock-short'>
+                                <p>Wrapper around update that updates all components</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.upgrade.html"
+                                  title='fn lal::upgrade'>upgrade</a></td>
+                           <td class='docblock-short'>
+                                <p>Check for and possibly upgrade lal when using musl releases</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.verify.html"
+                                  title='fn lal::verify'>verify</a></td>
+                           <td class='docblock-short'>
+                                <p>Verifies that <code>./INPUT</code> satisfies all strictness conditions.</p>
+                           </td>
+                       </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="type" href="type.LalResult.html"
+                                  title='type lal::LalResult'>LalResult</a></td>
+                           <td class='docblock-short'>
+                                <p>Type alias to stop having to type out <code>CliError</code> everywhere.</p>
+                           </td>
+                       </tr></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "lal";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

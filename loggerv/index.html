@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `loggerv` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, loggerv">
+
+    <title>loggerv - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc mod">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'>Crate loggerv</p><div class="block items"><ul><li><a href="#functions">Functions</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'loggerv', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Crate <a class="mod" href=''>loggerv</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/loggerv/lib.rs.html#1-177' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>A simple <code>io::stdout</code> and <code>io::stderr</code> writing <code>Logger</code> implementation from the
+<code>log</code> crate, using the <code>ansi_term</code> crate for colors and configured at runtime,
+or at compile time with simple function calls. Designed for simple CLIs.</p>
+
+<p>This library only comes with 3 public ways to initialize the global logger.
+Ensure you call one of these exactly once early in your rust program as shown
+in one of the examples below.</p>
+
+<h2 id='example' class='section-header'><a href='#example'>Example</a></h2>
+<p>The standard example with <code>clap</code> as the arg parser.</p>
+
+<pre class="rust rust-example-rendered">
+<span class="attribute">#[<span class="ident">macro_use</span>]</span> <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">log</span>;
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">clap</span>;
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">loggerv</span>;
+
+<span class="kw">use</span> <span class="ident">clap</span>::{<span class="ident">Arg</span>, <span class="ident">App</span>};
+
+<span class="kw">fn</span> <span class="ident">main</span>() {
+    <span class="kw">let</span> <span class="ident">args</span> <span class="op">=</span> <span class="ident">App</span>::<span class="ident">new</span>(<span class="string">&quot;app&quot;</span>)
+                   .<span class="ident">arg</span>(<span class="ident">Arg</span>::<span class="ident">with_name</span>(<span class="string">&quot;v&quot;</span>)
+                            .<span class="ident">short</span>(<span class="string">&quot;v&quot;</span>)
+                            .<span class="ident">multiple</span>(<span class="bool-val">true</span>)
+                            .<span class="ident">help</span>(<span class="string">&quot;Sets the level of verbosity&quot;</span>))
+                   .<span class="ident">get_matches</span>();
+
+    <span class="ident">loggerv</span>::<span class="ident">init_with_verbosity</span>(<span class="ident">args</span>.<span class="ident">occurrences_of</span>(<span class="string">&quot;v&quot;</span>)).<span class="ident">unwrap</span>();
+
+    <span class="macro">error</span><span class="macro">!</span>(<span class="string">&quot;this is always printed&quot;</span>);
+    <span class="macro">warn</span><span class="macro">!</span>(<span class="string">&quot;this too, and it&#39;s printed to stderr&quot;</span>);
+    <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;this is optional&quot;</span>);  <span class="comment">// for ./app -v or higher</span>
+    <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;this is optional&quot;</span>); <span class="comment">// for ./app -vv or higher</span>
+    <span class="macro">trace</span><span class="macro">!</span>(<span class="string">&quot;this is optional&quot;</span>); <span class="comment">// for ./app -vvv</span>
+}</pre>
+
+<p>But obviously use whatever argument parsing methods you prefer.</p>
+
+<h2 id='example-1' class='section-header'><a href='#example-1'>Example</a></h2>
+<p>For a compile time switch, all you really need is <code>log</code> (for the macros)
+and <code>loggerv</code> for how to print what&#39;s being sent to the macros.</p>
+
+<pre class="rust rust-example-rendered">
+<span class="attribute">#[<span class="ident">macro_use</span>]</span> <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">log</span>;
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">loggerv</span>;
+
+<span class="kw">use</span> <span class="ident">log</span>::<span class="ident">LogLevel</span>;
+
+<span class="kw">fn</span> <span class="ident">main</span>() {
+    <span class="ident">loggerv</span>::<span class="ident">init_with_level</span>(<span class="ident">LogLevel</span>::<span class="ident">Info</span>).<span class="ident">unwrap</span>();
+    <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;this is a debug {}&quot;</span>, <span class="string">&quot;message&quot;</span>);
+    <span class="macro">error</span><span class="macro">!</span>(<span class="string">&quot;this is printed by default&quot;</span>);
+}</pre>
+
+<h1 id='example-2' class='section-header'><a href='#example-2'>Example</a></h1>
+<p>If you don&#39;t really care at all you could just use the plain <code>init_quiet</code> function
+to only show warnings and errors:</p>
+
+<pre class="rust rust-example-rendered">
+<span class="attribute">#[<span class="ident">macro_use</span>]</span> <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">log</span>;
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">loggerv</span>;
+
+<span class="kw">fn</span> <span class="ident">main</span>() {
+    <span class="ident">loggerv</span>::<span class="ident">init_quiet</span>().<span class="ident">unwrap</span>();
+    <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;hidden&quot;</span>);
+    <span class="macro">error</span><span class="macro">!</span>(<span class="string">&quot;this is printed by default&quot;</span>);
+}</pre>
+
+<p>See the documentation for the log crate for more information about its API.</p>
+</div><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.init_quiet.html"
+                                  title='fn loggerv::init_quiet'>init_quiet</a></td>
+                           <td class='docblock-short'>
+                                <p>Initializes loggerv with only warnings and errors.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.init_with_level.html"
+                                  title='fn loggerv::init_with_level'>init_with_level</a></td>
+                           <td class='docblock-short'>
+                                <p>Initialize loggerv with a maximal log level.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.init_with_verbosity.html"
+                                  title='fn loggerv::init_with_verbosity'>init_with_verbosity</a></td>
+                           <td class='docblock-short'>
+                                <p>Initialize loggerv with a verbosity level.</p>
+                           </td>
+                       </tr></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "loggerv";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

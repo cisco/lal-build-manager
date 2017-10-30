@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Lockfile` struct in crate `lal`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Lockfile">
+
+    <title>lal::Lockfile - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'>Struct Lockfile</p><div class="block items"><ul><li><a href="#fields">Fields</a></li><li><a href="#methods">Methods</a></li><li><a href="#implementations">Trait Implementations</a></li></ul></div><p class='location'><a href='index.html'>lal</a></p><script>window.sidebarCurrent = {name: 'Lockfile', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>lal</a>::<wbr><a class="struct" href=''>Lockfile</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/lal/core/lockfile.rs.html#68-89' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Lockfile {
+    pub name: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>,
+    pub config: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>,
+    pub container: <a class="struct" href="../lal/struct.Container.html" title="struct lal::Container">Container</a>,
+    pub environment: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>,
+    pub defaultEnv: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;,
+    pub sha: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;,
+    pub version: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>,
+    pub tool: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>,
+    pub built: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;,
+    pub dependencies: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/btree/map/struct.BTreeMap.html" title="struct alloc::btree::map::BTreeMap">BTreeMap</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>, <a class="struct" href="../lal/struct.Lockfile.html" title="struct lal::Lockfile">Lockfile</a>&gt;,
+}</pre><div class='docblock'><p>Representation of <code>lockfile.json</code></p>
+</div><h2 id='fields' class='fields small-section-header'>
+                       Fields<a href='#fields' class='anchor'></a></h2><span id='structfield.name' class="structfield">
+                           <span id='name.v' class='invisible'>
+                           <code>name: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a></code>
+                           </span></span><div class='docblock'><p>Name of the component built</p>
+</div><span id='structfield.config' class="structfield">
+                           <span id='config.v' class='invisible'>
+                           <code>config: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a></code>
+                           </span></span><div class='docblock'><p>Build configuration used</p>
+</div><span id='structfield.container' class="structfield">
+                           <span id='container.v' class='invisible'>
+                           <code>container: <a class="struct" href="../lal/struct.Container.html" title="struct lal::Container">Container</a></code>
+                           </span></span><div class='docblock'><p>Container and tag used to build</p>
+</div><span id='structfield.environment' class="structfield">
+                           <span id='environment.v' class='invisible'>
+                           <code>environment: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a></code>
+                           </span></span><div class='docblock'><p>Name of the environment for the container at the time</p>
+</div><span id='structfield.defaultEnv' class="structfield">
+                           <span id='defaultEnv.v' class='invisible'>
+                           <code>defaultEnv: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;</code>
+                           </span></span><div class='docblock'><p>Name of the default environment set in the manifest</p>
+</div><span id='structfield.sha' class="structfield">
+                           <span id='sha.v' class='invisible'>
+                           <code>sha: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;</code>
+                           </span></span><div class='docblock'><p>Revision id from version control</p>
+</div><span id='structfield.version' class="structfield">
+                           <span id='version.v' class='invisible'>
+                           <code>version: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a></code>
+                           </span></span><div class='docblock'><p>Version of the component built</p>
+</div><span id='structfield.tool' class="structfield">
+                           <span id='tool.v' class='invisible'>
+                           <code>tool: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a></code>
+                           </span></span><div class='docblock'><p>Version of the lal tool</p>
+</div><span id='structfield.built' class="structfield">
+                           <span id='built.v' class='invisible'>
+                           <code>built: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;</code>
+                           </span></span><div class='docblock'><p>Built timestamp</p>
+</div><span id='structfield.dependencies' class="structfield">
+                           <span id='dependencies.v' class='invisible'>
+                           <code>dependencies: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/btree/map/struct.BTreeMap.html" title="struct alloc::btree::map::BTreeMap">BTreeMap</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>, <a class="struct" href="../lal/struct.Lockfile.html" title="struct lal::Lockfile">Lockfile</a>&gt;</code>
+                           </span></span><div class='docblock'><p>Recursive map of dependencies used</p>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><code>impl <a class="struct" href="../lal/struct.Lockfile.html" title="struct lal::Lockfile">Lockfile</a></code><a href='#impl' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#96-187' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class="method"><span id='new.v' class='invisible'><code>fn <a href='#method.new' class='fnname'>new</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;name: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;container: &amp;<a class="struct" href="../lal/struct.Container.html" title="struct lal::Container">Container</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;env: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;v: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;, <br>&nbsp;&nbsp;&nbsp;&nbsp;build_cfg: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;&amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>&gt;<br>) -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#100-121' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Initialize an empty Lockfile with defaults</p>
+
+<p>If no version is given, the version is EXPERIMENTAL-{randhex} for Colony.</p>
+</div><h4 id='method.from_path' class="method"><span id='from_path.v' class='invisible'><code>fn <a href='#method.from_path' class='fnname'>from_path</a>(lock_path: &amp;<a class="struct" href="https://doc.rust-lang.org/nightly/std/path/struct.PathBuf.html" title="struct std::path::PathBuf">PathBuf</a>, name: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>) -&gt; <a class="type" href="../lal/type.LalResult.html" title="type lal::LalResult">LalResult</a>&lt;Self&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#124-131' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Opened lockfile at a path</p>
+</div><h4 id='method.release_build' class="method"><span id='release_build.v' class='invisible'><code>fn <a href='#method.release_build' class='fnname'>release_build</a>() -&gt; <a class="type" href="../lal/type.LalResult.html" title="type lal::LalResult">LalResult</a>&lt;Self&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#134-137' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>A reader from ARTIFACT directory</p>
+</div><h4 id='method.populate_from_input' class="method"><span id='populate_from_input.v' class='invisible'><code>fn <a href='#method.populate_from_input' class='fnname'>populate_from_input</a>(self) -&gt; <a class="type" href="../lal/type.LalResult.html" title="type lal::LalResult">LalResult</a>&lt;Self&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#150-159' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Read all the lockfiles in INPUT to generate the full lockfile</p>
+
+<p>NB: This currently reads all the lockfiles partially in <code>analyze</code>,
+the re-reads them fully in <code>read_lockfile_from_component</code> so can be sped up.</p>
+</div><h4 id='method.set_default_env' class="method"><span id='set_default_env.v' class='invisible'><code>fn <a href='#method.set_default_env' class='fnname'>set_default_env</a>(self, default: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>) -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#162-165' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Attach a default environment to the lockfile</p>
+</div><h4 id='method.attach_revision_id' class="method"><span id='attach_revision_id.v' class='invisible'><code>fn <a href='#method.attach_revision_id' class='fnname'>attach_revision_id</a>(self, sha: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;) -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#168-171' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Attach a revision id from source control</p>
+</div><h4 id='method.set_name' class="method"><span id='set_name.v' class='invisible'><code>fn <a href='#method.set_name' class='fnname'>set_name</a>(self, name: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>) -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#174-177' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Attach a name to the lockfile</p>
+</div><h4 id='method.write' class="method"><span id='write.v' class='invisible'><code>fn <a href='#method.write' class='fnname'>write</a>(&amp;self, pth: &amp;<a class="struct" href="https://doc.rust-lang.org/nightly/std/path/struct.Path.html" title="struct std::path::Path">Path</a>) -&gt; <a class="type" href="../lal/type.LalResult.html" title="type lal::LalResult">LalResult</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">()</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#180-186' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Write the current <code>Lockfile</code> struct to a Path</p>
+</div></div><h3 id='impl-1' class='impl'><span class='in-band'><code>impl <a class="struct" href="../lal/struct.Lockfile.html" title="struct lal::Lockfile">Lockfile</a></code><a href='#impl-1' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#194-263' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.find_all_dependency_versions' class="method"><span id='find_all_dependency_versions.v' class='invisible'><code>fn <a href='#method.find_all_dependency_versions' class='fnname'>find_all_dependency_versions</a>(&amp;self) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html" title="struct std::collections::hash::map::HashMap">HashMap</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>, <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/btree/set/struct.BTreeSet.html" title="struct alloc::btree::set::BTreeSet">BTreeSet</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#244' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>List all used versions used of each dependency</p>
+</div><h4 id='method.find_all_environments' class="method"><span id='find_all_environments.v' class='invisible'><code>fn <a href='#method.find_all_environments' class='fnname'>find_all_environments</a>(&amp;self) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html" title="struct std::collections::hash::map::HashMap">HashMap</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>, <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/btree/set/struct.BTreeSet.html" title="struct alloc::btree::set::BTreeSet">BTreeSet</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#247' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>List all used environments used of each dependency</p>
+</div><h4 id='method.find_all_dependency_names' class="method"><span id='find_all_dependency_names.v' class='invisible'><code>fn <a href='#method.find_all_dependency_names' class='fnname'>find_all_dependency_names</a>(&amp;self) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html" title="struct std::collections::hash::map::HashMap">HashMap</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>, <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/btree/set/struct.BTreeSet.html" title="struct alloc::btree::set::BTreeSet">BTreeSet</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#250-262' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>List all dependency names used by each dependency (not transitively)</p>
+</div></div><h3 id='impl-2' class='impl'><span class='in-band'><code>impl <a class="struct" href="../lal/struct.Lockfile.html" title="struct lal::Lockfile">Lockfile</a></code><a href='#impl-2' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#268-338' title='goto source code'>[src]</a></span></h3>
+<div class='docblock'><p>Reverse dependency methods</p>
+
+<p>Similar to the above ones - requires a populated lockfile to make sense.</p>
+</div><div class='impl-items'><h4 id='method.get_reverse_deps' class="method"><span id='get_reverse_deps.v' class='invisible'><code>fn <a href='#method.get_reverse_deps' class='fnname'>get_reverse_deps</a>(&amp;self) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html" title="struct std::collections::hash::map::HashMap">HashMap</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>, <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/btree/set/struct.BTreeSet.html" title="struct alloc::btree::set::BTreeSet">BTreeSet</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#270-309' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>List all dependees for each dependency</p>
+</div><h4 id='method.get_reverse_deps_transitively_for' class="method"><span id='get_reverse_deps_transitively_for.v' class='invisible'><code>fn <a href='#method.get_reverse_deps_transitively_for' class='fnname'>get_reverse_deps_transitively_for</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;component: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a><br>) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/btree/set/struct.BTreeSet.html" title="struct alloc::btree::set::BTreeSet">BTreeSet</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#312-337' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>List all dependees for a dependency transitively</p>
+</div></div>
+            <h2 id='implementations' class='small-section-header'>
+              Trait Implementations<a href='#implementations' class='anchor'></a>
+            </h2>
+        <h3 id='impl-Debug' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug">Debug</a> for <a class="struct" href="../lal/struct.Lockfile.html" title="struct lal::Lockfile">Lockfile</a></code><a href='#impl-Debug' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#67' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class="method"><span id='fmt.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#67' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 id='impl-Default' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/default/trait.Default.html" title="trait core::default::Default">Default</a> for <a class="struct" href="../lal/struct.Lockfile.html" title="struct lal::Lockfile">Lockfile</a></code><a href='#impl-Default' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#92-94' title='goto source code'>[src]</a></span></h3>
+<div class='docblock'><p>Generates a temporary empty lockfile for internal analysis</p>
+</div><div class='impl-items'><h4 id='method.default' class="method"><span id='default.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/default/trait.Default.html#tymethod.default' class='fnname'>default</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/core/lockfile.rs.html#93' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the &quot;default value&quot; for a type. <a href="https://doc.rust-lang.org/nightly/core/default/trait.Default.html#tymethod.default">Read more</a></p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "lal";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

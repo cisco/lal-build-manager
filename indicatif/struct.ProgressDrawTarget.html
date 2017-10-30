@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `ProgressDrawTarget` struct in crate `indicatif`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, ProgressDrawTarget">
+
+    <title>indicatif::ProgressDrawTarget - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'>Struct ProgressDrawTarget</p><div class="block items"><ul><li><a href="#methods">Methods</a></li></ul></div><p class='location'><a href='index.html'>indicatif</a></p><script>window.sidebarCurrent = {name: 'ProgressDrawTarget', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>indicatif</a>::<wbr><a class="struct" href=''>ProgressDrawTarget</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/indicatif/progress.rs.html#55-57' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct ProgressDrawTarget { /* fields omitted */ }</pre><div class='docblock'><p>Target for draw operations</p>
+
+<p>This tells a progress bar or a multi progress object where to paint to.
+The draw target is a stateful wrapper over a drawing destination and
+internally optimizes how often the state is painted to the output
+device.</p>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><code>impl <a class="struct" href="../indicatif/struct.ProgressDrawTarget.html" title="struct indicatif::ProgressDrawTarget">ProgressDrawTarget</a></code><a href='#impl' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#59-138' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.stdout' class="method"><span id='stdout.v' class='invisible'><code>fn <a href='#method.stdout' class='fnname'>stdout</a>() -&gt; <a class="struct" href="../indicatif/struct.ProgressDrawTarget.html" title="struct indicatif::ProgressDrawTarget">ProgressDrawTarget</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#64-66' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Draw to a buffered stdout terminal at a max of 15 times a second.</p>
+
+<p>This is the default draw target for progress bars.  For more
+information see <code>ProgressDrawTarget::to_term</code>.</p>
+</div><h4 id='method.stderr' class="method"><span id='stderr.v' class='invisible'><code>fn <a href='#method.stderr' class='fnname'>stderr</a>() -&gt; <a class="struct" href="../indicatif/struct.ProgressDrawTarget.html" title="struct indicatif::ProgressDrawTarget">ProgressDrawTarget</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#71-73' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Draw to a buffered stderr terminal at a max of 15 times a second.</p>
+
+<p>For more information see <code>ProgressDrawTarget::to_term</code>.</p>
+</div><h4 id='method.to_term' class="method"><span id='to_term.v' class='invisible'><code>fn <a href='#method.to_term' class='fnname'>to_term</a>(term: <a class="struct" href="../indicatif/struct.Term.html" title="struct indicatif::Term">Term</a>, refresh_rate: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>&gt;) -&gt; <a class="struct" href="../indicatif/struct.ProgressDrawTarget.html" title="struct indicatif::ProgressDrawTarget">ProgressDrawTarget</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#81-86' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Draw to a terminal, optionally with a specific refresh rate.</p>
+
+<p>Progress bars are by default drawn to terminals however if the
+terminal is not user attended the entire progress bar will be
+hidden.  This is done so that piping to a file will not produce
+useless escape codes in that file.</p>
+</div><h4 id='method.hidden' class="method"><span id='hidden.v' class='invisible'><code>fn <a href='#method.hidden' class='fnname'>hidden</a>() -&gt; <a class="struct" href="../indicatif/struct.ProgressDrawTarget.html" title="struct indicatif::ProgressDrawTarget">ProgressDrawTarget</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#91-95' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>A hidden draw target.</p>
+
+<p>This forces a progress bar to be not rendered at all.</p>
+</div><h4 id='method.is_hidden' class="method"><span id='is_hidden.v' class='invisible'><code>fn <a href='#method.is_hidden' class='fnname'>is_hidden</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#101-107' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns true if the draw target is hidden.</p>
+
+<p>This is internally used in progress bars to figure out if overhead
+from drawing can be prevented.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "indicatif";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

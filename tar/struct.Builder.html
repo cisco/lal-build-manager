@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Builder` struct in crate `tar`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Builder">
+
+    <title>tar::Builder - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'>Struct Builder</p><div class="block items"><ul><li><a href="#methods">Methods</a></li><li><a href="#implementations">Trait Implementations</a></li></ul></div><p class='location'><a href='index.html'>tar</a></p><script>window.sidebarCurrent = {name: 'Builder', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>tar</a>::<wbr><a class="struct" href=''>Builder</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/tar/builder.rs.html#14-18' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Builder&lt;W:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/std/io/trait.Write.html" title="trait std::io::Write">Write</a>&gt; { /* fields omitted */ }</pre><div class='docblock'><p>A structure for building archives</p>
+
+<p>This structure has methods for building up an archive from scratch into any
+arbitrary writer.</p>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><code>impl&lt;W:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/std/io/trait.Write.html" title="trait std::io::Write">Write</a>&gt; <a class="struct" href="../tar/struct.Builder.html" title="struct tar::Builder">Builder</a>&lt;W&gt;</code><a href='#impl' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/tar/builder.rs.html#20-232' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class="method"><span id='new.v' class='invisible'><code>fn <a href='#method.new' class='fnname'>new</a>(obj: W) -&gt; <a class="struct" href="../tar/struct.Builder.html" title="struct tar::Builder">Builder</a>&lt;W&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/tar/builder.rs.html#24-30' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Create a new archive builder with the underlying object as the
+destination of all data written. The builder will use
+<code>HeaderMode::Complete</code> by default.</p>
+</div><h4 id='method.mode' class="method"><span id='mode.v' class='invisible'><code>fn <a href='#method.mode' class='fnname'>mode</a>(&amp;mut self, mode: <a class="enum" href="../tar/enum.HeaderMode.html" title="enum tar::HeaderMode">HeaderMode</a>)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/tar/builder.rs.html#39-41' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Changes the HeaderMode that will be used when reading fs Metadata for
+methods that implicitly read metadata for an input Path. Notably, this
+does <em>not</em> apply to <code>append(Header)</code>.</p>
+</div><h4 id='method.into_inner' class="method"><span id='into_inner.v' class='invisible'><code>fn <a href='#method.into_inner' class='fnname'>into_inner</a>(self) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;W&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/tar/builder.rs.html#48-53' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Unwrap this archive, returning the underlying object.</p>
+
+<p>This function will finish writing the archive if the <code>finish</code> function
+hasn&#39;t yet been called, returning any I/O error which happens during
+that operation.</p>
+</div><h4 id='method.append' class="method"><span id='append.v' class='invisible'><code>fn <a href='#method.append' class='fnname'>append</a>&lt;R:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/std/io/trait.Read.html" title="trait std::io::Read">Read</a>&gt;(&amp;mut self, header: &amp;<a class="struct" href="../tar/struct.Header.html" title="struct tar::Header">Header</a>, data: R) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">()</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/tar/builder.rs.html#91-94' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Adds a new entry to this archive.</p>
+
+<p>This function will append the header specified, followed by contents of
+the stream specified by <code>data</code>. To produce a valid archive the <code>size</code>
+field of <code>header</code> must be the same as the length of the stream that&#39;s
+being written. Additionally the checksum for the header should have been
+set via the <code>set_cksum</code> method.</p>
+
+<p>Note that this will not attempt to seek the archive to a valid position,
+so if the archive is in the middle of a read or some other similar
+operation then this may corrupt the archive.</p>
+
+<p>Also note that after all entries have been written to an archive the
+<code>finish</code> function needs to be called to finish writing the archive.</p>
+
+<h1 id='errors' class='section-header'><a href='#errors'>Errors</a></h1>
+<p>This function will return an error for any intermittent I/O error which
+occurs when either reading or writing.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">tar</span>::{<span class="ident">Builder</span>, <span class="ident">Header</span>};
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">header</span> <span class="op">=</span> <span class="ident">Header</span>::<span class="ident">new_gnu</span>();
+<span class="ident">header</span>.<span class="ident">set_path</span>(<span class="string">&quot;foo&quot;</span>);
+<span class="ident">header</span>.<span class="ident">set_size</span>(<span class="number">4</span>);
+<span class="ident">header</span>.<span class="ident">set_cksum</span>();
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] <span class="op">=</span> <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>];
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ar</span> <span class="op">=</span> <span class="ident">Builder</span>::<span class="ident">new</span>(<span class="ident">Vec</span>::<span class="ident">new</span>());
+<span class="ident">ar</span>.<span class="ident">append</span>(<span class="kw-2">&amp;</span><span class="ident">header</span>, <span class="ident">data</span>).<span class="ident">unwrap</span>();
+<span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">ar</span>.<span class="ident">into_inner</span>().<span class="ident">unwrap</span>();</pre>
+</div><h4 id='method.append_path' class="method"><span id='append_path.v' class='invisible'><code>fn <a href='#method.append_path' class='fnname'>append_path</a>&lt;P:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html" title="trait core::convert::AsRef">AsRef</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/std/path/struct.Path.html" title="struct std::path::Path">Path</a>&gt;&gt;(&amp;mut self, path: P) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">()</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/tar/builder.rs.html#120-123' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Adds a file on the local filesystem to this archive.</p>
+
+<p>This function will open the file specified by <code>path</code> and insert the file
+into the archive with the appropriate metadata set, returning any I/O
+error which occurs while writing. The path name for the file inside of
+this archive will be the same as <code>path</code>, and it is required that the
+path is a relative path.</p>
+
+<p>Note that this will not attempt to seek the archive to a valid position,
+so if the archive is in the middle of a read or some other similar
+operation then this may corrupt the archive.</p>
+
+<p>Also note that after all files have been written to an archive the
+<code>finish</code> function needs to be called to finish writing the archive.</p>
+
+<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
+<pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">tar</span>::<span class="ident">Builder</span>;
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ar</span> <span class="op">=</span> <span class="ident">Builder</span>::<span class="ident">new</span>(<span class="ident">Vec</span>::<span class="ident">new</span>());
+
+<span class="ident">ar</span>.<span class="ident">append_path</span>(<span class="string">&quot;foo/bar.txt&quot;</span>).<span class="ident">unwrap</span>();</pre>
+</div><h4 id='method.append_file' class="method"><span id='append_file.v' class='invisible'><code>fn <a href='#method.append_file' class='fnname'>append_file</a>&lt;P:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html" title="trait core::convert::AsRef">AsRef</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/std/path/struct.Path.html" title="struct std::path::Path">Path</a>&gt;&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;mut self, <br>&nbsp;&nbsp;&nbsp;&nbsp;path: P, <br>&nbsp;&nbsp;&nbsp;&nbsp;file: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/std/fs/struct.File.html" title="struct std::fs::File">File</a><br>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">()</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/tar/builder.rs.html#151-155' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Adds a file to this archive with the given path as the name of the file
+in the archive.</p>
+
+<p>This will use the metadata of <code>file</code> to populate a <code>Header</code>, and it will
+then append the file to the archive with the name <code>path</code>.</p>
+
+<p>Note that this will not attempt to seek the archive to a valid position,
+so if the archive is in the middle of a read or some other similar
+operation then this may corrupt the archive.</p>
+
+<p>Also note that after all files have been written to an archive the
+<code>finish</code> function needs to be called to finish writing the archive.</p>
+
+<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1>
+<pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fs</span>::<span class="ident">File</span>;
+<span class="kw">use</span> <span class="ident">tar</span>::<span class="ident">Builder</span>;
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ar</span> <span class="op">=</span> <span class="ident">Builder</span>::<span class="ident">new</span>(<span class="ident">Vec</span>::<span class="ident">new</span>());
+
+<span class="comment">// Open the file at one location, but insert it into the archive with a</span>
+<span class="comment">// different name.</span>
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">f</span> <span class="op">=</span> <span class="ident">File</span>::<span class="ident">open</span>(<span class="string">&quot;foo/bar/baz.txt&quot;</span>).<span class="ident">unwrap</span>();
+<span class="ident">ar</span>.<span class="ident">append_file</span>(<span class="string">&quot;bar/baz.txt&quot;</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">f</span>).<span class="ident">unwrap</span>();</pre>
+</div><h4 id='method.append_dir' class="method"><span id='append_dir.v' class='invisible'><code>fn <a href='#method.append_dir' class='fnname'>append_dir</a>&lt;P, Q&gt;(&amp;mut self, path: P, src_path: Q) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">()</a>&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;P: <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html" title="trait core::convert::AsRef">AsRef</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/std/path/struct.Path.html" title="struct std::path::Path">Path</a>&gt;,<br>&nbsp;&nbsp;&nbsp;&nbsp;Q: <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html" title="trait core::convert::AsRef">AsRef</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/std/path/struct.Path.html" title="struct std::path::Path">Path</a>&gt;,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/tar/builder.rs.html#182-187' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Adds a directory to this archive with the given path as the name of the
+directory in the archive.</p>
+
+<p>This will use <code>stat</code> to populate a <code>Header</code>, and it will then append the
+directory to the archive with the name <code>path</code>.</p>
+
+<p>Note that this will not attempt to seek the archive to a valid position,
+so if the archive is in the middle of a read or some other similar
+operation then this may corrupt the archive.</p>
+
+<p>Also note that after all files have been written to an archive the
+<code>finish</code> function needs to be called to finish writing the archive.</p>
+
+<h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1>
+<pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fs</span>;
+<span class="kw">use</span> <span class="ident">tar</span>::<span class="ident">Builder</span>;
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ar</span> <span class="op">=</span> <span class="ident">Builder</span>::<span class="ident">new</span>(<span class="ident">Vec</span>::<span class="ident">new</span>());
+
+<span class="comment">// Use the directory at one location, but insert it into the archive</span>
+<span class="comment">// with a different name.</span>
+<span class="ident">ar</span>.<span class="ident">append_dir</span>(<span class="string">&quot;bardir&quot;</span>, <span class="string">&quot;.&quot;</span>).<span class="ident">unwrap</span>();</pre>
+</div><h4 id='method.append_dir_all' class="method"><span id='append_dir_all.v' class='invisible'><code>fn <a href='#method.append_dir_all' class='fnname'>append_dir_all</a>&lt;P, Q&gt;(&amp;mut self, path: P, src_path: Q) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">()</a>&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;P: <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html" title="trait core::convert::AsRef">AsRef</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/std/path/struct.Path.html" title="struct std::path::Path">Path</a>&gt;,<br>&nbsp;&nbsp;&nbsp;&nbsp;Q: <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html" title="trait core::convert::AsRef">AsRef</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/std/path/struct.Path.html" title="struct std::path::Path">Path</a>&gt;,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/tar/builder.rs.html#211-216' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Adds a directory and all of its contents (recursively) to this archive
+with the given path as the name of the directory in the archive.</p>
+
+<p>Note that this will not attempt to seek the archive to a valid position,
+so if the archive is in the middle of a read or some other similar
+operation then this may corrupt the archive.</p>
+
+<p>Also note that after all files have been written to an archive the
+<code>finish</code> function needs to be called to finish writing the archive.</p>
+
+<h1 id='examples-4' class='section-header'><a href='#examples-4'>Examples</a></h1>
+<pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fs</span>;
+<span class="kw">use</span> <span class="ident">tar</span>::<span class="ident">Builder</span>;
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ar</span> <span class="op">=</span> <span class="ident">Builder</span>::<span class="ident">new</span>(<span class="ident">Vec</span>::<span class="ident">new</span>());
+
+<span class="comment">// Use the directory at one location, but insert it into the archive</span>
+<span class="comment">// with a different name.</span>
+<span class="ident">ar</span>.<span class="ident">append_dir_all</span>(<span class="string">&quot;bardir&quot;</span>, <span class="string">&quot;.&quot;</span>).<span class="ident">unwrap</span>();</pre>
+</div><h4 id='method.finish' class="method"><span id='finish.v' class='invisible'><code>fn <a href='#method.finish' class='fnname'>finish</a>(&amp;mut self) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">()</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/tar/builder.rs.html#225-231' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Finish writing this archive, emitting the termination sections.</p>
+
+<p>This function should only be called when the archive has been written
+entirely and if an I/O error happens the underlying object still needs
+to be acquired.</p>
+
+<p>In most situations the <code>into_inner</code> method should be preferred.</p>
+</div></div>
+            <h2 id='implementations' class='small-section-header'>
+              Trait Implementations<a href='#implementations' class='anchor'></a>
+            </h2>
+        <h3 id='impl-Drop' class='impl'><span class='in-band'><code>impl&lt;W:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/std/io/trait.Write.html" title="trait std::io::Write">Write</a>&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html" title="trait core::ops::drop::Drop">Drop</a> for <a class="struct" href="../tar/struct.Builder.html" title="struct tar::Builder">Builder</a>&lt;W&gt;</code><a href='#impl-Drop' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/tar/builder.rs.html#327-331' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.drop' class="method"><span id='drop.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/tar/builder.rs.html#328-330' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Executes the destructor for this type. <a href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop">Read more</a></p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "tar";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

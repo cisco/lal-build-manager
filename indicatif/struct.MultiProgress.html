@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `MultiProgress` struct in crate `indicatif`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, MultiProgress">
+
+    <title>indicatif::MultiProgress - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'>Struct MultiProgress</p><div class="block items"><ul><li><a href="#methods">Methods</a></li><li><a href="#implementations">Trait Implementations</a></li></ul></div><p class='location'><a href='index.html'>indicatif</a></p><script>window.sidebarCurrent = {name: 'MultiProgress', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>indicatif</a>::<wbr><a class="struct" href=''>MultiProgress</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/indicatif/progress.rs.html#564-569' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct MultiProgress { /* fields omitted */ }</pre><div class='docblock'><p>Manages multiple progress bars from different threads.</p>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><code>impl <a class="struct" href="../indicatif/struct.MultiProgress.html" title="struct indicatif::MultiProgress">MultiProgress</a></code><a href='#impl' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#573-690' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class="method"><span id='new.v' class='invisible'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class="struct" href="../indicatif/struct.MultiProgress.html" title="struct indicatif::MultiProgress">MultiProgress</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#575-586' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Creates a new multi progress object that draws to stdout.</p>
+</div><h4 id='method.set_draw_target' class="method"><span id='set_draw_target.v' class='invisible'><code>fn <a href='#method.set_draw_target' class='fnname'>set_draw_target</a>(&amp;self, target: <a class="struct" href="../indicatif/struct.ProgressDrawTarget.html" title="struct indicatif::ProgressDrawTarget">ProgressDrawTarget</a>)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#589-591' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Sets a different draw target for the multiprogress bar.</p>
+</div><h4 id='method.add' class="method"><span id='add.v' class='invisible'><code>fn <a href='#method.add' class='fnname'>add</a>(&amp;self, bar: <a class="struct" href="../indicatif/struct.ProgressBar.html" title="struct indicatif::ProgressBar">ProgressBar</a>) -&gt; <a class="struct" href="../indicatif/struct.ProgressBar.html" title="struct indicatif::ProgressBar">ProgressBar</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#598-609' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Adds a progress bar.</p>
+
+<p>The progress bar added will have the draw target changed to a
+remote draw target that is intercepted by the multi progress
+object.</p>
+</div><h4 id='method.join' class="method"><span id='join.v' class='invisible'><code>fn <a href='#method.join' class='fnname'>join</a>(&amp;self) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">()</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#616-618' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Waits for all progress bars to report that they are finished.</p>
+
+<p>You need to call this as this will request the draw instructions
+from the remote progress bars.  Not calling this will deadlock
+your program.</p>
+</div><h4 id='method.join_and_clear' class="method"><span id='join_and_clear.v' class='invisible'><code>fn <a href='#method.join_and_clear' class='fnname'>join_and_clear</a>(&amp;self) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">()</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#621-623' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Works like <code>join</code> but clears the progress bar in the end.</p>
+</div></div>
+            <h2 id='implementations' class='small-section-header'>
+              Trait Implementations<a href='#implementations' class='anchor'></a>
+            </h2>
+        <h3 id='impl-Sync' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html" title="trait core::marker::Sync">Sync</a> for <a class="struct" href="../indicatif/struct.MultiProgress.html" title="struct indicatif::MultiProgress">MultiProgress</a></code><a href='#impl-Sync' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#571' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "indicatif";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

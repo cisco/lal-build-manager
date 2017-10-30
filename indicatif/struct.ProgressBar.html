@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `ProgressBar` struct in crate `indicatif`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, ProgressBar">
+
+    <title>indicatif::ProgressBar - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'>Struct ProgressBar</p><div class="block items"><ul><li><a href="#methods">Methods</a></li><li><a href="#implementations">Trait Implementations</a></li></ul></div><p class='location'><a href='index.html'>indicatif</a></p><script>window.sidebarCurrent = {name: 'ProgressBar', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>indicatif</a>::<wbr><a class="struct" href=''>ProgressBar</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/indicatif/progress.rs.html#374-376' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct ProgressBar { /* fields omitted */ }</pre><div class='docblock'><p>A progress bar or spinner.</p>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><code>impl <a class="struct" href="../indicatif/struct.ProgressBar.html" title="struct indicatif::ProgressBar">ProgressBar</a></code><a href='#impl' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#380-550' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class="method"><span id='new.v' class='invisible'><code>fn <a href='#method.new' class='fnname'>new</a>(len: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>) -&gt; <a class="struct" href="../indicatif/struct.ProgressBar.html" title="struct indicatif::ProgressBar">ProgressBar</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#384-400' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Creates a new progress bar with a given length.</p>
+
+<p>This progress bar by default draws directly to stdout.</p>
+</div><h4 id='method.hidden' class="method"><span id='hidden.v' class='invisible'><code>fn <a href='#method.hidden' class='fnname'>hidden</a>() -&gt; <a class="struct" href="../indicatif/struct.ProgressBar.html" title="struct indicatif::ProgressBar">ProgressBar</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#406-410' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Creates a completely hidden progress bar.</p>
+
+<p>This progress bar still responds to API changes but it does not
+have a length or render in any way.</p>
+</div><h4 id='method.new_spinner' class="method"><span id='new_spinner.v' class='invisible'><code>fn <a href='#method.new_spinner' class='fnname'>new_spinner</a>() -&gt; <a class="struct" href="../indicatif/struct.ProgressBar.html" title="struct indicatif::ProgressBar">ProgressBar</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#416-420' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Creates a new spinner.</p>
+
+<p>This spinner by default draws directly to stdout.  This adds the
+default spinner style to it.</p>
+</div><h4 id='method.set_style' class="method"><span id='set_style.v' class='invisible'><code>fn <a href='#method.set_style' class='fnname'>set_style</a>(&amp;self, style: <a class="struct" href="../indicatif/struct.ProgressStyle.html" title="struct indicatif::ProgressStyle">ProgressStyle</a>)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#423-425' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Overrides the stored style.</p>
+</div><h4 id='method.tick' class="method"><span id='tick.v' class='invisible'><code>fn <a href='#method.tick' class='fnname'>tick</a>(&amp;self)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#430-434' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Manually ticks the spinner or progress bar.</p>
+
+<p>This automatically happens on any other change to a progress bar.</p>
+</div><h4 id='method.inc' class="method"><span id='inc.v' class='invisible'><code>fn <a href='#method.inc' class='fnname'>inc</a>(&amp;self, delta: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#437-442' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Advances the position of a progress bar by delta.</p>
+</div><h4 id='method.set_position' class="method"><span id='set_position.v' class='invisible'><code>fn <a href='#method.set_position' class='fnname'>set_position</a>(&amp;self, pos: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#445-450' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Sets the position of the progress bar.</p>
+</div><h4 id='method.set_length' class="method"><span id='set_length.v' class='invisible'><code>fn <a href='#method.set_length' class='fnname'>set_length</a>(&amp;self, len: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#453-457' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Sets the length of the progress bar.</p>
+</div><h4 id='method.set_prefix' class="method"><span id='set_prefix.v' class='invisible'><code>fn <a href='#method.set_prefix' class='fnname'>set_prefix</a>(&amp;self, prefix: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#460-466' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Sets the current prefix of the progress bar.</p>
+</div><h4 id='method.set_message' class="method"><span id='set_message.v' class='invisible'><code>fn <a href='#method.set_message' class='fnname'>set_message</a>(&amp;self, msg: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#469-475' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Sets the current message of the progress bar.</p>
+</div><h4 id='method.finish' class="method"><span id='finish.v' class='invisible'><code>fn <a href='#method.finish' class='fnname'>finish</a>(&amp;self)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#478-483' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Finishes the progress bar and leaves the current message.</p>
+</div><h4 id='method.finish_with_message' class="method"><span id='finish_with_message.v' class='invisible'><code>fn <a href='#method.finish_with_message' class='fnname'>finish_with_message</a>(&amp;self, msg: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#486-493' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Finishes the progress bar and sets a message.</p>
+</div><h4 id='method.finish_and_clear' class="method"><span id='finish_and_clear.v' class='invisible'><code>fn <a href='#method.finish_and_clear' class='fnname'>finish_and_clear</a>(&amp;self)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#496-501' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Finishes the progress bar and completely clears it.</p>
+</div><h4 id='method.set_draw_target' class="method"><span id='set_draw_target.v' class='invisible'><code>fn <a href='#method.set_draw_target' class='fnname'>set_draw_target</a>(&amp;self, target: <a class="struct" href="../indicatif/struct.ProgressDrawTarget.html" title="struct indicatif::ProgressDrawTarget">ProgressDrawTarget</a>)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#513-515' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Sets a different draw target for the progress bar.</p>
+
+<p>This can be used to draw the progress bar to stderr
+for instance:</p>
+
+<pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">pb</span> <span class="op">=</span> <span class="ident">ProgressBar</span>::<span class="ident">new</span>(<span class="number">100</span>);
+<span class="ident">pb</span>.<span class="ident">set_draw_target</span>(<span class="ident">ProgressDrawTarget</span>::<span class="ident">stderr</span>());</pre>
+</div></div>
+            <h2 id='implementations' class='small-section-header'>
+              Trait Implementations<a href='#implementations' class='anchor'></a>
+            </h2>
+        <h3 id='impl-Sync' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html" title="trait core::marker::Sync">Sync</a> for <a class="struct" href="../indicatif/struct.ProgressBar.html" title="struct indicatif::ProgressBar">ProgressBar</a></code><a href='#impl-Sync' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#378' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'></div><h3 id='impl-Drop' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html" title="trait core::ops::drop::Drop">Drop</a> for <a class="struct" href="../indicatif/struct.ProgressBar.html" title="struct indicatif::ProgressBar">ProgressBar</a></code><a href='#impl-Drop' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#692-701' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.drop' class="method"><span id='drop.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/progress.rs.html#693-700' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Executes the destructor for this type. <a href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop">Read more</a></p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "indicatif";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

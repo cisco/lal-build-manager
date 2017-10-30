@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `StyledObject` struct in crate `indicatif`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, StyledObject">
+
+    <title>indicatif::StyledObject - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'>Struct StyledObject</p><div class="block items"><ul><li><a href="#methods">Methods</a></li><li><a href="#implementations">Trait Implementations</a></li></ul></div><p class='location'><a href='index.html'>indicatif</a></p><script>window.sidebarCurrent = {name: 'StyledObject', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>indicatif</a>::<wbr><a class="struct" href=''>StyledObject</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/indicatif/ansistyle.rs.html#251-254' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct StyledObject&lt;D&gt; { /* fields omitted */ }</pre><div class='docblock'><p>A formatting wrapper that can be styled for a terminal.</p>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><code>impl&lt;D&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code><a href='#impl' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#256-309' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.force_styling' class="method"><span id='force_styling.v' class='invisible'><code>fn <a href='#method.force_styling' class='fnname'>force_styling</a>(self, value: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#261-264' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Forces styling on or off.</p>
+
+<p>This overrides the detection from <code>clicolors-control</code>.</p>
+</div><h4 id='method.fg' class="method"><span id='fg.v' class='invisible'><code>fn <a href='#method.fg' class='fnname'>fg</a>(self, color: <a class="enum" href="../indicatif/enum.Color.html" title="enum indicatif::Color">Color</a>) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#268-271' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Sets a foreground color.</p>
+</div><h4 id='method.bg' class="method"><span id='bg.v' class='invisible'><code>fn <a href='#method.bg' class='fnname'>bg</a>(self, color: <a class="enum" href="../indicatif/enum.Color.html" title="enum indicatif::Color">Color</a>) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#275-278' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Sets a background color.</p>
+</div><h4 id='method.attr' class="method"><span id='attr.v' class='invisible'><code>fn <a href='#method.attr' class='fnname'>attr</a>(self, attr: <a class="enum" href="../indicatif/enum.Attribute.html" title="enum indicatif::Attribute">Attribute</a>) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#282-285' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Adds a attr.</p>
+</div><h4 id='method.black' class="method"><span id='black.v' class='invisible'><code>fn <a href='#method.black' class='fnname'>black</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#287' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.red' class="method"><span id='red.v' class='invisible'><code>fn <a href='#method.red' class='fnname'>red</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#288' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.green' class="method"><span id='green.v' class='invisible'><code>fn <a href='#method.green' class='fnname'>green</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#289' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.yellow' class="method"><span id='yellow.v' class='invisible'><code>fn <a href='#method.yellow' class='fnname'>yellow</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#290' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.blue' class="method"><span id='blue.v' class='invisible'><code>fn <a href='#method.blue' class='fnname'>blue</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#291' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.magenta' class="method"><span id='magenta.v' class='invisible'><code>fn <a href='#method.magenta' class='fnname'>magenta</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#292' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.cyan' class="method"><span id='cyan.v' class='invisible'><code>fn <a href='#method.cyan' class='fnname'>cyan</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#293' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.white' class="method"><span id='white.v' class='invisible'><code>fn <a href='#method.white' class='fnname'>white</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#294' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.on_black' class="method"><span id='on_black.v' class='invisible'><code>fn <a href='#method.on_black' class='fnname'>on_black</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#295' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.on_red' class="method"><span id='on_red.v' class='invisible'><code>fn <a href='#method.on_red' class='fnname'>on_red</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#296' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.on_green' class="method"><span id='on_green.v' class='invisible'><code>fn <a href='#method.on_green' class='fnname'>on_green</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#297' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.on_yellow' class="method"><span id='on_yellow.v' class='invisible'><code>fn <a href='#method.on_yellow' class='fnname'>on_yellow</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#298' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.on_blue' class="method"><span id='on_blue.v' class='invisible'><code>fn <a href='#method.on_blue' class='fnname'>on_blue</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#299' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.on_magenta' class="method"><span id='on_magenta.v' class='invisible'><code>fn <a href='#method.on_magenta' class='fnname'>on_magenta</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#300' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.on_cyan' class="method"><span id='on_cyan.v' class='invisible'><code>fn <a href='#method.on_cyan' class='fnname'>on_cyan</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#301' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.on_white' class="method"><span id='on_white.v' class='invisible'><code>fn <a href='#method.on_white' class='fnname'>on_white</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#302' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.bold' class="method"><span id='bold.v' class='invisible'><code>fn <a href='#method.bold' class='fnname'>bold</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#303' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.dim' class="method"><span id='dim.v' class='invisible'><code>fn <a href='#method.dim' class='fnname'>dim</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#304' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.underlined' class="method"><span id='underlined.v' class='invisible'><code>fn <a href='#method.underlined' class='fnname'>underlined</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#305' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.blink' class="method"><span id='blink.v' class='invisible'><code>fn <a href='#method.blink' class='fnname'>blink</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#306' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.reverse' class="method"><span id='reverse.v' class='invisible'><code>fn <a href='#method.reverse' class='fnname'>reverse</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#307' title='goto source code'>[src]</a></span></h4>
+<h4 id='method.hidden' class="method"><span id='hidden.v' class='invisible'><code>fn <a href='#method.hidden' class='fnname'>hidden</a>(self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#308' title='goto source code'>[src]</a></span></h4>
+</div>
+            <h2 id='implementations' class='small-section-header'>
+              Trait Implementations<a href='#implementations' class='anchor'></a>
+            </h2>
+        <h3 id='impl-Clone' class='impl'><span class='in-band'><code>impl&lt;D:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html" title="trait core::clone::Clone">Clone</a>&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html" title="trait core::clone::Clone">Clone</a> for <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code><a href='#impl-Clone' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#250' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.clone' class="method"><span id='clone.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#250' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns a copy of the value. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone">Read more</a></p>
+</div><h4 id='method.clone_from' class="method"><span id='clone_from.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>Self)</code></span><span class='out-of-band'><div class='ghost'></div><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div><a class='srclink' href='https://doc.rust-lang.org/nightly/src/core/clone.rs.html#112-114' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Performs copy-assignment from <code>source</code>. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from">Read more</a></p>
+</div></div><h3 id='impl-Binary' class='impl'><span class='in-band'><code>impl&lt;D:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Binary.html" title="trait core::fmt::Binary">Binary</a>&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Binary.html" title="trait core::fmt::Binary">Binary</a> for <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code><a href='#impl-Binary' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#313-336' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class="method"><span id='fmt.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Binary.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#314-335' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 id='impl-Debug' class='impl'><span class='in-band'><code>impl&lt;D:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug">Debug</a>&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug">Debug</a> for <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code><a href='#impl-Debug' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#313-336' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt-1' class="method"><span id='fmt.v-1' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#314-335' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 id='impl-Display' class='impl'><span class='in-band'><code>impl&lt;D:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html" title="trait core::fmt::Display">Display</a>&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html" title="trait core::fmt::Display">Display</a> for <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code><a href='#impl-Display' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#313-336' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt-2' class="method"><span id='fmt.v-2' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#314-335' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter. <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#tymethod.fmt">Read more</a></p>
+</div></div><h3 id='impl-LowerExp' class='impl'><span class='in-band'><code>impl&lt;D:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.LowerExp.html" title="trait core::fmt::LowerExp">LowerExp</a>&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.LowerExp.html" title="trait core::fmt::LowerExp">LowerExp</a> for <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code><a href='#impl-LowerExp' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#313-336' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt-3' class="method"><span id='fmt.v-3' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.LowerExp.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#314-335' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 id='impl-LowerHex' class='impl'><span class='in-band'><code>impl&lt;D:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.LowerHex.html" title="trait core::fmt::LowerHex">LowerHex</a>&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.LowerHex.html" title="trait core::fmt::LowerHex">LowerHex</a> for <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code><a href='#impl-LowerHex' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#313-336' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt-4' class="method"><span id='fmt.v-4' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.LowerHex.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#314-335' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 id='impl-Octal' class='impl'><span class='in-band'><code>impl&lt;D:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Octal.html" title="trait core::fmt::Octal">Octal</a>&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Octal.html" title="trait core::fmt::Octal">Octal</a> for <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code><a href='#impl-Octal' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#313-336' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt-5' class="method"><span id='fmt.v-5' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Octal.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#314-335' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 id='impl-Pointer' class='impl'><span class='in-band'><code>impl&lt;D:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Pointer.html" title="trait core::fmt::Pointer">Pointer</a>&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Pointer.html" title="trait core::fmt::Pointer">Pointer</a> for <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code><a href='#impl-Pointer' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#313-336' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt-6' class="method"><span id='fmt.v-6' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Pointer.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#314-335' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 id='impl-UpperExp' class='impl'><span class='in-band'><code>impl&lt;D:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.UpperExp.html" title="trait core::fmt::UpperExp">UpperExp</a>&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.UpperExp.html" title="trait core::fmt::UpperExp">UpperExp</a> for <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code><a href='#impl-UpperExp' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#313-336' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt-7' class="method"><span id='fmt.v-7' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.UpperExp.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#314-335' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 id='impl-UpperHex' class='impl'><span class='in-band'><code>impl&lt;D:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.UpperHex.html" title="trait core::fmt::UpperHex">UpperHex</a>&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.UpperHex.html" title="trait core::fmt::UpperHex">UpperHex</a> for <a class="struct" href="../indicatif/struct.StyledObject.html" title="struct indicatif::StyledObject">StyledObject</a>&lt;D&gt;</code><a href='#impl-UpperHex' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#313-336' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt-8' class="method"><span id='fmt.v-8' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.UpperHex.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/indicatif/ansistyle.rs.html#314-335' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "indicatif";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

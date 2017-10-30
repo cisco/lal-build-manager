@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["buildables","Print the buildable components from the `Manifest`"],["configurations","Print the available configurations for a buildable Component"],["dependencies","Print the dependencies from the manifest"],["environments","Print the configured environments from the config"]]});

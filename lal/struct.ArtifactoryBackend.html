@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `ArtifactoryBackend` struct in crate `lal`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, ArtifactoryBackend">
+
+    <title>lal::ArtifactoryBackend - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'>Struct ArtifactoryBackend</p><div class="block items"><ul><li><a href="#fields">Fields</a></li><li><a href="#methods">Methods</a></li><li><a href="#implementations">Trait Implementations</a></li></ul></div><p class='location'><a href='index.html'>lal</a></p><script>window.sidebarCurrent = {name: 'ArtifactoryBackend', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>lal</a>::<wbr><a class="struct" href=''>ArtifactoryBackend</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/lal/storage/artifactory.rs.html#362-367' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct ArtifactoryBackend {
+    pub config: <a class="struct" href="../lal/struct.ArtifactoryConfig.html" title="struct lal::ArtifactoryConfig">ArtifactoryConfig</a>,
+    pub cache: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>,
+}</pre><div class='docblock'><p>Everything we need for Artifactory to implement the Backend trait</p>
+</div><h2 id='fields' class='fields small-section-header'>
+                       Fields<a href='#fields' class='anchor'></a></h2><span id='structfield.config' class="structfield">
+                           <span id='config.v' class='invisible'>
+                           <code>config: <a class="struct" href="../lal/struct.ArtifactoryConfig.html" title="struct lal::ArtifactoryConfig">ArtifactoryConfig</a></code>
+                           </span></span><div class='docblock'><p>Artifactory config and credentials</p>
+</div><span id='structfield.cache' class="structfield">
+                           <span id='cache.v' class='invisible'>
+                           <code>cache: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a></code>
+                           </span></span><div class='docblock'><p>Cache directory</p>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><code>impl <a class="struct" href="../lal/struct.ArtifactoryBackend.html" title="struct lal::ArtifactoryBackend">ArtifactoryBackend</a></code><a href='#impl' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/storage/artifactory.rs.html#369-377' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class="method"><span id='new.v' class='invisible'><code>fn <a href='#method.new' class='fnname'>new</a>(cfg: &amp;<a class="struct" href="../lal/struct.ArtifactoryConfig.html" title="struct lal::ArtifactoryConfig">ArtifactoryConfig</a>, cache: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>) -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/storage/artifactory.rs.html#370-376' title='goto source code'>[src]</a></span></h4>
+</div>
+            <h2 id='implementations' class='small-section-header'>
+              Trait Implementations<a href='#implementations' class='anchor'></a>
+            </h2>
+        <h3 id='impl-Backend' class='impl'><span class='in-band'><code>impl <a class="trait" href="../lal/trait.Backend.html" title="trait lal::Backend">Backend</a> for <a class="struct" href="../lal/struct.ArtifactoryBackend.html" title="struct lal::ArtifactoryBackend">ArtifactoryBackend</a></code><a href='#impl-Backend' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/storage/artifactory.rs.html#383-427' title='goto source code'>[src]</a></span></h3>
+<div class='docblock'><p>Artifact backend trait for <code>ArtifactoryBackend</code></p>
+
+<p>This is intended to be used by the caching trait <code>CachedBackend</code>, but for
+specific low-level use cases, these methods can be used directly.</p>
+</div><div class='impl-items'><h4 id='method.get_versions' class="method"><span id='get_versions.v' class='invisible'><code>fn <a href='../lal/trait.Backend.html#tymethod.get_versions' class='fnname'>get_versions</a>(&amp;self, name: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>, loc: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;&amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>&gt;) -&gt; <a class="type" href="../lal/type.LalResult.html" title="type lal::LalResult">LalResult</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>&gt;&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/storage/artifactory.rs.html#384-386' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Get a list of versions for a component</p>
+</div><h4 id='method.get_latest_version' class="method"><span id='get_latest_version.v' class='invisible'><code>fn <a href='../lal/trait.Backend.html#tymethod.get_latest_version' class='fnname'>get_latest_version</a>(&amp;self, name: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>, loc: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;&amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>&gt;) -&gt; <a class="type" href="../lal/type.LalResult.html" title="type lal::LalResult">LalResult</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/storage/artifactory.rs.html#388-391' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Get the latest version of a component</p>
+</div><h4 id='method.get_tarball_url' class="method"><span id='get_tarball_url.v' class='invisible'><code>fn <a href='../lal/trait.Backend.html#tymethod.get_tarball_url' class='fnname'>get_tarball_url</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;name: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;version: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>&gt;, <br>&nbsp;&nbsp;&nbsp;&nbsp;loc: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;&amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>&gt;<br>) -&gt; <a class="type" href="../lal/type.LalResult.html" title="type lal::LalResult">LalResult</a>&lt;<a class="struct" href="../lal/struct.Component.html" title="struct lal::Component">Component</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/storage/artifactory.rs.html#393-400' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Get the tarball url of a <code>Component</code> in a backend location If no version is given, return latest <a href="../lal/trait.Backend.html#tymethod.get_tarball_url">Read more</a></p>
+</div><h4 id='method.upload_artifact_dir' class="method"><span id='upload_artifact_dir.v' class='invisible'><code>fn <a href='../lal/trait.Backend.html#tymethod.upload_artifact_dir' class='fnname'>upload_artifact_dir</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;name: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;version: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;env: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;&amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>&gt;<br>) -&gt; <a class="type" href="../lal/type.LalResult.html" title="type lal::LalResult">LalResult</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">()</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/storage/artifactory.rs.html#402-420' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Publish a release build (ARTIFACT dir) to a specific location</p>
+</div><h4 id='method.get_cache_dir' class="method"><span id='get_cache_dir.v' class='invisible'><code>fn <a href='../lal/trait.Backend.html#tymethod.get_cache_dir' class='fnname'>get_cache_dir</a>(&amp;self) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/storage/artifactory.rs.html#422' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Return the base directory to be used to dump cached downloads This has to be in here for <code>CachedBackend</code> to have a straight dependency <a href="../lal/trait.Backend.html#tymethod.get_cache_dir">Read more</a></p>
+</div><h4 id='method.raw_download' class="method"><span id='raw_download.v' class='invisible'><code>fn <a href='../lal/trait.Backend.html#tymethod.raw_download' class='fnname'>raw_download</a>(&amp;self, url: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>, dest: &amp;<a class="struct" href="https://doc.rust-lang.org/nightly/std/path/struct.PathBuf.html" title="struct std::path::PathBuf">PathBuf</a>) -&gt; <a class="type" href="../lal/type.LalResult.html" title="type lal::LalResult">LalResult</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">()</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/lal/storage/artifactory.rs.html#424-426' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Raw dowlnload of a url to a destination</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "lal";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="Source to the Rust file `/home/clux/.cargo/registry/src/github.com-1ecc6299db9ec823/indicatif-0.3.3/src/lib.rs`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang">
+
+    <title>lib.rs.html -- source</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc source">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+</pre><pre class="rust ">
+<span class="doccomment">//! indicatif is a library for Rust that helps you build command line</span>
+<span class="doccomment">//! interfaces that report progress to users.  It comes with various</span>
+<span class="doccomment">//! tools and utilities for formatting anything that indicates progress.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Platform support:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! * Linux</span>
+<span class="doccomment">//! * OS X</span>
+<span class="doccomment">//! * Windows (colors require Windows 10)</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Crate Contents</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! * **Progress bars**</span>
+<span class="doccomment">//!   * [`ProgressBar`](struct.ProgressBar.html) for bars and spinners</span>
+<span class="doccomment">//!   * [`MultiProgress`](struct.MultiProgress.html) for multiple bars</span>
+<span class="doccomment">//! * **Terminal support**</span>
+<span class="doccomment">//!   * [`Term`](struct.Term.html) for controlling the terminal</span>
+<span class="doccomment">//!   * [`user_attended`](fn.user_attended.html) for checking if there is a terminal</span>
+<span class="doccomment">//!   * [`measure_text_width`](fn.measure_text_width.html) for calculating text width</span>
+<span class="doccomment">//! * **Colors and Styling**</span>
+<span class="doccomment">//!   * [`colors_enabled`](fn.colors_enabled.html) for checking if colors are on</span>
+<span class="doccomment">//!   * [`set_colors_enabled`](fn.set_colors_enabled.html) for turning colors off and on</span>
+<span class="doccomment">//!   * [`strip_ansi_codes`](fn.strip_ansi_codes.html) for stripping ANSI codes from a string</span>
+<span class="doccomment">//!   * [`style`](fn.style.html) / [`Style`](struct.Style.html) for coloring stuff</span>
+<span class="doccomment">//! * **Data Formatting**</span>
+<span class="doccomment">//!   * [`HumanBytes`](struct.HumanBytes.html) for formatting bytes</span>
+<span class="doccomment">//!   * [`HumanDuration`](struct.HumanDuration.html) for formatting durations</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Progress Bars and Spinners</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! indicatif comes with a `ProgressBar` type that support both bounded</span>
+<span class="doccomment">//! progress bar uses as well as unbounded &quot;spinner&quot; type progress reports.</span>
+<span class="doccomment">//! Progress bars are `Sync` and `Send` objects which means that they are</span>
+<span class="doccomment">//! internally locked and can be passed from thread to thread.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Additionally a `MultiProgress` utility is provided that can manage</span>
+<span class="doccomment">//! rendering multiple progress bars at once (eg: for instance from</span>
+<span class="doccomment">//! multiple threads).</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! To wet your appetite, this is what this can look like:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! &lt;img src=&quot;https://github.com/mitsuhiko/indicatif/raw/master/screenshots/yarn.gif?raw=true&quot; width=&quot;60%&quot;&gt;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Progress bars are manually advanced and by default draw to stdout.</span>
+<span class="doccomment">//! When you are done the progress bar can be finished either visibly</span>
+<span class="doccomment">//! (eg: the progress bar stays on the screen) or cleared (the progress</span>
+<span class="doccomment">//! bar will be removed).</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```rust</span>
+<span class="doccomment">//! use indicatif::ProgressBar;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! let bar = ProgressBar::new(1000);</span>
+<span class="doccomment">//! for _ in 0..1000 {</span>
+<span class="doccomment">//!     bar.inc(1);</span>
+<span class="doccomment">//!     // ...</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//! bar.finish();</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! General progress bar behaviors:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! * if a non terminal is detected the progress bar will be completely</span>
+<span class="doccomment">//!   hidden.  This makes piping programs to logfiles make sense out of</span>
+<span class="doccomment">//!   the box.</span>
+<span class="doccomment">//! * progress bars should be explicitly finished to reset the rendering</span>
+<span class="doccomment">//!   for others.  Either by also clearing them or by replacing them with</span>
+<span class="doccomment">//!   a new message / retaining the current message.</span>
+<span class="doccomment">//! * the default template renders neither message nor prefix.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Templates</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Progress bars can be styled with simple format strings similar to the</span>
+<span class="doccomment">//! ones in Rust itself.  The format for a placeholder is `{key:options}`</span>
+<span class="doccomment">//! where the `options` part is optional.  If provided the format is this:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```text</span>
+<span class="doccomment">//! [&lt;^&gt;]           for an optional alignment specification</span>
+<span class="doccomment">//! WIDTH           an optional width as positive integer</span>
+<span class="doccomment">//! !               an optional exclamation mark to enable truncation</span>
+<span class="doccomment">//! .STYLE          an optional dot separated style string</span>
+<span class="doccomment">//! /STYLE          an optional dot separated alternative style string</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! For the style component see `Styled::from_dotted_str` for more</span>
+<span class="doccomment">//! information.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Some examples for templates:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```text</span>
+<span class="doccomment">//! [{elapsed_precise}] {bar:40.cyan/blue} {pos:&gt;7}/{len:7} {msg}</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! This sets a progress bar that is 40 characters wide and has cyan</span>
+<span class="doccomment">//! as primary style color and blue as alternative style color.</span>
+<span class="doccomment">//! Alternative styles are currently only used for progress bars.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Example configuration:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```ignore</span>
+<span class="doccomment">//! bar.set_style(ProgressStyle::default_bar()</span>
+<span class="doccomment">//!     .template(&quot;[{elapsed_precise}] {bar:40.cyan/blue} {pos:&gt;7}/{len:7} {msg}&quot;)</span>
+<span class="doccomment">//!     .progress_chars(&quot;##-&quot;));</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! The following keys exist:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! * `bar`: renders a progress bar. By default 20 characters wide.  The</span>
+<span class="doccomment">//!   style string is used to color the elapsed part, the alternative</span>
+<span class="doccomment">//!   style is used for the bar that is yet to render.</span>
+<span class="doccomment">//! * `wide_bar`: like `bar` but always fills the remaining space.</span>
+<span class="doccomment">//! * `spinner`: renders the spinner (current tick char)</span>
+<span class="doccomment">//! * `prefix`: renders the prefix set on the progress bar.</span>
+<span class="doccomment">//! * `msg`: renders the currently set message on the progress bar.</span>
+<span class="doccomment">//! * `pos`: renders the current position of the bar as integer</span>
+<span class="doccomment">//! * `len`: renders the total length of the bar as integer</span>
+<span class="doccomment">//! * `bytes`: renders the current position of the bar as bytes.</span>
+<span class="doccomment">//! * `total_bytes`: renders the total length of the bar as bytes.</span>
+<span class="doccomment">//! * `elapsed_precise`: renders the elapsed time as `HH:MM:SS`.</span>
+<span class="doccomment">//! * `elapased`: renders the elapsed time as `42s`, `1m` etc.</span>
+<span class="doccomment">//! * `eta_precise`: the remaining time (like `elapsed_precise`).</span>
+<span class="doccomment">//! * `eta`: the remaining time (like `elapsed`).</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! The design of the progress bar can be altered with the integrated</span>
+<span class="doccomment">//! template functionality.  The template can be set by changing a</span>
+<span class="doccomment">//! `ProgressStyle` and attaching it to the progress bar.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Terminal Access</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! The library provides a basic abstraction over working with terminals</span>
+<span class="doccomment">//! through the `Term` object.  For instance you can use it to move</span>
+<span class="doccomment">//! cursors or clear contents.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Colors and Styles</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! `indicatif` uses `clicolors-control` to control colors.  It also</span>
+<span class="doccomment">//! provides higher level wrappers for styling text and other things</span>
+<span class="doccomment">//! that can be displayed with the `style` function.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Example usage:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//! use indicatif::style;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! println!(&quot;This is {} neat&quot;, style(&quot;fo&quot;).cyan());</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Human Readable Formatting</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! There are some formatting wrappers for showing elapsed time and</span>
+<span class="doccomment">//! file sizes for human users:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```ignore</span>
+<span class="doccomment">//! use std::time::Instant;</span>
+<span class="doccomment">//! use indicatif::{HumanDuration, HumanBytes};</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! let started = Instant::now();</span>
+<span class="doccomment">//! println!(&quot;The file is {} large&quot;, HumanBytes(file.size));</span>
+<span class="doccomment">//! println!(&quot;The script took {}&quot;, HumanDuration(started.elapsed()));</span>
+<span class="doccomment">//! ```</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">unix</span>)]</span> <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">libc</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">windows</span>)]</span> <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">winapi</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">windows</span>)]</span> <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">kernel32</span>;
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">parking_lot</span>;
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">regex</span>;
+<span class="attribute">#[<span class="ident">macro_use</span>]</span> <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">lazy_static</span>;
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">unicode_width</span>;
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">clicolors_control</span>;
+
+<span class="kw">mod</span> <span class="ident">term</span>;
+<span class="kw">mod</span> <span class="ident">progress</span>;
+<span class="kw">mod</span> <span class="ident">utils</span>;
+<span class="kw">mod</span> <span class="ident">ansistyle</span>;
+<span class="kw">mod</span> <span class="ident">format</span>;
+
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">progress</span>::{<span class="ident">ProgressBar</span>, <span class="ident">MultiProgress</span>,
+                   <span class="ident">ProgressDrawTarget</span>, <span class="ident">ProgressStyle</span>};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">term</span>::{<span class="ident">Term</span>, <span class="ident">user_attended</span>};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">ansistyle</span>::{<span class="ident">style</span>, <span class="ident">Style</span>, <span class="ident">StyledObject</span>, <span class="ident">Color</span>, <span class="ident">Attribute</span>,
+                    <span class="ident">strip_ansi_codes</span>, <span class="ident">measure_text_width</span>,
+                    <span class="ident">colors_enabled</span>, <span class="ident">set_colors_enabled</span>};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">format</span>::{<span class="ident">HumanDuration</span>, <span class="ident">FormattedDuration</span>, <span class="ident">HumanBytes</span>};
+</pre>
+</section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "indicatif";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>
