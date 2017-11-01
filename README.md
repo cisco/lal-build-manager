@@ -7,20 +7,30 @@ A strict, language-agnostic build system and dependency manager.
 * **Builds on existing package manager ideas**: versions in a manifest, fetch dependencies first, verify them, then build however you want, lal autogenerates lockfiles during build.
 * **Transparent use of docker for build environments** with configurable mounts and direct view of the docker run commands used. `lal shell` or `lal script` provides additional easy ways to use the build environments.
 
-## Overview
-A dependency manager built around artifactory and docker. Originally intended for C++ projects that lack a good module system, by making it easy to set up a system of versioned, pre-compiled releases that are all built in the same docker environment. However, it is in not tied to C++.
+## Conception
+We needed a simple dependency manager built around the idea of a storage backend and a build environment. Strict versioning and consistent build environments for our C++ codebases where the most important features needed, and we already had docker and artifactory for the rest, however other storage backends can be implemented in the future.
 
-See the [spec](./SPEC.md) for background information.
+The command line [specification](./SPEC.md) contains a detailed overview of what `lal` does.
 
-## Prerequisites (devs)
+## Showcases
+A few short ascii shorts about how lal is typically used internally:
+
+- [build / fetch](https://asciinema.org/a/3udzvbettco6sx44mbn238x0v)
+- [custom dependencies](https://asciinema.org/a/c9v790m4euh190ladaqzfdc43)
+- [scripts](https://asciinema.org/a/a3xmki0iz5j0am2vv780p41xa)
+
+## Setup
+Needs a few pieces to be set up across a team at the moment. Grab a :coffee:
+
+### Prerequisites (devs)
 You need [docker](https://docs.docker.com/engine/installation/linux/) (minimum version 1.12), logged into the group with access to your docker images in the [relevant config file](./configs).
 
-## Prerequisites (ops)
+### Prerequisites (ops)
 A set of docker images as outlined in the [relevant config file](./configs), all built to include a `lal` user and available to docker logged in devs (see below)
 
 CI setup to build and upload releases of master as outlined further below.
 
-A configured backend in same config file, distrubuted with lal to your devs.
+A configured backend in same config file, distrubuted with lal to your devs. Currently, this only supports artifactory.
 
 ## Building
 Get [rust](https://www.rust-lang.org/downloads.html) (inlined below), clone, build, install, and make it available:
@@ -62,13 +72,6 @@ git push -u origin master
 ```
 
 Note that the first `lal build` will call `lal env update` to make sure you have the build environment.
-
-### Workflow showcases
-Illustrated via common workflow examples below:
-
-- [build / fetch](https://asciinema.org/a/3udzvbettco6sx44mbn238x0v)
-- [custom dependencies](https://asciinema.org/a/c9v790m4euh190ladaqzfdc43)
-- [scripts](https://asciinema.org/a/a3xmki0iz5j0am2vv780p41xa)
 
 ### Creating a new version
 Designed to be handled by CI on each push to master (ideally through validated merge). CI should create your numeric tag and upload the build output to artifactory.  See the [spec](./SPEC.md) for full info.
