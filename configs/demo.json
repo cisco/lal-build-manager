@@ -23,11 +23,6 @@
       "src": "~/.lal/history",
       "dest": "/home/lal/.bash_history",
       "readonly": false
-    },
-    {
-      "src": "cargo-cache",
-      "dest": "/home/lal/.cargo",
-      "readonly": false
     }
   ],
   "minimum_lal": "3.7.0"
