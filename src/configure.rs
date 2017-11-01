@@ -195,7 +195,6 @@ fn create_lal_dir() -> LalResult<PathBuf> {
 /// A defaults file must be supplied to seed the new config with defined environments
 pub fn configure(save: bool, interactive: bool, defaults: &str) -> LalResult<Config> {
     let _ = create_lal_dir()?;
-    // TODO: root id check
 
     for exe in [
         "docker",

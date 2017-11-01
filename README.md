@@ -1,18 +1,36 @@
-# lal dependency manager
+# lal
+A strict, language-agnostic build system and dependency manager.
 
-A dependency manager built around artifactory and docker. Intended for C++ projects that lack a good module system, by making it easy to set up a system of versioned, pre-compiled releases that are all built in the same docker environment.
+* **Use existing tools**: `lal build` only shells out to an executable `BUILD` script in a configured docker container. Install what you want in your build environments: cmake, autotools, cargo, go, python.
+* **Cache large builds**: publish built libraries for later use down the dependency tree.
+* **Strict with environments and versions**: `lal verify` enforces that all your dependencies are built in the same environment and use the same version down the tree (and it runs before your build).
+* **Builds on existing package manager ideas**: versions in a manifest, fetch dependencies first, verify them, then build however you want, lal autogenerates lockfiles during build.
+* **Transparent use of docker for build environments** with configurable mounts and direct view of the docker run commands used. `lal shell` or `lal script` provides additional easy ways to use the build environments.
 
-See the [spec](./SPEC.md) for background information.
+## Conception
+We needed a simple dependency manager built around the idea of a storage backend and a build environment. Strict versioning and consistent build environments for our C++ codebases where the most important features needed, and we already had docker and artifactory for the rest, however other storage backends can be implemented in the future.
 
-## Prerequisites (devs)
-You need [docker](https://docs.docker.com/engine/installation/linux/) (minimum version 1.12), logged into the group with access to your docker images in the [relevant config file](./configs).
+The command line [specification](./SPEC.md) contains a detailed overview of what `lal` does.
 
-## Prerequisites (ops)
+## Showcases
+A few short ascii shorts about how lal is typically used internally:
+
+- [build / fetch](https://asciinema.org/a/3udzvbettco6sx44mbn238x0v)
+- [custom dependencies](https://asciinema.org/a/c9v790m4euh190ladaqzfdc43)
+- [scripts](https://asciinema.org/a/a3xmki0iz5j0am2vv780p41xa)
+
+## Setup
+Needs a few pieces to be set up across a team at the moment. Grab a :coffee:
+
+### Prerequisites (devs)
+You need [docker](https://docs.docker.com/engine/installation/linux/) (minimum version 1.12), logged into the group with access to your docker images in the [relevant config file](./configs). Distros with Linux >= 4.4.0 is the primary target, but Mac is also getting there.
+
+### Prerequisites (ops)
 A set of docker images as outlined in the [relevant config file](./configs), all built to include a `lal` user and available to docker logged in devs (see below)
 
 CI setup to build and upload releases of master as outlined further below.
 
-A configured backend in same config file, distrubuted with lal to your devs.
+A configured backend in same config file, distrubuted with lal to your devs. Currently, this only supports artifactory.
 
 ## Building
 Get [rust](https://www.rust-lang.org/downloads.html) (inlined below), clone, build, install, and make it available:
@@ -30,21 +48,20 @@ lal configure <site-config> # use autocomplete to select config
 If you want to release static binaries of these to developers, you can build lal on CI via [clux/muslrust](https://github.com/clux/muslrust). This takes away the need to install rust for developers, and if you use the `upgrade` feature, you can set up automatic upgrades.
 
 ## Usage
-Illustrated via common workflow examples below:
+Select an environment. If you haven't set one up use the demo environments from [lalbuild/dockerfiles](https://github.com/lalbuild/dockerfiles) by configuring with [demo.json](./configs/demo.json).
 
-- [build / fetch](https://asciinema.org/a/3udzvbettco6sx44mbn238x0v)
-- [custom dependencies](https://asciinema.org/a/c9v790m4euh190ladaqzfdc43)
-- [scripts](https://asciinema.org/a/a3xmki0iz5j0am2vv780p41xa)
+```sh
+lal configure configs/demo.json
+```
 
 ### Creating a new component
-
 Create a git repo, lal init it, then update deps and verify it builds.
 
 ```sh
 lal init xenial # create manifest for a xenial component
 git add .lal/
 git commit -m "init newcomponent"
-# add some dependencies to manifest
+# add some dependencies to manifest (if you have a storage backend)
 lal update gtest --save-dev
 lal update libwebsockets --save
 # create source and iterate until `lal build` passes
@@ -54,7 +71,7 @@ git commit -a -m "inital working version"
 git push -u origin master
 ```
 
-The last changeset should be tagged by CI, and `lal publish`'d if it succeeds.
+Note that the first `lal build` will call `lal env update` to make sure you have the build environment.
 
 ### Creating a new version
 Designed to be handled by CI on each push to master (ideally through validated merge). CI should create your numeric tag and upload the build output to artifactory.  See the [spec](./SPEC.md) for full info.
@@ -78,6 +95,8 @@ We will use this user inside the container to run build scripts. By default this
 This is a one time operation, and it is a more general solution for use than docker usernamespaces (which is currently incompatible with features like host networking).
 
 ## Developing
+Have the [rust documentation for lal](https://cisco.github.io/lal-build-manager) ready.
+
 To hack on `lal`, follow normal install procedure, but build non-release builds iteratively.
 When developing we do not do `--release`. Thus you should for convenience link `lal` via `ln -sf $PWD/target/debug/lal /usr/local/bin/lal`.
 

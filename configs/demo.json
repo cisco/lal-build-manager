@@ -1,0 +1,29 @@
+{
+  "backend": {
+    "artifactory": {
+      "master": "https://artifactory.host",
+      "slave": "https://artifactory.host",
+      "release": "DEMO-release",
+      "vgroup": "DEMO-group",
+      "credentials": null
+    }
+  },
+  "environments": {
+    "xenial": {
+      "name": "clux/lal-xenial",
+      "tag": "latest"
+    },
+    "rust": {
+      "name": "clux/lal-muslrust",
+      "tag": "latest"
+    }
+  },
+  "mounts": [
+    {
+      "src": "~/.lal/history",
+      "dest": "/home/lal/.bash_history",
+      "readonly": false
+    }
+  ],
+  "minimum_lal": "3.7.0"
+}
