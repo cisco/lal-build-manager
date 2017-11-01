@@ -23,7 +23,7 @@ A few short ascii shorts about how lal is typically used internally:
 Needs a few pieces to be set up across a team at the moment. Grab a :coffee:
 
 ### Prerequisites (devs)
-You need [docker](https://docs.docker.com/engine/installation/linux/) (minimum version 1.12), logged into the group with access to your docker images in the [relevant config file](./configs).
+You need [docker](https://docs.docker.com/engine/installation/linux/) (minimum version 1.12), logged into the group with access to your docker images in the [relevant config file](./configs). Distros with Linux >= 4.4.0 is the primary target, but Mac is also getting there.
 
 ### Prerequisites (ops)
 A set of docker images as outlined in the [relevant config file](./configs), all built to include a `lal` user and available to docker logged in devs (see below)
