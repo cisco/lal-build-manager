@@ -1,5 +1,5 @@
 use storage::CachedBackend;
-use super::{LalResult, Manifest};
+use super::{LalResult, Manifest, CliError};
 
 /// Update specific dependencies outside the manifest
 ///
@@ -26,6 +26,9 @@ pub fn update<T: CachedBackend + ?Sized>(
         if comp.contains('=') {
             let pair: Vec<&str> = comp.split('=').collect();
             if let Ok(n) = pair[1].parse::<u32>() {
+                if pair[0].to_lowercase() != pair[0] {
+                    return Err(CliError::InvalidComponentName(pair[0].into()))
+                }
                 // standard fetch with an integer version
                 match backend.unpack_published_component(pair[0], Some(n), Some(env)) {
                     Ok(c) => updated.push(c),
@@ -43,6 +46,9 @@ pub fn update<T: CachedBackend + ?Sized>(
                 });
             }
         } else {
+            if &comp.to_lowercase() != comp {
+                return Err(CliError::InvalidComponentName(comp.clone()))
+            }
             // fetch without a specific version (latest)
             match backend.unpack_published_component(comp, None, Some(env)) {
                 Ok(c) => updated.push(c),
