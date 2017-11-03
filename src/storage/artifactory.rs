@@ -399,7 +399,7 @@ impl Backend for ArtifactoryBackend {
         get_tarball_uri(&self.config, name, version, loc)
     }
 
-    fn upload_artifact_dir(&self, name: &str, version: u32, env: Option<&str>) -> LalResult<()> {
+    fn publish_artifact_dir(&self, name: &str, version: u32, env: Option<&str>) -> LalResult<()> {
         // this fn basically assumes all the sanity checks have been performed
         // files must exist and lockfile must be sensible
         let artdir = Path::new("./ARTIFACT");
@@ -421,7 +421,7 @@ impl Backend for ArtifactoryBackend {
 
     fn get_cache_dir(&self) -> String { self.cache.clone() }
 
-    fn raw_download(&self, url: &str, dest: &PathBuf) -> LalResult<()> {
+    fn raw_fetch(&self, url: &str, dest: &PathBuf) -> LalResult<()> {
         http_download_to_path(url, dest)
     }
 }

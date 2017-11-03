@@ -44,7 +44,7 @@ pub fn publish<T: Backend + ?Sized>(name: &str, backend: &T, env: Option<&str>) 
           name,
           version,
           env.unwrap_or("global"));
-    backend.upload_artifact_dir(name, version, env)?;
+    backend.publish_artifact_dir(name, version, env)?;
 
     Ok(())
 }

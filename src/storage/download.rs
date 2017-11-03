@@ -108,7 +108,7 @@ where
         if !is_cached(self, &component.name, component.version, env) {
             // download to PWD then move it to stash immediately
             let local_tarball = Path::new(".").join(format!("{}.tar", name));
-            self.raw_download(&component.location, &local_tarball)?;
+            self.raw_fetch(&component.location, &local_tarball)?;
             store_tarball(self, name, component.version, env)?;
         }
         assert!(is_cached(self, &component.name, component.version, env),

@@ -53,10 +53,12 @@ pub trait Backend {
     ) -> LalResult<Component>;
 
     /// Publish a release build (ARTIFACT dir) to a specific location
-    fn upload_artifact_dir(&self, name: &str, version: u32, env: Option<&str>) -> LalResult<()>;
+    fn publish_artifact_dir(&self, name: &str, version: u32, env: Option<&str>) -> LalResult<()>;
 
-    /// Raw dowlnload of a url to a destination
-    fn raw_download(&self, url: &str, dest: &PathBuf) -> LalResult<()>;
+    /// Raw fetch of location to a destination
+    ///
+    /// location can be a HTTPS url / a system path / etc (depending on the backend)
+    fn raw_fetch(&self, location: &str, dest: &PathBuf) -> LalResult<()>;
 
     /// Return the base directory to be used to dump cached downloads
     /// This has to be in here for `CachedBackend` to have a straight dependency
