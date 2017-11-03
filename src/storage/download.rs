@@ -103,7 +103,7 @@ where
     ) -> LalResult<(PathBuf, Component)> {
         trace!("Locate component {}", name);
 
-        let component = self.get_tarball_url(name, version, env)?;
+        let component = self.get_component_info(name, version, env)?;
 
         if !is_cached(self, &component.name, component.version, env) {
             // download to PWD then move it to stash immediately

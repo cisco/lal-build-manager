@@ -45,7 +45,7 @@ pub trait Backend {
 
     /// Get the tarball url of a `Component` in a backend location
     /// If no version is given, return latest
-    fn get_tarball_url(
+    fn get_component_info(
         &self,
         name: &str,
         version: Option<u32>,

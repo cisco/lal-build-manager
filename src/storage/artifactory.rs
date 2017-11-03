@@ -390,7 +390,7 @@ impl Backend for ArtifactoryBackend {
         Ok(latest.version)
     }
 
-    fn get_tarball_url(
+    fn get_component_info(
         &self,
         name: &str,
         version: Option<u32>,
