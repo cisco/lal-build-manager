@@ -21,6 +21,9 @@ pub fn fetch<T: CachedBackend + ?Sized>(
     core: bool,
     env: &str,
 ) -> LalResult<()> {
+    // first ensure manifest is sane:
+    manifest.verify()?;
+
     debug!("Installing dependencies{}",
            if !core { " and devDependencies" } else { "" });
 

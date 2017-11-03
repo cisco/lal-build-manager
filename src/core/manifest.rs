@@ -149,12 +149,25 @@ impl Manifest {
     /// Verify assumptions about configurations
     pub fn verify(&self) -> LalResult<()> {
         for (name, conf) in &self.components {
+            if &name.to_lowercase() != name {
+                return Err(CliError::InvalidComponentName(name.clone()))
+            }
             // Verify ComponentSettings (manifest.components[x])
             debug!("Verifying component {}", name);
             if !conf.configurations.contains(&conf.defaultConfig) {
                 let ename = format!("default configuration '{}' not found in configurations list",
                                     conf.defaultConfig);
                 return Err(CliError::InvalidBuildConfiguration(ename));
+            }
+        }
+        for (name, _) in &self.dependencies {
+            if &name.to_lowercase() != name {
+                return Err(CliError::InvalidComponentName(name.clone()))
+            }
+        }
+        for (name, _) in &self.devDependencies {
+            if &name.to_lowercase() != name {
+                return Err(CliError::InvalidComponentName(name.clone()))
             }
         }
         Ok(())

@@ -24,6 +24,8 @@ pub enum CliError {
     MissingConfig,
     /// Component not found in manifest
     MissingComponent(String),
+    /// Value in manifest is not lowercase
+    InvalidComponentName(String),
     /// Manifest cannot be overwritten without forcing
     ManifestExists,
     /// Executable we shell out to is missing
@@ -150,6 +152,9 @@ impl fmt::Display for CliError {
             CliError::MissingConfig => write!(f, "No ~/.lal/config found"),
             CliError::MissingComponent(ref s) => {
                 write!(f, "Component '{}' not found in manifest", s)
+            }
+            CliError::InvalidComponentName(ref s) => {
+                write!(f, "Invalid component name {} - not lowercase", s)
             }
             CliError::ManifestExists => write!(f, "Manifest already exists (use -f to force)"),
             CliError::MissingDependencies => {

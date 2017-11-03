@@ -2,7 +2,7 @@ use std::fs;
 use std::path::Path;
 
 use storage::CachedBackend;
-use super::LalResult;
+use super::{LalResult, CliError};
 
 /// Export a specific component from the storage backend
 pub fn export<T: CachedBackend + ?Sized>(
@@ -11,8 +11,11 @@ pub fn export<T: CachedBackend + ?Sized>(
     output: Option<&str>,
     env: Option<&str>,
 ) -> LalResult<()> {
-    let dir = output.unwrap_or(".");
+    if comp.to_lowercase() != comp {
+        return Err(CliError::InvalidComponentName(comp.into()))
+    }
 
+    let dir = output.unwrap_or(".");
     info!("Export {} {} to {}", env.unwrap_or("global"), comp, dir);
 
     let mut component_name = comp; // this is only correct if no =version suffix
