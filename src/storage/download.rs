@@ -8,7 +8,7 @@ fn is_cached<T: Backend + ?Sized>(
     backend: &T,
     name: &str,
     version: u32,
-    env: Option<&str>,
+    env: &str,
 ) -> bool {
     get_cache_dir(backend, name, version, env).is_dir()
 }
@@ -17,14 +17,13 @@ fn get_cache_dir<T: Backend + ?Sized>(
     backend: &T,
     name: &str,
     version: u32,
-    env: Option<&str>,
+    env: &str,
 ) -> PathBuf {
     let cache = backend.get_cache_dir();
-    let pth = Path::new(&cache);
-    match env {
-        None => pth.join("globals"),
-        Some(e) => pth.join("environments").join(e),
-    }.join(name)
+    Path::new(&cache)
+        .join("environments")
+        .join(env)
+        .join(name)
         .join(version.to_string())
 }
 
@@ -32,7 +31,7 @@ fn store_tarball<T: Backend + ?Sized>(
     backend: &T,
     name: &str,
     version: u32,
-    env: Option<&str>,
+    env: &str,
 ) -> Result<(), CliError> {
     // 1. mkdir -p cacheDir/$name/$version
     let destdir = get_cache_dir(backend, name, version, env);
@@ -99,7 +98,7 @@ where
         &self,
         name: &str,
         version: Option<u32>,
-        env: Option<&str>,
+        env: &str,
     ) -> LalResult<(PathBuf, Component)> {
         trace!("Locate component {}", name);
 
@@ -125,7 +124,7 @@ where
         &self,
         name: &str,
         version: Option<u32>,
-        env: Option<&str>,
+        env: &str,
     ) -> LalResult<Component> {
         let (tarname, component) = self.retrieve_published_component(name, version, env)?;
 

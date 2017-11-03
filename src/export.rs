@@ -9,14 +9,14 @@ pub fn export<T: CachedBackend + ?Sized>(
     backend: &T,
     comp: &str,
     output: Option<&str>,
-    env: Option<&str>,
+    env: &str,
 ) -> LalResult<()> {
     if comp.to_lowercase() != comp {
         return Err(CliError::InvalidComponentName(comp.into()))
     }
 
     let dir = output.unwrap_or(".");
-    info!("Export {} {} to {}", env.unwrap_or("global"), comp, dir);
+    info!("Export {} {} to {}", env, comp, dir);
 
     let mut component_name = comp; // this is only correct if no =version suffix
     let tarname = if comp.contains('=') {

@@ -200,19 +200,6 @@ fn get_storage_as_u32(uri: &str) -> LalResult<u32> {
     }
 }
 
-// The URL for a component tarball stored in the default artifactory location
-fn get_dependency_url_default(art_cfg: &ArtifactoryConfig, name: &str, version: u32) -> String {
-    let tar_url = format!("{}/{}/{}/{}/{}.tar.gz",
-                          art_cfg.slave,
-                          art_cfg.vgroup,
-                          name,
-                          version.to_string(),
-                          name);
-
-    trace!("Inferring tarball location as {}", tar_url);
-    tar_url
-}
-
 // The URL for a component tarball under the one of the environment trees
 fn get_dependency_env_url(
     art_cfg: &ArtifactoryConfig,
@@ -236,20 +223,16 @@ fn get_dependency_url(
     art_cfg: &ArtifactoryConfig,
     name: &str,
     version: u32,
-    env: Option<&str>,
+    env: &str,
 ) -> String {
-    if let Some(e) = env {
-        get_dependency_env_url(art_cfg, name, version, e)
-    } else {
-        // This is only used by lal export without -e
-        get_dependency_url_default(art_cfg, name, version)
-    }
+
+   get_dependency_env_url(art_cfg, name, version, env)
 }
 
 fn get_dependency_url_latest(
     art_cfg: &ArtifactoryConfig,
     name: &str,
-    env: Option<&str>,
+    env: &str,
 ) -> LalResult<Component> {
     let url = format!("{}/api/storage/{}/{}",
                       art_cfg.master,
@@ -270,24 +253,15 @@ fn get_dependency_url_latest(
 fn get_latest_versions(
     art_cfg: &ArtifactoryConfig,
     name: &str,
-    env: Option<&str>,
+    env: &str,
 ) -> LalResult<Vec<u32>> {
-    let url = match env {
-        Some(e) => {
-            format!("{}/api/storage/{}/{}/{}/{}",
+    let url = format!("{}/api/storage/{}/{}/{}/{}",
                     art_cfg.master,
                     art_cfg.release,
                     "env",
-                    e,
-                    name)
-        }
-        None => {
-            format!("{}/api/storage/{}/{}",
-                    art_cfg.master,
-                    art_cfg.release,
-                    name)
-        }
-    };
+                    env,
+                    name);
+
     get_storage_versions(&url)
 }
 
@@ -296,7 +270,7 @@ fn get_tarball_uri(
     art_cfg: &ArtifactoryConfig,
     name: &str,
     version: Option<u32>,
-    env: Option<&str>,
+    env: &str,
 ) -> LalResult<Component> {
     if let Some(v) = version {
         Ok(Component {
@@ -381,11 +355,11 @@ impl ArtifactoryBackend {
 /// This is intended to be used by the caching trait `CachedBackend`, but for
 /// specific low-level use cases, these methods can be used directly.
 impl Backend for ArtifactoryBackend {
-    fn get_versions(&self, name: &str, loc: Option<&str>) -> LalResult<Vec<u32>> {
+    fn get_versions(&self, name: &str, loc: &str) -> LalResult<Vec<u32>> {
         get_latest_versions(&self.config, name, loc)
     }
 
-    fn get_latest_version(&self, name: &str, loc: Option<&str>) -> LalResult<u32> {
+    fn get_latest_version(&self, name: &str, loc: &str) -> LalResult<u32> {
         let latest = get_dependency_url_latest(&self.config, name, loc)?;
         Ok(latest.version)
     }
@@ -394,12 +368,12 @@ impl Backend for ArtifactoryBackend {
         &self,
         name: &str,
         version: Option<u32>,
-        loc: Option<&str>,
+        loc: &str,
     ) -> LalResult<Component> {
         get_tarball_uri(&self.config, name, version, loc)
     }
 
-    fn publish_artifact_dir(&self, name: &str, version: u32, env: Option<&str>) -> LalResult<()> {
+    fn publish_artifact_dir(&self, name: &str, version: u32, env: &str) -> LalResult<()> {
         // this fn basically assumes all the sanity checks have been performed
         // files must exist and lockfile must be sensible
         let artdir = Path::new("./ARTIFACT");
@@ -407,7 +381,7 @@ impl Backend for ArtifactoryBackend {
         let lockfile = artdir.join("lockfile.json");
 
         // uri prefix if specific env upload
-        let prefix = env.map(|s| format!("env/{}/", s)).unwrap_or_else(|| "".into());
+        let prefix = format!("env/{}/", env);
 
         let tar_uri = format!("{}{}/{}/{}.tar.gz", prefix, name, version, name);
         let mut tarf = File::open(tarball)?;

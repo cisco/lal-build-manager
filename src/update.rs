@@ -30,7 +30,7 @@ pub fn update<T: CachedBackend + ?Sized>(
                     return Err(CliError::InvalidComponentName(pair[0].into()))
                 }
                 // standard fetch with an integer version
-                match backend.unpack_published_component(pair[0], Some(n), Some(env)) {
+                match backend.unpack_published_component(pair[0], Some(n), env) {
                     Ok(c) => updated.push(c),
                     Err(e) => {
                         warn!("Failed to update {} ({})", pair[0], e);
@@ -50,7 +50,8 @@ pub fn update<T: CachedBackend + ?Sized>(
                 return Err(CliError::InvalidComponentName(comp.clone()))
             }
             // fetch without a specific version (latest)
-            match backend.unpack_published_component(comp, None, Some(env)) {
+            // TODO: verify ALL supported_environments here!
+            match backend.unpack_published_component(comp, None, env) {
                 Ok(c) => updated.push(c),
                 Err(e) => {
                     warn!("Failed to update {} ({})", &comp, e);

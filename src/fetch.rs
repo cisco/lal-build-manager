@@ -79,7 +79,7 @@ pub fn fetch<T: CachedBackend + ?Sized>(
                 })?;
         }
 
-        let _ = backend.unpack_published_component(&k, Some(v), Some(env)).map_err(|e| {
+        let _ = backend.unpack_published_component(&k, Some(v), env).map_err(|e| {
             warn!("Failed to completely install {} ({})", k, e);
             // likely symlinks inside tarball that are being dodgy
             // this is why we clean_input

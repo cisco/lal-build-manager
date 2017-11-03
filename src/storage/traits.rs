@@ -39,9 +39,9 @@ pub struct Component {
 /// We do rely on there being a basic API that can implement this trait though.
 pub trait Backend {
     /// Get a list of versions for a component
-    fn get_versions(&self, name: &str, loc: Option<&str>) -> LalResult<Vec<u32>>;
+    fn get_versions(&self, name: &str, loc: &str) -> LalResult<Vec<u32>>;
     /// Get the latest version of a component
-    fn get_latest_version(&self, name: &str, loc: Option<&str>) -> LalResult<u32>;
+    fn get_latest_version(&self, name: &str, loc: &str) -> LalResult<u32>;
 
     /// Get the tarball url of a `Component` in a backend location
     /// If no version is given, return latest
@@ -49,11 +49,11 @@ pub trait Backend {
         &self,
         name: &str,
         version: Option<u32>,
-        loc: Option<&str>,
+        loc: &str,
     ) -> LalResult<Component>;
 
     /// Publish a release build (ARTIFACT dir) to a specific location
-    fn publish_artifact_dir(&self, name: &str, version: u32, env: Option<&str>) -> LalResult<()>;
+    fn publish_artifact_dir(&self, name: &str, version: u32, env: &str) -> LalResult<()>;
 
     /// Raw fetch of location to a destination
     ///
@@ -74,7 +74,7 @@ pub trait CachedBackend {
         &self,
         name: &str,
         version: Option<u32>,
-        env: Option<&str>,
+        env: &str,
     ) -> LalResult<(PathBuf, Component)>;
 
     /// Retrieve the location to a stashed component
@@ -85,7 +85,7 @@ pub trait CachedBackend {
         &self,
         name: &str,
         version: Option<u32>,
-        env: Option<&str>,
+        env: &str,
     ) -> LalResult<Component>;
 
     /// Retrieve and unpack a stashed component to INPUT
