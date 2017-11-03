@@ -28,8 +28,8 @@ pub struct Component {
     pub name: String,
     /// Version number
     pub version: u32,
-    /// The raw URL of the tarball at the specified version number
-    pub tarball: String,
+    /// The raw location of the tarball at the specified version number
+    pub location: String,
 }
 
 /// Properties a storage backend of artifacts should have

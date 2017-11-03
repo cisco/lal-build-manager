@@ -259,7 +259,7 @@ fn get_dependency_url_latest(
 
     debug!("Found latest version as {}", v);
     Ok(Component {
-           tarball: get_dependency_url(art_cfg, name, v, env),
+           location: get_dependency_url(art_cfg, name, v, env),
            version: v,
            name: name.into(),
        })
@@ -300,7 +300,7 @@ fn get_tarball_uri(
 ) -> LalResult<Component> {
     if let Some(v) = version {
         Ok(Component {
-               tarball: get_dependency_url(art_cfg, name, v, env),
+               location: get_dependency_url(art_cfg, name, v, env),
                version: v,
                name: name.into(),
            })
