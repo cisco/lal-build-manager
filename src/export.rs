@@ -9,8 +9,16 @@ pub fn export<T: CachedBackend + ?Sized>(
     backend: &T,
     comp: &str,
     output: Option<&str>,
-    env: &str,
+    _env: Option<&str>,
 ) -> LalResult<()> {
+    let env = match _env {
+        None => {
+            error!("export is no longer allowed without an explicit environment");
+            return Err(CliError::EnvironmentUnspecified)
+        },
+        Some(e) => e
+    };
+
     if comp.to_lowercase() != comp {
         return Err(CliError::InvalidComponentName(comp.into()));
     }

@@ -39,10 +39,10 @@ fn handle_manifest_agnostic_cmds(
         lal::export(backend,
                     a.value_of("component").unwrap(),
                     a.value_of("output"),
-                    explicit_env.unwrap()) // TODO: enforce unwrap condition
+                    explicit_env)
     } else if let Some(a) = args.subcommand_matches("query") {
         lal::query(backend,
-                   explicit_env.unwrap(), // TODO: enforce unwrap condition
+                   explicit_env,
                    a.value_of("component").unwrap(),
                    a.is_present("latest"))
     } else if let Some(a) = args.subcommand_matches("publish") {
