@@ -2,6 +2,7 @@ use std::fmt;
 use std::io;
 use hyper;
 use serde_json;
+use hubcaps;
 
 /// The one and only error type for the lal library
 ///
@@ -16,6 +17,8 @@ pub enum CliError {
     Parse(serde_json::error::Error),
     /// Errors propagated from `hyper`
     Hype(hyper::Error),
+    /// Errors propagated form `hubcaps
+    Github(hubcaps::Error),
 
     // main errors
     /// Manifest file not found in working directory
@@ -137,6 +140,7 @@ impl fmt::Display for CliError {
             }
             CliError::Parse(ref err) => err.fmt(f),
             CliError::Hype(ref err) => err.fmt(f),
+            CliError::Github(ref err) => err.fmt(f),
             CliError::MissingManifest => {
                 write!(f,
                        "No manifest.json found - are you at repository toplevel?")
@@ -269,6 +273,12 @@ impl From<hyper::Error> for CliError {
 impl From<serde_json::error::Error> for CliError {
     fn from(err: serde_json::error::Error) -> CliError { CliError::Parse(err) }
 }
+
+impl From<hubcaps::Error> for CliError {
+    fn from(err: hubcaps::Error) -> CliError { CliError::Github(err) }
+}
+
+
 
 /// Type alias to stop having to type out `CliError` everywhere.
 ///

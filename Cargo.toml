@@ -1,9 +1,9 @@
 [package]
-name = "lal"
-version = "3.7.0"
 authors = ["Eirik Albrigtsen <ealbrigt@cisco.com>"]
 description = "A strict, language-agnostic build system and dependency manager"
 license = "MIT"
+name = "lal"
+version = "3.7.0"
 
 [[bin]]
 doc = false
@@ -20,6 +20,7 @@ chrono = "0.2"
 clap = "2.27.1"
 filetime = "0.1"
 flate2 = "0.2"
+hubcaps = "0.3.16"
 hyper = "0.10.9"
 hyper-native-tls = "0.2.2"
 log = "0.3.5"

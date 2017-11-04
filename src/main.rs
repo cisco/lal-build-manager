@@ -554,6 +554,9 @@ fn main() {
         &BackendConfiguration::Artifactory(ref art_cfg) => {
             Box::new(ArtifactoryBackend::new(&art_cfg, &config.cache))
         }
+        &BackendConfiguration::Github(ref gh_cfg) => {
+            Box::new(GithubBackend::new(&gh_cfg, &config.cache))
+        }
     };
 
     // Ensure SSL is initialized before using the backend
