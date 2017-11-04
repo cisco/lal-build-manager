@@ -1,6 +1,7 @@
 {
   "name": "lal",
   "environment": "rust",
+  "supportedEnvironments": ["rust"],
   "components": {
     "lal": {
       "defaultConfig": "release",

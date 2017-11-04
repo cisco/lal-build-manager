@@ -166,9 +166,6 @@ impl Config {
         let mut cfg_str = String::new();
         f.read_to_string(&mut cfg_str)?;
         let res: Config = serde_json::from_str(&cfg_str)?;
-        if res.environments.contains_key("default") {
-            return Err(CliError::InvalidEnvironment);
-        }
         Ok(res)
     }
 
