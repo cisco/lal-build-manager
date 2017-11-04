@@ -2,6 +2,7 @@ use std::fmt;
 use std::io;
 use hyper;
 use serde_json;
+use hubcaps;
 
 /// The one and only error type for the lal library
 ///
@@ -16,6 +17,8 @@ pub enum CliError {
     Parse(serde_json::error::Error),
     /// Errors propagated from `hyper`
     Hype(hyper::Error),
+    /// Errors propagated form `hubcaps
+    Github(hubcaps::Error),
 
     // main errors
     /// Manifest file not found in working directory
@@ -24,6 +27,8 @@ pub enum CliError {
     MissingConfig,
     /// Component not found in manifest
     MissingComponent(String),
+    /// Value in manifest is not lowercase
+    InvalidComponentName(String),
     /// Manifest cannot be overwritten without forcing
     ManifestExists,
     /// Executable we shell out to is missing
@@ -56,12 +61,16 @@ pub enum CliError {
     EnvironmentMismatch(String, String),
     /// Custom versions are stashed in INPUT which will not fly on Jenkins
     NonGlobalDependencies(String),
+    /// No supported environments in the manifest
+    NoSupportedEnvironments,
+    /// Environment in manifest is not in the supported environments
+    UnsupportedEnvironment,
 
     // env related errors
     /// Specified environment is not present in the main config
     MissingEnvironment(String),
-    /// Default environment explicitly specified
-    InvalidEnvironment,
+    /// Command now requires an environment specified
+    EnvironmentUnspecified,
 
     // build errors
     /// Build configurations does not match manifest or user input
@@ -99,6 +108,8 @@ pub enum CliError {
     InstallFailure,
     /// Fetch failure related to backend
     BackendFailure(String),
+    /// No version found at same version across `supportedEnvironments`
+    NoIntersectedVersion(String),
 
     // publish errors
     /// Missing release build
@@ -129,6 +140,7 @@ impl fmt::Display for CliError {
             }
             CliError::Parse(ref err) => err.fmt(f),
             CliError::Hype(ref err) => err.fmt(f),
+            CliError::Github(ref err) => err.fmt(f),
             CliError::MissingManifest => {
                 write!(f,
                        "No manifest.json found - are you at repository toplevel?")
@@ -150,6 +162,9 @@ impl fmt::Display for CliError {
             CliError::MissingConfig => write!(f, "No ~/.lal/config found"),
             CliError::MissingComponent(ref s) => {
                 write!(f, "Component '{}' not found in manifest", s)
+            }
+            CliError::InvalidComponentName(ref s) => {
+                write!(f, "Invalid component name {} - not lowercase", s)
             }
             CliError::ManifestExists => write!(f, "Manifest already exists (use -f to force)"),
             CliError::MissingDependencies => {
@@ -180,11 +195,17 @@ impl fmt::Display for CliError {
                        "Depending on a custom version of {} (use -s to allow stashed versions)",
                        s)
             }
+            CliError::NoSupportedEnvironments => {
+                write!(f, "Need to specify supported environments in the manifest")
+            }
+            CliError::UnsupportedEnvironment => {
+                write!(f, "manifest.environment must exist in manifest.supportedEnvironments")
+            }
             CliError::MissingEnvironment(ref s) => {
                 write!(f, "Environment '{}' not found in ~/.lal/config", s)
             }
-            CliError::InvalidEnvironment => {
-                write!(f, "Environment 'default' is reserved for internal use")
+            CliError::EnvironmentUnspecified => {
+                write!(f, "Environment must be specified for this operation")
             }
             CliError::InvalidBuildConfiguration(ref s) => {
                 write!(f, "Invalid build configuration - {}", s)
@@ -217,6 +238,9 @@ impl fmt::Display for CliError {
             CliError::DockerImageNotFound(ref s) => write!(f, "Could not find docker image {}", s),
             CliError::InstallFailure => write!(f, "Install failed"),
             CliError::BackendFailure(ref s) => write!(f, "Backend - {}", s),
+            CliError::NoIntersectedVersion(ref s) => {
+                write!(f, "No version of {} found across all environments", s)
+            }
             CliError::MissingReleaseBuild => write!(f, "Missing release build"),
             CliError::MissingBackendCredentials => {
                 write!(f, "Missing backend credentials in ~/.lal/config")
@@ -249,6 +273,12 @@ impl From<hyper::Error> for CliError {
 impl From<serde_json::error::Error> for CliError {
     fn from(err: serde_json::error::Error) -> CliError { CliError::Parse(err) }
 }
+
+impl From<hubcaps::Error> for CliError {
+    fn from(err: hubcaps::Error) -> CliError { CliError::Github(err) }
+}
+
+
 
 /// Type alias to stop having to type out `CliError` everywhere.
 ///

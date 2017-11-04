@@ -29,6 +29,7 @@ extern crate tar;
 extern crate flate2;
 extern crate ansi_term;
 extern crate sha1;
+extern crate hubcaps;
 #[macro_use]
 extern crate log;
 extern crate walkdir;

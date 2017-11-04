@@ -95,7 +95,7 @@ _lal()
                 COMPREPLY=($(compgen -W "$ls_flags" -- "$cur"))
                 ;;
             export|query)
-                components=$(find "$HOME/.lal/cache/globals/" -maxdepth 1 -mindepth 1 -type d -printf "%f " 2> /dev/null)
+                components=$(find "$HOME/.lal/cache/environments" -maxdepth 2 -mindepth 2 -type d -printf "%f " 2> /dev/null)
                 COMPREPLY=($(compgen -W "$components" -- "$cur"))
                 ;;
             update)
@@ -103,7 +103,7 @@ _lal()
                 # Looking in local cache for allowed component names
                 # Means this won't work first time, but will be quick
                 local components=""
-                components=$(find "$HOME/.lal/cache/globals/" -maxdepth 1 -mindepth 1 -type d -printf "%f " 2> /dev/null)
+                components=$(find "$HOME/.lal/cache/environments/" -maxdepth 2 -mindepth 2 -type d -printf "%f " 2> /dev/null)
                 # also add stashed components to list
                 for dr in ~/.lal/cache/stash/**/**; do
                     if [[ "$dr" != *"**" ]]; then # ignore empty element (ends in **)

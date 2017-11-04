@@ -33,26 +33,18 @@ CI setup to build and upload releases of master as outlined further below.
 A configured backend in same config file, distrubuted with lal to your devs. Currently, this only supports artifactory.
 
 ## Building
-Get [rust](https://www.rust-lang.org/downloads.html) (inlined below), clone, build, install, and make it available:
+Clone, install from source with [rust](https://www.rust-lang.org/en-US/install.html), setup autocomplete, and select your site-config:
 
 ```sh
-curl https://sh.rustup.rs -sSf | sh
-# `rustup update stable` - to upgrade rust later
-cargo build --release
-ln -sf $PWD/target/release/lal /usr/local/bin/lal
+git clone git@github.com:lalbuild/lal.git && cd lal
+cargo install
 echo "source $PWD/lal.complete.sh" >> ~/.bash_completion
-source ~/.bash_completion # or open new shell
-lal configure <site-config> # use autocomplete to select config
+lal configure configs/demo.json
 ```
 
 If you want to release static binaries of these to developers, you can build lal on CI via [clux/muslrust](https://github.com/clux/muslrust). This takes away the need to install rust for developers, and if you use the `upgrade` feature, you can set up automatic upgrades.
 
 ## Usage
-Select an environment. If you haven't set one up use the demo environments from [lalbuild/dockerfiles](https://github.com/lalbuild/dockerfiles) by configuring with [demo.json](./configs/demo.json).
-
-```sh
-lal configure configs/demo.json
-```
 
 ### Creating a new component
 Create a git repo, lal init it, then update deps and verify it builds.

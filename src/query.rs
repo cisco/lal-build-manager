@@ -1,10 +1,21 @@
 use std::io::{self, Write};
 
 use storage::Backend;
-use super::LalResult;
+use super::{LalResult, CliError};
 
 /// Prints a list of versions associated with a component
-pub fn query(backend: &Backend, env: Option<&str>, component: &str, last: bool) -> LalResult<()> {
+pub fn query(backend: &Backend, _env: Option<&str>, component: &str, last: bool) -> LalResult<()> {
+    if component.to_lowercase() != component {
+        return Err(CliError::InvalidComponentName(component.into()));
+    }
+    let env = match _env {
+        None => {
+            error!("query is no longer allowed without an explicit environment");
+            return Err(CliError::EnvironmentUnspecified)
+        },
+        Some(e) => e
+    };
+
     if last {
         let ver = backend.get_latest_version(component, env)?;
         println!("{}", ver);
