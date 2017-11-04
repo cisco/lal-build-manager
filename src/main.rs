@@ -619,10 +619,13 @@ fn main() {
     };
     let container = handle_env_command(&args, &config, &env, &stickies);
 
-    // Warn users who are overriding the default for the main commands
-    if env != manifest.environment {
+    // Warn users who are using an unsupported environment
+    if !manifest.supportedEnvironments.clone().into_iter().any(|e| e == env) {
+       let sub = args.subcommand_name().unwrap();
+        warn!("Running {} command in unsupported {} environment", sub, env);
+    } else {
         let sub = args.subcommand_name().unwrap();
-        warn!("Running {} command in non-default {} environment", sub, env);
+        debug!("Running {} command in supported {} environent", sub, env);
     }
 
     // Main subcommands

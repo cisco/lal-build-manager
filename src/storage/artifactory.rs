@@ -123,12 +123,13 @@ fn get_storage_versions(uri: &str) -> LalResult<Vec<u32>> {
     trace!("Got body {}", resp);
 
     let res: ArtifactoryStorageResponse = serde_json::from_str(&resp)?;
-    let builds: Vec<u32> = res.children
+    let mut builds: Vec<u32> = res.children
         .iter()
         .map(|r| r.uri.as_str())
         .map(|r| r.trim_matches('/'))
         .filter_map(|b| b.parse().ok())
         .collect();
+    builds.sort_by(|a, b| b.cmp(a)); // sort by version number descending
     Ok(builds)
 }
 
@@ -224,9 +225,11 @@ fn get_dependency_url_latest(
     name: &str,
     env: &str,
 ) -> LalResult<Component> {
-    let url = format!("{}/api/storage/{}/{}",
+    let url = format!("{}/api/storage/{}/{}/{}/{}",
                       art_cfg.master,
                       art_cfg.release,
+                      "env",
+                      env,
                       name);
     let v = get_storage_as_u32(&url)?;
 

@@ -93,6 +93,26 @@ impl<T: ?Sized> CachedBackend for T
 where
     T: Backend,
 {
+    /// Get the latest version of a component across all supported environments
+    fn get_latest_supported_versions(&self, name: &str, environments: Vec<String>) -> LalResult<Vec<u32>> {
+        use std::collections::BTreeSet;
+        let mut result = BTreeSet::new();
+        let mut first_pass = true;
+        for e in environments {
+            let env_latest : BTreeSet<_> = self.get_versions(name, &e)?.into_iter().take(10).collect();
+            info!("Last versions for {} in {} env is {:?}", name, e, env_latest);
+            if first_pass {
+                // if first pass, can't take intersection with something empty, start with first result
+                result = env_latest;
+                first_pass = false;
+            } else {
+                result = result.clone().intersection(&env_latest).cloned().collect();
+            }
+        }
+        debug!("Intersection of allowed versions {:?}", result);
+        Ok(result.into_iter().collect())
+    }
+
     /// Locate a proper component, downloading it and caching if necessary
     fn retrieve_published_component(
         &self,

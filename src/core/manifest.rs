@@ -43,6 +43,8 @@ pub struct Manifest {
     pub name: String,
     /// Default environment to build in
     pub environment: String,
+    /// All the environments dependencies can currently be found in
+    pub supportedEnvironments: Vec<String>,
     /// Components and their available configurations that are buildable
     pub components: BTreeMap<String, ComponentConfiguration>,
     /// Dependencies that are always needed
@@ -108,6 +110,7 @@ impl Manifest {
             name: name.into(),
             components: comps,
             environment: env.into(),
+            supportedEnvironments: vec![env.into()],
             location: location.to_string_lossy().into(),
             ..Default::default()
         }
@@ -169,6 +172,9 @@ impl Manifest {
             if &name.to_lowercase() != name {
                 return Err(CliError::InvalidComponentName(name.clone()))
             }
+        }
+        if self.supportedEnvironments.is_empty() {
+            return Err(CliError::NoSupportedEnvironments)
         }
         Ok(())
     }

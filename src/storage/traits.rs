@@ -28,7 +28,9 @@ pub struct Component {
     pub name: String,
     /// Version number
     pub version: u32,
-    /// The raw location of the tarball at the specified version number
+    /// The raw location of the component at the specified version number
+    ///
+    /// No restriction on how this information is encoded, but it must work with `raw_fetch`
     pub location: String,
 }
 
@@ -38,19 +40,15 @@ pub struct Component {
 /// so that in case it fails it can be switched over.
 /// We do rely on there being a basic API that can implement this trait though.
 pub trait Backend {
-    /// Get a list of versions for a component
+    /// Get a list of versions for a component in descending order
     fn get_versions(&self, name: &str, loc: &str) -> LalResult<Vec<u32>>;
     /// Get the latest version of a component
     fn get_latest_version(&self, name: &str, loc: &str) -> LalResult<u32>;
 
-    /// Get the tarball url of a `Component` in a backend location
-    /// If no version is given, return latest
-    fn get_component_info(
-        &self,
-        name: &str,
-        version: Option<u32>,
-        loc: &str,
-    ) -> LalResult<Component>;
+    /// Get the version and location information of a component
+    ///
+    /// If no version is given, figure out what latest is
+    fn get_component_info(&self, name: &str, ver: Option<u32>, loc: &str) -> LalResult<Component>;
 
     /// Publish a release build (ARTIFACT dir) to a specific location
     fn publish_artifact_dir(&self, name: &str, version: u32, env: &str) -> LalResult<()>;
@@ -69,6 +67,9 @@ pub trait Backend {
 ///
 /// This wraps the common fetch commands in a caching layer on the cache dir.
 pub trait CachedBackend {
+    /// Get the latest version of a component across all supported environments
+    fn get_latest_supported_versions(&self, name: &str, environments: Vec<String>) -> LalResult<Vec<u32>>;
+
     /// Retrieve the location to a cached published component (downloading if necessary)
     fn retrieve_published_component(
         &self,

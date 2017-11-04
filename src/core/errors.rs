@@ -58,6 +58,8 @@ pub enum CliError {
     EnvironmentMismatch(String, String),
     /// Custom versions are stashed in INPUT which will not fly on Jenkins
     NonGlobalDependencies(String),
+    /// No supported environments in the manifest
+    NoSupportedEnvironments,
 
     // env related errors
     /// Specified environment is not present in the main config
@@ -101,6 +103,8 @@ pub enum CliError {
     InstallFailure,
     /// Fetch failure related to backend
     BackendFailure(String),
+    /// No version found at same version across `supportedEnvironments`
+    NoIntersectedVersion(String),
 
     // publish errors
     /// Missing release build
@@ -185,6 +189,9 @@ impl fmt::Display for CliError {
                        "Depending on a custom version of {} (use -s to allow stashed versions)",
                        s)
             }
+            CliError::NoSupportedEnvironments => {
+                write!(f, "Need to specify supported environments in the manifest")
+            }
             CliError::MissingEnvironment(ref s) => {
                 write!(f, "Environment '{}' not found in ~/.lal/config", s)
             }
@@ -222,6 +229,9 @@ impl fmt::Display for CliError {
             CliError::DockerImageNotFound(ref s) => write!(f, "Could not find docker image {}", s),
             CliError::InstallFailure => write!(f, "Install failed"),
             CliError::BackendFailure(ref s) => write!(f, "Backend - {}", s),
+            CliError::NoIntersectedVersion(ref s) => {
+                write!(f, "No version of {} found across all environments", s)
+            }
             CliError::MissingReleaseBuild => write!(f, "Missing release build"),
             CliError::MissingBackendCredentials => {
                 write!(f, "Missing backend credentials in ~/.lal/config")
