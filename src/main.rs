@@ -621,7 +621,7 @@ fn main() {
 
     // Warn users who are using an unsupported environment
     if !manifest.supportedEnvironments.clone().into_iter().any(|e| e == env) {
-       let sub = args.subcommand_name().unwrap();
+        let sub = args.subcommand_name().unwrap();
         warn!("Running {} command in unsupported {} environment", sub, env);
     } else {
         let sub = args.subcommand_name().unwrap();

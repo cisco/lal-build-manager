@@ -4,27 +4,13 @@ use std::path::{Path, PathBuf};
 use storage::{Backend, CachedBackend, Component};
 use core::{CliError, LalResult, output};
 
-fn is_cached<T: Backend + ?Sized>(
-    backend: &T,
-    name: &str,
-    version: u32,
-    env: &str,
-) -> bool {
+fn is_cached<T: Backend + ?Sized>(backend: &T, name: &str, version: u32, env: &str) -> bool {
     get_cache_dir(backend, name, version, env).is_dir()
 }
 
-fn get_cache_dir<T: Backend + ?Sized>(
-    backend: &T,
-    name: &str,
-    version: u32,
-    env: &str,
-) -> PathBuf {
+fn get_cache_dir<T: Backend + ?Sized>(backend: &T, name: &str, version: u32, env: &str) -> PathBuf {
     let cache = backend.get_cache_dir();
-    Path::new(&cache)
-        .join("environments")
-        .join(env)
-        .join(name)
-        .join(version.to_string())
+    Path::new(&cache).join("environments").join(env).join(name).join(version.to_string())
 }
 
 fn store_tarball<T: Backend + ?Sized>(
@@ -93,20 +79,27 @@ impl<T: ?Sized> CachedBackend for T
 where
     T: Backend,
 {
-    /// Get the latest version of a component across all supported environments
-    fn get_latest_supported_versions(&self, name: &str, environments: Vec<String>) -> LalResult<Vec<u32>> {
+    /// Get the latest versions of a component across all supported environments
+    ///
+    /// Because the versions have to be available in all environments, these numbers may
+    /// not contain the highest numbers available on specific environments.
+    fn get_latest_supported_versions(
+        &self,
+        name: &str,
+        environments: Vec<String>,
+    ) -> LalResult<Vec<u32>> {
         use std::collections::BTreeSet;
         let mut result = BTreeSet::new();
         let mut first_pass = true;
         for e in environments {
-            let env_latest : BTreeSet<_> = self.get_versions(name, &e)?.into_iter().take(10).collect();
-            info!("Last versions for {} in {} env is {:?}", name, e, env_latest);
+            let eres: BTreeSet<_> = self.get_versions(name, &e)?.into_iter().take(100).collect();
+            info!("Last versions for {} in {} env is {:?}", name, e, eres);
             if first_pass {
                 // if first pass, can't take intersection with something empty, start with first result
-                result = env_latest;
+                result = eres;
                 first_pass = false;
             } else {
-                result = result.clone().intersection(&env_latest).cloned().collect();
+                result = result.clone().intersection(&eres).cloned().collect();
             }
         }
         debug!("Intersection of allowed versions {:?}", result);

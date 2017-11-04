@@ -153,7 +153,7 @@ impl Manifest {
     pub fn verify(&self) -> LalResult<()> {
         for (name, conf) in &self.components {
             if &name.to_lowercase() != name {
-                return Err(CliError::InvalidComponentName(name.clone()))
+                return Err(CliError::InvalidComponentName(name.clone()));
             }
             // Verify ComponentSettings (manifest.components[x])
             debug!("Verifying component {}", name);
@@ -165,16 +165,16 @@ impl Manifest {
         }
         for (name, _) in &self.dependencies {
             if &name.to_lowercase() != name {
-                return Err(CliError::InvalidComponentName(name.clone()))
+                return Err(CliError::InvalidComponentName(name.clone()));
             }
         }
         for (name, _) in &self.devDependencies {
             if &name.to_lowercase() != name {
-                return Err(CliError::InvalidComponentName(name.clone()))
+                return Err(CliError::InvalidComponentName(name.clone()));
             }
         }
         if self.supportedEnvironments.is_empty() {
-            return Err(CliError::NoSupportedEnvironments)
+            return Err(CliError::NoSupportedEnvironments);
         }
         Ok(())
     }

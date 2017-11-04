@@ -12,7 +12,7 @@ pub fn export<T: CachedBackend + ?Sized>(
     env: &str,
 ) -> LalResult<()> {
     if comp.to_lowercase() != comp {
-        return Err(CliError::InvalidComponentName(comp.into()))
+        return Err(CliError::InvalidComponentName(comp.into()));
     }
 
     let dir = output.unwrap_or(".");

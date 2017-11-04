@@ -50,8 +50,10 @@ pub trait Backend {
     /// If no version is given, figure out what latest is
     fn get_component_info(&self, name: &str, ver: Option<u32>, loc: &str) -> LalResult<Component>;
 
-    /// Publish a release build (ARTIFACT dir) to a specific location
-    fn publish_artifact_dir(&self, name: &str, version: u32, env: &str) -> LalResult<()>;
+    /// Publish a release build's ARTIFACT to a specific location
+    ///
+    /// This will publish everything inside the ARTIFACT dir created by `lal build -r`
+    fn publish_artifact(&self, name: &str, version: u32, env: &str) -> LalResult<()>;
 
     /// Raw fetch of location to a destination
     ///
@@ -59,6 +61,7 @@ pub trait Backend {
     fn raw_fetch(&self, location: &str, dest: &PathBuf) -> LalResult<()>;
 
     /// Return the base directory to be used to dump cached downloads
+    ///
     /// This has to be in here for `CachedBackend` to have a straight dependency
     fn get_cache_dir(&self) -> String;
 }
@@ -68,7 +71,11 @@ pub trait Backend {
 /// This wraps the common fetch commands in a caching layer on the cache dir.
 pub trait CachedBackend {
     /// Get the latest version of a component across all supported environments
-    fn get_latest_supported_versions(&self, name: &str, environments: Vec<String>) -> LalResult<Vec<u32>>;
+    fn get_latest_supported_versions(
+        &self,
+        name: &str,
+        environments: Vec<String>,
+    ) -> LalResult<Vec<u32>>;
 
     /// Retrieve the location to a cached published component (downloading if necessary)
     fn retrieve_published_component(

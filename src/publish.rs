@@ -34,7 +34,7 @@ pub fn publish<T: Backend + ?Sized>(name: &str, backend: &T) -> LalResult<()> {
     let env = lock.environment;
 
     info!("Publishing {}={} to {}", name, version, env);
-    backend.publish_artifact_dir(name, version, &env)?;
+    backend.publish_artifact(name, version, &env)?;
 
     Ok(())
 }

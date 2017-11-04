@@ -27,7 +27,7 @@ pub fn update<T: CachedBackend + ?Sized>(
             let pair: Vec<&str> = comp.split('=').collect();
             if let Ok(n) = pair[1].parse::<u32>() {
                 if pair[0].to_lowercase() != pair[0] {
-                    return Err(CliError::InvalidComponentName(pair[0].into()))
+                    return Err(CliError::InvalidComponentName(pair[0].into()));
                 }
                 // standard fetch with an integer version
                 match backend.unpack_published_component(pair[0], Some(n), env) {
@@ -47,19 +47,17 @@ pub fn update<T: CachedBackend + ?Sized>(
             }
         } else {
             if &comp.to_lowercase() != comp {
-                return Err(CliError::InvalidComponentName(comp.clone()))
+                return Err(CliError::InvalidComponentName(comp.clone()));
             }
             // fetch without a specific version (latest)
 
             // First, since this potentially goes in the manifest
             // make sure the version is found for all supported environments:
-            let res = backend.get_latest_supported_versions(comp, manifest.supportedEnvironments.clone())?;
-            let ver = match res.into_iter().max() {
-                Some(m) => m,
-                None => {
-                    return Err(CliError::NoIntersectedVersion(comp.clone()));
-                }
-            };
+            let ver = backend
+                .get_latest_supported_versions(comp, manifest.supportedEnvironments.clone())?
+                .into_iter()
+                .max()
+                .ok_or(CliError::NoIntersectedVersion(comp.clone()))?;
             info!("Fetch {} {}={}", env, comp, ver);
 
             match backend.unpack_published_component(comp, Some(ver), env) {

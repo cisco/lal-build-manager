@@ -243,17 +243,13 @@ fn get_dependency_url_latest(
 
 // This queries the API for the default location
 // if a default exists, then all our current multi-builds must exist
-fn get_latest_versions(
-    art_cfg: &ArtifactoryConfig,
-    name: &str,
-    env: &str,
-) -> LalResult<Vec<u32>> {
+fn get_latest_versions(art_cfg: &ArtifactoryConfig, name: &str, env: &str) -> LalResult<Vec<u32>> {
     let url = format!("{}/api/storage/{}/{}/{}/{}",
-                    art_cfg.master,
-                    art_cfg.release,
-                    "env",
-                    env,
-                    name);
+                      art_cfg.master,
+                      art_cfg.release,
+                      "env",
+                      env,
+                      name);
 
     get_storage_versions(&url)
 }
@@ -366,7 +362,7 @@ impl Backend for ArtifactoryBackend {
         get_tarball_uri(&self.config, name, version, loc)
     }
 
-    fn publish_artifact_dir(&self, name: &str, version: u32, env: &str) -> LalResult<()> {
+    fn publish_artifact(&self, name: &str, version: u32, env: &str) -> LalResult<()> {
         // this fn basically assumes all the sanity checks have been performed
         // files must exist and lockfile must be sensible
         let artdir = Path::new("./ARTIFACT");
