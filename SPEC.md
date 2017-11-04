@@ -27,6 +27,7 @@ A per-repo file. Format looks like this (here annotated with illegal comments):
 {
   "name": "libwebsockets",  // name of repo
   "environment": "centos",  // name of environment found in the lal config
+  "supportedEnvironments": ["centos", "xenial"],
   "components": {           // map of components and default configuration
     "libwebsockets": {
       "defaultConfig": "release",
@@ -162,10 +163,6 @@ The local cache is populated by fetches from the registry, or calls to `stash` t
 │       └── ciscossl
 │           └── 6
 │               └── ciscossl.tar
-├── globals
-│   └── ciscossl
-│       └── 6
-│           └── ciscossl.tar
 └── stash
     └── ciscossl
         └── asan
@@ -174,11 +171,8 @@ The local cache is populated by fetches from the registry, or calls to `stash` t
 
 Sources:
 
-- `globals` are default components unpacked straight from the registry
 - `environments` are components from the registry under a specific environment namespace
 - `stash` are tarballs of OUTPUT of builds when doing `lal stash <name>`
-
-Note that the globals will contain duplicated components from one or more of the environments subfolders.
 
 ## Versioning
 As implied by the structure of the Manifest, Lockfile, and cache directories, the *only* versioning scheme supported by `lal` is a monotonically increasing integer sequence.
@@ -187,11 +181,13 @@ As implied by the structure of the Manifest, Lockfile, and cache directories, th
 #### lal status
 Provides list of dependencies currently in `INPUT`.
 If they are not in the manifest they will be listed as _extraneous_.
-If they are modified (not a global fetch) they will be listed as _modified_.
+If they are stashed dependencies they will be listed in yellow origin
 
 Extra flags:
 
-- `--full` or `-f`: show the full dependency tree
+- `--full` or `-f`: print the full dependency tree
+- `--origin` or `-o`: print version and environment origin of artifact
+- `--time` or `-t`: print build time of artifact
 
 Alias: `lal ls`
 
@@ -201,16 +197,16 @@ Subcommand that controls the current environment. This is a sticky, repo-wide se
 
 ```sh
 $ lal env
-default
-# every lal command will defer to `manifest.json` for environment settings
+xenial
+# every lal command will defer the environments key in `manifest.json` by default
 
-$ lal env set xenial # writes { "environment": "xenial" } to .lal/opts
-$ lal env update # invokes docker pull of the xenial image
+$ lal env set zesty # writes { "environment": "zesty" } to .lal/opts
+$ lal env update # invokes docker pull of the zesty image
 # now every lal command will warn if `manifest.environment != lal env`
-$ lal fetch # fetches from xenial
-$ lal build # build using xenial components
-$ lal shell # enters xenial shell
-$ lal run unit-test websocket_server_test 5 asan # runs unit test in xenial shell
+$ lal fetch # fetches from zesty
+$ lal build # build using zesty components
+$ lal shell # enters zesty shell
+$ lal run unit-test websocket_server_test 5 asan # runs unit test in zesty shell
 
 $ lal env reset # deletes `.lal/opts` if it exists
 
@@ -252,6 +248,7 @@ Passing configuration flags:
 This allows multiple blessed configurations of the same component, i.e. `lal build dme-unit-tests --config=asan` and `lal build dme-unit-tests --config=debug`. Both are valid provided `dme-unit-tests` provides those `configurations` in the `components` part of the manifest.
 
 #### lal update [components..]
+Find the latest available version of a component that is available in all currently `supportedEnvironments` from the manifest.
 
  - *lal update component [--save]*: fetches the latest version of a component. The optional `--save` flag will also update the manifest file locally.
 
@@ -342,12 +339,12 @@ Helper command used by `lal build` exposed for convenience/sanity. Verifies that
 - `manifest.json` exists in `$PWD` and is valid JSON
 - dependencies in `INPUT` match `manifest.json`
 - the dependency tree is flat
-- dependencies in `INPUT` contains only global dependencies
+- dependencies in `INPUT` contains only published dependencies
 - dependencies in `INPUT` were built using the correct environment
 
 `lal build` normally guards on this command.
 
-An optional `--simple` or `-s` can be passed to `lal verify` to not check for global dependencies and a flat dependency tree.
+An optional `--simple` or `-s` can be passed to `lal verify` to not check for published dependencies and a flat dependency tree.
 
 #### lal configure [defaults]
 Sets up a default config with a set of pre-configured defaults from a seperately supplied file with default values:
@@ -373,27 +370,31 @@ lal init -f centos
 #### lal upgrade
 Performs an upgrade check of `lal`. If new versions are found, it reports how to upgrade your lal tool. This is normally checked daily. But it can be done manually with this command.
 
+This is currently disabled awaiting a redesign.
+
 #### lal clean
 Deletes artifacts in the cache directory older than 14 days. The day is configurable with `-d <days>`.
 
 #### lal export [component]
-Exports a build artifact from artifactory for a component into `$PWD` or directory of choice. The component can be either the name of the component for latest version, or suffixed with `=version` for a specific version:
+Exports a build artifact from the storage backend in the current directory or a directory of choice.
+
+The component can be either the name of the component for latest version, or suffixed with `=version` for a specific version:
 
 ```sh
-lal export gtest -o mystorage/
+lal -e xenial export gtest -o mystorage/
 test -f mystorage/gtest.tar.gz
 
-lal --env xenial export liblzma=6
+lal -e xenial export liblzma=6
 test -f ./liblzma.tar.gz
 ```
 
 NB: export does not read the manifest.json for environment overrides.
 
 #### lal query [component]
-Lists the availble version on artifactory for a given component in the current environment.
+Lists the availble versions in the storage backend that were built in a speific environent.
 
 ```sh
-lal query libwebsockets
+lal -e xenial query libwebsockets
 ```
 
 NB: query does not read the manifest.json for environment overrides.
@@ -418,21 +419,16 @@ lal env set xenial
 lal fetch
 lal build libldns --release --with-version=20 --with-sha=$(git rev-parse HEAD)
 # specific builds should push immediately (even if there are more builds)
-lal -e xenial publish libldns
-# last publish is a join step (done iff all environments succeeded)
 lal publish libldns
 ```
 
-The publish command will verify that `./ARTIFACT/lockfile.json` is built in the correct environment and that the version is not experimental.
+The publish command will upload to a bucket named after the environment used to build it (found in `./ARTIFACT/lockfile.json`). It will also verify that the version is set with `--with-version`.
 
-The uploaded artifact will in this case end up in two locations:
+The uploaded artifact will in this case end up the following location:
 
 - `https://artifactory.host/artifactory/group/env/xenial/libldns/20/`
-- `https://artifactory.host/artifactory/group/libldns/20/`.
 
-Beause `lal update` and `lal fetch` always verify that components are found on the second location first (the global non-env specific bucket), it's important to upload the global environment artifact last (as a join step).
-
-This is largely irrelevant if you are only building one environment, but nevertheless we do require that you publish the place to both buckets, for clarity.
+If you have more `supportedEnvironments` then `lal update` will look in all the buckets corresponing to your environments before finding a version that can be useg in all environments.
 
 #### lal propagate [component]
 Retraces a dependency tree in reverse to figure out steps needed to propagate a leaf dependency properly. This is useful for satisfying the full version strictness checks of `lal verify` in a large dependency tree (recall that we enforce a flat dependency tree).

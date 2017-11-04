@@ -176,6 +176,9 @@ impl Manifest {
         if self.supportedEnvironments.is_empty() {
             return Err(CliError::NoSupportedEnvironments);
         }
+        if !self.supportedEnvironments.iter().any(|x| x == &self.environment) {
+            return Err(CliError::UnsupportedEnvironment);
+        }
         Ok(())
     }
 }

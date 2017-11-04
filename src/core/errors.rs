@@ -60,6 +60,8 @@ pub enum CliError {
     NonGlobalDependencies(String),
     /// No supported environments in the manifest
     NoSupportedEnvironments,
+    /// Environment in manifest is not in the supported environments
+    UnsupportedEnvironment,
 
     // env related errors
     /// Specified environment is not present in the main config
@@ -191,6 +193,9 @@ impl fmt::Display for CliError {
             }
             CliError::NoSupportedEnvironments => {
                 write!(f, "Need to specify supported environments in the manifest")
+            }
+            CliError::UnsupportedEnvironment => {
+                write!(f, "manifest.environment must exist in manifest.supportedEnvironments")
             }
             CliError::MissingEnvironment(ref s) => {
                 write!(f, "Environment '{}' not found in ~/.lal/config", s)
