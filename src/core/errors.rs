@@ -64,8 +64,6 @@ pub enum CliError {
     // env related errors
     /// Specified environment is not present in the main config
     MissingEnvironment(String),
-    /// Default environment explicitly specified
-    InvalidEnvironment,
 
     // build errors
     /// Build configurations does not match manifest or user input
@@ -194,9 +192,6 @@ impl fmt::Display for CliError {
             }
             CliError::MissingEnvironment(ref s) => {
                 write!(f, "Environment '{}' not found in ~/.lal/config", s)
-            }
-            CliError::InvalidEnvironment => {
-                write!(f, "Environment 'default' is reserved for internal use")
             }
             CliError::InvalidBuildConfiguration(ref s) => {
                 write!(f, "Invalid build configuration - {}", s)
