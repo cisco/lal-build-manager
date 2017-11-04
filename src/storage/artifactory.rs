@@ -219,16 +219,6 @@ fn get_dependency_env_url(
     tar_url
 }
 
-fn get_dependency_url(
-    art_cfg: &ArtifactoryConfig,
-    name: &str,
-    version: u32,
-    env: &str,
-) -> String {
-
-   get_dependency_env_url(art_cfg, name, version, env)
-}
-
 fn get_dependency_url_latest(
     art_cfg: &ArtifactoryConfig,
     name: &str,
@@ -242,7 +232,7 @@ fn get_dependency_url_latest(
 
     debug!("Found latest version as {}", v);
     Ok(Component {
-           location: get_dependency_url(art_cfg, name, v, env),
+           location: get_dependency_env_url(art_cfg, name, v, env),
            version: v,
            name: name.into(),
        })
@@ -274,7 +264,7 @@ fn get_tarball_uri(
 ) -> LalResult<Component> {
     if let Some(v) = version {
         Ok(Component {
-               location: get_dependency_url(art_cfg, name, v, env),
+               location: get_dependency_env_url(art_cfg, name, v, env),
                version: v,
                name: name.into(),
            })
