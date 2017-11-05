@@ -1,0 +1,19 @@
+{
+  "name": "hello",
+  "environment": "xenial",
+  "supportedEnvironments": [
+    "xenial"
+  ],
+  "components": {
+    "hello": {
+      "defaultConfig": "release",
+      "configurations": [
+        "release"
+      ]
+    }
+  },
+  "dependencies": {
+    "libhello": 2
+  },
+  "devDependencies": {}
+}
