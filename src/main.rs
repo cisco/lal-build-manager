@@ -554,6 +554,9 @@ fn main() {
         &BackendConfiguration::Artifactory(ref art_cfg) => {
             Box::new(ArtifactoryBackend::new(&art_cfg, &config.cache))
         }
+        &BackendConfiguration::Local(ref local_cfg) => {
+            Box::new(LocalBackend::new(&local_cfg, &config.cache))
+        }
     };
 
     // Ensure SSL is initialized before using the backend
