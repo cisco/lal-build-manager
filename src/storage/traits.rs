@@ -28,8 +28,10 @@ pub struct Component {
     pub name: String,
     /// Version number
     pub version: u32,
-    /// The raw URL of the tarball at the specified version number
-    pub tarball: String,
+    /// The raw location of the component at the specified version number
+    ///
+    /// No restriction on how this information is encoded, but it must work with `raw_fetch`
+    pub location: String,
 }
 
 /// Properties a storage backend of artifacts should have
@@ -38,27 +40,28 @@ pub struct Component {
 /// so that in case it fails it can be switched over.
 /// We do rely on there being a basic API that can implement this trait though.
 pub trait Backend {
-    /// Get a list of versions for a component
-    fn get_versions(&self, name: &str, loc: Option<&str>) -> LalResult<Vec<u32>>;
+    /// Get a list of versions for a component in descending order
+    fn get_versions(&self, name: &str, loc: &str) -> LalResult<Vec<u32>>;
     /// Get the latest version of a component
-    fn get_latest_version(&self, name: &str, loc: Option<&str>) -> LalResult<u32>;
+    fn get_latest_version(&self, name: &str, loc: &str) -> LalResult<u32>;
 
-    /// Get the tarball url of a `Component` in a backend location
-    /// If no version is given, return latest
-    fn get_tarball_url(
-        &self,
-        name: &str,
-        version: Option<u32>,
-        loc: Option<&str>,
-    ) -> LalResult<Component>;
+    /// Get the version and location information of a component
+    ///
+    /// If no version is given, figure out what latest is
+    fn get_component_info(&self, name: &str, ver: Option<u32>, loc: &str) -> LalResult<Component>;
 
-    /// Publish a release build (ARTIFACT dir) to a specific location
-    fn upload_artifact_dir(&self, name: &str, version: u32, env: Option<&str>) -> LalResult<()>;
+    /// Publish a release build's ARTIFACT to a specific location
+    ///
+    /// This will publish everything inside the ARTIFACT dir created by `lal build -r`
+    fn publish_artifact(&self, name: &str, version: u32, env: &str) -> LalResult<()>;
 
-    /// Raw dowlnload of a url to a destination
-    fn raw_download(&self, url: &str, dest: &PathBuf) -> LalResult<()>;
+    /// Raw fetch of location to a destination
+    ///
+    /// location can be a HTTPS url / a system path / etc (depending on the backend)
+    fn raw_fetch(&self, location: &str, dest: &PathBuf) -> LalResult<()>;
 
     /// Return the base directory to be used to dump cached downloads
+    ///
     /// This has to be in here for `CachedBackend` to have a straight dependency
     fn get_cache_dir(&self) -> String;
 }
@@ -67,12 +70,19 @@ pub trait Backend {
 ///
 /// This wraps the common fetch commands in a caching layer on the cache dir.
 pub trait CachedBackend {
+    /// Get the latest version of a component across all supported environments
+    fn get_latest_supported_versions(
+        &self,
+        name: &str,
+        environments: Vec<String>,
+    ) -> LalResult<Vec<u32>>;
+
     /// Retrieve the location to a cached published component (downloading if necessary)
     fn retrieve_published_component(
         &self,
         name: &str,
         version: Option<u32>,
-        env: Option<&str>,
+        env: &str,
     ) -> LalResult<(PathBuf, Component)>;
 
     /// Retrieve the location to a stashed component
@@ -83,7 +93,7 @@ pub trait CachedBackend {
         &self,
         name: &str,
         version: Option<u32>,
-        env: Option<&str>,
+        env: &str,
     ) -> LalResult<Component>;
 
     /// Retrieve and unpack a stashed component to INPUT

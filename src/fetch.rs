@@ -21,6 +21,9 @@ pub fn fetch<T: CachedBackend + ?Sized>(
     core: bool,
     env: &str,
 ) -> LalResult<()> {
+    // first ensure manifest is sane:
+    manifest.verify()?;
+
     debug!("Installing dependencies{}",
            if !core { " and devDependencies" } else { "" });
 
@@ -76,7 +79,7 @@ pub fn fetch<T: CachedBackend + ?Sized>(
                 })?;
         }
 
-        let _ = backend.unpack_published_component(&k, Some(v), Some(env)).map_err(|e| {
+        let _ = backend.unpack_published_component(&k, Some(v), env).map_err(|e| {
             warn!("Failed to completely install {} ({})", k, e);
             // likely symlinks inside tarball that are being dodgy
             // this is why we clean_input

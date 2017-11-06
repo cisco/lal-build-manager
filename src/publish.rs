@@ -8,7 +8,7 @@ use super::{LalResult, CliError, Lockfile};
 ///
 /// Meant to be done after a `lal build -r <component>`
 /// and requires publish credentials in the local `Config`.
-pub fn publish<T: Backend + ?Sized>(name: &str, backend: &T, env: Option<&str>) -> LalResult<()> {
+pub fn publish<T: Backend + ?Sized>(name: &str, backend: &T) -> LalResult<()> {
     let artdir = Path::new("./ARTIFACT");
     let tarball = artdir.join(format!("{}.tar.gz", name));
     if !artdir.is_dir() || !tarball.exists() {
@@ -30,21 +30,11 @@ pub fn publish<T: Backend + ?Sized>(name: &str, backend: &T, env: Option<&str>) 
         warn!("Release build not done --with-sha=$(git rev-parse HEAD)");
     }
 
-    if let Some(envu) = env {
-        // no accidental publishes to envs it wasn't built in!
-        if envu != lock.environment {
-            error!("Cannot publish {} built component to the {} environment",
-                   lock.environment,
-                   envu);
-            return Err(CliError::MissingReleaseBuild);
-        }
-    }
+    // always publish to the environment in the lockfile
+    let env = lock.environment;
 
-    info!("Publishing {}={} to {}",
-          name,
-          version,
-          env.unwrap_or("global"));
-    backend.upload_artifact_dir(name, version, env)?;
+    info!("Publishing {}={} to {}", name, version, env);
+    backend.publish_artifact(name, version, &env)?;
 
     Ok(())
 }

@@ -4,35 +4,20 @@ use std::path::{Path, PathBuf};
 use storage::{Backend, CachedBackend, Component};
 use core::{CliError, LalResult, output};
 
-fn is_cached<T: Backend + ?Sized>(
-    backend: &T,
-    name: &str,
-    version: u32,
-    env: Option<&str>,
-) -> bool {
+fn is_cached<T: Backend + ?Sized>(backend: &T, name: &str, version: u32, env: &str) -> bool {
     get_cache_dir(backend, name, version, env).is_dir()
 }
 
-fn get_cache_dir<T: Backend + ?Sized>(
-    backend: &T,
-    name: &str,
-    version: u32,
-    env: Option<&str>,
-) -> PathBuf {
+fn get_cache_dir<T: Backend + ?Sized>(backend: &T, name: &str, version: u32, env: &str) -> PathBuf {
     let cache = backend.get_cache_dir();
-    let pth = Path::new(&cache);
-    match env {
-        None => pth.join("globals"),
-        Some(e) => pth.join("environments").join(e),
-    }.join(name)
-        .join(version.to_string())
+    Path::new(&cache).join("environments").join(env).join(name).join(version.to_string())
 }
 
 fn store_tarball<T: Backend + ?Sized>(
     backend: &T,
     name: &str,
     version: u32,
-    env: Option<&str>,
+    env: &str,
 ) -> Result<(), CliError> {
     // 1. mkdir -p cacheDir/$name/$version
     let destdir = get_cache_dir(backend, name, version, env);
@@ -94,21 +79,48 @@ impl<T: ?Sized> CachedBackend for T
 where
     T: Backend,
 {
+    /// Get the latest versions of a component across all supported environments
+    ///
+    /// Because the versions have to be available in all environments, these numbers may
+    /// not contain the highest numbers available on specific environments.
+    fn get_latest_supported_versions(
+        &self,
+        name: &str,
+        environments: Vec<String>,
+    ) -> LalResult<Vec<u32>> {
+        use std::collections::BTreeSet;
+        let mut result = BTreeSet::new();
+        let mut first_pass = true;
+        for e in environments {
+            let eres: BTreeSet<_> = self.get_versions(name, &e)?.into_iter().take(100).collect();
+            info!("Last versions for {} in {} env is {:?}", name, e, eres);
+            if first_pass {
+                // if first pass, can't take intersection with something empty, start with first result
+                result = eres;
+                first_pass = false;
+            } else {
+                result = result.clone().intersection(&eres).cloned().collect();
+            }
+        }
+        debug!("Intersection of allowed versions {:?}", result);
+        Ok(result.into_iter().collect())
+    }
+
     /// Locate a proper component, downloading it and caching if necessary
     fn retrieve_published_component(
         &self,
         name: &str,
         version: Option<u32>,
-        env: Option<&str>,
+        env: &str,
     ) -> LalResult<(PathBuf, Component)> {
         trace!("Locate component {}", name);
 
-        let component = self.get_tarball_url(name, version, env)?;
+        let component = self.get_component_info(name, version, env)?;
 
         if !is_cached(self, &component.name, component.version, env) {
             // download to PWD then move it to stash immediately
             let local_tarball = Path::new(".").join(format!("{}.tar", name));
-            self.raw_download(&component.tarball, &local_tarball)?;
+            self.raw_fetch(&component.location, &local_tarball)?;
             store_tarball(self, name, component.version, env)?;
         }
         assert!(is_cached(self, &component.name, component.version, env),
@@ -125,7 +137,7 @@ where
         &self,
         name: &str,
         version: Option<u32>,
-        env: Option<&str>,
+        env: &str,
     ) -> LalResult<Component> {
         let (tarname, component) = self.retrieve_published_component(name, version, env)?;
 

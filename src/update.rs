@@ -1,5 +1,5 @@
 use storage::CachedBackend;
-use super::{LalResult, Manifest};
+use super::{LalResult, Manifest, CliError};
 
 /// Update specific dependencies outside the manifest
 ///
@@ -26,8 +26,11 @@ pub fn update<T: CachedBackend + ?Sized>(
         if comp.contains('=') {
             let pair: Vec<&str> = comp.split('=').collect();
             if let Ok(n) = pair[1].parse::<u32>() {
+                if pair[0].to_lowercase() != pair[0] {
+                    return Err(CliError::InvalidComponentName(pair[0].into()));
+                }
                 // standard fetch with an integer version
-                match backend.unpack_published_component(pair[0], Some(n), Some(env)) {
+                match backend.unpack_published_component(pair[0], Some(n), env) {
                     Ok(c) => updated.push(c),
                     Err(e) => {
                         warn!("Failed to update {} ({})", pair[0], e);
@@ -43,8 +46,21 @@ pub fn update<T: CachedBackend + ?Sized>(
                 });
             }
         } else {
+            if &comp.to_lowercase() != comp {
+                return Err(CliError::InvalidComponentName(comp.clone()));
+            }
             // fetch without a specific version (latest)
-            match backend.unpack_published_component(comp, None, Some(env)) {
+
+            // First, since this potentially goes in the manifest
+            // make sure the version is found for all supported environments:
+            let ver = backend
+                .get_latest_supported_versions(comp, manifest.supportedEnvironments.clone())?
+                .into_iter()
+                .max()
+                .ok_or(CliError::NoIntersectedVersion(comp.clone()))?;
+            info!("Fetch {} {}={}", env, comp, ver);
+
+            match backend.unpack_published_component(comp, Some(ver), env) {
                 Ok(c) => updated.push(c),
                 Err(e) => {
                     warn!("Failed to update {} ({})", &comp, e);
@@ -65,7 +81,15 @@ pub fn update<T: CachedBackend + ?Sized>(
         for c in &updated {
             debug!("Successfully updated {} at version {}", &c.name, c.version);
             if hmap.contains_key(&c.name) {
-                *hmap.get_mut(&c.name).unwrap() = c.version;
+                let val = hmap.get_mut(&c.name).unwrap();
+                if c.version < *val {
+                    warn!("Downgrading {} from {} to {}", c.name, *val, c.version);
+                } else if c.version > *val {
+                    info!("Upgrading {} from {} to {}", c.name, *val, c.version);
+                } else {
+                    info!("Maintaining {} at version {}", c.name, c.version);
+                }
+                *val = c.version;
             } else {
                 hmap.insert(c.name.clone(), c.version);
             }

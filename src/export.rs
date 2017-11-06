@@ -2,18 +2,29 @@ use std::fs;
 use std::path::Path;
 
 use storage::CachedBackend;
-use super::LalResult;
+use super::{LalResult, CliError};
 
 /// Export a specific component from the storage backend
 pub fn export<T: CachedBackend + ?Sized>(
     backend: &T,
     comp: &str,
     output: Option<&str>,
-    env: Option<&str>,
+    _env: Option<&str>,
 ) -> LalResult<()> {
-    let dir = output.unwrap_or(".");
+    let env = match _env {
+        None => {
+            error!("export is no longer allowed without an explicit environment");
+            return Err(CliError::EnvironmentUnspecified)
+        },
+        Some(e) => e
+    };
 
-    info!("Export {} {} to {}", env.unwrap_or("global"), comp, dir);
+    if comp.to_lowercase() != comp {
+        return Err(CliError::InvalidComponentName(comp.into()));
+    }
+
+    let dir = output.unwrap_or(".");
+    info!("Export {} {} to {}", env, comp, dir);
 
     let mut component_name = comp; // this is only correct if no =version suffix
     let tarname = if comp.contains('=') {
