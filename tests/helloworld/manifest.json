@@ -1,0 +1,15 @@
+{
+  "name": "hello",
+  "environment": "alp36",
+  "supportedEnvironments": ["alp36"],
+  "components": {
+    "hello": {
+      "defaultConfig": "release",
+      "configurations": [
+        "release"
+      ]
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

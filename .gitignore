@@ -5,4 +5,6 @@ lal.musl.tar
 OUTPUT
 lal.tar
 ARTIFACT
+tests/helloworld/INPUT
+tests/helloworld/.lal
 testtmp

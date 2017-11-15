@@ -53,28 +53,57 @@ fn main() {
     env::set_var("LAL_CONFIG_HOME", env::current_dir().unwrap());
 
     // init_with_verbosity(0).unwrap();
-    let has_docker = true;
-    let num_tests = if has_docker { 15 } else { 11 };
+    let num_tests = 7;
 
     println!("# lal tests");
     println!("1..{}", num_tests);
     let mut i = 0;
 
+    // Set up a fresh LAL_CONFIG_HOME and reconfigure
     i += 1;
     kill_laldir();
     println!("ok {} kill_laldir", i);
+    i += 1;
+    let backend = configure_yes();
+    println!("ok {} configure_yes", i);
+
+
+    // Test basic build functionality with hello component
+    let tmp = Path::new("..").join("tests").join("helloworld");
+    assert!(env::set_current_dir(tmp).is_ok());
 
     i += 1;
     kill_input();
     println!("ok {} kill_input", i);
 
     i += 1;
-    kill_manifest();
-    println!("ok {} kill_manifest", i);
+    shell_echo();
+    println!("ok {} shell_echo", i);
 
     i += 1;
-    let backend = configure_yes();
-    println!("ok {} configure_yes", i);
+    shell_permissions();
+    println!("ok {} shell_permissions", i);
+
+    i += 1;
+    build_and_stash_update_self(&backend);
+    println!("ok {} build_stash_and_update_from_stash", i);
+
+    i += 1;
+    run_scripts();
+    println!("ok {} run_scripts", i);
+
+    // TODO: publish the artifact so we can fetch it elsewhere
+
+    //i += 1;
+    //status_on_experimentals();
+    //println!("ok {} status_on_experimentals", i);
+
+    // TODO: verify stash + update
+
+/*
+    i += 1;
+    kill_manifest();
+    println!("ok {} kill_manifest", i);
 
     i += 1;
     init_force();
@@ -84,8 +113,11 @@ fn main() {
     has_config_and_manifest();
     println!("ok {} has_config_and_manifest", i);
     // assume we have manifest and config after this point
+*/
 
-    i += 1;
+
+
+/*    i += 1;
     update_save(&backend);
     println!("ok {} update_save", i);
 
@@ -93,31 +125,7 @@ fn main() {
     verify_checks(&backend);
     println!("ok {} verify_checks", i);
 
-    if has_docker {
-        i += 1;
-        shell_echo();
-        println!("ok {} shell_echo", i);
 
-        i += 1;
-        shell_permissions();
-        println!("ok {} shell_permissions", i);
-
-        i += 1;
-        build_stash_and_update_from_stash(&backend);
-        println!("ok {} build_stash_and_update_from_stash", i);
-
-        i += 1;
-        run_scripts();
-        println!("ok {} run_scripts", i);
-
-        i += 1;
-        status_on_experimentals();
-        println!("ok {} status_on_experimentals", i);
-    }
-
-    i += 1;
-    upgrade_does_not_fail();
-    println!("ok {} upgrade_does_not_fail", i);
 
     i += 1;
     export_check(&backend);
@@ -125,7 +133,7 @@ fn main() {
 
     i += 1;
     clean_check();
-    println!("ok {} clean_check", i);
+    println!("ok {} clean_check", i);*/
 }
 // Start from scratch
 fn kill_laldir() {
@@ -156,11 +164,11 @@ fn kill_manifest() {
 }
 
 // Create config
-fn configure_yes() -> ArtifactoryBackend {
+fn configure_yes() -> LocalBackend {
     let config = Config::read();
     assert!(config.is_err(), "no config at this point");
 
-    let r = lal::configure(true, false, "../configs/edonus.json");
+    let r = lal::configure(true, false, "../configs/demo.json");
     assert!(r.is_ok(), "configure succeeded");
 
     let cfg = Config::read();
@@ -169,12 +177,13 @@ fn configure_yes() -> ArtifactoryBackend {
     let cfgu = cfg.unwrap();
 
     match &cfgu.backend {
-        &BackendConfiguration::Artifactory(ref art_cfg) => {
-            ArtifactoryBackend::new(art_cfg, &cfgu.cache)
+        &BackendConfiguration::Local(ref local_cfg) => {
+            LocalBackend::new(&local_cfg, &cfgu.cache)
         }
+        _ => unreachable!() // demo.json uses local backend
     }
 }
-
+/*
 // Create manifest
 fn init_force() {
     let cfg = Config::read().unwrap();
@@ -194,11 +203,11 @@ fn init_force() {
 
     let m5 = lal::init(&cfg, true, "blah");
     assert!(m5.is_err(), "could not init without valid environment");
-}
+}*/
 
 // Tests need to be run in a directory with a manifest
 // and ~/.lal + config must exist
-fn has_config_and_manifest() {
+/*fn has_config_and_manifest() {
     let ldir = config_dir();
     assert!(ldir.is_dir(), "have laldir");
 
@@ -211,7 +220,7 @@ fn has_config_and_manifest() {
     // There is no INPUT yet, but we have no dependencies, so this should work:
     let r = lal::verify(&manifest.unwrap(), "xenial".into(), false);
     chk::is_ok(r, "could verify after install");
-}
+}*/
 
 // add some dependencies
 fn update_save<T: CachedBackend + Backend>(backend: &T) {
@@ -292,7 +301,7 @@ fn verify_checks<T: CachedBackend + Backend>(backend: &T) {
 // Shell tests
 fn shell_echo() {
     let cfg = Config::read().unwrap();
-    let container = cfg.get_container("rust".into()).unwrap();
+    let container = cfg.get_container("alp36".into()).unwrap();
     let modes = ShellModes::default();
     let r = lal::docker_run(&cfg,
                             &container,
@@ -303,7 +312,7 @@ fn shell_echo() {
 }
 fn shell_permissions() {
     let cfg = Config::read().unwrap();
-    let container = cfg.get_container("rust".into()).unwrap();
+    let container = cfg.get_container("alp36".into()).unwrap();
     let modes = ShellModes::default();
     let r = lal::docker_run(&cfg,
                             &container,
@@ -313,22 +322,14 @@ fn shell_permissions() {
     assert!(r.is_ok(), "could touch files in container");
 }
 
-fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
+fn build_and_stash_update_self<T: CachedBackend + Backend>(backend: &T) {
     let mf = Manifest::read().unwrap();
     let cfg = Config::read().unwrap();
-    let container = cfg.get_container("rust".into()).unwrap();
-
-    {
-        let mut f = File::create("./BUILD").unwrap();
-        // Rust check in there to verify we can build in a rust container
-        write!(f, "#!/bin/bash\nset -e\nwhich rustc\necho hi > test.txt\n").unwrap();
-        Command::new("chmod").arg("+x").arg("BUILD").output().unwrap();
-    } // scope ensures file is not busy before lal::build
-
+    let container = cfg.get_container("alp36".into()).unwrap();
 
     // we'll try with various build options further down with various deps
     let mut bopts = BuildOptions {
-        name: Some("testtmp".into()),
+        name: Some("hello".into()),
         configuration: Some("release".into()),
         container: container,
         release: true,
@@ -339,45 +340,46 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
     };
     let modes = ShellModes::default();
     // basic build works - all deps are global at right env
-    // NB: BUILD calls `which rustc`
-    // if cargo-cache volume is set up badly, it can interfere with ~/.cargo
-    let r = lal::build(&cfg, &mf, &bopts, "xenial".into(), modes.clone());
-    assert!(r.is_ok(), "could perform a xenial build");
+    let r = lal::build(&cfg, &mf, &bopts, "alp36".into(), modes.clone());
+    if let Err(e) = r {
+        println!("error from build: {:?}", e);
+        assert!(false, "could perform an alpine build");
+    }
 
     // lal stash blah
     let rs = lal::stash(backend, &mf, "blah");
     assert!(rs.is_ok(), "could stash lal build artifact");
 
-    // lal update testtmp=blah
+    // lal update hello=blah
     let ru = lal::update(&mf,
                          backend,
-                         vec!["testtmp=blah".to_string()],
+                         vec!["hello=blah".to_string()],
                          false,
                          false,
                          "garbage"); // env not relevant for stash
-    chk::is_ok(ru, "could update testtmp from stash");
+    chk::is_ok(ru, "could update hello from stash");
 
     // basic build won't work now without simple verify
-    let r1 = lal::build(&cfg, &mf, &bopts, "xenial".into(), modes.clone());
+    let r1 = lal::build(&cfg, &mf, &bopts, "alp36".into(), modes.clone());
     assert!(r1.is_err(), "could not verify a new xenial build");
     if let Err(CliError::NonGlobalDependencies(nonglob)) = r1 {
-        assert_eq!(nonglob, "testtmp");
+        assert_eq!(nonglob, "hello");
     } else {
         println!("actual r1 was {:?}", r1);
         assert!(false);
     }
 
     bopts.simple_verify = true;
-    let r2 = lal::build(&cfg, &mf, &bopts, "xenial".into(), modes.clone());
+    let r2 = lal::build(&cfg, &mf, &bopts, "alp36".into(), modes.clone());
     assert!(r2.is_ok(), "can build with stashed deps with simple verify");
 
 
     // force will also work - even with stashed deps from wrong env
-    let renv = lal::build(&cfg, &mf, &bopts, "rust".into(), modes.clone());
+    let renv = lal::build(&cfg, &mf, &bopts, "xenial".into(), modes.clone());
     assert!(renv.is_err(),
             "cannot build with simple verify when wrong env");
     if let Err(CliError::EnvironmentMismatch(_, compenv)) = renv {
-        assert_eq!(compenv, "xenial"); // expected complaints about xenial env
+        assert_eq!(compenv, "alp36"); // expected complaints about xenial env
     } else {
         println!("actual renv was {:?}", renv);
         assert!(false);
@@ -386,7 +388,7 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
     // settings that reflect lal build -f
     bopts.simple_verify = false;
     bopts.force = true;
-    let renv2 = lal::build(&cfg, &mf, &bopts, "rust".into(), modes.clone());
+    let renv2 = lal::build(&cfg, &mf, &bopts, "xenial".into(), modes.clone());
     assert!(renv2.is_ok(), "could force build in different env");
 
     // additionally do a build with printonly
@@ -396,9 +398,20 @@ fn build_stash_and_update_from_stash<T: CachedBackend + Backend>(backend: &T) {
         host_networking: true,
         env_vars: vec![],
     };
-    let printbuild = lal::build(&cfg, &mf, &bopts, "rust".into(), all_modes);
+    let printbuild = lal::build(&cfg, &mf, &bopts, "alp36".into(), all_modes);
+    // TODO: verify output!
     assert!(printbuild.is_ok(), "saw docker run print with X11 mounts");
 }
+
+
+/*fn build_stash_and_update_from_stash() {
+    {
+        let mut f = File::create("./BUILD").unwrap();
+        write!(f, "#!/bin/bash\nset -e\nwhich rustc\necho hi > test.txt\n").unwrap();
+        Command::new("chmod").arg("+x").arg("BUILD").output().unwrap();
+    } // scope ensures file is not busy before lal::build
+
+}*/
 
 fn run_scripts() {
     {
@@ -428,6 +441,7 @@ fn status_on_experimentals() {
     assert!(r.is_err(), "status should complain at experimental deps");
 }
 
+#[cfg(feature = "upgrade")]
 fn upgrade_does_not_fail() {
     let uc = lal::upgrade(true);
     assert!(uc.is_ok(), "could perform upgrade check");
