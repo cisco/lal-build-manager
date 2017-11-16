@@ -7,4 +7,8 @@ lal.tar
 ARTIFACT
 tests/helloworld/INPUT
 tests/helloworld/.lal
+tests/heylib/INPUT
+tests/heylib/*.o
+tests/heylib/*.a
+tests/helloworld/*.o
 testtmp

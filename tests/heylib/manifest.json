@@ -1,0 +1,17 @@
+{
+  "name": "heylib",
+  "environment": "alp36",
+  "supportedEnvironments": [
+    "alp36"
+  ],
+  "components": {
+    "heylib": {
+      "defaultConfig": "release",
+      "configurations": [
+        "release"
+      ]
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
