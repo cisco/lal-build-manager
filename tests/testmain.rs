@@ -68,8 +68,8 @@ fn main() {
     println!("ok {} configure_yes", i);
 
 
-    // Test basic build functionality with hello component
-    let tmp = Path::new("..").join("tests").join("helloworld");
+    // Test basic build functionality with heylib component
+    let tmp = Path::new("..").join("tests").join("heylib");
     assert!(env::set_current_dir(tmp).is_ok());
 
     i += 1;
@@ -329,7 +329,7 @@ fn build_and_stash_update_self<T: CachedBackend + Backend>(backend: &T) {
 
     // we'll try with various build options further down with various deps
     let mut bopts = BuildOptions {
-        name: Some("hello".into()),
+        name: Some("heylib".into()),
         configuration: Some("release".into()),
         container: container,
         release: true,
@@ -350,20 +350,20 @@ fn build_and_stash_update_self<T: CachedBackend + Backend>(backend: &T) {
     let rs = lal::stash(backend, &mf, "blah");
     assert!(rs.is_ok(), "could stash lal build artifact");
 
-    // lal update hello=blah
+    // lal update heylib=blah
     let ru = lal::update(&mf,
                          backend,
-                         vec!["hello=blah".to_string()],
+                         vec!["heylib=blah".to_string()],
                          false,
                          false,
                          "garbage"); // env not relevant for stash
-    chk::is_ok(ru, "could update hello from stash");
+    chk::is_ok(ru, "could update heylib from stash");
 
     // basic build won't work now without simple verify
     let r1 = lal::build(&cfg, &mf, &bopts, "alp36".into(), modes.clone());
     assert!(r1.is_err(), "could not verify a new xenial build");
     if let Err(CliError::NonGlobalDependencies(nonglob)) = r1 {
-        assert_eq!(nonglob, "hello");
+        assert_eq!(nonglob, "heylib");
     } else {
         println!("actual r1 was {:?}", r1);
         assert!(false);
