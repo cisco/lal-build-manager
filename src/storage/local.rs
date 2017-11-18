@@ -5,7 +5,7 @@ use std::str::FromStr;
 use std::vec::Vec;
 use std::path::{Path, PathBuf};
 
-use core::{LalResult, config_dir, ensure_dir_exists_fresh};
+use core::{CliError, LalResult, config_dir, ensure_dir_exists_fresh};
 
 
 #[derive(Serialize, Deserialize, Clone, Default)]
@@ -48,8 +48,11 @@ impl Backend for LocalBackend {
         Ok(versions)
     }
 
-    fn get_latest_version(&self, _name: &str, _loc: &str) -> LalResult<u32> {
-        unimplemented!()
+    fn get_latest_version(&self, name: &str, loc: &str) -> LalResult<u32> {
+        if let Some(&last) = self.get_versions(name, loc)?.last() {
+            return Ok(last);
+        }
+        Err(CliError::BackendFailure("No versions found on local storage".into()))
     }
 
     fn get_component_info(
