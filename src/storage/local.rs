@@ -40,10 +40,12 @@ impl Backend for LocalBackend {
         let dentries = fs::read_dir(config_dir().join(tar_dir));
         let mut versions = vec![];
         for entry in dentries? {
-            let path = entry.unwrap();
-            let filename = path.file_name();
-            let version = u32::from_str(filename.to_str().unwrap()).unwrap();
-            versions.push(version);
+            let path = entry?;
+            if let Some(filename) = path.file_name().to_str() {
+                if let Ok(version) = u32::from_str(filename) {
+                    versions.push(version);
+                }
+            }
         }
         Ok(versions)
     }
@@ -59,12 +61,13 @@ impl Backend for LocalBackend {
         &self,
         name: &str,
         version: Option<u32>,
-        _loc: &str,
+        loc: &str,
     ) -> LalResult<Component> {
+        info!("get_component_info: {} {:?} {}", name, version, loc);
         Ok(Component {
             name: name.into(),
             version: version.unwrap(),
-            location: "".into(),
+            location: "".into(), // unused, component is already local
         })
     }
 
@@ -80,7 +83,10 @@ impl Backend for LocalBackend {
         let tar_path = format!("cache/environments/{}/{}/{}/{}.tar", env, name, version, name);
         let lock_path = format!("cache/environments/{}/{}/{}/lockfile.json", env, name, version);
 
-        ensure_dir_exists_fresh(config_dir().join(tar_dir).to_str().unwrap())?;
+        if let Some(full_tar_dir) = config_dir().join(tar_dir).to_str() {
+            ensure_dir_exists_fresh(full_tar_dir)?;
+        }
+
         fs::copy(tarball, config_dir().join(tar_path))?;
         fs::copy(lockfile, config_dir().join(lock_path))?;
 
