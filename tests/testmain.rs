@@ -91,8 +91,17 @@ fn main() {
     fetch_release_build_and_publish(&backend);
     info!("ok fetch_release_build_and_publish heylib");
 
+    kill_input();
+    info!("ok kill_input again");
+
     let helloworlddir = testdir.join("helloworld");
     assert!(env::set_current_dir(&helloworlddir).is_ok());
+
+    update_save(&backend);
+    info!("ok update_save");
+
+    verify_checks(&backend);
+    info!("ok verify_checks");
 
     fetch_release_build_and_publish(&backend);
     info!("ok fetch_release_build_and_publish helloworld");
@@ -121,11 +130,6 @@ fn main() {
     info!("ok has_config_and_manifest");
     // assume we have manifest and config after this point
 
-    update_save(&backend);
-    info!("ok update_save");
-
-    verify_checks(&backend);
-    info!("ok verify_checks");
 */
 }
 // Start from scratch
@@ -213,83 +217,6 @@ fn init_force() {
     // There is no INPUT yet, but we have no dependencies, so this should work:
     let r = lal::verify(&manifest.unwrap(), "xenial".into(), false);
     chk::is_ok(r, "could verify after install");
-}*/
-
-/*
-// add some dependencies
-fn update_save<T: CachedBackend + Backend>(backend: &T) {
-    let mf1 = Manifest::read().unwrap();
-
-    // gtest savedev
-    let ri = lal::update(&mf1,
-                         backend,
-                         vec!["gtest".to_string()],
-                         false,
-                         true,
-                         "xenial");
-    chk::is_ok(ri, "could update gtest and save as dev");
-
-    // three main deps (and re-read manifest to avoid overwriting devedps)
-    let mf2 = Manifest::read().unwrap();
-    let updates = vec![
-        "libyaml".to_string(),
-        "yajl".to_string(),
-        "libwebsockets".to_string(),
-    ];
-    let ri = lal::update(&mf2, backend, updates, true, false, "xenial");
-    chk::is_ok(ri, "could update libyaml and save");
-
-    // verify update-all --save
-    let mf3 = Manifest::read().unwrap();
-    let ri = lal::update_all(&mf3, backend, true, false, "xenial");
-    chk::is_ok(ri, "could update all and --save");
-
-    // verify update-all --save --dev
-    let mf4 = Manifest::read().unwrap();
-    let ri = lal::update_all(&mf4, backend, false, true, "xenial");
-    chk::is_ok(ri, "could update all and --save --dev");
-}
-
-fn verify_checks<T: CachedBackend + Backend>(backend: &T) {
-    let mf = Manifest::read().unwrap();
-
-    let r = lal::verify(&mf, "xenial".into(), false);
-    assert!(r.is_ok(), "could verify after install");
-
-    let renv1 = lal::verify(&mf, "zesty".into(), false);
-    assert!(renv1.is_err(), "could not verify with wrong env");
-    let renv2 = lal::verify(&mf, "zesty".into(), true);
-    assert!(renv2.is_err(),
-            "could not verify with wrong env - even with simple");
-
-    let gtest = Path::new(&env::current_dir().unwrap()).join("INPUT").join("gtest");
-    // clean folders and verify it fails
-    let yajl = Path::new(&env::current_dir().unwrap()).join("INPUT").join("yajl");
-    fs::remove_dir_all(&yajl).unwrap();
-
-    let r2 = lal::verify(&mf, "xenial".into(), false);
-    assert!(r2.is_err(), "verify failed after fiddling");
-
-    // fetch --core, resyncs with core deps (removes devDeps and other extraneous)
-    let rcore = lal::fetch(&mf, backend, true, "xenial");
-    assert!(rcore.is_ok(), "install core succeeded");
-    assert!(yajl.is_dir(), "yajl was reinstalled from manifest");
-    assert!(!gtest.is_dir(),
-            "gtest was was extraneous with --core => removed");
-
-    // fetch --core also doesn't install else again
-    let rcore2 = lal::fetch(&mf, backend, true, "xenial");
-    assert!(rcore2.is_ok(), "install core succeeded 2");
-    assert!(yajl.is_dir(), "yajl still there");
-    assert!(!gtest.is_dir(), "gtest was not reinstalled with --core");
-
-    // and it is finally installed if we ask for non-core as well
-    let rall = lal::fetch(&mf, backend, false, "xenial");
-    assert!(rall.is_ok(), "install all succeeded");
-    assert!(gtest.is_dir(), "gtest is otherwise installed again");
-
-    let r3 = lal::verify(&mf, "xenial", false);
-    assert!(r3.is_ok(), "verify ok again");
 }*/
 
 // Shell tests
@@ -423,6 +350,86 @@ fn fetch_release_build_and_publish<T: CachedBackend + Backend>(backend: &T) {
 
     let rp = lal::publish(&mf.name, backend);
     assert!(rp.is_ok(), "could publish");
+}
+
+
+// add dependencies to test tree
+// NB: this currently shouldn't do anything as all deps are accounted for
+// Thus if this changes test manifests, something is wrong..
+fn update_save<T: CachedBackend + Backend>(backend: &T) {
+    let mf1 = Manifest::read().unwrap();
+
+    // update heylib --save
+    let ri = lal::update(&mf1,
+                         backend,
+                         vec!["heylib".to_string()],
+                         true,
+                         false,
+                         "alpine");
+    chk::is_ok(ri, "could update heylib and save");
+
+    // main deps (and re-read manifest to avoid overwriting devedps)
+    let mf2 = Manifest::read().unwrap();
+    let updates = vec![
+        "heylib".to_string(),
+        // TODO: more deps
+    ];
+    let ri = lal::update(&mf2, backend, updates, true, false, "alpine");
+    chk::is_ok(ri, "could update and save");
+
+    // verify update-all --save
+    let mf3 = Manifest::read().unwrap();
+    let ri = lal::update_all(&mf3, backend, true, false, "alpine");
+    chk::is_ok(ri, "could update all and --save");
+
+    // verify update-all --save --dev
+    let mf4 = Manifest::read().unwrap();
+    let ri = lal::update_all(&mf4, backend, false, true, "alpine");
+    chk::is_ok(ri, "could update all and --save --dev");
+}
+
+fn verify_checks<T: CachedBackend + Backend>(backend: &T) {
+    let mf = Manifest::read().unwrap();
+
+    let rcore = lal::fetch(&mf, backend, true, "alpine");
+    assert!(rcore.is_ok(), "install core succeeded");
+
+    let r = lal::verify(&mf, "alpine".into(), false);
+    assert!(r.is_ok(), "could verify after install");
+
+    let renv1 = lal::verify(&mf, "xenial".into(), false);
+    assert!(renv1.is_err(), "could not verify with wrong env");
+    let renv2 = lal::verify(&mf, "xenial".into(), true);
+    assert!(renv2.is_err(),
+            "could not verify with wrong env - even with simple");
+
+    let heylib = Path::new(&env::current_dir().unwrap()).join("INPUT").join("heylib");
+    // clean folders and verify it fails
+    fs::remove_dir_all(&heylib).unwrap();
+
+    let r2 = lal::verify(&mf, "alpine".into(), false);
+    assert!(r2.is_err(), "verify failed after fiddling");
+
+    // fetch --core, resyncs with core deps (removes devDeps and other extraneous)
+    let rcore = lal::fetch(&mf, backend, true, "alpine");
+    assert!(rcore.is_ok(), "install core succeeded");
+    assert!(heylib.is_dir(), "heylib was reinstalled from manifest");
+    // TODO: add dev dep to verify it wasn't reinstalled here
+    //assert!(!gtest.is_dir(), "gtest was was extraneous with --core => removed");
+
+    // fetch --core also doesn't install else again
+    let rcore2 = lal::fetch(&mf, backend, true, "alpine");
+    assert!(rcore2.is_ok(), "install core succeeded 2");
+    assert!(heylib.is_dir(), "heylib still there");
+    //assert!(!gtest.is_dir(), "gtest was not reinstalled with --core");
+
+    // and it is finally installed if we ask for non-core as well
+    let rall = lal::fetch(&mf, backend, false, "alpine");
+    assert!(rall.is_ok(), "install all succeeded");
+    //assert!(gtest.is_dir(), "gtest is otherwise installed again");
+
+    let r3 = lal::verify(&mf, "alpine", false);
+    assert!(r3.is_ok(), "verify ok again");
 }
 
 
