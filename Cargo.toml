@@ -9,6 +9,10 @@ categories = ["command-line-utilities"]
 keywords = ["package", "manager", "dependency", "build", "docker", "artifactory"]
 readme = "README.md"
 
+[badges]
+travis-ci = { repository = "lalbuild/lal" branch = "master" }
+coveralls = { repository = "lalbuild/lal", branch = "master" }
+
 [[bin]]
 doc = false
 name = "lal"
