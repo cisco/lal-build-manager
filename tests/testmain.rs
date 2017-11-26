@@ -191,13 +191,13 @@ fn init_force() {
     assert!(m1.is_err(), "no manifest at this point");
 
     // Creates a manifest in the testtmp directory
-    let m2 = lal::init(&cfg, false, "rust");
+    let m2 = lal::init(&cfg, false, "alpine");
     assert!(m2.is_ok(), "could init without force param");
 
-    let m3 = lal::init(&cfg, true, "rust");
+    let m3 = lal::init(&cfg, true, "alpine");
     assert!(m3.is_ok(), "could re-init with force param");
 
-    let m4 = lal::init(&cfg, false, "rust");
+    let m4 = lal::init(&cfg, false, "alpine");
     assert!(m4.is_err(), "could not re-init without force ");
 
     let m5 = lal::init(&cfg, true, "blah");
@@ -434,16 +434,6 @@ fn verify_checks<T: CachedBackend + Backend>(backend: &T) {
     assert!(r3.is_ok(), "verify ok again");
 }
 
-
-/*fn build_stash_and_update_from_stash() {
-    {
-        let mut f = File::create("./BUILD").unwrap();
-        write!(f, "#!/bin/bash\nset -e\nwhich rustc\necho hi > test.txt\n").unwrap();
-        Command::new("chmod").arg("+x").arg("BUILD").output().unwrap();
-    } // scope ensures file is not busy before lal::build
-
-}*/
-
 fn run_scripts() {
     {
         Command::new("mkdir").arg("-p").arg(".lal/scripts").output().unwrap();
@@ -452,7 +442,7 @@ fn run_scripts() {
         Command::new("chmod").arg("+x").arg(".lal/scripts/subroutine").output().unwrap();
     }
     let cfg = Config::read().unwrap();
-    let container = cfg.get_container("rust".into()).unwrap();
+    let container = cfg.get_container("alpine".into()).unwrap();
     let modes = ShellModes::default();
     let r = lal::script(&cfg,
                         &container,
