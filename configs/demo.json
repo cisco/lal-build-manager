@@ -3,7 +3,7 @@
     "local": {}
   },
   "environments": {
-    "alp36": {
+    "alpine": {
       "name": "clux/lal-alpine",
       "tag": "3.6"
     },

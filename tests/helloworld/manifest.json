@@ -1,7 +1,9 @@
 {
   "name": "hello",
-  "environment": "alp36",
-  "supportedEnvironments": ["alp36"],
+  "environment": "alpine",
+  "supportedEnvironments": [
+    "alpine"
+  ],
   "components": {
     "hello": {
       "defaultConfig": "release",

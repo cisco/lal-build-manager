@@ -86,7 +86,7 @@ fn main() {
 
     i += 1;
     build_and_stash_update_self(&backend);
-    println!("ok {} build_stash_and_update_from_stash", i);
+    println!("ok {} build_and_stash_update_self", i);
 
     i += 1;
     run_scripts();
@@ -301,7 +301,7 @@ fn verify_checks<T: CachedBackend + Backend>(backend: &T) {
 // Shell tests
 fn shell_echo() {
     let cfg = Config::read().unwrap();
-    let container = cfg.get_container("alp36".into()).unwrap();
+    let container = cfg.get_container("alpine".into()).unwrap();
     let modes = ShellModes::default();
     let r = lal::docker_run(&cfg,
                             &container,
@@ -312,7 +312,7 @@ fn shell_echo() {
 }
 fn shell_permissions() {
     let cfg = Config::read().unwrap();
-    let container = cfg.get_container("alp36".into()).unwrap();
+    let container = cfg.get_container("alpine".into()).unwrap();
     let modes = ShellModes::default();
     let r = lal::docker_run(&cfg,
                             &container,
@@ -325,7 +325,7 @@ fn shell_permissions() {
 fn build_and_stash_update_self<T: CachedBackend + Backend>(backend: &T) {
     let mf = Manifest::read().unwrap();
     let cfg = Config::read().unwrap();
-    let container = cfg.get_container("alp36".into()).unwrap();
+    let container = cfg.get_container("alpine".into()).unwrap();
 
     // we'll try with various build options further down with various deps
     let mut bopts = BuildOptions {
@@ -340,7 +340,7 @@ fn build_and_stash_update_self<T: CachedBackend + Backend>(backend: &T) {
     };
     let modes = ShellModes::default();
     // basic build works - all deps are global at right env
-    let r = lal::build(&cfg, &mf, &bopts, "alp36".into(), modes.clone());
+    let r = lal::build(&cfg, &mf, &bopts, "alpine".into(), modes.clone());
     if let Err(e) = r {
         println!("error from build: {:?}", e);
         assert!(false, "could perform an alpine build");
@@ -360,8 +360,8 @@ fn build_and_stash_update_self<T: CachedBackend + Backend>(backend: &T) {
     chk::is_ok(ru, "could update heylib from stash");
 
     // basic build won't work now without simple verify
-    let r1 = lal::build(&cfg, &mf, &bopts, "alp36".into(), modes.clone());
-    assert!(r1.is_err(), "could not verify a new xenial build");
+    let r1 = lal::build(&cfg, &mf, &bopts, "alpine".into(), modes.clone());
+    assert!(r1.is_err(), "could not verify a new alpine build");
     if let Err(CliError::NonGlobalDependencies(nonglob)) = r1 {
         assert_eq!(nonglob, "heylib");
     } else {
@@ -370,7 +370,7 @@ fn build_and_stash_update_self<T: CachedBackend + Backend>(backend: &T) {
     }
 
     bopts.simple_verify = true;
-    let r2 = lal::build(&cfg, &mf, &bopts, "alp36".into(), modes.clone());
+    let r2 = lal::build(&cfg, &mf, &bopts, "alpine".into(), modes.clone());
     assert!(r2.is_ok(), "can build with stashed deps with simple verify");
 
 
@@ -379,7 +379,7 @@ fn build_and_stash_update_self<T: CachedBackend + Backend>(backend: &T) {
     assert!(renv.is_err(),
             "cannot build with simple verify when wrong env");
     if let Err(CliError::EnvironmentMismatch(_, compenv)) = renv {
-        assert_eq!(compenv, "alp36"); // expected complaints about xenial env
+        assert_eq!(compenv, "alpine"); // expected complaints about xenial env
     } else {
         println!("actual renv was {:?}", renv);
         assert!(false);
@@ -398,7 +398,7 @@ fn build_and_stash_update_self<T: CachedBackend + Backend>(backend: &T) {
         host_networking: true,
         env_vars: vec![],
     };
-    let printbuild = lal::build(&cfg, &mf, &bopts, "alp36".into(), all_modes);
+    let printbuild = lal::build(&cfg, &mf, &bopts, "alpine".into(), all_modes);
     // TODO: verify output!
     assert!(printbuild.is_ok(), "saw docker run print with X11 mounts");
 }
