@@ -46,10 +46,12 @@ fn main() {
     init_with_verbosity(2).unwrap();
 
     // Do all lal tests in a subdir as it messes with the manifest
-    let tmp = fs::canonicalize(Path::new(".").join("testtmp")).unwrap();
-    if !tmp.is_dir() {
-        fs::create_dir(&tmp).unwrap();
+    let tmprelative = Path::new(".").join("testtmp");
+    if !tmprelative.is_dir() {
+        fs::create_dir(&tmprelative).unwrap();
     }
+    let tmp = fs::canonicalize(tmprelative).unwrap();
+
     // Ensure we are can do everything in there before continuing
     assert!(env::set_current_dir(tmp.clone()).is_ok());
     // dump config and artifacts under the current temp directory

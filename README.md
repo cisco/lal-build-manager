@@ -1,4 +1,8 @@
 # lal
+[![build status](https://secure.travis-ci.org/lalbuild/lal.svg)](http://travis-ci.org/lalbuild/lal)
+[![coverage status](http://img.shields.io/coveralls/lalbuild/lal.svg)](https://coveralls.io/r/lalbuild/lal)
+[![crates status](https://img.shields.io/crates/v/lal.svg)](https://crates.io/crates/lal)
+
 A strict, language-agnostic build system and dependency manager.
 
 * **Use existing tools**: `lal build` only shells out to an executable `BUILD` script in a configured docker container. Install what you want in your build environments: cmake, autotools, cargo, go, python.
