@@ -35,7 +35,7 @@ impl LocalBackend {
 /// specific low-level use cases, these methods can be used directly.
 impl Backend for LocalBackend {
     fn get_versions(&self, name: &str, loc: &str) -> LalResult<Vec<u32>> {
-        let tar_dir = format!("cache/environments/{}/{}/", loc, name);
+        let tar_dir = format!("{}/environments/{}/{}/", self.cache, loc, name);
         let dentries = fs::read_dir(config_dir().join(tar_dir));
         let mut versions = vec![];
         for entry in dentries? {
