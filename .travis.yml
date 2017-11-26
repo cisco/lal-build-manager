@@ -1,26 +1,26 @@
 sudo: required
 services:
   - docker
+dist: trusty
+addons:
+  apt:
+    packages:
+      - libssl-dev
 language: rust
 rust:
   - stable
 before_script:
-  - pip install 'travis-cargo<0.2' --user
-  - export PATH=$HOME/.local/bin:$PATH
   - export RUST_BACKTRACE=full
 script:
-  - travis-cargo build
-  - travis-cargo test
-  - travis-cargo bench
-  - travis-cargo --only stable doc
-addons:
-  apt:
-    packages:
-    - libcurl4-openssl-dev
-    - libelf-dev
-    - libdw-dev
-after_success:
-  - travis-cargo coveralls --no-sudo
+  - cargo clean
+  - cargo build
+  - cargo test
+  - cargo doc
+after_success: |
+  if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
+    bash <(curl -sSL https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
+    cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
+  fi
 notifications:
   email:
     on_success: change
