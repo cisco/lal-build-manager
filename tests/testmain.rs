@@ -1,5 +1,6 @@
 extern crate lal;
 
+#[macro_use]
 extern crate log;
 extern crate loggerv;
 extern crate walkdir;
@@ -11,7 +12,7 @@ use std::process::Command;
 use std::io::prelude::*;
 use walkdir::WalkDir;
 
-// use loggerv::init_with_verbosity;
+use loggerv::init_with_verbosity;
 use lal::*;
 
 // TODO: macroify this stuff
@@ -41,6 +42,8 @@ fn init_ssl() {
 
 fn main() {
     init_ssl();
+    // print debug output and greater from lal during tests
+    init_with_verbosity(2).unwrap();
 
     // Do all lal tests in a subdir as it messes with the manifest
     let tmp = Path::new(".").join("testtmp");
@@ -52,88 +55,75 @@ fn main() {
     // dump config and artifacts under the current temp directory
     env::set_var("LAL_CONFIG_HOME", env::current_dir().unwrap());
 
-    // init_with_verbosity(0).unwrap();
-    let num_tests = 7;
-
-    println!("# lal tests");
-    println!("1..{}", num_tests);
-    let mut i = 0;
+    info!("# lal tests");
 
     // Set up a fresh LAL_CONFIG_HOME and reconfigure
-    i += 1;
     kill_laldir();
-    println!("ok {} kill_laldir", i);
-    i += 1;
+    info!("ok kill_laldir");
     let backend = configure_yes();
-    println!("ok {} configure_yes", i);
+    info!("ok configure_yes");
+
+    let testdir = fs::canonicalize(Path::new("..").join("tests")).unwrap();
 
 
     // Test basic build functionality with heylib component
-    let tmp = Path::new("..").join("tests").join("heylib");
-    assert!(env::set_current_dir(tmp).is_ok());
+    let heylibdir = testdir.join("heylib");
+    assert!(env::set_current_dir(heylibdir).is_ok());
 
-    i += 1;
     kill_input();
-    println!("ok {} kill_input", i);
+    info!("ok kill_input");
 
-    i += 1;
     shell_echo();
-    println!("ok {} shell_echo", i);
+    info!("ok shell_echo");
 
-    i += 1;
     shell_permissions();
-    println!("ok {} shell_permissions", i);
+    info!("ok shell_permissions");
 
-    i += 1;
     build_and_stash_update_self(&backend);
-    println!("ok {} build_and_stash_update_self", i);
+    info!("ok build_and_stash_update_self");
 
-    i += 1;
+    status_on_experimentals();
+    info!("ok status_on_experimentals");
+
     run_scripts();
-    println!("ok {} run_scripts", i);
+    info!("ok run_scripts");
 
-    // TODO: publish the artifact so we can fetch it elsewhere
+    fetch_release_build_and_publish(&backend);
+    info!("ok fetch_release_build_and_publish heylib");
 
-    //i += 1;
-    //status_on_experimentals();
-    //println!("ok {} status_on_experimentals", i);
+    let helloworlddir = testdir.join("helloworld");
+    assert!(env::set_current_dir(&helloworlddir).is_ok());
+
+    fetch_release_build_and_publish(&backend);
+    info!("ok fetch_release_build_and_publish helloworld");
+
+    // back to test dir to do checks of export
+    assert!(env::set_current_dir(&testdir).is_ok());
+    export_check(&backend);
+    info!("ok export_check");
+
+    clean_check();
+    info!("ok clean_check");
 
     // TODO: verify stash + update
 
 /*
-    i += 1;
     kill_manifest();
-    println!("ok {} kill_manifest", i);
+    info!("ok kill_manifest");
 
-    i += 1;
     init_force();
-    println!("ok {} init_force", i);
+    info!("ok init_force");
 
-    i += 1;
     has_config_and_manifest();
-    println!("ok {} has_config_and_manifest", i);
+    info!("ok has_config_and_manifest");
     // assume we have manifest and config after this point
-*/
 
-
-
-/*    i += 1;
     update_save(&backend);
-    println!("ok {} update_save", i);
+    info!("ok update_save");
 
-    i += 1;
     verify_checks(&backend);
-    println!("ok {} verify_checks", i);
-
-
-
-    i += 1;
-    export_check(&backend);
-    println!("ok {} export_check", i);
-
-    i += 1;
-    clean_check();
-    println!("ok {} clean_check", i);*/
+    info!("ok verify_checks");
+*/
 }
 // Start from scratch
 fn kill_laldir() {
@@ -150,7 +140,7 @@ fn kill_input() {
     }
     assert_eq!(input.is_dir(), false);
 }
-fn kill_manifest() {
+/*fn kill_manifest() {
     let pwd = env::current_dir().unwrap();
     let manifest = Path::new(&pwd).join("manifest.json");
     let lalsubdir = Path::new(&pwd).join(".lal");
@@ -161,7 +151,7 @@ fn kill_manifest() {
         fs::remove_dir_all(&lalsubdir).unwrap();
     }
     assert_eq!(manifest.is_file(), false);
-}
+}*/
 
 // Create config
 fn configure_yes() -> LocalBackend {
@@ -222,6 +212,7 @@ fn init_force() {
     chk::is_ok(r, "could verify after install");
 }*/
 
+/*
 // add some dependencies
 fn update_save<T: CachedBackend + Backend>(backend: &T) {
     let mf1 = Manifest::read().unwrap();
@@ -296,7 +287,7 @@ fn verify_checks<T: CachedBackend + Backend>(backend: &T) {
 
     let r3 = lal::verify(&mf, "xenial", false);
     assert!(r3.is_ok(), "verify ok again");
-}
+}*/
 
 // Shell tests
 fn shell_echo() {
@@ -404,6 +395,34 @@ fn build_and_stash_update_self<T: CachedBackend + Backend>(backend: &T) {
 }
 
 
+fn fetch_release_build_and_publish<T: CachedBackend + Backend>(backend: &T) {
+    let mf = Manifest::read().unwrap();
+    let cfg = Config::read().unwrap();
+    let container = cfg.get_container("alpine".into()).unwrap();
+
+    let rcore = lal::fetch(&mf, backend, true, "alpine");
+    assert!(rcore.is_ok(), "install core succeeded");
+
+    // we'll try with various build options further down with various deps
+    let bopts = BuildOptions {
+        name: None,
+        configuration: Some("release".into()),
+        container: container,
+        release: true,
+        version: Some("1".into()), // want to publish version 1 for later
+        sha: None,
+        force: false,
+        simple_verify: false,
+    };
+    let modes = ShellModes::default();
+    let r = lal::build(&cfg, &mf, &bopts, "alpine".into(), modes.clone());
+    assert!(r.is_ok(), "could build in release");
+
+    let rp = lal::publish(&mf.name, backend);
+    assert!(rp.is_ok(), "could publish");
+}
+
+
 /*fn build_stash_and_update_from_stash() {
     {
         let mut f = File::create("./BUILD").unwrap();
@@ -486,15 +505,15 @@ fn export_check<T: CachedBackend + Backend>(backend: &T) {
     if !tmp.is_dir() {
         fs::create_dir(&tmp).unwrap();
     }
-    let r = lal::export(backend, "gtest=6", Some("blah"), None);
-    assert!(r.is_ok(), "could export global gtest=6 into subdir");
+    let r = lal::export(backend, "heylib=1", Some("blah"), Some("alpine"));
+    assert!(r.is_ok(), "could export heylib=1 into subdir");
 
-    let r2 = lal::export(backend, "libcurl", None, Some("xenial"));
-    assert!(r2.is_ok(), "could export latest libcurl into PWD");
+    let r2 = lal::export(backend, "helloworld", None, Some("alpine"));
+    assert!(r2.is_ok(), "could export latest helloworld into PWD");
 
-    let gtest = Path::new(".").join("blah").join("gtest.tar.gz");
-    assert!(gtest.is_file(), "gtest was copied correctly");
+    let heylib = Path::new(".").join("blah").join("heylib.tar.gz");
+    assert!(heylib.is_file(), "heylib was copied correctly");
 
-    let libcurl = Path::new(".").join("libcurl.tar.gz");
-    assert!(libcurl.is_file(), "libcurl was copied correctly");
+    let helloworld = Path::new(".").join("helloworld.tar.gz");
+    assert!(helloworld.is_file(), "helloworld was copied correctly");
 }

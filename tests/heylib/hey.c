@@ -1,5 +1,5 @@
 #include "hey.h"
 
 const char *greeting() {
-  return "Hello";
+  return "Hello there";
 }
