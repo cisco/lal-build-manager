@@ -1,14 +1,12 @@
 {
   "backend": {
-    "artifactory": {
-      "master": "https://artifactory.host",
-      "slave": "https://artifactory.host",
-      "release": "DEMO-release",
-      "vgroup": "DEMO-group",
-      "credentials": null
-    }
+    "local": {}
   },
   "environments": {
+    "alpine": {
+      "name": "clux/lal-alpine",
+      "tag": "3.6"
+    },
     "xenial": {
       "name": "clux/lal-xenial",
       "tag": "latest"

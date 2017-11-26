@@ -1,0 +1,23 @@
+{
+  "backend": {
+    "local": {}
+  },
+  "environments": {
+    "xenial": {
+        "name": "clux/lal-xenial",
+        "tag": "latest"
+    },
+    "muslrust": {
+        "name": "clux/lal-muslrust",
+        "tag": "latest"
+    }
+  },
+  "mounts": [
+    {
+      "src": "~/.lal/history",
+      "dest": "/home/lal/.bash_history",
+      "readonly": false
+    }
+  ],
+  "minimum_lal": "3.8.0"
+}

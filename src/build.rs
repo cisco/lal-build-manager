@@ -1,11 +1,10 @@
 use std::path::Path;
 use std::fs;
-use std::io;
 
 use shell;
 use verify::verify;
-use super::{output, Lockfile, Manifest, Container, Config, LalResult, CliError, DockerRunFlags,
-            ShellModes};
+use super::{ensure_dir_exists_fresh, output, Lockfile, Manifest, Container, Config, LalResult,
+            CliError, DockerRunFlags, ShellModes};
 
 
 fn find_valid_build_script() -> LalResult<String> {
@@ -38,16 +37,6 @@ fn find_valid_build_script() -> LalResult<String> {
     Ok(build_string.into())
 }
 
-
-fn ensure_dir_exists_fresh(subdir: &str) -> io::Result<()> {
-    let dir = Path::new(".").join(subdir);
-    if dir.is_dir() {
-        // clean it out first
-        fs::remove_dir_all(&dir)?;
-    }
-    fs::create_dir(&dir)?;
-    Ok(())
-}
 
 /// Configurable build flags for `lal build`
 pub struct BuildOptions {
@@ -86,7 +75,7 @@ pub fn build(
 
     // have a better warning on first file-io operation
     // if nfs mounts and stuff cause issues this usually catches it
-    ensure_dir_exists_fresh("OUTPUT")
+    ensure_dir_exists_fresh("./OUTPUT")
         .map_err(|e| {
             error!("Failed to clean out OUTPUT dir: {}", e);
             e
@@ -172,7 +161,7 @@ pub fn build(
 
     if opts.release && !modes.printonly {
         trace!("Create ARTIFACT dir");
-        ensure_dir_exists_fresh("ARTIFACT")?;
+        ensure_dir_exists_fresh("./ARTIFACT")?;
         trace!("Copy lockfile to ARTIFACT dir");
         fs::copy(&lockpth, Path::new("./ARTIFACT/lockfile.json"))?;
 

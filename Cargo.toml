@@ -1,6 +1,6 @@
 [package]
 name = "lal"
-version = "3.7.0"
+version = "3.8.0"
 authors = ["Eirik Albrigtsen <ealbrigt@cisco.com>"]
 description = "A strict, language-agnostic build system and dependency manager"
 license = "MIT"
@@ -23,7 +23,7 @@ flate2 = "0.2"
 hyper = "0.10.9"
 hyper-native-tls = "0.2.2"
 log = "0.3.5"
-loggerv = "0.4.0"
+loggerv = "0.5.1"
 openssl-probe = "0.1.1"
 rand = "0.3.14"
 regex = "0.1.55"

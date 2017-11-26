@@ -254,6 +254,10 @@ fn main() {
             .short("v")
             .multiple(true)
             .help("Increase verbosity"))
+       .arg(Arg::with_name("debug")
+            .short("d")
+            .long("debug")
+            .help("Adds line numbers to log statements"))
         .subcommand(SubCommand::with_name("fetch")
             .about("Fetch dependencies listed in the manifest into INPUT")
             .arg(Arg::with_name("core")
@@ -529,7 +533,12 @@ fn main() {
     let args = app.get_matches();
 
     // by default, always show INFO messages for now (+1)
-    loggerv::init_with_verbosity(args.occurrences_of("verbose") + 1).unwrap();
+    loggerv::Logger::new()
+        .verbosity(args.occurrences_of("verbose") + 1)
+        .module_path(true)
+        .line_numbers(args.is_present("debug"))
+        .init()
+        .unwrap();
 
     // Allow lal configure without assumptions
     if let Some(a) = args.subcommand_matches("configure") {
@@ -553,6 +562,9 @@ fn main() {
     let backend: Box<Backend> = match &config.backend {
         &BackendConfiguration::Artifactory(ref art_cfg) => {
             Box::new(ArtifactoryBackend::new(&art_cfg, &config.cache))
+        }
+        &BackendConfiguration::Local(ref local_cfg) => {
+            Box::new(LocalBackend::new(&local_cfg, &config.cache))
         }
     };
 

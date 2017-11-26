@@ -23,7 +23,7 @@ pub fn verify(m: &Manifest, env: &str, simple: bool) -> LalResult<()> {
     m.verify()?;
 
     // 2. dependencies in `INPUT` match `manifest.json`.
-    if m.dependencies.is_empty() {
+    if m.dependencies.is_empty() && !input::present() {
         // special case where lal fetch is not required and so INPUT may not exist
         // nothing needs to be verified in this case, so allow missing INPUT
         return Ok(());

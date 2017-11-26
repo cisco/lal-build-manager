@@ -25,6 +25,10 @@ fn read_partial_lockfile(component: &str) -> LalResult<PartialLock> {
     Ok(serde_json::from_str(&lock_str)?)
 }
 
+pub fn present() -> bool {
+    Path::new("./INPUT").is_dir()
+}
+
 /// Simple INPUT analyzer for the lockfile generator and `analyze_full`
 pub fn analyze() -> LalResult<BTreeMap<String, String>> {
     let input = Path::new("./INPUT");

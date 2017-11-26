@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use core::LalResult;
-use super::ArtifactoryConfig;
+use super::{ArtifactoryConfig, LocalConfig};
 
 /// An enum struct for the currently configured `Backend`
 ///
@@ -12,6 +12,10 @@ pub enum BackendConfiguration {
     /// Config for the `ArtifactoryBackend`
     #[serde(rename = "artifactory")]
     Artifactory(ArtifactoryConfig),
+
+    /// Config for the `LocalBackend`
+    #[serde(rename = "local")]
+    Local(LocalConfig),
 }
 
 /// Artifactory is the default backend
