@@ -46,12 +46,12 @@ fn main() {
     init_with_verbosity(2).unwrap();
 
     // Do all lal tests in a subdir as it messes with the manifest
-    let tmp = Path::new(".").join("testtmp");
+    let tmp = fs::canonicalize(Path::new(".").join("testtmp")).unwrap();
     if !tmp.is_dir() {
         fs::create_dir(&tmp).unwrap();
     }
     // Ensure we are can do everything in there before continuing
-    assert!(env::set_current_dir(tmp).is_ok());
+    assert!(env::set_current_dir(tmp.clone()).is_ok());
     // dump config and artifacts under the current temp directory
     env::set_var("LAL_CONFIG_HOME", env::current_dir().unwrap());
 
@@ -97,10 +97,13 @@ fn main() {
     fetch_release_build_and_publish(&backend);
     info!("ok fetch_release_build_and_publish helloworld");
 
-    // back to test dir to do checks of export
-    assert!(env::set_current_dir(&testdir).is_ok());
+    // back to tmpdir to test export and clean
+    assert!(env::set_current_dir(&tmp).is_ok());
     export_check(&backend);
     info!("ok export_check");
+
+    query_check(&backend);
+    info!("ok query_check");
 
     clean_check();
     info!("ok clean_check");
@@ -508,12 +511,20 @@ fn export_check<T: CachedBackend + Backend>(backend: &T) {
     let r = lal::export(backend, "heylib=1", Some("blah"), Some("alpine"));
     assert!(r.is_ok(), "could export heylib=1 into subdir");
 
-    let r2 = lal::export(backend, "helloworld", None, Some("alpine"));
-    assert!(r2.is_ok(), "could export latest helloworld into PWD");
+    let r2 = lal::export(backend, "hello", None, Some("alpine"));
+    assert!(r2.is_ok(), "could export latest hello into PWD");
 
     let heylib = Path::new(".").join("blah").join("heylib.tar.gz");
     assert!(heylib.is_file(), "heylib was copied correctly");
 
-    let helloworld = Path::new(".").join("helloworld.tar.gz");
-    assert!(helloworld.is_file(), "helloworld was copied correctly");
+    let hello = Path::new(".").join("hello.tar.gz");
+    assert!(hello.is_file(), "hello was copied correctly");
+
+    // TODO: verify we can untar and execute hello binary and grep output after #15
+}
+
+fn query_check<T: Backend>(backend: &T) {
+    let r = lal::query(backend, Some("alpine"), "hello", false);
+    assert!(r.is_ok(), "could query for hello");
+
 }

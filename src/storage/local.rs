@@ -35,7 +35,6 @@ impl LocalBackend {
 /// specific low-level use cases, these methods can be used directly.
 impl Backend for LocalBackend {
     fn get_versions(&self, name: &str, loc: &str) -> LalResult<Vec<u32>> {
-
         let tar_dir = format!("cache/environments/{}/{}/", loc, name);
         let dentries = fs::read_dir(config_dir().join(tar_dir));
         let mut versions = vec![];
@@ -64,10 +63,17 @@ impl Backend for LocalBackend {
         loc: &str,
     ) -> LalResult<Component> {
         info!("get_component_info: {} {:?} {}", name, version, loc);
+
+        let v = if let Some(ver) = version {
+            ver
+        } else {
+            self.get_latest_version(name, loc)?
+        };
+        let loc = format!("{}/environments/{}/{}/{}/{}.tar", self.cache, loc, name, v, name);
         Ok(Component {
             name: name.into(),
-            version: version.unwrap(),
-            location: "".into(), // unused, component is already local
+            version: v,
+            location: loc,
         })
     }
 
@@ -79,9 +85,9 @@ impl Backend for LocalBackend {
         let lockfile = artifactdir.join("lockfile.json");
 
         // prefix with environment
-        let tar_dir = format!("cache/environments/{}/{}/{}/", env, name, version);
-        let tar_path = format!("cache/environments/{}/{}/{}/{}.tar", env, name, version, name);
-        let lock_path = format!("cache/environments/{}/{}/{}/lockfile.json", env, name, version);
+        let tar_dir = format!("{}/environments/{}/{}/{}/", self.cache, env, name, version);
+        let tar_path = format!("{}/environments/{}/{}/{}/{}.tar", self.cache, env, name, version, name);
+        let lock_path = format!("{}/environments/{}/{}/{}/lockfile.json", self.cache, env, name, version);
 
         if let Some(full_tar_dir) = config_dir().join(tar_dir).to_str() {
             ensure_dir_exists_fresh(full_tar_dir)?;
@@ -95,7 +101,9 @@ impl Backend for LocalBackend {
 
     fn get_cache_dir(&self) -> String { self.cache.clone() }
 
-    fn raw_fetch(&self, _url: &str, _dest: &PathBuf) -> LalResult<()> {
-        unimplemented!()
+    fn raw_fetch(&self, src: &str, dest: &PathBuf) -> LalResult<()> {
+        debug!("raw fetch {} -> {}", src, dest.display());
+        fs::copy(src, dest)?;
+        Ok(())
     }
 }
