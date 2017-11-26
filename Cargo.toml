@@ -6,7 +6,7 @@ description = "A strict, language-agnostic build system and dependency manager"
 documentation = "http://lalbuild.github.io/lal"
 license = "MIT"
 categories = ["command-line-utilities"]
-keywords = ["package", "manager", "dependency", "build", "docker", "artifactory"]
+keywords = ["package", "dependency", "build", "docker", "artifactory"]
 readme = "README.md"
 
 [badges]
