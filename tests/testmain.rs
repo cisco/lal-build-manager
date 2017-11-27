@@ -127,6 +127,9 @@ fn main() {
     has_config_and_manifest();
     info!("ok has_config_and_manifest");
 
+    list_everything();
+    info!("ok list_everything");
+
     kill_manifest();
     info!("ok kill_manifest");
 }
@@ -163,6 +166,25 @@ fn kill_manifest() {
         fs::remove_dir_all(&lalsubdir).unwrap();
     }
     assert_eq!(manifest.is_file(), false);
+}
+
+fn list_everything() {
+    let cfg = Config::read().unwrap();
+    let mf = Manifest::read().unwrap();
+
+    let re = lal::list::environments(&cfg);
+    assert!(re.is_ok(), "list envs succeeded");
+
+    let rdc = lal::list::dependencies(&mf, true);
+    assert!(rdc.is_ok(), "list deps --core succeeded");
+    let rd = lal::list::dependencies(&mf, false);
+    assert!(rd.is_ok(), "list deps succeeded");
+
+    let rc = lal::list::configurations(&mf.name, &mf);
+    assert!(rc.is_ok(), "list configurations succeeded");
+
+    let rb = lal::list::buildables(&mf);
+    assert!(rb.is_ok(), "list buildables succeeded");
 }
 
 // Create config
