@@ -119,20 +119,16 @@ fn main() {
     clean_check();
     info!("ok clean_check");
 
-    // TODO: verify stash + update
-
-/*
-    kill_manifest();
-    info!("ok kill_manifest");
-
+    // finally test out some functionality regarding creating of new components
+    // we just do this in the same temp directory as there's nothing there
     init_force();
     info!("ok init_force");
 
     has_config_and_manifest();
     info!("ok has_config_and_manifest");
-    // assume we have manifest and config after this point
 
-*/
+    kill_manifest();
+    info!("ok kill_manifest");
 }
 // Start from scratch
 fn kill_laldir() {
@@ -156,7 +152,7 @@ fn remove_dependencies() {
     let r = lal::remove(&mf, xs, false, false);
     assert!(r.is_ok(), "could lal rm all dependencies");
 }
-/*fn kill_manifest() {
+fn kill_manifest() {
     let pwd = env::current_dir().unwrap();
     let manifest = Path::new(&pwd).join("manifest.json");
     let lalsubdir = Path::new(&pwd).join(".lal");
@@ -167,7 +163,7 @@ fn remove_dependencies() {
         fs::remove_dir_all(&lalsubdir).unwrap();
     }
     assert_eq!(manifest.is_file(), false);
-}*/
+}
 
 // Create config
 fn configure_yes() -> LocalBackend {
@@ -189,8 +185,8 @@ fn configure_yes() -> LocalBackend {
         _ => unreachable!() // demo.json uses local backend
     }
 }
-/*
-// Create manifest
+
+// Create manifest in a weird directory
 fn init_force() {
     let cfg = Config::read().unwrap();
 
@@ -209,11 +205,11 @@ fn init_force() {
 
     let m5 = lal::init(&cfg, true, "blah");
     assert!(m5.is_err(), "could not init without valid environment");
-}*/
+}
 
 // Tests need to be run in a directory with a manifest
 // and ~/.lal + config must exist
-/*fn has_config_and_manifest() {
+fn has_config_and_manifest() {
     let ldir = config_dir();
     assert!(ldir.is_dir(), "have laldir");
 
@@ -226,7 +222,7 @@ fn init_force() {
     // There is no INPUT yet, but we have no dependencies, so this should work:
     let r = lal::verify(&manifest.unwrap(), "xenial".into(), false);
     chk::is_ok(r, "could verify after install");
-}*/
+}
 
 // Shell tests
 fn shell_echo() {
