@@ -130,10 +130,13 @@ fn main() {
     list_everything();
     info!("ok list_everything");
 
+    change_envs();
+    info!("ok change_envs");
+
     kill_manifest();
     info!("ok kill_manifest");
 }
-// Start from scratch
+
 fn kill_laldir() {
     let ldir = config_dir();
     if ldir.is_dir() {
@@ -155,6 +158,36 @@ fn remove_dependencies() {
     let r = lal::remove(&mf, xs, false, false);
     assert!(r.is_ok(), "could lal rm all dependencies");
 }
+
+fn change_envs() {
+    let cfg = Config::read().unwrap();
+    let mf = Manifest::read().unwrap();
+
+    // no sticky flags set yet
+    let sticky_none = StickyOptions::read().unwrap();
+    assert_eq!(sticky_none.env, None);
+
+    // update the container associated with the default env
+    // (on CI we've already done this at test start => cheap)
+    let container = cfg.get_container(mf.environment.clone()).unwrap();
+    let ru = lal::env::update(&container, &mf.environment);
+    assert!(ru.is_ok(), "env update succeeded");
+
+    let rc = lal::env::set(&sticky_none, &cfg, "xenial");
+    assert!(rc.is_ok(), "env set xenial succeeded");
+
+    // we changed the sticky option with that
+    let sticky_set = StickyOptions::read().unwrap();
+    assert_eq!(sticky_set.env, Some("xenial".into()));
+
+    let rc = lal::env::clear();
+    assert!(rc.is_ok(), "env clear succeeded");
+
+    // we cleared the stickies with that
+    let sticky_clear = StickyOptions::read().unwrap();
+    assert_eq!(sticky_clear.env, None);
+}
+
 fn kill_manifest() {
     let pwd = env::current_dir().unwrap();
     let manifest = Path::new(&pwd).join("manifest.json");
