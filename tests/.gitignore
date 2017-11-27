@@ -1,0 +1,7 @@
+heylib/INPUT
+heylib/*.o
+heylib/*.a
+heylib/.lal
+
+helloworld/INPUT
+helloworld/*.o
