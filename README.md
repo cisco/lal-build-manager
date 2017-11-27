@@ -54,7 +54,7 @@ If you want to release static binaries of these to developers, you can build lal
 Create a git repo, lal init it, then update deps and verify it builds.
 
 ```sh
-lal init xenial # create manifest for a xenial component
+lal init alpine # create manifest for a alpine component
 git add .lal/
 git commit -m "init newcomponent"
 # add some dependencies to manifest (if you have a storage backend)
