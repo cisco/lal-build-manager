@@ -69,7 +69,7 @@ fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, backend: &
     } else if let Some(a) = args.subcommand_matches("list-dependencies") {
         lal::list::dependencies(mf, a.is_present("core"))
     } else if let Some(a) = args.subcommand_matches("remove") {
-        let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
+        let xs = a.values_of("components").unwrap().map(String::from).collect::<Vec<_>>();
         lal::remove(mf, xs, a.is_present("save"), a.is_present("savedev"))
     } else if let Some(a) = args.subcommand_matches("stash") {
         lal::stash(backend, mf, a.value_of("name").unwrap())

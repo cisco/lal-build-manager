@@ -93,8 +93,8 @@ fn main() {
     fetch_release_build_and_publish(&backend);
     info!("ok fetch_release_build_and_publish heylib");
 
-    kill_input();
-    info!("ok kill_input again");
+    remove_dependencies();
+    info!("ok remove_dependencies");
 
     let helloworlddir = testdir.join("helloworld");
     assert!(env::set_current_dir(&helloworlddir).is_ok());
@@ -148,6 +148,13 @@ fn kill_input() {
         fs::remove_dir_all(&input).unwrap();
     }
     assert_eq!(input.is_dir(), false);
+}
+
+fn remove_dependencies() {
+    let mf = Manifest::read().unwrap();
+    let xs = mf.dependencies.keys().cloned().collect::<Vec<_>>();
+    let r = lal::remove(&mf, xs, false, false);
+    assert!(r.is_ok(), "could lal rm all dependencies");
 }
 /*fn kill_manifest() {
     let pwd = env::current_dir().unwrap();

@@ -10,7 +10,7 @@ use super::{CliError, LalResult, Manifest};
 ///
 /// If one of `save` or `savedev` was set, `manifest.json` is also updated to remove
 /// the specified components from the corresponding dictionary.
-pub fn remove(manifest: &Manifest, xs: Vec<&str>, save: bool, savedev: bool) -> LalResult<()> {
+pub fn remove(manifest: &Manifest, xs: Vec<String>, save: bool, savedev: bool) -> LalResult<()> {
     debug!("Removing dependencies {:?}", xs);
 
     // remove entries in xs from manifest.
@@ -25,11 +25,11 @@ pub fn remove(manifest: &Manifest, xs: Vec<&str>, save: bool, savedev: bool) -> 
             // This could work, but it's not currently what install does, so not doing it.
             // => all components uninstalled from either dependencies, or all from devDependencies
             // if doing multiple components from different maps, do multiple calls
-            if !hmap.contains_key(component) {
+            if !hmap.contains_key(&component) {
                 return Err(CliError::MissingComponent(component.to_string()));
             }
             debug!("Removing {} from manifest", component);
-            hmap.remove(component);
+            hmap.remove(&component);
         }
         if save {
             mf.dependencies = hmap;
@@ -46,7 +46,7 @@ pub fn remove(manifest: &Manifest, xs: Vec<&str>, save: bool, savedev: bool) -> 
         return Ok(());
     }
     for component in xs {
-        let pth = Path::new(&input).join(component);
+        let pth = Path::new(&input).join(&component);
         if pth.is_dir() {
             debug!("Deleting INPUT/{}", component);
             fs::remove_dir_all(&pth)?;
