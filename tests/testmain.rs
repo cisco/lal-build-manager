@@ -135,6 +135,30 @@ fn main() {
 
     kill_manifest();
     info!("ok kill_manifest");
+
+    // verify propagations by building prop-leaf -> prop-mid-X -> prop-base
+    let propleaf = testdir.join("prop-leaf");
+    assert!(env::set_current_dir(&propleaf).is_ok());
+    fetch_release_build_and_publish(&backend);
+    info!("ok fetch_release_build_and_publish prop-leaf");
+
+    let propmid1 = testdir.join("prop-mid-1");
+    assert!(env::set_current_dir(&propmid1).is_ok());
+    fetch_release_build_and_publish(&backend);
+    info!("ok fetch_release_build_and_publish prop-mid-1");
+
+    let propmid2 = testdir.join("prop-mid-2");
+    assert!(env::set_current_dir(&propmid2).is_ok());
+    fetch_release_build_and_publish(&backend);
+    info!("ok fetch_release_build_and_publish prop-mid-2");
+
+    let propbase = testdir.join("prop-base");
+    assert!(env::set_current_dir(&propbase).is_ok());
+    fetch_release_build_and_publish(&backend);
+    info!("ok fetch_release_build_and_publish prop-base");
+
+    check_propagation("prop-leaf");
+    info!("ok check_propagation prop-leaf -> prop-base");
 }
 
 fn kill_laldir() {
@@ -191,12 +215,8 @@ fn change_envs() {
 fn kill_manifest() {
     let pwd = env::current_dir().unwrap();
     let manifest = Path::new(&pwd).join("manifest.json");
-    let lalsubdir = Path::new(&pwd).join(".lal");
     if manifest.is_file() {
         fs::remove_file(&manifest).unwrap();
-    }
-    if lalsubdir.exists() {
-        fs::remove_dir_all(&lalsubdir).unwrap();
     }
     assert_eq!(manifest.is_file(), false);
 }
@@ -220,7 +240,6 @@ fn list_everything() {
     assert!(rb.is_ok(), "list buildables succeeded");
 }
 
-// Create config
 fn configure_yes() -> LocalBackend {
     let config = Config::read();
     assert!(config.is_err(), "no config at this point");
@@ -509,6 +528,34 @@ fn run_scripts() {
                         &modes,
                         false);
     assert!(r.is_ok(), "could run subroutine script");
+}
+
+fn check_propagation(leaf: &str) {
+    let mf = Manifest::read().unwrap();
+
+    let lf = Lockfile::default().set_name(&mf.name).populate_from_input().unwrap();
+    if let Ok(res) = lal::propagate::compute(&lf, leaf) {
+        assert_eq!(res.stages.len(), 2);
+        // first stage
+        assert_eq!(res.stages[0].updates.len(), 2); // must update both mid points
+        assert_eq!(res.stages[0].updates[0].dependencies, vec!["prop-leaf"]);
+        assert_eq!(res.stages[0].updates[1].dependencies, vec!["prop-leaf"]);
+        assert_eq!(res.stages[0].updates[0].repo, "prop-mid-1");
+        assert_eq!(res.stages[0].updates[1].repo, "prop-mid-2");
+        // second stage
+        assert_eq!(res.stages[1].updates.len(), 1); // must update base
+        assert_eq!(res.stages[1].updates[0].dependencies, vec!["prop-mid-1", "prop-mid-2"]);
+        assert_eq!(res.stages[1].updates[0].repo, "prop-base");
+    } else {
+        assert!(false, "could propagate leaf to {}", mf.name);
+    }
+
+    let rp = lal::propagate::print(&mf, leaf, true);
+    assert!(rp.is_ok(), "could print propagate to stdout");
+
+    // print tree for extra coverage of bigger trees
+    let rs = lal::status(&mf, true, true, true);
+    assert!(rs.is_ok(), "could print status of propagation root");
 }
 
 fn status_on_experimentals() {

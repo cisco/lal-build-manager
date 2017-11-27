@@ -74,7 +74,7 @@ fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, backend: &
     } else if let Some(a) = args.subcommand_matches("stash") {
         lal::stash(backend, mf, a.value_of("name").unwrap())
     } else if let Some(a) = args.subcommand_matches("propagate") {
-        lal::propagate(mf, a.value_of("component").unwrap(), a.is_present("json"))
+        lal::propagate::print(mf, a.value_of("component").unwrap(), a.is_present("json"))
     } else {
         return ();
     };
