@@ -5,10 +5,4 @@ lal.musl.tar
 OUTPUT
 lal.tar
 ARTIFACT
-tests/heylib/INPUT
-tests/heylib/*.o
-tests/heylib/*.a
-tests/heylib/.lal
-tests/helloworld/*.o
-tests/helloworld/INPUT
 testtmp
