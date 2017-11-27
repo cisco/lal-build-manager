@@ -93,8 +93,8 @@ fn main() {
     fetch_release_build_and_publish(&backend);
     info!("ok fetch_release_build_and_publish heylib");
 
-    kill_input();
-    info!("ok kill_input again");
+    remove_dependencies();
+    info!("ok remove_dependencies");
 
     let helloworlddir = testdir.join("helloworld");
     assert!(env::set_current_dir(&helloworlddir).is_ok());
@@ -119,22 +119,24 @@ fn main() {
     clean_check();
     info!("ok clean_check");
 
-    // TODO: verify stash + update
-
-/*
-    kill_manifest();
-    info!("ok kill_manifest");
-
+    // finally test out some functionality regarding creating of new components
+    // we just do this in the same temp directory as there's nothing there
     init_force();
     info!("ok init_force");
 
     has_config_and_manifest();
     info!("ok has_config_and_manifest");
-    // assume we have manifest and config after this point
 
-*/
+    list_everything();
+    info!("ok list_everything");
+
+    change_envs();
+    info!("ok change_envs");
+
+    kill_manifest();
+    info!("ok kill_manifest");
 }
-// Start from scratch
+
 fn kill_laldir() {
     let ldir = config_dir();
     if ldir.is_dir() {
@@ -149,7 +151,44 @@ fn kill_input() {
     }
     assert_eq!(input.is_dir(), false);
 }
-/*fn kill_manifest() {
+
+fn remove_dependencies() {
+    let mf = Manifest::read().unwrap();
+    let xs = mf.dependencies.keys().cloned().collect::<Vec<_>>();
+    let r = lal::remove(&mf, xs, false, false);
+    assert!(r.is_ok(), "could lal rm all dependencies");
+}
+
+fn change_envs() {
+    let cfg = Config::read().unwrap();
+    let mf = Manifest::read().unwrap();
+
+    // no sticky flags set yet
+    let sticky_none = StickyOptions::read().unwrap();
+    assert_eq!(sticky_none.env, None);
+
+    // update the container associated with the default env
+    // (on CI we've already done this at test start => cheap)
+    let container = cfg.get_container(mf.environment.clone()).unwrap();
+    let ru = lal::env::update(&container, &mf.environment);
+    assert!(ru.is_ok(), "env update succeeded");
+
+    let rc = lal::env::set(&sticky_none, &cfg, "xenial");
+    assert!(rc.is_ok(), "env set xenial succeeded");
+
+    // we changed the sticky option with that
+    let sticky_set = StickyOptions::read().unwrap();
+    assert_eq!(sticky_set.env, Some("xenial".into()));
+
+    let rc = lal::env::clear();
+    assert!(rc.is_ok(), "env clear succeeded");
+
+    // we cleared the stickies with that
+    let sticky_clear = StickyOptions::read().unwrap();
+    assert_eq!(sticky_clear.env, None);
+}
+
+fn kill_manifest() {
     let pwd = env::current_dir().unwrap();
     let manifest = Path::new(&pwd).join("manifest.json");
     let lalsubdir = Path::new(&pwd).join(".lal");
@@ -160,7 +199,26 @@ fn kill_input() {
         fs::remove_dir_all(&lalsubdir).unwrap();
     }
     assert_eq!(manifest.is_file(), false);
-}*/
+}
+
+fn list_everything() {
+    let cfg = Config::read().unwrap();
+    let mf = Manifest::read().unwrap();
+
+    let re = lal::list::environments(&cfg);
+    assert!(re.is_ok(), "list envs succeeded");
+
+    let rdc = lal::list::dependencies(&mf, true);
+    assert!(rdc.is_ok(), "list deps --core succeeded");
+    let rd = lal::list::dependencies(&mf, false);
+    assert!(rd.is_ok(), "list deps succeeded");
+
+    let rc = lal::list::configurations(&mf.name, &mf);
+    assert!(rc.is_ok(), "list configurations succeeded");
+
+    let rb = lal::list::buildables(&mf);
+    assert!(rb.is_ok(), "list buildables succeeded");
+}
 
 // Create config
 fn configure_yes() -> LocalBackend {
@@ -182,8 +240,8 @@ fn configure_yes() -> LocalBackend {
         _ => unreachable!() // demo.json uses local backend
     }
 }
-/*
-// Create manifest
+
+// Create manifest in a weird directory
 fn init_force() {
     let cfg = Config::read().unwrap();
 
@@ -202,11 +260,11 @@ fn init_force() {
 
     let m5 = lal::init(&cfg, true, "blah");
     assert!(m5.is_err(), "could not init without valid environment");
-}*/
+}
 
 // Tests need to be run in a directory with a manifest
 // and ~/.lal + config must exist
-/*fn has_config_and_manifest() {
+fn has_config_and_manifest() {
     let ldir = config_dir();
     assert!(ldir.is_dir(), "have laldir");
 
@@ -219,7 +277,7 @@ fn init_force() {
     // There is no INPUT yet, but we have no dependencies, so this should work:
     let r = lal::verify(&manifest.unwrap(), "xenial".into(), false);
     chk::is_ok(r, "could verify after install");
-}*/
+}
 
 // Shell tests
 fn shell_echo() {
