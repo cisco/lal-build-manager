@@ -93,8 +93,8 @@ fn main() {
     fetch_release_build_and_publish(&backend);
     info!("ok fetch_release_build_and_publish heylib");
 
-    remove_dependencies();
-    info!("ok remove_dependencies");
+    no_publish_non_release_builds(&backend);
+    info!("ok no_publish_non_release_builds heylib");
 
     let helloworlddir = testdir.join("helloworld");
     assert!(env::set_current_dir(&helloworlddir).is_ok());
@@ -107,6 +107,9 @@ fn main() {
 
     fetch_release_build_and_publish(&backend);
     info!("ok fetch_release_build_and_publish helloworld");
+
+    remove_dependencies();
+    info!("ok remove_dependencies");
 
     // back to tmpdir to test export and clean
     assert!(env::set_current_dir(&tmp).is_ok());
@@ -179,8 +182,18 @@ fn kill_input() {
 fn remove_dependencies() {
     let mf = Manifest::read().unwrap();
     let xs = mf.dependencies.keys().cloned().collect::<Vec<_>>();
-    let r = lal::remove(&mf, xs, false, false);
+    let r = lal::remove(&mf, xs.clone(), false, false);
     assert!(r.is_ok(), "could lal rm all dependencies");
+
+    let rs = lal::remove(&mf, xs, true, false);
+    assert!(rs.is_ok(), "could lal rm all dependencies and save");
+
+    // should be no dependencies now
+    let mf2 = Manifest::read().unwrap();
+    let xs2 = mf2.dependencies.keys().cloned().collect::<Vec<_>>();
+    assert_eq!(xs2.len(), 0);
+
+    mf.write(); // save the old one again
 }
 
 fn change_envs() {
@@ -431,7 +444,44 @@ fn fetch_release_build_and_publish<T: CachedBackend + Backend>(backend: &T) {
     assert!(rp.is_ok(), "could publish");
 }
 
+fn no_publish_non_release_builds<T: CachedBackend + Backend>(backend: &T) {
+    let mf = Manifest::read().unwrap();
+    let cfg = Config::read().unwrap();
+    let container = cfg.get_container("alpine".into()).unwrap();
 
+    let artifact_dir = Path::new("./ARTIFACT");
+    if artifact_dir.is_dir() {
+        debug!("Deleting existing artifact dir");
+        fs::remove_dir_all(&artifact_dir).unwrap();
+    }
+
+    let mut bopts = BuildOptions {
+        name: None,
+        configuration: Some("release".into()),
+        container: container,
+        release: false, // missing releaes bad
+        version: Some("2".into()), // but have version
+        sha: None,
+        force: false,
+        simple_verify: false,
+    };
+    let modes = ShellModes::default();
+    let r = lal::build(&cfg, &mf, &bopts, "alpine".into(), modes.clone());
+    assert!(r.is_ok(), "could build without non-release");
+
+    let rp = lal::publish(&mf.name, backend);
+    assert!(rp.is_err(), "could not publish non-release build");
+
+    bopts.version = None; // missing version bad
+    bopts.release = true; // but at least in release mode now
+
+    let rb2 = lal::build(&cfg, &mf, &bopts, "alpine".into(), modes.clone());
+    assert!(rb2.is_ok(), "could build in without version");
+
+    let rp2 = lal::publish(&mf.name, backend);
+    assert!(rp2.is_err(), "could not publish without version set");
+
+}
 // add dependencies to test tree
 // NB: this currently shouldn't do anything as all deps are accounted for
 // Thus if this changes test manifests, something is wrong..
@@ -632,5 +682,8 @@ fn export_check<T: CachedBackend + Backend>(backend: &T) {
 fn query_check<T: Backend>(backend: &T) {
     let r = lal::query(backend, Some("alpine"), "hello", false);
     assert!(r.is_ok(), "could query for hello");
+
+    let rl = lal::query(backend, Some("alpine"), "hello", true);
+    assert!(rl.is_ok(), "could query latest for hello");
 
 }
