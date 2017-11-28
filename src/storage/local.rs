@@ -8,11 +8,13 @@ use std::path::{Path, PathBuf};
 use core::{CliError, LalResult, config_dir, ensure_dir_exists_fresh};
 
 
+/// LocalBackend configuration options (currently none)
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct LocalConfig {}
 
 use super::{Backend, Component};
 
+/// Artifact storage on the local machine
 pub struct LocalBackend {
     /// Local config
     pub config: LocalConfig,
