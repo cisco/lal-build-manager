@@ -550,7 +550,9 @@ fn check_propagation(leaf: &str) {
         assert!(false, "could propagate leaf to {}", mf.name);
     }
 
-    let rp = lal::propagate::print(&mf, leaf, true);
+    let rpj = lal::propagate::print(&mf, leaf, true);
+    assert!(rpj.is_ok(), "could print propagate json to stdout");
+    let rp = lal::propagate::print(&mf, leaf, false);
     assert!(rp.is_ok(), "could print propagate to stdout");
 
     // print tree for extra coverage of bigger trees
