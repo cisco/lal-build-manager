@@ -14,10 +14,10 @@ before_script:
 script:
   - cargo clean
   - cargo build
-  - cargo test
+  - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then cargo test; fi
   - cargo doc --no-deps
 after_success: |
-  if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
+  if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
     bash <(curl -sSL https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
     cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
   fi
