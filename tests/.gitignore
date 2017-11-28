@@ -2,6 +2,7 @@ heylib/INPUT
 heylib/*.o
 heylib/*.a
 heylib/.lal
+prop*/INPUT
 
 helloworld/INPUT
 helloworld/*.o

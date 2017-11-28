@@ -1,0 +1,19 @@
+{
+  "name": "prop-mid-2",
+  "environment": "alpine",
+  "supportedEnvironments": [
+    "alpine"
+  ],
+  "components": {
+    "prop-mid-2": {
+      "defaultConfig": "release",
+      "configurations": [
+        "release"
+      ]
+    }
+  },
+  "dependencies": {
+    "prop-leaf": 1
+  },
+  "devDependencies": {}
+}

@@ -3,30 +3,31 @@ use std::collections::BTreeSet;
 use super::{LalResult, Manifest, Lockfile};
 
 
-/// A single update
+/// A single update of of a propagation
 #[derive(Serialize)]
-struct SingleUpdate {
+pub struct SingleUpdate {
     /// Where to update dependencies
     pub repo: String,
     /// Dependencies to update
     pub dependencies: Vec<String>,
 }
 
-/// A parallelizable update stage
+/// A parallelizable update stage of a propagation
 #[derive(Serialize, Default)]
-struct UpdateStage {
+pub struct UpdateStage {
     /// Updates to perform at this stage
     pub updates: Vec<SingleUpdate>,
 }
 
-/// A set of sequential update steps
+/// A set of sequential update steps that describe a propagation
 #[derive(Serialize, Default)]
-struct UpdateSequence {
+pub struct UpdateSequence {
     /// Update stages needed
     pub stages: Vec<UpdateStage>,
 }
 
-fn compute_update_stages(lf: &Lockfile, component: &str) -> LalResult<UpdateSequence> {
+/// Compute the update sequence for a propagation
+pub fn compute(lf: &Lockfile, component: &str) -> LalResult<UpdateSequence> {
     // 1. collect the list of everything we want to build in between root and component
     let all_required = lf.get_reverse_deps_transitively_for(component.into());
     let dependencies = lf.find_all_dependency_names(); // map String -> Set(names)
@@ -82,13 +83,13 @@ fn compute_update_stages(lf: &Lockfile, component: &str) -> LalResult<UpdateSequ
 ///
 /// This will produce a set of sequential steps, each set itself being parallelizable.
 /// The resulting update steps can be performed in order to ensure `lal verify` is happy.
-pub fn propagate(manifest: &Manifest, component: &str, json_output: bool) -> LalResult<()> {
+pub fn print(manifest: &Manifest, component: &str, json_output: bool) -> LalResult<()> {
     debug!("Calculating update path for {}", component);
 
     // TODO: allow taking a custom lockfile to be used outside a repo.
     let lf = Lockfile::default().set_name(&manifest.name).populate_from_input()?;
 
-    let result = compute_update_stages(&lf, component)?;
+    let result = compute(&lf, component)?;
 
     if json_output {
         let encoded = serde_json::to_string_pretty(&result)?;

@@ -50,6 +50,9 @@ pub use storage::*;
 pub mod env;
 /// List module for all the list-* subcommands
 pub mod list;
+/// Propagation module with all structs describing the steps
+pub mod propagate;
+
 
 // lift most other pub functions into our libraries main scope
 // this avoids having to type lal::build::build in tests and main.rs
@@ -67,7 +70,6 @@ pub use stash::stash;
 pub use clean::clean;
 pub use query::query;
 pub use publish::publish;
-pub use propagate::propagate;
 
 mod configure;
 mod init;
@@ -83,7 +85,6 @@ mod verify;
 mod stash;
 mod status;
 mod publish;
-mod propagate;
 
 #[cfg(feature = "upgrade")]
 pub use upgrade::upgrade;
