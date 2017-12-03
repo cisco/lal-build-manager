@@ -1,6 +1,6 @@
 [package]
 name = "lal"
-version = "3.8.0"
+version = "3.8.1"
 authors = ["Eirik Albrigtsen <sszynrae@gmail.com>"]
 description = "A strict, language-agnostic build system and dependency manager"
 documentation = "http://lalbuild.github.io/lal"
