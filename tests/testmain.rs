@@ -193,7 +193,7 @@ fn remove_dependencies() {
     let xs2 = mf2.dependencies.keys().cloned().collect::<Vec<_>>();
     assert_eq!(xs2.len(), 0);
 
-    mf.write(); // save the old one again
+    mf.write().unwrap(); // save the old one again
 }
 
 fn change_envs() {
