@@ -17,11 +17,13 @@ script:
 - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then docker run --rm -v $PWD:/volume -w /volume -t clux/muslrust cargo build --release; fi
 - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then cargo test; fi
 - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then cargo doc --no-deps; fi
+- ls
 after_success: |
   if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
     bash <(curl -sSL https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
     sudo chown -R $USER:$USER target
     cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
+    ls
   fi
 notifications:
   email:
@@ -33,7 +35,7 @@ branches:
   - /^v.*$/
 deploy:
   provider: releases
-  file: target/x86_64-unknown-linux-musl/release/lal
+  file: ./target/x86_64-unknown-linux-musl/release/lal
   skip_cleanup: true
   on:
     tags: true
