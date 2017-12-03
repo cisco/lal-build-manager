@@ -1,21 +1,22 @@
 sudo: required
 services:
-  - docker
+- docker
 dist: trusty
 addons:
   apt:
     packages:
-      - libssl-dev
+    - libssl-dev
 language: rust
 rust:
-  - stable
+- stable
 before_script:
-  - export RUST_BACKTRACE=full
+- export RUST_BACKTRACE=full
 script:
-  - cargo clean
-  - cargo build
-  - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then cargo test; fi
-  - cargo doc --no-deps
+- cargo clean
+- if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then cargo build; fi
+- if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then docker run --rm -v $PWD:/volume -w /volume -t clux/muslrust cargo build --release; fi
+- if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then cargo test; fi
+- cargo doc --no-deps
 after_success: |
   if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
     bash <(curl -sSL https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
@@ -27,4 +28,12 @@ notifications:
     on_failure: always
 branches:
   only:
-    - "master"
+  - master
+deploy:
+  provider: releases
+  file: target/x86_64-unknown-linux-musl/release/lal
+  skip_cleanup: true
+  on:
+    tags: true
+  api_key:
+    secure: jo7upaSy/Suepldw8OAjFhIl0y0xdIrd5W0WS7XMNCtHk3QC+iUSGiqlmZ/uQPp0IW5v8cTKVGyQ5bW66eUj8yLbw1QOwGUKdVF33jdZA1kAwY0baxcZCkbeEbWUiDKMRSJ/kr/AqFKgVJVLBcPhqGmHHmfK+m8RuVSI2ioUrW3hYdLUT35xws4wOdgQiEuKOn6EGUsFaulNj6LJWfl9jYmCUFX55UmMU/VIQiwCEMSCBin739BwHXBDNLwJEgHR9VHceSaBWsazOW6roT9gE6FdUqMGkjiK9vOBgTp9LElfK/4RO30TJ7Nz4EYz3/PoQzNrB3TMMBRtD14I8BnWRGeNKlFwUCXoPWnEeVuyurNQLLb0KiV4+JoxYQ1614pwaIwiz1wMf2yGMswc7VT89KqGGV18saVcQJaPOWSjsNyySWjK0FSMIAyCX5qzixFmvgfPu6Jf9/A2Wd5v6oJypo9i4n4x63UjXXuH/dOeg49V/QlM3py0CsztlUNRypb0NyFOBlYGJerAkKuTSW3Fh3fjte3GS+ze3rzC//ADYowG9R1mJdrpM48busoOzwzytgRHXAAXq0CFlWEw5a/Ly+iES2f3yQbGqx0/ZLIb5oZqlXsv3iEEczhokPiK74Psc/7yG7Mn5+Vjndb1AGcZ6gmNfGFRy4WWcaUFZ/b23VA=
