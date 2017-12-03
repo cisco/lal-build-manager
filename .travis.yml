@@ -20,6 +20,7 @@ script:
 after_success: |
   if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
     bash <(curl -sSL https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
+    sudo chown -R $USER:$USER target
     cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
   fi
 notifications:
