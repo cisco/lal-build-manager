@@ -16,7 +16,7 @@ script:
 - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then cargo build; fi
 - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then docker run --rm -v $PWD:/volume -w /volume -t clux/muslrust cargo build --release; fi
 - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then cargo test; fi
-- cargo doc --no-deps
+- if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then cargo doc --no-deps; fi
 after_success: |
   if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
     bash <(curl -sSL https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
