@@ -30,6 +30,7 @@ notifications:
 branches:
   only:
   - master
+  - /^v.*$/
 deploy:
   provider: releases
   file: target/x86_64-unknown-linux-musl/release/lal
