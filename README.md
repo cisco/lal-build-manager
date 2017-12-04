@@ -36,6 +36,18 @@ CI setup to build and upload releases of master as outlined further below.
 
 A configured backend in same config file, distrubuted with lal to your devs. Currently, this only supports artifactory.
 
+## Installation
+If you do not want to install rust, get a statically linked version of lal:
+
+```sh
+curl -sSL https://github.com/lalbuild/lal/releases/download/v3.8.1/lal.tar.gz | sudo tar xz -C /usr/local
+echo "source /usr/local/share/lal/lal.complete.sh" > ~/.bash_completion
+curl -sSL https://raw.githubusercontent.com/lalbuild/lal/master/configs/demo.json > cfg.json
+lal configure cfg.json
+```
+
+These are built on [CI](https://travis-ci.org/lalbuild/lal/builds) via [muslrust](https://github.com/clux/muslrust). You can drop `sudo` if you own or `chown` your install prefix.
+
 ## Building
 Clone, install from source with [rust](https://www.rust-lang.org/en-US/install.html), setup autocomplete, and select your site-config:
 
@@ -45,8 +57,6 @@ cargo install
 echo "source $PWD/lal.complete.sh" >> ~/.bash_completion
 lal configure configs/demo.json
 ```
-
-If you want to release static binaries of these to developers, you can build lal on CI via [clux/muslrust](https://github.com/clux/muslrust). This takes away the need to install rust for developers, and if you use the `upgrade` feature, you can set up automatic upgrades.
 
 ## Usage
 
