@@ -6,7 +6,6 @@ addons:
   apt:
     packages:
     - libssl-dev
-    - tree
 language: rust
 rust:
 - stable
@@ -27,11 +26,15 @@ branches:
   - master
   - /^v.*$/
 before_deploy:
-  - tree target || true
+  - sudo chown -R $USER:$USER target
   - ldd target/x86_64-unknown-linux-musl/release/lal || true
+  - mkdir ARTIFACT/{bin,share/lal} -p
+  - mv target/x86_64-unknown-linux-musl/release/lal ARTIFACT/bin/
+  - cp lal.complete.sh ARTIFACT/share/lal/
+  - tar czf lal.tar.gz --transform=s,^ARTIFACT/,, $(find ARTIFACT/ -type f -o -type l)
 deploy:
   provider: releases
-  file: target/x86_64-unknown-linux-musl/release/lal
+  file: lal.tar.gz
   skip_cleanup: true
   on:
     tags: true
