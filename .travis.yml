@@ -23,7 +23,6 @@ after_success: |
     sudo chown -R $USER:$USER target
     cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
   fi
-  tree target
 notifications:
   email:
     on_success: change
@@ -32,6 +31,7 @@ branches:
   only:
   - master
   - /^v.*$/
+before_deploy: tree target
 deploy:
   provider: releases
   file: ./target/x86_64-unknown-linux-musl/release/lal
