@@ -158,15 +158,15 @@ The local cache is populated by fetches from the registry, or calls to `stash` t
 │   ├── centos
 │   │   └── ciscossl
 │   │       └── 6
-│   │           └── ciscossl.tar
+│   │           └── ciscossl.tar.gz
 │   └── xenial
 │       └── ciscossl
 │           └── 6
-│               └── ciscossl.tar
+│               └── ciscossl.tar.gz
 └── stash
     └── ciscossl
         └── asan
-            └── ciscossl.tar
+            └── ciscossl.tar.gz
 ```
 
 Sources:

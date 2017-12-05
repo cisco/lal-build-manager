@@ -310,7 +310,7 @@ pub fn get_latest_lal_version() -> LalResult<LatestLal> {
     if let Some(l) = latest {
         Ok(LatestLal {
                version: l.clone(),
-               url: format!("https://engci-maven.cisco.com/artifactory/CME-group/lal/{}/lal.tar",
+               url: format!("https://engci-maven.cisco.com/artifactory/CME-group/lal/{}/lal.tar.gz",
                             l),
            })
     } else {

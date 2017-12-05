@@ -24,7 +24,7 @@ pub fn tar(tarball: &Path) -> LalResult<()> {
         args.push(f.into())
     }
 
-    // basically `tar czf component.tar --transform.. $(find OUTPUT -type f -o -type l)`:
+    // basically `tar czf component.tar.gz --transform.. $(find OUTPUT -type f -o -type l)`:
     debug!("tar {}", args.join(" "));
     let s = Command::new("tar").args(&args).status()?;
 

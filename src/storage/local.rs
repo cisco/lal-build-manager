@@ -71,7 +71,7 @@ impl Backend for LocalBackend {
         } else {
             self.get_latest_version(name, loc)?
         };
-        let loc = format!("{}/environments/{}/{}/{}/{}.tar", self.cache, loc, name, v, name);
+        let loc = format!("{}/environments/{}/{}/{}/{}.tar.gz", self.cache, loc, name, v, name);
         Ok(Component {
             name: name.into(),
             version: v,
@@ -88,7 +88,7 @@ impl Backend for LocalBackend {
 
         // prefix with environment
         let tar_dir = format!("{}/environments/{}/{}/{}/", self.cache, env, name, version);
-        let tar_path = format!("{}/environments/{}/{}/{}/{}.tar", self.cache, env, name, version, name);
+        let tar_path = format!("{}/environments/{}/{}/{}/{}.tar.gz", self.cache, env, name, version, name);
         let lock_path = format!("{}/environments/{}/{}/{}/lockfile.json", self.cache, env, name, version);
 
         if let Some(full_tar_dir) = config_dir().join(tar_dir).to_str() {
