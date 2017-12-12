@@ -1,0 +1,48 @@
+sudo: required
+services:
+- docker
+dist: trusty
+addons:
+  apt:
+    packages:
+    - libssl-dev
+language: rust
+rust:
+- stable
+before_script:
+- export RUST_BACKTRACE=full
+script:
+- cargo clean
+- if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then cargo build; fi
+- if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then docker run --rm -v $PWD:/volume -w /volume -t clux/muslrust cargo build --release; fi
+- if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then cargo test; fi
+- if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then cargo doc --no-deps; fi
+notifications:
+  email:
+    on_success: change
+    on_failure: always
+branches:
+  only:
+  - master
+  - /^v.*$/
+before_deploy:
+  - sudo chown -R $USER:$USER target
+  - ldd target/x86_64-unknown-linux-musl/release/lal || true
+  - mkdir ARTIFACT/{bin,share/lal} -p
+  - mv target/x86_64-unknown-linux-musl/release/lal ARTIFACT/bin/
+  - cp lal.complete.sh ARTIFACT/share/lal/
+  - tar czf lal.tar.gz --transform=s,^ARTIFACT/,, $(find ARTIFACT/ -type f -o -type l)
+deploy:
+  provider: releases
+  file: lal.tar.gz
+  skip_cleanup: true
+  on:
+    tags: true
+  api_key:
+    secure: jo7upaSy/Suepldw8OAjFhIl0y0xdIrd5W0WS7XMNCtHk3QC+iUSGiqlmZ/uQPp0IW5v8cTKVGyQ5bW66eUj8yLbw1QOwGUKdVF33jdZA1kAwY0baxcZCkbeEbWUiDKMRSJ/kr/AqFKgVJVLBcPhqGmHHmfK+m8RuVSI2ioUrW3hYdLUT35xws4wOdgQiEuKOn6EGUsFaulNj6LJWfl9jYmCUFX55UmMU/VIQiwCEMSCBin739BwHXBDNLwJEgHR9VHceSaBWsazOW6roT9gE6FdUqMGkjiK9vOBgTp9LElfK/4RO30TJ7Nz4EYz3/PoQzNrB3TMMBRtD14I8BnWRGeNKlFwUCXoPWnEeVuyurNQLLb0KiV4+JoxYQ1614pwaIwiz1wMf2yGMswc7VT89KqGGV18saVcQJaPOWSjsNyySWjK0FSMIAyCX5qzixFmvgfPu6Jf9/A2Wd5v6oJypo9i4n4x63UjXXuH/dOeg49V/QlM3py0CsztlUNRypb0NyFOBlYGJerAkKuTSW3Fh3fjte3GS+ze3rzC//ADYowG9R1mJdrpM48busoOzwzytgRHXAAXq0CFlWEw5a/Ly+iES2f3yQbGqx0/ZLIb5oZqlXsv3iEEczhokPiK74Psc/7yG7Mn5+Vjndb1AGcZ6gmNfGFRy4WWcaUFZ/b23VA=
+after_script: |
+  if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
+    bash <(curl -sSL https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
+    sudo chown -R $USER:$USER target
+    cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
+  fi

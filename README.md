@@ -1,4 +1,8 @@
 # lal
+[![build status](https://secure.travis-ci.org/lalbuild/lal.svg)](http://travis-ci.org/lalbuild/lal)
+[![coverage status](http://img.shields.io/coveralls/lalbuild/lal.svg)](https://coveralls.io/r/lalbuild/lal)
+[![crates status](https://img.shields.io/crates/v/lal.svg)](https://crates.io/crates/lal)
+
 A strict, language-agnostic build system and dependency manager.
 
 * **Use existing tools**: `lal build` only shells out to an executable `BUILD` script in a configured docker container. Install what you want in your build environments: cmake, autotools, cargo, go, python.
@@ -32,6 +36,18 @@ CI setup to build and upload releases of master as outlined further below.
 
 A configured backend in same config file, distrubuted with lal to your devs. Currently, this only supports artifactory.
 
+## Installation
+If you do not want to install rust, get a statically linked version of lal:
+
+```sh
+curl -sSL https://github.com/lalbuild/lal/releases/download/v3.8.1/lal.tar.gz | sudo tar xz -C /usr/local
+echo "source /usr/local/share/lal/lal.complete.sh" > ~/.bash_completion
+curl -sSL https://raw.githubusercontent.com/lalbuild/lal/master/configs/demo.json > cfg.json
+lal configure cfg.json
+```
+
+These are built on [CI](https://travis-ci.org/lalbuild/lal/builds) via [muslrust](https://github.com/clux/muslrust). You can drop `sudo` if you own or `chown` your install prefix.
+
 ## Building
 Clone, install from source with [rust](https://www.rust-lang.org/en-US/install.html), setup autocomplete, and select your site-config:
 
@@ -42,15 +58,13 @@ echo "source $PWD/lal.complete.sh" >> ~/.bash_completion
 lal configure configs/demo.json
 ```
 
-If you want to release static binaries of these to developers, you can build lal on CI via [clux/muslrust](https://github.com/clux/muslrust). This takes away the need to install rust for developers, and if you use the `upgrade` feature, you can set up automatic upgrades.
-
 ## Usage
 
 ### Creating a new component
 Create a git repo, lal init it, then update deps and verify it builds.
 
 ```sh
-lal init xenial # create manifest for a xenial component
+lal init alpine # create manifest for a alpine component
 git add .lal/
 git commit -m "init newcomponent"
 # add some dependencies to manifest (if you have a storage backend)

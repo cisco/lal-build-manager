@@ -69,12 +69,12 @@ fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, backend: &
     } else if let Some(a) = args.subcommand_matches("list-dependencies") {
         lal::list::dependencies(mf, a.is_present("core"))
     } else if let Some(a) = args.subcommand_matches("remove") {
-        let xs = a.values_of("components").unwrap().collect::<Vec<_>>();
+        let xs = a.values_of("components").unwrap().map(String::from).collect::<Vec<_>>();
         lal::remove(mf, xs, a.is_present("save"), a.is_present("savedev"))
     } else if let Some(a) = args.subcommand_matches("stash") {
         lal::stash(backend, mf, a.value_of("name").unwrap())
     } else if let Some(a) = args.subcommand_matches("propagate") {
-        lal::propagate(mf, a.value_of("component").unwrap(), a.is_present("json"))
+        lal::propagate::print(mf, a.value_of("component").unwrap(), a.is_present("json"))
     } else {
         return ();
     };
@@ -254,6 +254,10 @@ fn main() {
             .short("v")
             .multiple(true)
             .help("Increase verbosity"))
+       .arg(Arg::with_name("debug")
+            .short("d")
+            .long("debug")
+            .help("Adds line numbers to log statements"))
         .subcommand(SubCommand::with_name("fetch")
             .about("Fetch dependencies listed in the manifest into INPUT")
             .arg(Arg::with_name("core")
@@ -529,7 +533,12 @@ fn main() {
     let args = app.get_matches();
 
     // by default, always show INFO messages for now (+1)
-    loggerv::init_with_verbosity(args.occurrences_of("verbose") + 1).unwrap();
+    loggerv::Logger::new()
+        .verbosity(args.occurrences_of("verbose") + 1)
+        .module_path(true)
+        .line_numbers(args.is_present("debug"))
+        .init()
+        .unwrap();
 
     // Allow lal configure without assumptions
     if let Some(a) = args.subcommand_matches("configure") {
@@ -553,6 +562,9 @@ fn main() {
     let backend: Box<Backend> = match &config.backend {
         &BackendConfiguration::Artifactory(ref art_cfg) => {
             Box::new(ArtifactoryBackend::new(&art_cfg, &config.cache))
+        }
+        &BackendConfiguration::Local(ref local_cfg) => {
+            Box::new(LocalBackend::new(&local_cfg, &config.cache))
         }
     };
 

@@ -1,0 +1,17 @@
+{
+  "name": "heylib",
+  "environment": "alpine",
+  "supportedEnvironments": [
+    "alpine"
+  ],
+  "components": {
+    "heylib": {
+      "defaultConfig": "release",
+      "configurations": [
+        "release"
+      ]
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

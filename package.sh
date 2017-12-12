@@ -15,9 +15,9 @@
 #
 # ARTIFACT/
 # ├── 3.3.3
-# │   └── lal.tar
+# │   └── lal.tar.gz
 # ├── latest
-# │   └── lal.tar
+# │   └── lal.tar.gz
 # └── lockfile.json
 #
 # Such that jenkins will upload this verbatim to:
@@ -40,7 +40,7 @@ mutate_artifact_folder() {
   else
     echo "Packaging new lal version"
     mkdir "ARTIFACT/${lalversion}" -p
-    mv ARTIFACT/lal.tar.gz "ARTIFACT/${lalversion}/lal.tar"
+    mv ARTIFACT/lal.tar.gz "ARTIFACT/${lalversion}/lal.tar.gz"
     # Overwrite the latest folder
     cp "ARTIFACT/${lalversion}" "ARTIFACT/latest" -R
   fi

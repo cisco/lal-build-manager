@@ -40,7 +40,7 @@ pub fn clean(cachedir: &str, days: i64) -> LalResult<()> {
     let edirs = WalkDir::new(&edir).min_depth(3).max_depth(3);
     clean_in_dir(cutoff, edirs)?;
 
-    // clean out stash + globals
+    // clean out stash
     let dirs = WalkDir::new(&cachedir).min_depth(3).max_depth(3);
     clean_in_dir(cutoff, dirs)?;
 

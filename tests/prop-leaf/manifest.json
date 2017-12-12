@@ -1,0 +1,17 @@
+{
+  "name": "prop-leaf",
+  "environment": "alpine",
+  "supportedEnvironments": [
+    "alpine"
+  ],
+  "components": {
+    "prop-leaf": {
+      "defaultConfig": "release",
+      "configurations": [
+        "release"
+      ]
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

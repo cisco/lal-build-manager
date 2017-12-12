@@ -24,8 +24,8 @@ fn store_tarball<T: Backend + ?Sized>(
     if !destdir.is_dir() {
         fs::create_dir_all(&destdir)?;
     }
-    // 2. stuff $PWD/$name.tar in there
-    let tarname = [name, ".tar"].concat();
+    // 2. stuff $PWD/$name.tar.gz in there
+    let tarname = [name, ".tar.gz"].concat();
     let dest = Path::new(&destdir).join(&tarname);
     let src = Path::new(".").join(&tarname);
     if !src.is_file() {
@@ -119,7 +119,7 @@ where
 
         if !is_cached(self, &component.name, component.version, env) {
             // download to PWD then move it to stash immediately
-            let local_tarball = Path::new(".").join(format!("{}.tar", name));
+            let local_tarball = Path::new(".").join(format!("{}.tar.gz", name));
             self.raw_fetch(&component.location, &local_tarball)?;
             store_tarball(self, name, component.version, env)?;
         }
@@ -128,7 +128,7 @@ where
 
         trace!("Fetching {} from cache", name);
         let tarname = get_cache_dir(self, &component.name, component.version, env)
-            .join(format!("{}.tar", name));
+            .join(format!("{}.tar.gz", name));
         Ok((tarname, component))
     }
 

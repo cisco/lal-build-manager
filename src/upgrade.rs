@@ -6,7 +6,7 @@
 //! Be very careful about updating these functions without also testing the musl
 //! build on a variety of Cargo.toml.version strings.
 //!
-//! People should not have to be told to `curl lal.tar | tar xz -C prefix` again.
+//! People should not have to be told to `curl lal.tar.gz | tar xz -C prefix` again.
 
 use semver::Version;
 use std::env;
@@ -79,7 +79,7 @@ fn verify_permissions(exe: &ExeInfo) -> LalResult<()> {
 
 fn overwrite_exe(latest: &LatestLal, exe: &ExeInfo) -> LalResult<()> {
     let prefix = exe.prefix.clone().unwrap();
-    extract_tarball(prefix.join("lal.tar"), &prefix)?;
+    extract_tarball(prefix.join("lal.tar.gz"), &prefix)?;
     validate_exe(latest, exe)?;
     Ok(())
 }
@@ -111,7 +111,7 @@ fn upgrade_exe(latest: &LatestLal, exe: &ExeInfo) -> LalResult<()> {
         fs::remove_file(&old_file)?;
     }
     // 2. make sure we can download the tarball before starting
-    let tar_dest = prefix.join("lal.tar");
+    let tar_dest = prefix.join("lal.tar.gz");
     info!("Downloading tarball to {}", tar_dest.display());
     http_download_to_path(&latest.url, &tar_dest)?;
     info!("Backing up {} to {}", exe.path, old_file.display());
