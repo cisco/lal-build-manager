@@ -7,7 +7,7 @@ _lal()
 
     local -r subcommands="build clean configure export fetch help init script run ls
                           query remove rm shell stash save status update upgrade verify
-                          publish env list-components list-dependencies
+                          publish env list-components list-supported-environments list-dependencies
                           list-environments list-configurations propagate"
 
     local has_sub
@@ -77,7 +77,7 @@ _lal()
                 [[ $in_lal_repo ]] || return 0
                 local -r env_subs="set reset update help -h --help"
                 if [[ $prev = "set" ]]; then
-                    local -r envs="$(lal list-environments)"
+                    local -r envs="$(lal list-supported-environments)"
                     COMPREPLY=($(compgen -W "$envs" -- "$cur"))
                 else
                     COMPREPLY=($(compgen -W "$env_subs" -- "$cur"))
