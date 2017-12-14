@@ -11,6 +11,14 @@ pub fn buildables(manifest: &Manifest) -> LalResult<()> {
     Ok(())
 }
 
+/// Print the supported environments from the `Manifest`
+pub fn supported_environments(manifest: &Manifest) -> LalResult<()> {
+    for env in &manifest.supportedEnvironments {
+        println!("{}", env);
+    }
+    Ok(())
+}
+
 /// Print the available configurations for a buildable Component
 pub fn configurations(component: &str, manifest: &Manifest) -> LalResult<()> {
     let component_settings = match manifest.components.get(component) {

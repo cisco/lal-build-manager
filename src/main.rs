@@ -64,6 +64,8 @@ fn handle_environment_agnostic_cmds(args: &ArgMatches, mf: &Manifest, backend: &
                     a.is_present("time"))
     } else if args.subcommand_matches("list-components").is_some() {
         lal::list::buildables(mf)
+    } else if args.subcommand_matches("list-supported-environments").is_some() {
+        lal::list::supported_environments(mf)
     } else if let Some(a) = args.subcommand_matches("list-configurations") {
         lal::list::configurations(a.value_of("component").unwrap(), mf)
     } else if let Some(a) = args.subcommand_matches("list-dependencies") {
@@ -508,6 +510,9 @@ fn main() {
         .subcommand(SubCommand::with_name("list-components")
             .setting(AppSettings::Hidden)
             .about("list components that can be used with lal build"))
+        .subcommand(SubCommand::with_name("list-supported-environments")
+            .setting(AppSettings::Hidden)
+            .about("list supported environments from the manifest"))
         .subcommand(SubCommand::with_name("list-environments")
             .setting(AppSettings::Hidden)
             .about("list environments that can be used with lal build"))
