@@ -1,21 +1,21 @@
-use serde_json;
 use chrono::UTC;
-use std::path::{Path, PathBuf};
-use std::fs;
-use std::vec::Vec;
-use std::io::prelude::*;
+use serde_json;
 use std::collections::BTreeMap;
 use std::env;
+use std::fs;
+use std::io::prelude::*;
+use std::path::{Path, PathBuf};
+use std::vec::Vec;
 
-use super::{Container, LalResult, CliError};
-use storage::BackendConfiguration;
+use super::{CliError, Container, LalResult};
+use crate::storage::BackendConfiguration;
 
 fn find_home_dir() -> PathBuf {
     // Either we have LAL_CONFIG_HOME evar, or HOME
     if let Ok(lh) = env::var("LAL_CONFIG_HOME") {
         Path::new(&lh).to_owned()
     } else {
-        env::home_dir().unwrap()
+        dirs::home_dir().unwrap()
     }
 }
 
@@ -75,15 +75,20 @@ pub struct ConfigDefaults {
 
 impl ConfigDefaults {
     /// Open and deserialize a defaults file
-    pub fn read(file: &str) -> LalResult<ConfigDefaults> {
+    pub fn read(file: &str) -> LalResult<Self> {
         let pth = Path::new(file);
         if !pth.exists() {
-            error!("No such defaults file '{}'", file); // file open will fail below
+            // Panics only if the current directory does not exist or the user does not have permissions to see the current directory.
+            error!(
+                "No such defaults file '{}' found from path '{:#?}",
+                file,
+                std::env::current_dir().unwrap()
+            ); // file open will fail below
         }
         let mut f = fs::File::open(&pth)?;
         let mut data = String::new();
         f.read_to_string(&mut data)?;
-        let defaults: ConfigDefaults = serde_json::from_str(&data)?;
+        let defaults: Self = serde_json::from_str(&data)?;
         Ok(defaults)
     }
 }
@@ -98,10 +103,15 @@ fn check_mount(name: &str) -> LalResult<String> {
         return Ok(src.clone()); // pass along the real source
     }
 
-    // Otherwise, if it does not contain a slash
-    if !name.contains("/") {
+    if name.contains('/') {
+        warn!("Discarding missing mount {}", src);
+        Err(CliError::MissingMount(src.clone()))
+    } else {
+        // Otherwise, if it does not contain a slash
         use std::process::Command;
-        let volume_output = Command::new("docker").args(vec!["volume", "ls", "-q"]).output()?;
+        let volume_output = Command::new("docker")
+            .args(vec!["volume", "ls", "-q"])
+            .output()?;
         let volstr = String::from_utf8_lossy(&volume_output.stdout);
         // If it exists, do nothing:
         if volstr.contains(name) {
@@ -111,19 +121,15 @@ fn check_mount(name: &str) -> LalResult<String> {
         // Otherwise warn
         warn!("Discarding missing docker volume {}", name);
         Err(CliError::MissingMount(name.into()))
-    } else {
-        warn!("Discarding missing mount {}", src);
-        Err(CliError::MissingMount(src.clone()))
     }
 }
-
 
 impl Config {
     /// Initialize a Config with ConfigDefaults
     ///
     /// This will locate you homedir, and set last update check 2 days in the past.
     /// Thus, with a blank default config, you will always trigger an upgrade check.
-    pub fn new(defaults: ConfigDefaults) -> Config {
+    pub fn new(defaults: ConfigDefaults) -> Self {
         let cachepath = config_dir().join("cache");
         let cachedir = cachepath.as_path().to_str().unwrap();
 
@@ -144,9 +150,9 @@ impl Config {
             }
         }
 
-        Config {
+        Self {
             cache: cachedir.into(),
-            mounts: mounts, // the filtered defaults
+            mounts, // the filtered defaults
             lastUpgrade: time.to_rfc3339(),
             autoupgrade: cfg!(feature = "upgrade"),
             environments: defaults.environments,
@@ -157,7 +163,7 @@ impl Config {
     }
 
     /// Read and deserialize a Config from ~/.lal/config
-    pub fn read() -> LalResult<Config> {
+    pub fn read() -> LalResult<Self> {
         let cfg_path = config_dir().join("config");
         if !cfg_path.exists() {
             return Err(CliError::MissingConfig);
@@ -165,14 +171,14 @@ impl Config {
         let mut f = fs::File::open(&cfg_path)?;
         let mut cfg_str = String::new();
         f.read_to_string(&mut cfg_str)?;
-        let res: Config = serde_json::from_str(&cfg_str)?;
+        let res: Self = serde_json::from_str(&cfg_str)?;
         Ok(res)
     }
 
     /// Checks if it is time to perform an upgrade check
     #[cfg(feature = "upgrade")]
     pub fn upgrade_check_time(&self) -> bool {
-        use chrono::{Duration, DateTime};
+        use chrono::{DateTime, Duration};
         let last = self.lastUpgrade.parse::<DateTime<UTC>>().unwrap();
         let cutoff = UTC::now() - Duration::days(1);
         last < cutoff
@@ -181,7 +187,7 @@ impl Config {
     #[cfg(feature = "upgrade")]
     pub fn performed_upgrade(&mut self) -> LalResult<()> {
         self.lastUpgrade = UTC::now().to_rfc3339();
-        Ok(self.write(true)?)
+        self.write(true)
     }
 
     /// Overwrite `~/.lal/config` with serialized data from this struct
@@ -190,7 +196,7 @@ impl Config {
         let encoded = serde_json::to_string_pretty(self)?;
 
         let mut f = fs::File::create(&cfg_path)?;
-        write!(f, "{}\n", encoded)?;
+        writeln!(f, "{}", encoded)?;
         if !silent {
             info!("Wrote config to {}", cfg_path.display());
         }

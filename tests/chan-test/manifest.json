@@ -1,23 +1,18 @@
 {
-  "name": "hello",
-  "channel": null,
+  "name": "chan-test",
+  "channel": "/testing",
   "environment": "alpine",
   "supportedEnvironments": [
     "alpine"
   ],
   "components": {
-    "hello": {
+    "chan-test": {
       "defaultConfig": "release",
       "configurations": [
         "release"
       ]
     }
   },
-  "dependencies": {
-    "heylib": {
-      "channel": "/",
-      "version": 1
-    }
-  },
+  "dependencies": {},
   "devDependencies": {}
 }

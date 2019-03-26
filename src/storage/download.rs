@@ -1,16 +1,34 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use storage::{Backend, CachedBackend, Component};
-use core::{CliError, LalResult, output};
+use crate::channel::Channel;
+use crate::core::{output, CliError, LalResult};
+use crate::storage::{Backend, CachedBackend, Component};
 
-fn is_cached<T: Backend + ?Sized>(backend: &T, name: &str, version: u32, env: &str) -> bool {
-    get_cache_dir(backend, name, version, env).is_dir()
+fn is_cached<T: Backend + ?Sized>(
+    backend: &T,
+    name: &str,
+    version: u32,
+    env: &str,
+    channel: &Channel,
+) -> bool {
+    get_cache_dir(backend, name, version, env, channel).is_dir()
 }
 
-fn get_cache_dir<T: Backend + ?Sized>(backend: &T, name: &str, version: u32, env: &str) -> PathBuf {
+fn get_cache_dir<T: Backend + ?Sized>(
+    backend: &T,
+    name: &str,
+    version: u32,
+    env: &str,
+    channel: &Channel,
+) -> PathBuf {
     let cache = backend.get_cache_dir();
-    Path::new(&cache).join("environments").join(env).join(name).join(version.to_string())
+    Path::new(&cache)
+        .join(channel.to_path())
+        .join("environments")
+        .join(env)
+        .join(name)
+        .join(version.to_string())
 }
 
 fn store_tarball<T: Backend + ?Sized>(
@@ -18,9 +36,10 @@ fn store_tarball<T: Backend + ?Sized>(
     name: &str,
     version: u32,
     env: &str,
+    channel: &Channel,
 ) -> Result<(), CliError> {
     // 1. mkdir -p cacheDir/$name/$version
-    let destdir = get_cache_dir(backend, name, version, env);
+    let destdir = get_cache_dir(backend, name, version, env, channel);
     if !destdir.is_dir() {
         fs::create_dir_all(&destdir)?;
     }
@@ -40,8 +59,8 @@ fn store_tarball<T: Backend + ?Sized>(
 
 // helper for the unpack_ functions
 fn extract_tarball_to_input(tarname: PathBuf, component: &str) -> LalResult<()> {
-    use tar::Archive;
     use flate2::read::GzDecoder;
+    use tar::Archive;
 
     let extract_path = Path::new("./INPUT").join(component);
     let _ = fs::remove_dir_all(&extract_path); // remove current dir if exists
@@ -87,12 +106,17 @@ where
         &self,
         name: &str,
         environments: Vec<String>,
+        channel: &Channel,
     ) -> LalResult<Vec<u32>> {
         use std::collections::BTreeSet;
         let mut result = BTreeSet::new();
         let mut first_pass = true;
         for e in environments {
-            let eres: BTreeSet<_> = self.get_versions(name, &e)?.into_iter().take(100).collect();
+            let eres: BTreeSet<_> = self
+                .get_versions(name, &e, channel)?
+                .into_iter()
+                .take(100)
+                .collect();
             info!("Last versions for {} in {} env is {:?}", name, e, eres);
             if first_pass {
                 // if first pass, can't take intersection with something empty, start with first result
@@ -112,24 +136,53 @@ where
         name: &str,
         version: Option<u32>,
         env: &str,
+        channel: &Channel,
     ) -> LalResult<(PathBuf, Component)> {
         trace!("Locate component {}", name);
 
-        let component = self.get_component_info(name, version, env)?;
+        let component = self.get_component_info(name, version, env, channel)?;
 
-        if !is_cached(self, &component.name, component.version, env) {
-            // download to PWD then move it to stash immediately
-            let local_tarball = Path::new(".").join(format!("{}.tar.gz", name));
-            self.raw_fetch(&component.location, &local_tarball)?;
-            store_tarball(self, name, component.version, env)?;
+        if !is_cached(self, &component.name, component.version, env, channel) {
+            self.cache_published_component(&component, env)?;
         }
-        assert!(is_cached(self, &component.name, component.version, env),
-                "cached component");
+        assert!(
+            is_cached(self, &component.name, component.version, env, channel),
+            "cached component"
+        );
 
         trace!("Fetching {} from cache", name);
-        let tarname = get_cache_dir(self, &component.name, component.version, env)
-            .join(format!("{}.tar.gz", name));
-        Ok((tarname, component))
+        let base_name =
+            get_cache_dir(self, &component.name, component.version, env, channel).join(name);
+
+        // Older versions of lal may have stored the artefacts without the gz extension. Check for this and fix it.
+        // This is just a rename as the files were gzipped, however this was not reflected in their name.
+        let compressed_name = base_name.with_extension("tar.gz");
+        let uncompressed_name = base_name.with_extension("tar");
+        if uncompressed_name.exists() {
+            assert!(!compressed_name.exists());
+            fs::rename(uncompressed_name, &compressed_name)?;
+        }
+
+        if !(compressed_name.exists()) {
+            // The cache has somehow become corrupted, try to update it.
+            self.cache_published_component(&component, env)?;
+            assert!(compressed_name.exists());
+        }
+
+        Ok((compressed_name, component))
+    }
+
+    fn cache_published_component(&self, component: &Component, env: &str) -> LalResult<()> {
+        // Download to PWD then move it to stash immediately
+        let local_tarball = Path::new(".").join(format!("{}.tar.gz", component.name));
+        self.raw_fetch(&component.location, &local_tarball)?;
+        store_tarball(
+            self,
+            &component.name,
+            component.version,
+            env,
+            &component.channel,
+        )
     }
 
     // basic functionality for `fetch`/`update`
@@ -138,12 +191,16 @@ where
         name: &str,
         version: Option<u32>,
         env: &str,
+        channel: &Channel,
     ) -> LalResult<Component> {
-        let (tarname, component) = self.retrieve_published_component(name, version, env)?;
+        let (tarname, component) =
+            self.retrieve_published_component(name, version, env, channel)?;
 
-        debug!("Unpacking tarball {} for {}",
-               tarname.to_str().unwrap(),
-               component.name);
+        debug!(
+            "Unpacking tarball {} for {}",
+            tarname.to_str().unwrap(),
+            component.name
+        );
         extract_tarball_to_input(tarname, name)?;
 
         Ok(component)
@@ -165,6 +222,7 @@ where
             .join(code)
             .join(format!("{}.tar.gz", name));
         if !tarpath.is_file() {
+            debug!("Could not find {:?}", tarpath);
             return Err(CliError::MissingStashArtifact(format!("{}/{}", name, code)));
         }
         Ok(tarpath)
@@ -172,7 +230,10 @@ where
 
     // helper for `stash`
     fn stash_output(&self, name: &str, code: &str) -> LalResult<()> {
-        let destdir = Path::new(&self.get_cache_dir()).join("stash").join(name).join(code);
+        let destdir = Path::new(&self.get_cache_dir())
+            .join("stash")
+            .join(name)
+            .join(code);
         debug!("Creating {:?}", destdir);
         fs::create_dir_all(&destdir)?;
 

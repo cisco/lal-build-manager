@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
-use core::LalResult;
 use super::{ArtifactoryConfig, LocalConfig};
+use crate::channel::Channel;
+use crate::core::LalResult;
 
 /// An enum struct for the currently configured `Backend`
 ///
@@ -23,7 +24,6 @@ impl Default for BackendConfiguration {
     fn default() -> Self { BackendConfiguration::Artifactory(ArtifactoryConfig::default()) }
 }
 
-
 /// The basic definition of a component as it exists online
 ///
 /// A component may have many build artifacts from many environments.
@@ -32,6 +32,8 @@ pub struct Component {
     pub name: String,
     /// Version number
     pub version: u32,
+    /// Channel path
+    pub channel: Channel,
     /// The raw location of the component at the specified version number
     ///
     /// No restriction on how this information is encoded, but it must work with `raw_fetch`
@@ -45,19 +47,31 @@ pub struct Component {
 /// We do rely on there being a basic API that can implement this trait though.
 pub trait Backend {
     /// Get a list of versions for a component in descending order
-    fn get_versions(&self, name: &str, loc: &str) -> LalResult<Vec<u32>>;
+    fn get_versions(&self, name: &str, loc: &str, channel: &Channel) -> LalResult<Vec<u32>>;
     /// Get the latest version of a component
-    fn get_latest_version(&self, name: &str, loc: &str) -> LalResult<u32>;
+    fn get_latest_version(&self, name: &str, loc: &str, channel: &Channel) -> LalResult<u32>;
 
     /// Get the version and location information of a component
     ///
     /// If no version is given, figure out what latest is
-    fn get_component_info(&self, name: &str, ver: Option<u32>, loc: &str) -> LalResult<Component>;
+    fn get_component_info(
+        &self,
+        name: &str,
+        ver: Option<u32>,
+        loc: &str,
+        channel: &Channel,
+    ) -> LalResult<Component>;
 
     /// Publish a release build's ARTIFACT to a specific location
     ///
     /// This will publish everything inside the ARTIFACT dir created by `lal build -r`
-    fn publish_artifact(&self, name: &str, version: u32, env: &str) -> LalResult<()>;
+    fn publish_artifact(
+        &self,
+        name: &str,
+        version: u32,
+        channel: Channel,
+        env: &str,
+    ) -> LalResult<()>;
 
     /// Raw fetch of location to a destination
     ///
@@ -79,6 +93,7 @@ pub trait CachedBackend {
         &self,
         name: &str,
         environments: Vec<String>,
+        channel: &Channel,
     ) -> LalResult<Vec<u32>>;
 
     /// Retrieve the location to a cached published component (downloading if necessary)
@@ -87,6 +102,7 @@ pub trait CachedBackend {
         name: &str,
         version: Option<u32>,
         env: &str,
+        channel: &Channel,
     ) -> LalResult<(PathBuf, Component)>;
 
     /// Retrieve the location to a stashed component
@@ -98,6 +114,7 @@ pub trait CachedBackend {
         name: &str,
         version: Option<u32>,
         env: &str,
+        channel: &Channel,
     ) -> LalResult<Component>;
 
     /// Retrieve and unpack a stashed component to INPUT
@@ -105,4 +122,7 @@ pub trait CachedBackend {
 
     /// Add a stashed component from a folder
     fn stash_output(&self, name: &str, code: &str) -> LalResult<()>;
+
+    /// Pull a component into the cache
+    fn cache_published_component(&self, component: &Component, env: &str) -> LalResult<()>;
 }

@@ -16,7 +16,11 @@ pub fn remove(manifest: &Manifest, xs: Vec<String>, save: bool, savedev: bool) -
     // remove entries in xs from manifest.
     if save || savedev {
         let mut mf = manifest.clone();
-        let mut hmap = if save { mf.dependencies.clone() } else { mf.devDependencies.clone() };
+        let mut hmap = if save {
+            mf.dependencies.clone()
+        } else {
+            mf.devDependencies.clone()
+        };
         for component in xs.clone() {
             // We could perhaps allow people to just specify ANY dependency
             // and have a generic save flag, which we could infer from

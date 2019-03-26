@@ -19,74 +19,62 @@
 
 #[macro_use]
 extern crate hyper;
-extern crate hyper_native_tls;
-extern crate openssl_probe;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
-extern crate regex;
-extern crate tar;
-extern crate flate2;
-extern crate ansi_term;
-extern crate sha1;
 #[macro_use]
 extern crate log;
-extern crate walkdir;
-extern crate chrono;
-extern crate filetime;
-extern crate rand;
-extern crate semver;
-#[cfg(feature = "progress")]
-extern crate indicatif;
+#[macro_use]
+extern crate bitflags;
 
 // re-exports
 mod core;
-pub use core::*;
+pub use crate::core::*;
 
 mod storage;
-pub use storage::*;
+pub use crate::storage::*;
 
+/// Channel module for channel subcommand
+pub mod channel;
 /// Env module for env subcommand (which has further subcommands)
 pub mod env;
 /// List module for all the list-* subcommands
 pub mod list;
 /// Propagation module with all structs describing the steps
 pub mod propagate;
-
+/// Verification of state
+pub mod verify;
 
 // lift most other pub functions into our libraries main scope
 // this avoids having to type lal::build::build in tests and main.rs
-pub use build::{build, BuildOptions};
-pub use configure::configure;
-pub use init::init;
-pub use shell::{shell, docker_run, script, DockerRunFlags, ShellModes};
-pub use fetch::fetch;
-pub use update::{update, update_all};
-pub use remove::remove;
-pub use export::export;
-pub use status::status;
-pub use verify::verify;
-pub use stash::stash;
-pub use clean::clean;
-pub use query::query;
-pub use publish::publish;
+pub use crate::build::{build, BuildOptions};
+pub use crate::clean::clean;
+pub use crate::configure::configure;
+pub use crate::export::export;
+pub use crate::fetch::fetch;
+pub use crate::init::init;
+pub use crate::publish::publish;
+pub use crate::query::query;
+pub use crate::remove::remove;
+pub use crate::shell::{docker_run, script, shell, DockerRunFlags, ShellModes};
+pub use crate::stash::stash;
+pub use crate::status::status;
+pub use crate::update::{update, update_all};
 
-mod configure;
-mod init;
-mod shell;
 mod build;
-mod query;
-mod update;
-mod fetch;
-mod remove;
-mod export;
 mod clean;
-mod verify;
+mod configure;
+mod export;
+mod fetch;
+mod init;
+mod publish;
+mod query;
+mod remove;
+mod shell;
 mod stash;
 mod status;
-mod publish;
+mod update;
 
 #[cfg(feature = "upgrade")]
-pub use upgrade::upgrade;
+pub use crate::upgrade::upgrade;
 #[cfg(feature = "upgrade")]
 mod upgrade;

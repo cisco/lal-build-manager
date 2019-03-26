@@ -1,12 +1,12 @@
 {
-  "name": "hello",
-  "channel": null,
+  "name": "chan-base2",
+  "channel": "/leaf",
   "environment": "alpine",
   "supportedEnvironments": [
     "alpine"
   ],
   "components": {
-    "hello": {
+    "chan-base2": {
       "defaultConfig": "release",
       "configurations": [
         "release"
@@ -14,10 +14,7 @@
     }
   },
   "dependencies": {
-    "heylib": {
-      "channel": "/",
-      "version": 1
-    }
+    "chan-leaf": {"version":1, "channel": "/leaf"}
   },
   "devDependencies": {}
 }

@@ -1,23 +1,27 @@
-use std::path::{Path, PathBuf};
-use std::fs;
-use std::env;
-use std::process::Command;
 use semver::Version;
+use std::env;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 
-use super::{LalResult, Config, ConfigDefaults, CliError, config_dir};
+use super::{config_dir, CliError, Config, ConfigDefaults, LalResult};
 
 fn executable_on_path(exe: &str) -> LalResult<()> {
     trace!("Verifying executable {}", exe);
     let s = Command::new("which").arg(exe).output()?;
     if !s.status.success() {
-        debug!("Failed to find {}: {}",
-               exe,
-               String::from_utf8_lossy(&s.stderr).trim());
+        debug!(
+            "Failed to find {}: {}",
+            exe,
+            String::from_utf8_lossy(&s.stderr).trim()
+        );
         return Err(CliError::ExecutableMissing(exe.into()));
     };
-    debug!("Found {} at {}",
-           exe,
-           String::from_utf8_lossy(&s.stdout).trim());
+    debug!(
+        "Found {} at {}",
+        exe,
+        String::from_utf8_lossy(&s.stdout).trim()
+    );
     Ok(())
 }
 
@@ -51,24 +55,32 @@ fn kernel_sanity() -> LalResult<()> {
     match uname.trim().parse::<Version>() {
         Ok(ver) => {
             debug!("Found linux kernel version {}", ver);
-            trace!("found major {} minor {} patch {} - prelen {}",
-                   ver.major,
-                   ver.minor,
-                   ver.patch,
-                   ver.pre.len());
-            trace!("req major {} minor {} patch {} - prelen {}",
-                   req.major,
-                   req.minor,
-                   req.patch,
-                   req.pre.len());
+            trace!(
+                "found major {} minor {} patch {} - prelen {}",
+                ver.major,
+                ver.minor,
+                ver.patch,
+                ver.pre.len()
+            );
+            trace!(
+                "req major {} minor {} patch {} - prelen {}",
+                req.major,
+                req.minor,
+                req.patch,
+                req.pre.len()
+            );
             if ver >= req {
-                debug!("Minimum kernel requirement of {} satisfied ({})",
-                       req.to_string(),
-                       ver.to_string());
+                debug!(
+                    "Minimum kernel requirement of {} satisfied ({})",
+                    req.to_string(),
+                    ver.to_string()
+                );
             } else {
                 warn!("Your Linux kernel {} is very old", ver.to_string());
-                warn!("A kernel >= {} is highly recommended on Linux systems",
-                      req.to_string())
+                warn!(
+                    "A kernel >= {} is highly recommended on Linux systems",
+                    req.to_string()
+                )
             }
         }
         Err(e) => {
@@ -94,29 +106,36 @@ fn docker_version_check() -> LalResult<()> {
     let dver_output = Command::new("docker").arg("--version").output()?;
     let dverstr = String::from_utf8_lossy(&dver_output.stdout);
     trace!("docker version string {}", dverstr);
-    let dverary = dverstr.trim().split(" ").collect::<Vec<_>>();
+    let dverary = dverstr.trim().split(' ').collect::<Vec<_>>();
     if dverary.len() < 3 {
         warn!("Failed to parse docker version: ({})", dverstr);
         return Ok(()); // assume it's a really weird docker
     }
-    let mut dver = dverary[2].to_string(); // third entry is the semver version
-    dver.pop(); // remove trailing comma (even if it goes, this parses)
-    match dver.parse::<Version>() {
+    let mut ver = dverary[2].to_string(); // third entry is the semver version
+    ver.pop(); // remove trailing comma (even if it goes, this parses)
+    match ver.parse::<Version>() {
         Ok(ver) => {
             debug!("Found docker version {}", ver);
             if ver < req {
                 warn!("Your docker version {} is very old", ver.to_string());
-                warn!("A docker version >= {} is highly recommended",
-                      req.to_string())
+                warn!(
+                    "A docker version >= {} is highly recommended",
+                    req.to_string()
+                )
             } else {
-                debug!("Minimum docker requirement of {} satisfied ({})",
-                       req.to_string(),
-                       ver.to_string());
+                debug!(
+                    "Minimum docker requirement of {} satisfied ({})",
+                    req.to_string(),
+                    ver.to_string()
+                );
             }
         }
         Err(e) => {
-            warn!("Failed to parse docker version from `docker --version`: {}",
-                  e);
+            warn!(
+                "Failed to parse docker version from `docker --version`: {}",
+                e
+            );
+            warn!("Found version {}", dverstr);
             warn!("Note that a docker version >= 1.12 is expected");
         }
     }
@@ -124,11 +143,11 @@ fn docker_version_check() -> LalResult<()> {
 }
 
 fn ssl_cert_sanity() -> LalResult<()> {
+    use openssl_probe;
     // SSL_CERT_FILE are overridden by openssl_probe in main.rs
     // BUT this happens AFTER lal configure
     // evars are currently empty (unless set manually) - so we can provide debug here
     let is_overridden = env::var_os("SSL_CERT_FILE").is_some();
-    use openssl_probe;
     let proberes = openssl_probe::probe();
     if let Some(cert) = proberes.cert_dir {
         debug!("Using SSL_CERT_DIR as {}", cert.display());
@@ -154,9 +173,11 @@ fn lal_version_check(minlal: &str) -> LalResult<()> {
     if current < req {
         Err(CliError::OutdatedLal(current.to_string(), req.to_string()))
     } else {
-        debug!("Minimum lal requirement of {} satisfied ({})",
-               req.to_string(),
-               current.to_string());
+        debug!(
+            "Minimum lal requirement of {} satisfied ({})",
+            req.to_string(),
+            current.to_string()
+        );
         Ok(())
     }
 }
@@ -196,17 +217,9 @@ fn create_lal_dir() -> LalResult<PathBuf> {
 pub fn configure(save: bool, interactive: bool, defaults: &str) -> LalResult<Config> {
     let _ = create_lal_dir()?;
 
-    for exe in [
-        "docker",
-        "tar",
-        "touch",
-        "id",
-        "find",
-        "mkdir",
-        "chmod",
-        "uname",
-    ].into_iter()
-    {
+    for exe in &[
+        "docker", "tar", "touch", "id", "find", "mkdir", "chmod", "uname",
+    ] {
         executable_on_path(exe)?;
     }
     docker_sanity()?;

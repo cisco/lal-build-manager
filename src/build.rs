@@ -1,11 +1,12 @@
-use std::path::Path;
 use std::fs;
+use std::path::Path;
 
-use shell;
-use verify::verify;
-use super::{ensure_dir_exists_fresh, output, Lockfile, Manifest, Container, Config, LalResult,
-            CliError, DockerRunFlags, ShellModes};
-
+use super::{
+    ensure_dir_exists_fresh, output, CliError, Config, Container, DockerRunFlags, LalResult,
+    Lockfile, Manifest, ShellModes,
+};
+use crate::shell;
+use crate::verify::{verify, Flags};
 
 fn find_valid_build_script() -> LalResult<String> {
     use std::os::unix::fs::PermissionsExt;
@@ -37,7 +38,6 @@ fn find_valid_build_script() -> LalResult<String> {
     Ok(build_string.into())
 }
 
-
 /// Configurable build flags for `lal build`
 pub struct BuildOptions {
     /// Component to build if specified
@@ -54,10 +54,9 @@ pub struct BuildOptions {
     pub sha: Option<String>,
     /// Ignore verify failures
     pub force: bool,
-    /// Use the `simple` verify algorithm
-    pub simple_verify: bool,
+    /// Flags used to tweak the verification algorithm
+    pub verify_flags: Flags,
 }
-
 
 /// Runs the `./BUILD` script in a container and packages artifacts.
 ///
@@ -68,31 +67,30 @@ pub fn build(
     cfg: &Config,
     manifest: &Manifest,
     opts: &BuildOptions,
-    envname: String,
-    _modes: ShellModes,
+    envname: &str,
+    mut modes: ShellModes,
 ) -> LalResult<()> {
-    let mut modes = _modes;
-
     // have a better warning on first file-io operation
     // if nfs mounts and stuff cause issues this usually catches it
-    ensure_dir_exists_fresh("./OUTPUT")
-        .map_err(|e| {
-            error!("Failed to clean out OUTPUT dir: {}", e);
-            e
-        })?;
+    ensure_dir_exists_fresh("./OUTPUT").map_err(|e| {
+        error!("Failed to clean out OUTPUT dir: {}", e);
+        e
+    })?;
 
     debug!("Version flag is {:?}", opts.version);
 
     // Verify INPUT
-    let mut verify_failed = false;
-    if let Some(e) = verify(manifest, &envname, opts.simple_verify).err() {
-        if !opts.force {
-            return Err(e);
+    let verify_failed = {
+        if let Some(e) = verify(manifest, &envname, opts.verify_flags).err() {
+            if !opts.force {
+                return Err(e);
+            }
+            warn!("Verify failed - build will fail on jenkins, but continuing");
+            true
+        } else {
+            false
         }
-        verify_failed = true;
-        warn!("Verify failed - build will fail on jenkins, but continuing");
-    }
-
+    };
 
     let component = opts.name.clone().unwrap_or_else(|| manifest.name.clone());
     debug!("Getting configurations for {}", component);
@@ -110,18 +108,24 @@ pub fn build(
     } else {
         component_settings.defaultConfig.clone()
     };
-    if !component_settings.configurations.contains(&configuration_name) {
+    if !component_settings
+        .configurations
+        .contains(&configuration_name)
+    {
         let ename = format!("{} not found in configurations list", configuration_name);
         return Err(CliError::InvalidBuildConfiguration(ename));
     }
-    let lockfile = Lockfile::new(&component,
-                                 &opts.container,
-                                 &envname,
-                                 opts.version.clone(),
-                                 Some(&configuration_name))
-        .set_default_env(manifest.environment.clone())
-        .attach_revision_id(opts.sha.clone())
-        .populate_from_input()?;
+    let lockfile = Lockfile::new(
+        &component,
+        &opts.container,
+        &envname,
+        opts.version.clone(),
+        Some(&configuration_name),
+    )
+    .with_channel(manifest.channel.clone())
+    .set_default_env(manifest.environment.clone())
+    .attach_revision_id(opts.sha.clone())
+    .populate_from_input()?;
 
     let lockpth = Path::new("./OUTPUT/lockfile.json");
     lockfile.write(lockpth)?; // always put a lockfile in OUTPUT at the start of a build

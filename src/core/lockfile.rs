@@ -1,16 +1,17 @@
-use serde_json;
 use chrono::UTC;
 use rand;
+use serde_json;
+use std::fmt::Debug;
 
-use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::io::prelude::*;
+use std::path::{Path, PathBuf};
 
-use std::collections::{HashMap, BTreeMap};
 use std::collections::BTreeSet;
+use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 
-use super::{CliError, LalResult, input};
+use super::{input, CliError, LalResult};
 
 /// Representation of a docker container image
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -24,7 +25,7 @@ pub struct Container {
 impl Container {
     /// Container struct with latest tag
     pub fn latest(name: &str) -> Self {
-        Container {
+        Self {
             name: name.into(),
             tag: "latest".into(),
         }
@@ -39,7 +40,7 @@ impl fmt::Display for Container {
 /// Intentionally kept distinct from normal build images
 impl Default for Container {
     fn default() -> Self {
-        Container {
+        Self {
             name: "ubuntu".into(),
             tag: "xenial".into(),
         }
@@ -51,11 +52,15 @@ impl Container {
     ///
     /// This will split the container on `:` to actually fetch the tag, and if no tag
     /// was present, it will assume tag is latest as per docker conventions.
-    pub fn new(container: &str) -> Container {
+    pub fn new(container: &str) -> Self {
         let split: Vec<&str> = container.split(':').collect();
         let tag = if split.len() == 2 { split[1] } else { "latest" };
-        let cname = if split.len() == 2 { split[0] } else { container };
-        Container {
+        let cname = if split.len() == 2 {
+            split[0]
+        } else {
+            container
+        };
+        Self {
             name: cname.into(),
             tag: tag.into(),
         }
@@ -80,6 +85,8 @@ pub struct Lockfile {
     pub sha: Option<String>,
     /// Version of the component built
     pub version: String,
+    /// Channel of the component built
+    pub channel: Option<String>,
     /// Version of the lal tool
     pub tool: String,
     /// Built timestamp
@@ -90,7 +97,7 @@ pub struct Lockfile {
 
 /// Generates a temporary empty lockfile for internal analysis
 impl Default for Lockfile {
-    fn default() -> Self { Lockfile::new("templock", &Container::default(), "none", None, None) }
+    fn default() -> Self { Self::new("templock", &Container::default(), "none", None, None) }
 }
 
 impl Lockfile {
@@ -106,9 +113,10 @@ impl Lockfile {
     ) -> Self {
         let def_version = format!("EXPERIMENTAL-{:x}", rand::random::<u64>());
         let time = UTC::now();
-        Lockfile {
+        Self {
             name: name.to_string(),
             version: v.unwrap_or(def_version),
+            channel: None,
             config: build_cfg.unwrap_or("release").to_string(),
             container: container.clone(),
             tool: env!("CARGO_PKG_VERSION").to_string(),
@@ -118,6 +126,12 @@ impl Lockfile {
             dependencies: BTreeMap::new(),
             sha: None,
         }
+    }
+
+    /// Provide a channel for the lockfile.
+    pub fn with_channel(mut self, channel: Option<String>) -> Self {
+        self.channel = channel;
+        self
     }
 
     /// Opened lockfile at a path
@@ -133,15 +147,14 @@ impl Lockfile {
     /// A reader from ARTIFACT directory
     pub fn release_build() -> LalResult<Self> {
         let lpath = Path::new("ARTIFACT").join("lockfile.json");
-        Ok(Lockfile::from_path(&lpath, "release build")?)
+        Ok(Self::from_path(&lpath, "release build")?)
     }
 
     // Helper constructor for input populator below
     fn from_input_component(component: &str) -> LalResult<Self> {
         let lock_path = Path::new("./INPUT").join(component).join("lockfile.json");
-        Ok(Lockfile::from_path(&lock_path, component)?)
+        Ok(Self::from_path(&lock_path, component)?)
     }
-
 
     /// Read all the lockfiles in INPUT to generate the full lockfile
     ///
@@ -152,7 +165,7 @@ impl Lockfile {
         let deps = input::analyze()?;
         for name in deps.keys() {
             trace!("Populating lockfile with {}", name);
-            let deplock = Lockfile::from_input_component(name)?;
+            let deplock = Self::from_input_component(name)?;
             self.dependencies.insert(name.clone(), deplock);
         }
         Ok(self)
@@ -180,31 +193,24 @@ impl Lockfile {
     pub fn write(&self, pth: &Path) -> LalResult<()> {
         let encoded = serde_json::to_string_pretty(self)?;
         let mut f = File::create(pth)?;
-        write!(f, "{}\n", encoded)?;
+        writeln!(f, "{}", encoded)?;
         debug!("Wrote lockfile {}: \n{}", pth.display(), encoded);
         Ok(())
     }
 }
 
-
 // name of component -> (value1, value2, ..)
-pub type ValueUsage = HashMap<String, BTreeSet<String>>;
+pub type ValueUsageGen<T> = HashMap<String, BTreeSet<T>>;
+pub type ValueUsage = ValueUsageGen<String>;
 
 // The hardcore dependency analysis parts
 impl Lockfile {
-    // helper to extract specific keys out of a struct
-    fn get_value(&self, key: &str) -> String {
-        if key == "version" {
-            self.version.clone()
-        } else if key == "environment" {
-            self.environment.clone()
-        } else {
-            unreachable!("Only using get_value internally");
-        }
-    }
-
     /// Recursive function to check for multiple version/environment (key) use
-    fn find_all_values(&self, key: &str) -> ValueUsage {
+    fn find_all_values<F, T>(&self, f: &F) -> ValueUsageGen<T>
+    where
+        F: Fn(&Self) -> T,
+        T: Ord + Debug,
+    {
         let mut acc = HashMap::new();
         // for each entry in dependencies
         for (main_name, dep) in &self.dependencies {
@@ -215,17 +221,13 @@ impl Lockfile {
             {
                 // Only borrow as mutable once - so creating a temporary scope
                 let first_value_set = acc.get_mut(main_name).unwrap();
-                first_value_set.insert(dep.get_value(key));
+                first_value_set.insert(f(dep));
             }
 
             // Recurse into its dependencies
             trace!("Recursing into deps for {}, acc is {:?}", main_name, acc);
-            for (name, value_set) in dep.find_all_values(key) {
-                trace!("Found {} for for {} under {} as {:?}",
-                       key,
-                       name,
-                       main_name,
-                       value_set);
+            for (name, value_set) in dep.find_all_values(f) {
+                trace!("Found for {} under {} as {:?}", name, main_name, value_set);
                 // ensure each entry from above exists in current accumulator
                 if !acc.contains_key(&name) {
                     acc.insert(name.clone(), BTreeSet::new());
@@ -240,11 +242,20 @@ impl Lockfile {
         acc
     }
 
-    /// List all used versions used of each dependency
-    pub fn find_all_dependency_versions(&self) -> ValueUsage { self.find_all_values("version") }
+    /// List the versions used by each dependency
+    pub fn find_all_dependency_versions(&self) -> ValueUsage {
+        self.find_all_values(&|lf| lf.version.clone())
+    }
 
-    /// List all used environments used of each dependency
-    pub fn find_all_environments(&self) -> ValueUsage { self.find_all_values("environment") }
+    /// List the environments used by each dependency
+    pub fn find_all_environments(&self) -> ValueUsage {
+        self.find_all_values(&|lf| lf.environment.clone())
+    }
+
+    /// List the channels used by each dependency
+    pub fn find_all_channels(&self) -> ValueUsageGen<Option<String>> {
+        self.find_all_values(&|lf| lf.channel.clone())
+    }
 
     /// List all dependency names used by each dependency (not transitively)
     pub fn find_all_dependency_names(&self) -> ValueUsage {
@@ -299,7 +310,7 @@ impl Lockfile {
                 }
                 // merge in values from recursion
                 let full_value_set = acc.get_mut(&name).unwrap(); // know this exists now
-                // union in values from recursion
+                                                                  // union in values from recursion
                 for value in value_set {
                     full_value_set.insert(value);
                 }
@@ -315,9 +326,10 @@ impl Lockfile {
         let mut res = BTreeSet::new();
 
         if !revdeps.contains_key(&component) {
-            warn!("Could not find {} in the dependency tree for {}",
-                  component,
-                  self.name);
+            warn!(
+                "Could not find {} in the dependency tree for {}",
+                component, self.name
+            );
             return res;
         }
 

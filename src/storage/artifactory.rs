@@ -1,23 +1,23 @@
 #![allow(missing_docs)]
 
-use std::vec::Vec;
-use std::io::{Read, Write};
 use std::fs::File;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::vec::Vec;
 
 #[cfg(feature = "upgrade")]
 use semver::Version;
 
+use hyper::header::{Authorization, Basic};
+use hyper::net::HttpsConnector;
+use hyper::status::StatusCode;
+use hyper::{self, Client};
+use hyper_native_tls::NativeTlsClient;
 use serde_json;
 use sha1;
-use hyper::{self, Client};
-use hyper::net::HttpsConnector;
-use hyper::header::{Authorization, Basic};
-use hyper::status::StatusCode;
-use hyper_native_tls::NativeTlsClient;
 
-use core::{CliError, LalResult};
-
+use crate::channel::Channel;
+use crate::core::{CliError, LalResult};
 
 /// Artifactory credentials
 #[derive(Serialize, Deserialize, Clone)]
@@ -41,8 +41,9 @@ pub struct ArtifactoryConfig {
     pub vgroup: String,
     /// Optional publish credentials
     pub credentials: Option<Credentials>,
+    /// Optional max number of upload retries
+    pub upload_retries: Option<u32>,
 }
-
 
 // Need these to query for stored artifacts:
 // This query has tons of info, but we only care about the version
@@ -61,7 +62,10 @@ fn hyper_req(url: &str) -> LalResult<String> {
     let client = Client::with_connector(HttpsConnector::new(NativeTlsClient::new().unwrap()));
     let mut res = client.get(url).send()?;
     if res.status != hyper::Ok {
-        return Err(CliError::BackendFailure(format!("GET request with {}", res.status)));
+        return Err(CliError::BackendFailure(format!(
+            "GET request with {}",
+            res.status
+        )));
     }
     let mut body = String::new();
     res.read_to_string(&mut body)?;
@@ -74,7 +78,10 @@ pub fn http_download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
     let client = Client::with_connector(HttpsConnector::new(NativeTlsClient::new().unwrap()));
     let mut res = client.get(url).send()?;
     if res.status != hyper::Ok {
-        return Err(CliError::BackendFailure(format!("GET request with {}", res.status)));
+        return Err(CliError::BackendFailure(format!(
+            "GET request with {}",
+            res.status
+        )));
     }
 
     if cfg!(feature = "progress") {
@@ -86,8 +93,10 @@ pub fn http_download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
             let mut buffer = [0; 1024 * 64];
             let mut f = File::create(save)?;
             let pb = ProgressBar::new(total_size);
-            pb.set_style(ProgressStyle::default_bar()
-                             .template("{bar:40.yellow/black} {bytes}/{total_bytes} ({eta})"));
+            pb.set_style(
+                ProgressStyle::default_bar()
+                    .template("{bar:40.yellow/black} {bytes}/{total_bytes} ({eta})"),
+            );
 
             while downloaded < total_size {
                 let read = res.read(&mut buffer)?;
@@ -106,7 +115,6 @@ pub fn http_download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
     Ok(())
 }
 
-
 /// Query the Artifactory storage api
 ///
 /// This will get, then parse all results as u32s, and return this list.
@@ -114,16 +122,16 @@ pub fn http_download_to_path(url: &str, save: &PathBuf) -> LalResult<()> {
 fn get_storage_versions(uri: &str) -> LalResult<Vec<u32>> {
     debug!("GET {}", uri);
 
-    let resp = hyper_req(uri)
-        .map_err(|e| {
-            warn!("Failed to GET {}: {}", uri, e);
-            CliError::BackendFailure("No version information found on API".into())
-        })?;
+    let resp = hyper_req(uri).map_err(|e| {
+        warn!("Failed to GET {}: {}", uri, e);
+        CliError::BackendFailure("No version information found on API".into())
+    })?;
 
     trace!("Got body {}", resp);
 
     let res: ArtifactoryStorageResponse = serde_json::from_str(&resp)?;
-    let mut builds: Vec<u32> = res.children
+    let mut builds: Vec<u32> = res
+        .children
         .iter()
         .map(|r| r.uri.as_str())
         .map(|r| r.trim_matches('/'))
@@ -142,8 +150,6 @@ header! {(XCheckSumSha1, "X-Checksum-Sha1") => [String]}
 /// This is using a http basic auth PUT to artifactory using config credentials.
 fn upload_artifact(arti: &ArtifactoryConfig, uri: &str, f: &mut File) -> LalResult<()> {
     if let Some(creds) = arti.credentials.clone() {
-        let client = Client::new();
-
         let mut buffer: Vec<u8> = Vec::new();
         f.read_to_end(&mut buffer)?;
 
@@ -153,43 +159,77 @@ fn upload_artifact(arti: &ArtifactoryConfig, uri: &str, f: &mut File) -> LalResu
         sha.update(&buffer);
 
         let auth = Authorization(Basic {
-                                     username: creds.username,
-                                     password: Some(creds.password),
-                                 });
+            username: creds.username,
+            password: Some(creds.password),
+        });
 
-        // upload the artifact
-        info!("PUT {}", full_uri);
-        let resp = client.put(&full_uri[..]).header(auth.clone()).body(&buffer[..]).send()?;
-        debug!("resp={:?}", resp);
-        let respstr = format!("{} from PUT {}", resp.status, full_uri);
-        if resp.status != StatusCode::Created {
-            return Err(CliError::UploadFailure(respstr));
+        let client = Client::with_connector(HttpsConnector::new(NativeTlsClient::new().unwrap()));
+
+        let mut remaining_retries = arti.upload_retries.unwrap_or(0);
+        loop {
+            match upload_artifact_attempt(&client, &auth, &full_uri, &buffer, &sha) {
+                Err(e) => {
+                    if remaining_retries == 0 {
+                        return Err(e);
+                    }
+                    warn!(
+                        "Upload attempt failed! Remaining attempts: {}",
+                        remaining_retries
+                    );
+                    remaining_retries -= 1;
+                }
+                Ok(()) => return Ok(()),
+            }
         }
-        debug!("{}", respstr);
-
-        // do another request to get the hash on artifactory
-        // jfrog api does not allow do do both at once - and this also creates the md5 (somehow)
-        // this creates ${full_uri}.sha1 and ${full_uri}.md5 (although we just gave it the sha..)
-        // This `respsha` can fail if engci-maven becomes inconsistent. NotFound has been seen.
-        // And that makes no sense because the above must have returned Created to get here..
-        info!("PUT {} (X-Checksum-Sha1)", full_uri);
-        let respsha = client
-            .put(&full_uri[..])
-            .header(XCheckSumDeploy("true".into()))
-            .header(XCheckSumSha1(sha.digest().to_string()))
-            .header(auth)
-            .send()?;
-        debug!("respsha={:?}", respsha);
-        let respshastr = format!("{} from PUT {} (X-Checksum-Sha1)", respsha.status, full_uri);
-        if respsha.status != StatusCode::Created {
-            return Err(CliError::UploadFailure(respshastr));
-        }
-        debug!("{}", respshastr);
-
-        Ok(())
     } else {
         Err(CliError::MissingBackendCredentials)
     }
+}
+
+/// Make an attempt to upload an artifact
+///
+/// Uses borrowed client, credentials, full_uri, buffer to upload and its sha
+fn upload_artifact_attempt(
+    client: &Client,
+    auth: &Authorization<Basic>,
+    full_uri: &str,
+    buffer: &[u8],
+    sha: &sha1::Sha1,
+) -> LalResult<()> {
+    // attempt upload the artifact
+    info!("PUT {}", full_uri);
+    let resp = client
+        .put(&full_uri[..])
+        .header(auth.clone())
+        .body(&buffer[..])
+        .send()?;
+    debug!("resp={:?}", resp);
+    let respstr = format!("{} from PUT {}", resp.status, full_uri);
+    if resp.status != StatusCode::Created {
+        return Err(CliError::UploadFailure(respstr));
+    }
+    debug!("{}", respstr);
+
+    // do another request to get the hash on artifactory
+    // jfrog api does not allow do do both at once - and this also creates the md5 (somehow)
+    // this creates ${full_uri}.sha1 and ${full_uri}.md5 (although we just gave it the sha..)
+    // This `respsha` can fail if engci-maven becomes inconsistent. NotFound has been seen.
+    // And that makes no sense because the above must have returned Created to get here..
+    info!("PUT {} (X-Checksum-Sha1)", full_uri);
+    let respsha = client
+        .put(&full_uri[..])
+        .header(XCheckSumDeploy("true".into()))
+        .header(XCheckSumSha1(sha.digest().to_string()))
+        .header(auth.clone())
+        .send()?;
+    debug!("respsha={:?}", respsha);
+    let respshastr = format!("{} from PUT {} (X-Checksum-Sha1)", respsha.status, full_uri);
+    if respsha.status != StatusCode::Created {
+        return Err(CliError::UploadFailure(respshastr));
+    }
+    debug!("{}", respshastr);
+
+    Ok(())
 }
 
 /// Get the maximal version number from the storage api
@@ -197,7 +237,9 @@ fn get_storage_as_u32(uri: &str) -> LalResult<u32> {
     if let Some(&latest) = get_storage_versions(uri)?.iter().max() {
         Ok(latest)
     } else {
-        Err(CliError::BackendFailure("No version information found on API".into()))
+        Err(CliError::BackendFailure(
+            "No version information found on API".into(),
+        ))
     }
 }
 
@@ -208,48 +250,63 @@ fn get_dependency_env_url(
     version: u32,
     env: &str,
 ) -> String {
-    let tar_url = format!("{}/{}/env/{}/{}/{}/{}.tar.gz",
-                          art_cfg.slave,
-                          art_cfg.vgroup,
-                          env,
-                          name,
-                          version.to_string(),
-                          name);
+    let tar_url = format!(
+        "{}/{}/env/{}/{}/{}/{}.tar.gz",
+        art_cfg.slave,
+        art_cfg.vgroup,
+        env,
+        name,
+        version.to_string(),
+        name
+    );
 
     trace!("Inferring tarball location as {}", tar_url);
     tar_url
+}
+
+fn get_api_storage_url(
+    art_cfg: &ArtifactoryConfig,
+    name: &str,
+    env: &str,
+    channel: &Channel,
+) -> String {
+    format!(
+        "{}/api/storage/{}/{}env/{}/{}",
+        art_cfg.master,
+        art_cfg.release,
+        channel.http_string(),
+        env,
+        name
+    )
 }
 
 fn get_dependency_url_latest(
     art_cfg: &ArtifactoryConfig,
     name: &str,
     env: &str,
+    channel: &Channel,
 ) -> LalResult<Component> {
-    let url = format!("{}/api/storage/{}/{}/{}/{}",
-                      art_cfg.master,
-                      art_cfg.release,
-                      "env",
-                      env,
-                      name);
+    let url = get_api_storage_url(art_cfg, name, env, channel);
     let v = get_storage_as_u32(&url)?;
 
     debug!("Found latest version as {}", v);
     Ok(Component {
-           location: get_dependency_env_url(art_cfg, name, v, env),
-           version: v,
-           name: name.into(),
-       })
+        location: get_dependency_env_url(art_cfg, name, v, env),
+        version: v,
+        name: name.into(),
+        channel: channel.clone(),
+    })
 }
 
 // This queries the API for the default location
 // if a default exists, then all our current multi-builds must exist
-fn get_latest_versions(art_cfg: &ArtifactoryConfig, name: &str, env: &str) -> LalResult<Vec<u32>> {
-    let url = format!("{}/api/storage/{}/{}/{}/{}",
-                      art_cfg.master,
-                      art_cfg.release,
-                      "env",
-                      env,
-                      name);
+fn get_latest_versions(
+    art_cfg: &ArtifactoryConfig,
+    name: &str,
+    env: &str,
+    channel: &Channel,
+) -> LalResult<Vec<u32>> {
+    let url = get_api_storage_url(art_cfg, name, env, channel);
 
     get_storage_versions(&url)
 }
@@ -260,15 +317,17 @@ fn get_tarball_uri(
     name: &str,
     version: Option<u32>,
     env: &str,
+    channel: &Channel,
 ) -> LalResult<Component> {
     if let Some(v) = version {
         Ok(Component {
-               location: get_dependency_env_url(art_cfg, name, v, env),
-               version: v,
-               name: name.into(),
-           })
+            location: get_dependency_env_url(art_cfg, name, v, env),
+            version: v,
+            name: name.into(),
+            channel: channel.clone(),
+        })
     } else {
-        get_dependency_url_latest(art_cfg, name, env)
+        get_dependency_url_latest(art_cfg, name, env, channel)
     }
 }
 
@@ -292,15 +351,15 @@ pub fn get_latest_lal_version() -> LalResult<LatestLal> {
     // canonical latest url
     let uri = "https://engci-maven-master.cisco.com/artifactory/api/storage/CME-release/lal";
     debug!("GET {}", uri);
-    let resp = hyper_req(uri)
-        .map_err(|e| {
-            warn!("Failed to GET {}: {}", uri, e);
-            CliError::BackendFailure("No version information found on API".into())
-        })?;
+    let resp = hyper_req(uri).map_err(|e| {
+        warn!("Failed to GET {}: {}", uri, e);
+        CliError::BackendFailure("No version information found on API".into())
+    })?;
     trace!("Got body {}", resp);
 
     let res: ArtifactoryStorageResponse = serde_json::from_str(&resp)?;
-    let latest: Option<Version> = res.children
+    let latest: Option<Version> = res
+        .children
         .iter()
         .map(|r| r.uri.trim_matches('/').to_string())
         .inspect(|v| trace!("Found lal version {}", v))
@@ -309,13 +368,17 @@ pub fn get_latest_lal_version() -> LalResult<LatestLal> {
 
     if let Some(l) = latest {
         Ok(LatestLal {
-               version: l.clone(),
-               url: format!("https://engci-maven.cisco.com/artifactory/CME-group/lal/{}/lal.tar.gz",
-                            l),
-           })
+            version: l.clone(),
+            url: format!(
+                "https://engci-maven.cisco.com/artifactory/CME-group/lal/{}/lal.tar.gz",
+                l
+            ),
+        })
     } else {
         warn!("Failed to parse version information from artifactory storage api for lal");
-        Err(CliError::BackendFailure("No version information found on API".into()))
+        Err(CliError::BackendFailure(
+            "No version information found on API".into(),
+        ))
     }
 }
 
@@ -332,7 +395,7 @@ pub struct ArtifactoryBackend {
 impl ArtifactoryBackend {
     pub fn new(cfg: &ArtifactoryConfig, cache: &str) -> Self {
         // TODO: create hyper clients in here rather than once per download
-        ArtifactoryBackend {
+        Self {
             config: cfg.clone(),
             cache: cache.into(),
         }
@@ -344,12 +407,12 @@ impl ArtifactoryBackend {
 /// This is intended to be used by the caching trait `CachedBackend`, but for
 /// specific low-level use cases, these methods can be used directly.
 impl Backend for ArtifactoryBackend {
-    fn get_versions(&self, name: &str, loc: &str) -> LalResult<Vec<u32>> {
-        get_latest_versions(&self.config, name, loc)
+    fn get_versions(&self, name: &str, loc: &str, channel: &Channel) -> LalResult<Vec<u32>> {
+        get_latest_versions(&self.config, name, loc, channel)
     }
 
-    fn get_latest_version(&self, name: &str, loc: &str) -> LalResult<u32> {
-        let latest = get_dependency_url_latest(&self.config, name, loc)?;
+    fn get_latest_version(&self, name: &str, loc: &str, channel: &Channel) -> LalResult<u32> {
+        let latest = get_dependency_url_latest(&self.config, name, loc, channel)?;
         Ok(latest.version)
     }
 
@@ -358,19 +421,26 @@ impl Backend for ArtifactoryBackend {
         name: &str,
         version: Option<u32>,
         loc: &str,
+        channel: &Channel,
     ) -> LalResult<Component> {
-        get_tarball_uri(&self.config, name, version, loc)
+        get_tarball_uri(&self.config, name, version, loc, channel)
     }
 
-    fn publish_artifact(&self, name: &str, version: u32, env: &str) -> LalResult<()> {
+    fn publish_artifact(
+        &self,
+        name: &str,
+        version: u32,
+        channel: Channel,
+        env: &str,
+    ) -> LalResult<()> {
         // this fn basically assumes all the sanity checks have been performed
         // files must exist and lockfile must be sensible
         let artdir = Path::new("./ARTIFACT");
         let tarball = artdir.join(format!("{}.tar.gz", name));
         let lockfile = artdir.join("lockfile.json");
 
-        // uri prefix if specific env upload
-        let prefix = format!("env/{}/", env);
+        // URI prefix based on environment and channel
+        let prefix = format!("{}env/{}/", channel.http_string(), env);
 
         let tar_uri = format!("{}{}/{}/{}.tar.gz", prefix, name, version, name);
         let mut tarf = File::open(tarball)?;
@@ -386,5 +456,23 @@ impl Backend for ArtifactoryBackend {
 
     fn raw_fetch(&self, url: &str, dest: &PathBuf) -> LalResult<()> {
         http_download_to_path(url, dest)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_uri() {
+        let input =
+            get_api_storage_url(&ArtifactoryConfig::default(), "a", "b", &Channel::default());
+        let output = "/api/storage//env/b/a";
+        assert_eq!(input, output);
+
+        let input =
+            get_api_storage_url(&ArtifactoryConfig::default(), "a", "b", &Channel::new("c"));
+        let output = "/api/storage//ch/c/env/b/a";
+        assert_eq!(input, output);
     }
 }
