@@ -1,14 +1,15 @@
 #![allow(missing_docs)]
 
-use std::io::prelude::*;
-use std::fs::File;
-use std::path::Path;
-use std::collections::BTreeMap;
+use crate::channel::Channel;
 use serde_json;
+use std::collections::BTreeMap;
+use std::fs::File;
+use std::io::prelude::*;
+use std::path::Path;
 
 use walkdir::WalkDir;
 
-use super::{Manifest, Lockfile, CliError, LalResult};
+use super::{CliError, Coordinates, LalResult, Lockfile, Manifest};
 
 #[derive(Deserialize)]
 struct PartialLock {
@@ -25,9 +26,7 @@ fn read_partial_lockfile(component: &str) -> LalResult<PartialLock> {
     Ok(serde_json::from_str(&lock_str)?)
 }
 
-pub fn present() -> bool {
-    Path::new("./INPUT").is_dir()
-}
+pub fn present() -> bool { Path::new("./INPUT").is_dir() }
 
 /// Simple INPUT analyzer for the lockfile generator and `analyze_full`
 pub fn analyze() -> LalResult<BTreeMap<String, String>> {
@@ -41,7 +40,7 @@ pub fn analyze() -> LalResult<BTreeMap<String, String>> {
         .min_depth(1)
         .max_depth(1)
         .into_iter()
-        .filter_map(|e| e.ok())
+        .filter_map(Result::ok)
         .filter(|e| e.path().is_dir());
 
     for d in dirs {
@@ -59,7 +58,7 @@ pub struct InputDependency {
     pub missing: bool,
     pub extraneous: bool,
     pub development: bool,
-    pub version: String, // on disk
+    pub version: String,             // on disk
     pub requirement: Option<String>, // from manifest
 }
 
@@ -85,30 +84,34 @@ pub fn analyze_full(manifest: &Manifest) -> LalResult<InputMap> {
             Some(v) => v.clone(),
             None => v.to_string(),
         };
-        depmap.insert(d.clone(),
-                      InputDependency {
-                          name: d.clone(),
-                          version: version,
-                          requirement: Some(format!("{}", v)),
-                          missing: deps.get(&d).is_none(),
-                          development: manifest.devDependencies.contains_key(&d),
-                          extraneous: false,
-                      });
+        depmap.insert(
+            d.clone(),
+            InputDependency {
+                name: d.clone(),
+                version,
+                requirement: Some(format!("{}", v)),
+                missing: deps.get(&d).is_none(),
+                development: manifest.devDependencies.contains_key(&d),
+                extraneous: false,
+            },
+        );
     }
     // check for potentially non-manifested deps
     // i.e. something in INPUT, but not in manifest
     for name in deps.keys() {
         let actual_ver = deps[name].clone();
         if !saved_deps.contains_key(name) {
-            depmap.insert(name.clone(),
-                          InputDependency {
-                              name: name.clone(),
-                              version: actual_ver,
-                              requirement: None,
-                              missing: false,
-                              development: false,
-                              extraneous: true,
-                          });
+            depmap.insert(
+                name.clone(),
+                InputDependency {
+                    name: name.clone(),
+                    version: actual_ver,
+                    requirement: None,
+                    missing: false,
+                    development: false,
+                    extraneous: true,
+                },
+            );
         }
     }
 
@@ -123,7 +126,7 @@ pub fn verify_dependencies_present(m: &Manifest) -> LalResult<()> {
         .min_depth(1)
         .max_depth(1)
         .into_iter()
-        .filter_map(|e| e.ok())
+        .filter_map(Result::ok)
         .filter(|e| e.path().is_dir());
     for entry in dirs {
         let pth = entry.path().strip_prefix("INPUT").unwrap();
@@ -142,31 +145,34 @@ pub fn verify_dependencies_present(m: &Manifest) -> LalResult<()> {
             error = Some(CliError::MissingDependencies);
         }
     }
-    if let Some(e) = error { Err(e) } else { Ok(()) }
+    if let Some(e) = error {
+        Err(e)
+    } else {
+        Ok(())
+    }
 }
 
 /// Optional part of input verifier - checks that all versions use correct versions
 pub fn verify_global_versions(lf: &Lockfile, m: &Manifest) -> LalResult<()> {
     let all_deps = m.all_dependencies();
     for (name, dep) in &lf.dependencies {
-        let v = dep.version
-            .parse::<u32>()
-            .map_err(|e| {
-                debug!("Failed to parse first version of {} as int ({:?})", name, e);
-                CliError::NonGlobalDependencies(name.clone())
-            })?;
+        let v = dep.version.parse::<u32>().map_err(|e| {
+            debug!("Failed to parse first version of {} as int ({:?})", name, e);
+            CliError::NonGlobalDependencies(name.clone())
+        })?;
         // also ensure it matches the version in the manifest
-        let vreq = *all_deps
-            .get(name)
-            .ok_or_else(|| {
-                // This is a first level dependency - it should be in the manifest
-                CliError::ExtraneousDependencies(name.clone())
-            })?;
+        let vreq = match all_deps.get(name).ok_or_else(|| {
+            // This is a first level dependency - it should be in the manifest
+            CliError::ExtraneousDependencies(name.clone())
+        })? {
+            Coordinates::OneD(v) => *v,
+            Coordinates::TwoD(c) => c.version,
+        };
         if v != vreq {
-            warn!("Dependency {} has version {}, but manifest requires {}",
-                  name,
-                  v,
-                  vreq);
+            warn!(
+                "Dependency {} has version {}, but manifest requires {}",
+                name, v, vreq
+            );
             return Err(CliError::InvalidVersion(name.clone()));
         }
         // Prevent Cycles (enough to stop it at one manifest level)
@@ -177,17 +183,36 @@ pub fn verify_global_versions(lf: &Lockfile, m: &Manifest) -> LalResult<()> {
     Ok(())
 }
 
+/// Optional part of input verifier - checks that the Channel hierarchy is maintained.
+/// i.e dependencies of Channel "/a/b" must be in channel "/a/b", "/a", or "/".
+pub fn verify_global_channels(lf: &Lockfile) -> LalResult<()> {
+    let channel = Channel::from_option(&lf.channel);
+    channel.verify()?;
+    for dep_lf in lf.dependencies.values() {
+        let dep_ch = Channel::from_option(&dep_lf.channel);
+        channel.contains(&dep_ch)?;
+
+        verify_global_channels(&dep_lf)?;
+    }
+
+    Ok(())
+}
+
 /// Strict requirement for verifier - dependency tree must be flat-equivalent
 pub fn verify_consistent_dependency_versions(lf: &Lockfile, m: &Manifest) -> LalResult<()> {
     for (name, vers) in lf.find_all_dependency_versions() {
         debug!("Found version(s) for {} as {:?}", name, vers);
         assert!(!vers.is_empty(), "found versions");
         if vers.len() != 1 && m.dependencies.contains_key(&name) {
-            warn!("Multiple version requirements on {} found in lockfile",
-                  name.clone());
-            warn!("If you are trying to propagate {0} into the tree, \
-                    you need to follow `lal propagate {0}`",
-                  name);
+            warn!(
+                "Multiple version requirements on {} found in lockfile",
+                name.clone()
+            );
+            warn!(
+                "If you are trying to propagate {0} into the tree, \
+                 you need to follow `lal propagate {0}`",
+                name
+            );
             return Err(CliError::MultipleVersions(name.clone()));
         }
     }
@@ -198,15 +223,107 @@ pub fn verify_consistent_dependency_versions(lf: &Lockfile, m: &Manifest) -> Lal
 pub fn verify_environment_consistency(lf: &Lockfile, env: &str) -> LalResult<()> {
     for (name, envs) in lf.find_all_environments() {
         debug!("Found environment(s) for {} as {:?}", name, envs);
-        if envs.len() != 1 {
-            warn!("Multiple environments used to build {}", name.clone());
-            return Err(CliError::MultipleEnvironments(name.clone()));
-        } else {
+        if envs.len() == 1 {
             let used_env = envs.iter().next().unwrap();
             if used_env != env {
-                return Err(CliError::EnvironmentMismatch(name.clone(), used_env.clone()));
+                return Err(CliError::EnvironmentMismatch(
+                    name.clone(),
+                    used_env.clone(),
+                ));
             }
+        } else {
+            warn!("Multiple environments used to build {}", name.clone());
+            return Err(CliError::MultipleEnvironments(name.clone()));
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn assert_consistent(lf: Lockfile) {
+        let result = verify_global_channels(&lf);
+        assert!(result.is_ok())
+    }
+
+    fn assert_invalid(lf: Lockfile) {
+        let result = verify_global_channels(&lf);
+        assert!(result.is_err())
+    }
+
+    #[test]
+    fn both_default_is_valid() {
+        let mut main_lf = Lockfile::default().with_channel(None);
+        let dep_lf = Lockfile::default().with_channel(None);
+
+        main_lf.dependencies.insert("".to_string(), dep_lf);
+
+        assert_consistent(main_lf);
+    }
+
+    #[test]
+    fn test_consistent_recursion() {
+        let mut main_lf = Lockfile::default().with_channel(None);
+        let mut dep_lf = Lockfile::default().with_channel(None);
+        let dep_dep_lf = Lockfile::default().with_channel(None);
+
+        dep_lf.dependencies.insert("".to_string(), dep_dep_lf);
+        main_lf.dependencies.insert("".to_string(), dep_lf);
+
+        assert_consistent(main_lf);
+    }
+
+    #[test]
+    fn default_channel_cannot_have_child_channel() {
+        let mut main_lf = Lockfile::default().with_channel(None);
+        let dep_lf = Lockfile::default().with_channel(Some("/a".to_string()));
+
+        main_lf.dependencies.insert("".to_string(), dep_lf);
+
+        assert_invalid(main_lf);
+    }
+
+    #[test]
+    fn test_invalid_recursion() {
+        let mut main_lf = Lockfile::default().with_channel(None);
+        let mut dep_lf = Lockfile::default().with_channel(None);
+        let dep_dep_lf = Lockfile::default().with_channel(Some("/a".to_string()));
+
+        dep_lf.dependencies.insert("".to_string(), dep_dep_lf);
+        main_lf.dependencies.insert("".to_string(), dep_lf);
+
+        assert_invalid(main_lf);
+    }
+
+    #[test]
+    fn explicit_parent_with_same_child_consistent() {
+        let mut main_lf = Lockfile::default().with_channel(Some("/a".to_string()));
+        let dep_lf = Lockfile::default().with_channel(Some("/a".to_string()));
+
+        main_lf.dependencies.insert("".to_string(), dep_lf);
+
+        assert_consistent(main_lf);
+    }
+
+    #[test]
+    fn explicit_parent_with_different_child_invalid() {
+        let mut main_lf = Lockfile::default().with_channel(Some("/a".to_string()));
+        let dep_lf = Lockfile::default().with_channel(Some("/b".to_string()));
+
+        main_lf.dependencies.insert("".to_string(), dep_lf);
+
+        assert_invalid(main_lf);
+    }
+
+    #[test]
+    fn child_contains_parent_valid() {
+        let mut main_lf = Lockfile::default().with_channel(Some("/a/b".to_string()));
+        let dep_lf = Lockfile::default().with_channel(Some("/a".to_string()));
+
+        main_lf.dependencies.insert("".to_string(), dep_lf);
+
+        assert_consistent(main_lf);
+    }
 }

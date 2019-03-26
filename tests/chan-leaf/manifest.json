@@ -1,23 +1,18 @@
 {
-  "name": "hello",
-  "channel": null,
+  "name": "chan-leaf",
+  "channel": "/leaf",
   "environment": "alpine",
   "supportedEnvironments": [
     "alpine"
   ],
   "components": {
-    "hello": {
+    "chan-leaf": {
       "defaultConfig": "release",
       "configurations": [
         "release"
       ]
     }
   },
-  "dependencies": {
-    "heylib": {
-      "channel": "/",
-      "version": 1
-    }
-  },
+  "dependencies": {},
   "devDependencies": {}
 }

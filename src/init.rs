@@ -1,8 +1,7 @@
 use std::env;
 
-use super::{Config, CliError, LalResult};
-use core::manifest::*;
-
+use super::{CliError, Config, LalResult};
+use crate::core::manifest::*;
 
 /// Generates a blank manifest in the current directory
 ///
@@ -26,7 +25,7 @@ pub fn init(cfg: &Config, force: bool, env: &str) -> LalResult<()> {
     // we are allowed to overwrite or write a new manifest if we are here
     // always create new manifests in new default location
     create_lal_subdir(&pwd)?; // create the `.lal` subdir if it's not there already
-    Manifest::new(dirname, env, ManifestLocation::default().as_path(&pwd)).write()?;
+    Manifest::new(dirname, env, &ManifestLocation::default().as_path(&pwd)).write()?;
 
     // if the manifest already existed, warn about this now being placed elsewhere
     if let Ok(ManifestLocation::RepoRoot) = mpath {

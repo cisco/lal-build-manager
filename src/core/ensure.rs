@@ -1,7 +1,6 @@
-use std::path::Path;
 use std::fs;
 use std::io;
-
+use std::path::Path;
 
 /// Ensure a directory exists and is empty
 pub fn ensure_dir_exists_fresh(dir: &str) -> io::Result<()> {

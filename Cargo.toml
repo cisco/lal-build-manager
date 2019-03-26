@@ -1,6 +1,6 @@
 [package]
 name = "lal"
-version = "3.8.1"
+version = "4.0.0"
 authors = ["Eirik Albrigtsen <sszynrae@gmail.com>"]
 description = "A strict, language-agnostic build system and dependency manager"
 documentation = "http://lalbuild.github.io/lal"
@@ -8,6 +8,8 @@ license = "MIT"
 categories = ["command-line-utilities"]
 keywords = ["package", "dependency", "build", "docker", "artifactory"]
 readme = "README.md"
+autotests = false
+edition = "2018"
 
 [badges]
 travis-ci = { repository = "lalbuild/lal", branch = "master" }
@@ -17,6 +19,7 @@ coveralls = { repository = "lalbuild/lal", branch = "master" }
 doc = false
 name = "lal"
 path = "src/main.rs"
+edition = "2018"
 
 [[test]]
 harness = false
@@ -28,6 +31,7 @@ chrono = "0.2"
 clap = "2.27.1"
 filetime = "0.1"
 flate2 = "0.2"
+fs2 = "0.4.2"
 hyper = "0.10.9"
 hyper-native-tls = "0.2.2"
 log = "0.3.5"
@@ -42,13 +46,15 @@ serde_json = "1.0.8"
 sha1 = "0.3.0"
 tar = "0.4.10"
 walkdir = "1.0.7"
+dirs = "1.0"
+bitflags = "1.0.4"
 
 [dependencies.indicatif]
 optional = true
 version = "0.3.3"
 
 [features]
-default = ["progress"]
+default = ["progress", "upgrade"]
 progress = ["indicatif"]
 upgrade = []
 

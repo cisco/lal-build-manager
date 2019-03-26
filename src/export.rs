@@ -1,22 +1,23 @@
 use std::fs;
 use std::path::Path;
 
-use storage::CachedBackend;
-use super::{LalResult, CliError};
+use super::{CliError, LalResult};
+use crate::channel::{parse_coords, Channel};
+use crate::storage::CachedBackend;
 
 /// Export a specific component from the storage backend
 pub fn export<T: CachedBackend + ?Sized>(
     backend: &T,
     comp: &str,
     output: Option<&str>,
-    _env: Option<&str>,
+    env: Option<&str>,
 ) -> LalResult<()> {
-    let env = match _env {
+    let env = match env {
         None => {
             error!("export is no longer allowed without an explicit environment");
-            return Err(CliError::EnvironmentUnspecified)
-        },
-        Some(e) => e
+            return Err(CliError::EnvironmentUnspecified);
+        }
+        Some(e) => e,
     };
 
     if comp.to_lowercase() != comp {
@@ -26,24 +27,36 @@ pub fn export<T: CachedBackend + ?Sized>(
     let dir = output.unwrap_or(".");
     info!("Export {} {} to {}", env, comp, dir);
 
-    let mut component_name = comp; // this is only correct if no =version suffix
-    let tarname = if comp.contains('=') {
-        let pair: Vec<&str> = comp.split('=').collect();
-        if let Ok(n) = pair[1].parse::<u32>() {
+    let comp_vec = comp.split('=').collect::<Vec<_>>();
+    let comp_name = comp_vec[0];
+    let tarname = if comp_vec.len() > 1 {
+        // Put the original `=` signs back in place.
+        let coords = comp_vec.iter().skip(1).cloned().collect::<Vec<_>>().join("=");
+        let (version, channel) = parse_coords(&coords);
+        let channel = match channel {
+            Some(ch) => ch,
+            None => Channel::default(),
+        };
+
+        // Verify the channel is valid.
+        channel.verify()?;
+
+        if version.is_some() {
             // standard fetch with an integer version
-            component_name = pair[0]; // save so we have sensible tarball names
-            backend.retrieve_published_component(pair[0], Some(n), env)?.0
+            backend
+                .retrieve_published_component(comp_name, version, env, &channel)?
+                .0
         } else {
-            // string version -> stash
-            component_name = pair[0]; // save so we have sensible tarball names
-            backend.retrieve_stashed_component(pair[0], pair[1])?
+            backend.retrieve_stashed_component(comp_name, &coords)?
         }
     } else {
-        // fetch without a specific version (latest)
-        backend.retrieve_published_component(comp, None, env)?.0
+        // fetch without a specific version and channel (latest, and default)
+        backend
+            .retrieve_published_component(comp_name, None, env, &Channel::default())?
+            .0
     };
 
-    let dest = Path::new(dir).join(format!("{}.tar.gz", component_name));
+    let dest = Path::new(dir).join(format!("{}.tar.gz", comp_name));
     debug!("Copying {:?} to {:?}", tarname, dest);
 
     fs::copy(tarname, dest)?;

@@ -1,0 +1,16 @@
+{
+  "name": "chan-leaf",
+  "config": "release",
+  "container": {
+    "name": "clux/lal-alpine",
+    "tag": "3.6"
+  },
+  "environment": "alpine",
+  "defaultEnv": "alpine",
+  "sha": null,
+  "version": "1",
+  "channel": "/leaf",
+  "tool": "3.8.1",
+  "built": "2019-03-15 13:36:49",
+  "dependencies": {}
+}

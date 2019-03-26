@@ -1,7 +1,6 @@
 /// This file contains all the hidden `lal list-*` subcommands
 /// If you are looking for `lal ls` go to status.rs
-
-use super::{Manifest, Config, LalResult};
+use super::{Config, LalResult, Manifest};
 
 /// Print the buildable components from the `Manifest`
 pub fn buildables(manifest: &Manifest) -> LalResult<()> {
@@ -41,7 +40,11 @@ pub fn environments(cfg: &Config) -> LalResult<()> {
 
 /// Print the dependencies from the manifest
 pub fn dependencies(mf: &Manifest, core: bool) -> LalResult<()> {
-    let deps = if core { mf.dependencies.clone() } else { mf.all_dependencies() };
+    let deps = if core {
+        mf.dependencies.clone()
+    } else {
+        mf.all_dependencies()
+    };
     for k in deps.keys() {
         println!("{}", k);
     }

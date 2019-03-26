@@ -1,15 +1,11 @@
-extern crate lal;
-
 #[macro_use]
 extern crate log;
-extern crate loggerv;
-extern crate walkdir;
 
 use std::env;
-use std::path::Path;
 use std::fs::{self, File};
-use std::process::Command;
 use std::io::prelude::*;
+use std::path::Path;
+use std::process::Command;
 use walkdir::WalkDir;
 
 use loggerv::init_with_verbosity;
@@ -19,28 +15,20 @@ use lal::*;
 
 mod chk {
     use std::fmt::Display;
-    use std::process;
     // TODO: don't need to move T into here, but since they are joined..
     pub fn is_ok<T, E: Display>(x: Result<T, E>, name: &str) {
         let _ = x.map_err(|e| {
-            println!("Bail out! {} failed with '{}'", name, e);
-            process::exit(1);
+            panic!(format!("Bail out! {} failed with '{}'", name, e));
         });
     }
 }
-// fn assert_err<T>(x: LalResult<T>, name: &str) {
-//    let _ = x.map(|v| {
-//        println!("Bail out! {} unexpected ok: {}", name, v);
-//        process::exit(1);
-//    });
-//
 
 fn init_ssl() {
     use std::env;
     env::set_var("SSL_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt");
 }
 
-fn main() {
+pub fn main() {
     init_ssl();
     // print debug output and greater from lal during tests
     init_with_verbosity(2).unwrap();
@@ -66,7 +54,6 @@ fn main() {
     info!("ok configure_yes");
 
     let testdir = fs::canonicalize(Path::new("..").join("tests")).unwrap();
-
 
     // Test basic build functionality with heylib component
     let heylibdir = testdir.join("heylib");
@@ -162,6 +149,33 @@ fn main() {
 
     check_propagation("prop-leaf");
     info!("ok check_propagation prop-leaf -> prop-base");
+
+    check_multiple_propagation();
+    info!("ok check_propagation prop-mid-1 + prop-mid-2 -> prop-base");
+
+    // Verify channel dependency
+    let chanleaf = testdir.join("chan-leaf");
+    assert!(env::set_current_dir(&chanleaf).is_ok());
+    fetch_release_build_and_publish(&backend);
+    info!("ok fetch_release_build_and_publish chan-leaf");
+
+    let chanbase1 = testdir.join("chan-base");
+    assert!(env::set_current_dir(&chanbase1).is_ok());
+    verify_channel_mismatch(&backend);
+    info!("ok verify_channel_mismatch chan-base");
+
+    let chanbase2 = testdir.join("chan-base2");
+    assert!(env::set_current_dir(&chanbase2).is_ok());
+    fetch_release_build_and_publish(&backend);
+    info!("ok fetch_release_build_and_publish chan-base2");
+
+    // Verify testing channel verification
+    let chanleaf = testdir.join("chan-test");
+    assert!(env::set_current_dir(&chanleaf).is_ok());
+    verify_testing_channel_failure(&backend);
+    info!("ok verify_channel_mismatch chan-test");
+    fetch_release_test_build_and_publish(&backend);
+    info!("ok fetch_release_build_and_publish chan-test");
 }
 
 fn kill_laldir() {
@@ -265,11 +279,9 @@ fn configure_yes() -> LocalBackend {
 
     let cfgu = cfg.unwrap();
 
-    match &cfgu.backend {
-        &BackendConfiguration::Local(ref local_cfg) => {
-            LocalBackend::new(&local_cfg, &cfgu.cache)
-        }
-        _ => unreachable!() // demo.json uses local backend
+    match cfgu.backend {
+        BackendConfiguration::Local(ref local_cfg) => LocalBackend::new(&local_cfg, &cfgu.cache),
+        _ => unreachable!(), // demo.json uses local backend
     }
 }
 
@@ -307,7 +319,7 @@ fn has_config_and_manifest() {
     chk::is_ok(Manifest::read(), "could read manifest");
 
     // There is no INPUT yet, but we have no dependencies, so this should work:
-    let r = lal::verify(&manifest.unwrap(), "xenial".into(), false);
+    let r = lal::verify::verify(&manifest.unwrap(), "xenial", lal::verify::Flags::default());
     chk::is_ok(r, "could verify after install");
 }
 
@@ -316,22 +328,26 @@ fn shell_echo() {
     let cfg = Config::read().unwrap();
     let container = cfg.get_container("alpine".into()).unwrap();
     let modes = ShellModes::default();
-    let r = lal::docker_run(&cfg,
-                            &container,
-                            vec!["echo".to_string(), "# echo from docker".to_string()],
-                            &DockerRunFlags::default(),
-                            &modes);
+    let r = lal::docker_run(
+        &cfg,
+        &container,
+        vec!["echo".to_string(), "# echo from docker".to_string()],
+        &DockerRunFlags::default(),
+        &modes,
+    );
     assert!(r.is_ok(), "shell echoed");
 }
 fn shell_permissions() {
     let cfg = Config::read().unwrap();
     let container = cfg.get_container("alpine".into()).unwrap();
     let modes = ShellModes::default();
-    let r = lal::docker_run(&cfg,
-                            &container,
-                            vec!["touch".to_string(), "README.md".to_string()],
-                            &DockerRunFlags::default(),
-                            &modes);
+    let r = lal::docker_run(
+        &cfg,
+        &container,
+        vec!["touch".to_string(), "README.md".to_string()],
+        &DockerRunFlags::default(),
+        &modes,
+    );
     assert!(r.is_ok(), "could touch files in container");
 }
 
@@ -344,19 +360,19 @@ fn build_and_stash_update_self<T: CachedBackend + Backend>(backend: &T) {
     let mut bopts = BuildOptions {
         name: Some("heylib".into()),
         configuration: Some("release".into()),
-        container: container,
+        container,
         release: true,
         version: None,
         sha: None,
         force: false,
-        simple_verify: false,
+        verify_flags: lal::verify::Flags::default(),
     };
     let modes = ShellModes::default();
     // basic build works - all deps are global at right env
-    let r = lal::build(&cfg, &mf, &bopts, "alpine".into(), modes.clone());
+    let r = lal::build(&cfg, &mf, &bopts, "alpine", modes.clone());
     if let Err(e) = r {
         println!("error from build: {:?}", e);
-        assert!(false, "could perform an alpine build");
+        unreachable!("could perform an alpine build");
     }
 
     // lal stash blah
@@ -364,44 +380,47 @@ fn build_and_stash_update_self<T: CachedBackend + Backend>(backend: &T) {
     assert!(rs.is_ok(), "could stash lal build artifact");
 
     // lal update heylib=blah
-    let ru = lal::update(&mf,
-                         backend,
-                         vec!["heylib=blah".to_string()],
-                         false,
-                         false,
-                         "garbage"); // env not relevant for stash
+    let ru = lal::update(
+        &mf,
+        backend,
+        &["heylib=blah".to_string()],
+        false,
+        false,
+        "garbage",
+    ); // env not relevant for stash
     chk::is_ok(ru, "could update heylib from stash");
 
     // basic build won't work now without simple verify
-    let r1 = lal::build(&cfg, &mf, &bopts, "alpine".into(), modes.clone());
+    let r1 = lal::build(&cfg, &mf, &bopts, "alpine", modes.clone());
     assert!(r1.is_err(), "could not verify a new alpine build");
     if let Err(CliError::NonGlobalDependencies(nonglob)) = r1 {
         assert_eq!(nonglob, "heylib");
     } else {
         println!("actual r1 was {:?}", r1);
-        assert!(false);
+        unreachable!();
     }
 
-    bopts.simple_verify = true;
-    let r2 = lal::build(&cfg, &mf, &bopts, "alpine".into(), modes.clone());
+    bopts.verify_flags = lal::verify::Flags::SIMPLE;
+    let r2 = lal::build(&cfg, &mf, &bopts, "alpine", modes.clone());
     assert!(r2.is_ok(), "can build with stashed deps with simple verify");
 
-
     // force will also work - even with stashed deps from wrong env
-    let renv = lal::build(&cfg, &mf, &bopts, "xenial".into(), modes.clone());
-    assert!(renv.is_err(),
-            "cannot build with simple verify when wrong env");
+    let renv = lal::build(&cfg, &mf, &bopts, "xenial", modes.clone());
+    assert!(
+        renv.is_err(),
+        "cannot build with simple verify when wrong env"
+    );
     if let Err(CliError::EnvironmentMismatch(_, compenv)) = renv {
         assert_eq!(compenv, "alpine"); // expected complaints about xenial env
     } else {
         println!("actual renv was {:?}", renv);
-        assert!(false);
+        unreachable!();
     }
 
     // settings that reflect lal build -f
-    bopts.simple_verify = false;
+    bopts.verify_flags = lal::verify::Flags::default();
     bopts.force = true;
-    let renv2 = lal::build(&cfg, &mf, &bopts, "xenial".into(), modes.clone());
+    let renv2 = lal::build(&cfg, &mf, &bopts, "xenial", modes.clone());
     assert!(renv2.is_ok(), "could force build in different env");
 
     // additionally do a build with printonly
@@ -410,12 +429,12 @@ fn build_and_stash_update_self<T: CachedBackend + Backend>(backend: &T) {
         x11_forwarding: true,
         host_networking: true,
         env_vars: vec![],
+        capabilities: vec![],
     };
-    let printbuild = lal::build(&cfg, &mf, &bopts, "alpine".into(), all_modes);
+    let printbuild = lal::build(&cfg, &mf, &bopts, "alpine", all_modes);
     // TODO: verify output!
     assert!(printbuild.is_ok(), "saw docker run print with X11 mounts");
 }
-
 
 fn fetch_release_build_and_publish<T: CachedBackend + Backend>(backend: &T) {
     let mf = Manifest::read().unwrap();
@@ -429,19 +448,77 @@ fn fetch_release_build_and_publish<T: CachedBackend + Backend>(backend: &T) {
     let bopts = BuildOptions {
         name: None,
         configuration: Some("release".into()),
-        container: container,
+        container,
         release: true,
         version: Some("1".into()), // want to publish version 1 for later
         sha: None,
         force: false,
-        simple_verify: false,
+        verify_flags: lal::verify::Flags::default(),
     };
     let modes = ShellModes::default();
-    let r = lal::build(&cfg, &mf, &bopts, "alpine".into(), modes.clone());
+    let r = lal::build(&cfg, &mf, &bopts, "alpine", modes.clone());
     assert!(r.is_ok(), "could build in release");
 
     let rp = lal::publish(&mf.name, backend);
     assert!(rp.is_ok(), "could publish");
+}
+
+fn fetch_release_test_build_and_publish<T: CachedBackend + Backend>(backend: &T) {
+    let mf = Manifest::read().unwrap();
+    let cfg = Config::read().unwrap();
+    let container = cfg.get_container("alpine".into()).unwrap();
+
+    let rcore = lal::fetch(&mf, backend, true, "alpine");
+    assert!(rcore.is_ok(), "install core succeeded");
+
+    // we'll try with various build options further down with various deps
+    let bopts = BuildOptions {
+        name: None,
+        configuration: Some("release".into()),
+        container,
+        release: true,
+        version: Some("1".into()), // want to publish version 1 for later
+        sha: None,
+        force: false,
+        verify_flags: lal::verify::Flags::TESTING,
+    };
+    let modes = ShellModes::default();
+    let r = lal::build(&cfg, &mf, &bopts, "alpine", modes.clone());
+    assert!(r.is_ok(), "could build in release");
+
+    let rp = lal::publish(&mf.name, backend);
+    assert!(rp.is_ok(), "could publish");
+}
+
+fn verify_channel_mismatch<T: CachedBackend + Backend>(backend: &T) {
+    let mf = Manifest::read().unwrap();
+
+    let rcore = lal::fetch(&mf, backend, true, "alpine");
+    assert!(rcore.is_err(), "expected channel mismtach");
+}
+
+fn verify_testing_channel_failure<T: CachedBackend + Backend>(backend: &T) {
+    let mf = Manifest::read().unwrap();
+    let cfg = Config::read().unwrap();
+    let container = cfg.get_container("alpine".into()).unwrap();
+
+    let rcore = lal::fetch(&mf, backend, true, "alpine");
+    assert!(rcore.is_ok(), "install core succeeded");
+
+    // we'll try with various build options further down with various deps
+    let bopts = BuildOptions {
+        name: None,
+        configuration: Some("release".into()),
+        container,
+        release: true,
+        version: Some("1".into()), // want to publish version 1 for later
+        sha: None,
+        force: false,
+        verify_flags: lal::verify::Flags::default(),
+    };
+    let modes = ShellModes::default();
+    let r = lal::build(&cfg, &mf, &bopts, "alpine", modes.clone());
+    assert!(r.is_err(), "expected channel mismatch");
 }
 
 fn no_publish_non_release_builds<T: CachedBackend + Backend>(backend: &T) {
@@ -458,15 +535,15 @@ fn no_publish_non_release_builds<T: CachedBackend + Backend>(backend: &T) {
     let mut bopts = BuildOptions {
         name: None,
         configuration: Some("release".into()),
-        container: container,
-        release: false, // missing releaes bad
+        container,
+        release: false,            // missing releaes bad
         version: Some("2".into()), // but have version
         sha: None,
         force: false,
-        simple_verify: false,
+        verify_flags: lal::verify::Flags::default(),
     };
     let modes = ShellModes::default();
-    let r = lal::build(&cfg, &mf, &bopts, "alpine".into(), modes.clone());
+    let r = lal::build(&cfg, &mf, &bopts, "alpine", modes.clone());
     assert!(r.is_ok(), "could build without non-release");
 
     let rp = lal::publish(&mf.name, backend);
@@ -475,12 +552,11 @@ fn no_publish_non_release_builds<T: CachedBackend + Backend>(backend: &T) {
     bopts.version = None; // missing version bad
     bopts.release = true; // but at least in release mode now
 
-    let rb2 = lal::build(&cfg, &mf, &bopts, "alpine".into(), modes.clone());
+    let rb2 = lal::build(&cfg, &mf, &bopts, "alpine", modes.clone());
     assert!(rb2.is_ok(), "could build in without version");
 
     let rp2 = lal::publish(&mf.name, backend);
     assert!(rp2.is_err(), "could not publish without version set");
-
 }
 // add dependencies to test tree
 // NB: this currently shouldn't do anything as all deps are accounted for
@@ -489,12 +565,14 @@ fn update_save<T: CachedBackend + Backend>(backend: &T) {
     let mf1 = Manifest::read().unwrap();
 
     // update heylib --save
-    let ri = lal::update(&mf1,
-                         backend,
-                         vec!["heylib".to_string()],
-                         true,
-                         false,
-                         "alpine");
+    let ri = lal::update(
+        &mf1,
+        backend,
+        &["heylib".to_string()],
+        true,
+        false,
+        "alpine",
+    );
     chk::is_ok(ri, "could update heylib and save");
 
     // main deps (and re-read manifest to avoid overwriting devedps)
@@ -503,7 +581,7 @@ fn update_save<T: CachedBackend + Backend>(backend: &T) {
         "heylib".to_string(),
         // TODO: more deps
     ];
-    let ri = lal::update(&mf2, backend, updates, true, false, "alpine");
+    let ri = lal::update(&mf2, backend, &updates, true, false, "alpine");
     chk::is_ok(ri, "could update and save");
 
     // verify update-all --save
@@ -523,20 +601,24 @@ fn verify_checks<T: CachedBackend + Backend>(backend: &T) {
     let rcore = lal::fetch(&mf, backend, true, "alpine");
     assert!(rcore.is_ok(), "install core succeeded");
 
-    let r = lal::verify(&mf, "alpine".into(), false);
+    let r = lal::verify::verify(&mf, "alpine", lal::verify::Flags::default());
     assert!(r.is_ok(), "could verify after install");
 
-    let renv1 = lal::verify(&mf, "xenial".into(), false);
+    let renv1 = lal::verify::verify(&mf, "xenial", lal::verify::Flags::default());
     assert!(renv1.is_err(), "could not verify with wrong env");
-    let renv2 = lal::verify(&mf, "xenial".into(), true);
-    assert!(renv2.is_err(),
-            "could not verify with wrong env - even with simple");
+    let renv2 = lal::verify::verify(&mf, "xenial", lal::verify::Flags::SIMPLE);
+    assert!(
+        renv2.is_err(),
+        "could not verify with wrong env - even with simple"
+    );
 
-    let heylib = Path::new(&env::current_dir().unwrap()).join("INPUT").join("heylib");
+    let heylib = Path::new(&env::current_dir().unwrap())
+        .join("INPUT")
+        .join("heylib");
     // clean folders and verify it fails
     fs::remove_dir_all(&heylib).unwrap();
 
-    let r2 = lal::verify(&mf, "alpine".into(), false);
+    let r2 = lal::verify::verify(&mf, "alpine", lal::verify::Flags::default());
     assert!(r2.is_err(), "verify failed after fiddling");
 
     // fetch --core, resyncs with core deps (removes devDeps and other extraneous)
@@ -557,52 +639,109 @@ fn verify_checks<T: CachedBackend + Backend>(backend: &T) {
     assert!(rall.is_ok(), "install all succeeded");
     //assert!(gtest.is_dir(), "gtest is otherwise installed again");
 
-    let r3 = lal::verify(&mf, "alpine", false);
+    let r3 = lal::verify::verify(&mf, "alpine", lal::verify::Flags::default());
     assert!(r3.is_ok(), "verify ok again");
 }
 
 fn run_scripts() {
     {
-        Command::new("mkdir").arg("-p").arg(".lal/scripts").output().unwrap();
+        Command::new("mkdir")
+            .arg("-p")
+            .arg(".lal/scripts")
+            .output()
+            .unwrap();
         let mut f = File::create("./.lal/scripts/subroutine").unwrap();
-        write!(f, "main() {{ echo hi $1 $2 ;}}\n").unwrap();
-        Command::new("chmod").arg("+x").arg(".lal/scripts/subroutine").output().unwrap();
+        writeln!(f, "main() {{ echo hi $1 $2 ;}}").unwrap();
+        Command::new("chmod")
+            .arg("+x")
+            .arg(".lal/scripts/subroutine")
+            .output()
+            .unwrap();
     }
     let cfg = Config::read().unwrap();
     let container = cfg.get_container("alpine".into()).unwrap();
     let modes = ShellModes::default();
-    let r = lal::script(&cfg,
-                        &container,
-                        "subroutine",
-                        vec!["there", "mr"],
-                        &modes,
-                        false);
+    let r = lal::script(
+        &cfg,
+        &container,
+        "subroutine",
+        &["there", "mr"],
+        &modes,
+        false,
+    );
     assert!(r.is_ok(), "could run subroutine script");
+}
+
+fn assert_dep(dependencies: &[lal::propagate::Repo], expected: &[&str]) {
+    for (dep, exp) in dependencies.iter().zip(expected) {
+        assert_repo(dep, exp);
+    }
+}
+
+fn assert_repo(repo: &lal::propagate::Repo, expected: &str) {
+    assert_eq!(repo.to_string(), expected);
 }
 
 fn check_propagation(leaf: &str) {
     let mf = Manifest::read().unwrap();
+    let leaf = vec![leaf.to_owned()];
 
-    let lf = Lockfile::default().set_name(&mf.name).populate_from_input().unwrap();
-    if let Ok(res) = lal::propagate::compute(&lf, leaf) {
+    let lf = Lockfile::default()
+        .set_name(&mf.name)
+        .populate_from_input()
+        .unwrap();
+    if let Ok(res) = lal::propagate::compute(&lf, &leaf) {
         assert_eq!(res.stages.len(), 2);
         // first stage
         assert_eq!(res.stages[0].updates.len(), 2); // must update both mid points
-        assert_eq!(res.stages[0].updates[0].dependencies, vec!["prop-leaf"]);
-        assert_eq!(res.stages[0].updates[1].dependencies, vec!["prop-leaf"]);
-        assert_eq!(res.stages[0].updates[0].repo, "prop-mid-1");
-        assert_eq!(res.stages[0].updates[1].repo, "prop-mid-2");
+        assert_dep(&res.stages[0].updates[0].dependencies, &["prop-leaf"]);
+        assert_dep(&res.stages[0].updates[1].dependencies, &["prop-leaf"]);
+        assert_repo(&res.stages[0].updates[1].repo, "prop-mid-2");
         // second stage
         assert_eq!(res.stages[1].updates.len(), 1); // must update base
-        assert_eq!(res.stages[1].updates[0].dependencies, vec!["prop-mid-1", "prop-mid-2"]);
-        assert_eq!(res.stages[1].updates[0].repo, "prop-base");
+        assert_dep(
+            &res.stages[1].updates[0].dependencies,
+            &["prop-mid-1", "prop-mid-2"],
+        );
+        assert_repo(&res.stages[1].updates[0].repo, "prop-base");
     } else {
-        assert!(false, "could propagate leaf to {}", mf.name);
+        unreachable!("could propagate leaf to {}", mf.name);
     }
 
-    let rpj = lal::propagate::print(&mf, leaf, true);
+    let rpj = lal::propagate::print(&mf, &leaf, true);
     assert!(rpj.is_ok(), "could print propagate json to stdout");
-    let rp = lal::propagate::print(&mf, leaf, false);
+    let rp = lal::propagate::print(&mf, &leaf, false);
+    assert!(rp.is_ok(), "could print propagate to stdout");
+
+    // print tree for extra coverage of bigger trees
+    let rs = lal::status(&mf, true, true, true);
+    assert!(rs.is_ok(), "could print status of propagation root");
+}
+
+fn check_multiple_propagation() {
+    let mf = Manifest::read().unwrap();
+    let leaf = vec!["prop-mid-1".to_owned(), "prop-mid-2".to_owned()];
+
+    let lf = Lockfile::default()
+        .set_name(&mf.name)
+        .populate_from_input()
+        .unwrap();
+    if let Ok(res) = lal::propagate::compute(&lf, &leaf) {
+        assert_eq!(res.stages.len(), 1);
+        // first stage
+        assert_eq!(res.stages[0].updates.len(), 1); // must update both mid points
+        assert_dep(
+            &res.stages[0].updates[0].dependencies,
+            &["prop-mid-1", "prop-mid-2"],
+        );
+        assert_repo(&res.stages[0].updates[0].repo, "prop-base");
+    } else {
+        unreachable!("could propagate leaf to {}", mf.name);
+    }
+
+    let rpj = lal::propagate::print(&mf, &leaf, true);
+    assert!(rpj.is_ok(), "could print propagate json to stdout");
+    let rp = lal::propagate::print(&mf, &leaf, false);
     assert!(rp.is_ok(), "could print propagate to stdout");
 
     // print tree for extra coverage of bigger trees
@@ -619,14 +758,6 @@ fn status_on_experimentals() {
     assert!(r.is_err(), "status should complain at experimental deps");
 }
 
-#[cfg(feature = "upgrade")]
-fn upgrade_does_not_fail() {
-    let uc = lal::upgrade(true);
-    assert!(uc.is_ok(), "could perform upgrade check");
-    let upgraded = uc.unwrap();
-    assert!(!upgraded, "we never have upgrades in the tip source tree");
-}
-
 fn clean_check() {
     let cfg = Config::read().unwrap();
     let r = lal::clean(&cfg.cache, 1);
@@ -637,7 +768,7 @@ fn clean_check() {
         .min_depth(3)
         .max_depth(3)
         .into_iter()
-        .filter_map(|e| e.ok())
+        .filter_map(Result::ok)
         .filter(|e| e.path().is_dir());
 
     let first = dirs.next();
@@ -652,7 +783,7 @@ fn clean_check() {
         .min_depth(3)
         .max_depth(3)
         .into_iter()
-        .filter_map(|e| e.ok())
+        .filter_map(Result::ok)
         .filter(|e| e.path().is_dir());
 
     let first2 = dirs2.next();
@@ -680,10 +811,9 @@ fn export_check<T: CachedBackend + Backend>(backend: &T) {
 }
 
 fn query_check<T: Backend>(backend: &T) {
-    let r = lal::query(backend, Some("alpine"), "hello", false);
+    let r = lal::query(backend, Some("alpine"), None, "hello", false);
     assert!(r.is_ok(), "could query for hello");
 
-    let rl = lal::query(backend, Some("alpine"), "hello", true);
+    let rl = lal::query(backend, Some("alpine"), None, "hello", true);
     assert!(rl.is_ok(), "could query latest for hello");
-
 }

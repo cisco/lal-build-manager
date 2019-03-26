@@ -1,7 +1,8 @@
-use std::fmt;
-use std::io;
 use hyper;
 use serde_json;
+use std::env;
+use std::fmt;
+use std::io;
 
 /// The one and only error type for the lal library
 ///
@@ -26,6 +27,12 @@ pub enum CliError {
     MissingComponent(String),
     /// Value in manifest is not lowercase
     InvalidComponentName(String),
+    /// Value in manifest is not a well-formatted channel
+    InvalidChannelName(String),
+    /// Value in manifest contains invalid characters
+    InvalidChannelCharacter(String),
+    /// Attempt to set testing channel outside of tooling
+    InvalidTestingChannel(String),
     /// Manifest cannot be overwritten without forcing
     ManifestExists,
     /// Executable we shell out to is missing
@@ -42,6 +49,8 @@ pub enum CliError {
     // status/verify errors
     /// Core dependencies missing in INPUT
     MissingDependencies,
+    /// Channel hierarchy not maintained
+    ChannelMismatch(String, String),
     /// Cyclical dependency loop found in INPUT
     DependencyCycle(String),
     /// Dependency present at wrong version
@@ -125,33 +134,34 @@ pub enum CliError {
 
 // Format implementation used when printing an error
 impl fmt::Display for CliError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             CliError::Io(ref err) => {
                 let knd = err.kind();
                 if knd == io::ErrorKind::PermissionDenied {
-                    warn!("If you are on norman - ensure you have access to clean ./OUTPUT and \
-                           ./INPUT");
+                    warn!(
+                        "If you are on norman - ensure you have access to clean ./OUTPUT and \
+                         ./INPUT"
+                    );
                 }
                 err.fmt(f)
             }
             CliError::Parse(ref err) => err.fmt(f),
             CliError::Hype(ref err) => err.fmt(f),
-            CliError::MissingManifest => {
-                write!(f,
-                       "No manifest.json found - are you at repository toplevel?")
-            }
-            CliError::ExecutableMissing(ref s) => {
-                write!(f,
-                       "Please ensure you have `{}` installed on your system first.",
-                       s)
-            }
-            CliError::OutdatedLal(ref o, ref n) => {
-                write!(f,
-                       "Your version of lal `{}` is too old (<{}). Please `lal upgrade`.",
-                       o,
-                       n)
-            }
+            CliError::MissingManifest => write!(
+                f,
+                "No manifest.json found - are you at repository toplevel?"
+            ),
+            CliError::ExecutableMissing(ref s) => write!(
+                f,
+                "Please ensure you have `{}` installed on your system first.",
+                s
+            ),
+            CliError::OutdatedLal(ref o, ref n) => write!(
+                f,
+                "Your version of lal `{}` is too old (<{}). Please `lal upgrade`.",
+                o, n
+            ),
             CliError::MissingSslCerts => write!(f, "Missing SSL certificates"),
             CliError::UnmappableRootUser => write!(f, "Root user is not supported for lal builds"),
             CliError::MissingMount(ref s) => write!(f, "Missing mount {}", s),
@@ -159,14 +169,24 @@ impl fmt::Display for CliError {
             CliError::MissingComponent(ref s) => {
                 write!(f, "Component '{}' not found in manifest", s)
             }
+            CliError::ChannelMismatch(ref a, ref b) => {
+                write!(f, "Channel {} is not a valid parent of channel {}", a, b)
+            }
             CliError::InvalidComponentName(ref s) => {
                 write!(f, "Invalid component name {} - not lowercase", s)
             }
+            CliError::InvalidChannelName(ref s) => write!(f, "Invalid channel {}", s),
+            CliError::InvalidChannelCharacter(ref s) => write!(f, "Invalid channel {}, byte representation {:#?}", s, s.as_bytes()),
+            CliError::InvalidTestingChannel(ref s) => write!(
+                f,
+                "Invalid channel {} - testing components are leaf only components for use in tooling only",
+                s
+            ),
             CliError::ManifestExists => write!(f, "Manifest already exists (use -f to force)"),
-            CliError::MissingDependencies => {
-                write!(f,
-                       "Core dependencies missing in INPUT - try `lal fetch` first")
-            }
+            CliError::MissingDependencies => write!(
+                f,
+                "Core dependencies missing in INPUT - try `lal fetch` first"
+            ),
             CliError::DependencyCycle(ref s) => {
                 write!(f, "Cyclical dependencies found for {} in INPUT", s)
             }
@@ -186,17 +206,18 @@ impl fmt::Display for CliError {
             CliError::EnvironmentMismatch(ref dep, ref env) => {
                 write!(f, "Environment mismatch for {} - built in {}", dep, env)
             }
-            CliError::NonGlobalDependencies(ref s) => {
-                write!(f,
-                       "Depending on a custom version of {} (use -s to allow stashed versions)",
-                       s)
-            }
+            CliError::NonGlobalDependencies(ref s) => write!(
+                f,
+                "Depending on a custom version of {} (use -s to allow stashed versions)",
+                s
+            ),
             CliError::NoSupportedEnvironments => {
                 write!(f, "Need to specify supported environments in the manifest")
             }
-            CliError::UnsupportedEnvironment => {
-                write!(f, "manifest.environment must exist in manifest.supportedEnvironments")
-            }
+            CliError::UnsupportedEnvironment => write!(
+                f,
+                "manifest.environment must exist in manifest.supportedEnvironments"
+            ),
             CliError::MissingEnvironment(ref s) => {
                 write!(f, "Environment '{}' not found in ~/.lal/config", s)
             }
@@ -213,24 +234,26 @@ impl fmt::Display for CliError {
             CliError::MissingScript(ref s) => {
                 write!(f, "Missing script '{}' in local folder .lal/scripts/", s)
             }
-            CliError::MissingTarball => write!(f, "Tarball missing in PWD"),
+            CliError::MissingTarball => write!(
+                f,
+                "Tarball missing in {}",
+                env::current_dir().unwrap().to_string_lossy()
+            ),
             CliError::MissingBuild => write!(f, "No build found in OUTPUT"),
-            CliError::InvalidStashName(n) => {
-                write!(f,
-                       "Invalid name '{}' to stash under - must not be an integer",
-                       n)
-            }
+            CliError::InvalidStashName(n) => write!(
+                f,
+                "Invalid name '{}' to stash under - must not be an integer",
+                n
+            ),
             CliError::MissingStashArtifact(ref s) => {
                 write!(f, "No stashed artifact '{}' found in ~/.lal/cache/stash", s)
             }
             CliError::SubprocessFailure(n) => write!(f, "Process exited with {}", n),
-            CliError::DockerPermissionSafety(ref s, u, g) => {
-                write!(f,
-                       "ID mismatch inside and outside docker - {}; UID and GID are {}:{}",
-                       s,
-                       u,
-                       g)
-            }
+            CliError::DockerPermissionSafety(ref s, u, g) => write!(
+                f,
+                "ID mismatch inside and outside docker - {}; UID and GID are {}:{}",
+                s, u, g
+            ),
             CliError::DockerImageNotFound(ref s) => write!(f, "Could not find docker image {}", s),
             CliError::InstallFailure => write!(f, "Install failed"),
             CliError::BackendFailure(ref s) => write!(f, "Backend - {}", s),
@@ -241,17 +264,16 @@ impl fmt::Display for CliError {
             CliError::MissingBackendCredentials => {
                 write!(f, "Missing backend credentials in ~/.lal/config")
             }
-            CliError::MissingPrefixPermissions(ref s) => {
-                write!(f,
-                       "No write access in {} - consider chowning: `sudo chown -R $USER {}`",
-                       s,
-                       s)
-            }
-            CliError::UpgradeValidationFailure(ref s) => {
-                write!(f,
-                       "Failed to validate new lal version - rolling back ({})",
-                       s)
-            }
+            CliError::MissingPrefixPermissions(ref s) => write!(
+                f,
+                "No write access in {} - consider chowning: `sudo chown -R $USER {}`",
+                s, s
+            ),
+            CliError::UpgradeValidationFailure(ref s) => write!(
+                f,
+                "Failed to validate new lal version - rolling back ({})",
+                s
+            ),
             CliError::UploadFailure(ref up) => write!(f, "Upload failure: {}", up),
         }
     }
@@ -259,15 +281,15 @@ impl fmt::Display for CliError {
 
 // Allow io and json errors to be converted to `CliError` in a try! without map_err
 impl From<io::Error> for CliError {
-    fn from(err: io::Error) -> CliError { CliError::Io(err) }
+    fn from(err: io::Error) -> Self { CliError::Io(err) }
 }
 
 impl From<hyper::Error> for CliError {
-    fn from(err: hyper::Error) -> CliError { CliError::Hype(err) }
+    fn from(err: hyper::Error) -> Self { CliError::Hype(err) }
 }
 
 impl From<serde_json::error::Error> for CliError {
-    fn from(err: serde_json::error::Error) -> CliError { CliError::Parse(err) }
+    fn from(err: serde_json::error::Error) -> Self { CliError::Parse(err) }
 }
 
 /// Type alias to stop having to type out `CliError` everywhere.

@@ -1,26 +1,34 @@
 use std::io::{self, Write};
 
-use storage::Backend;
-use super::{LalResult, CliError};
+use super::{CliError, LalResult};
+use crate::channel::Channel;
+use crate::storage::Backend;
 
 /// Prints a list of versions associated with a component
-pub fn query(backend: &Backend, _env: Option<&str>, component: &str, last: bool) -> LalResult<()> {
+pub fn query(
+    backend: &dyn Backend,
+    env: Option<&str>,
+    channel: Option<&str>,
+    component: &str,
+    last: bool,
+) -> LalResult<()> {
+    let channel = Channel::from_option(&channel);
     if component.to_lowercase() != component {
         return Err(CliError::InvalidComponentName(component.into()));
     }
-    let env = match _env {
+    let env = match env {
         None => {
-            error!("query is no longer allowed without an explicit environment");
-            return Err(CliError::EnvironmentUnspecified)
-        },
-        Some(e) => e
+            error!("query is no longer allowed without an explicit environment. Specify an environment by passing the -e flag to lal");
+            return Err(CliError::EnvironmentUnspecified);
+        }
+        Some(e) => e,
     };
 
     if last {
-        let ver = backend.get_latest_version(component, env)?;
+        let ver = backend.get_latest_version(component, env, &channel)?;
         println!("{}", ver);
     } else {
-        let vers = backend.get_versions(component, env)?;
+        let vers = backend.get_versions(component, env, &channel)?;
         for v in vers {
             println!("{}", v);
             // needed because sigpipe handling is broken for stdout atm

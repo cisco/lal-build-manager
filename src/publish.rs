@@ -1,8 +1,9 @@
 use std::path::Path;
 
 // Need both the struct and the trait
-use storage::Backend;
-use super::{LalResult, CliError, Lockfile};
+use super::{CliError, LalResult, Lockfile};
+use crate::channel::Channel;
+use crate::storage::Backend;
 
 /// Publish a release build to the storage backend
 ///
@@ -18,13 +19,11 @@ pub fn publish<T: Backend + ?Sized>(name: &str, backend: &T) -> LalResult<()> {
 
     let lock = Lockfile::release_build()?;
 
-    let version = lock.version
-        .parse::<u32>()
-        .map_err(|e| {
-            error!("Release build not done --with-version=$BUILD_VERSION");
-            debug!("Error: {}", e);
-            CliError::MissingReleaseBuild
-        })?;
+    let version = lock.version.parse::<u32>().map_err(|e| {
+        error!("Release build not done --with-version=$BUILD_VERSION");
+        debug!("Error: {}", e);
+        CliError::MissingReleaseBuild
+    })?;
 
     if lock.sha.is_none() {
         warn!("Release build not done --with-sha=$(git rev-parse HEAD)");
@@ -33,8 +32,10 @@ pub fn publish<T: Backend + ?Sized>(name: &str, backend: &T) -> LalResult<()> {
     // always publish to the environment in the lockfile
     let env = lock.environment;
 
-    info!("Publishing {}={} to {}", name, version, env);
-    backend.publish_artifact(name, version, &env)?;
+    let channel = Channel::from_option(&lock.channel);
+
+    info!("Publishing {}={}/{} to {}", name, channel.version_string(), version, env);
+    backend.publish_artifact(name, version, channel, &env)?;
 
     Ok(())
 }

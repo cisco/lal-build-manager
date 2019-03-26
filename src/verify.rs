@@ -1,5 +1,20 @@
-use super::{Lockfile, Manifest, LalResult};
-use input;
+use super::{LalResult, Lockfile, Manifest};
+use crate::input;
+
+bitflags! {
+    /// Flags to indicate variants on the verification process.
+    #[derive(Default)]
+    pub struct Flags: u8 {
+        /// A simple verify was added to aid the workflow of stashed components.
+        /// Users can use `lal verify --simple` or `lal build -s` aka. `--simple-verify`,
+        /// instead of having to use `lal build --force` when just using stashed components.
+        /// This avoids problems with different environments going undetected.
+        const SIMPLE = 0b01;
+        /// Indicates whether verification should allow testing channels, which are only to be
+        /// used by automated systems.
+        const TESTING = 0b10;
+    }
+}
 
 /// Verifies that `./INPUT` satisfies all strictness conditions.
 ///
@@ -13,14 +28,9 @@ use input;
 /// This function is meant to be a helper for when we want official builds, but also
 /// a way to tell developers that they are using things that differ from what jenkins
 /// would use.
-///
-/// A simple verify was added to aid the workflow of stashed components.
-/// Users can use `lal verify --simple` or `lal build -s` aka. `--simple-verify`,
-/// instead of having to use `lal build --force` when just using stashed components.
-/// This avoids problems with different environments going undetected.
-pub fn verify(m: &Manifest, env: &str, simple: bool) -> LalResult<()> {
+pub fn verify(m: &Manifest, env: &str, flags: Flags) -> LalResult<()> {
     // 1. Verify that the manifest is sane
-    m.verify()?;
+    m.verify(flags)?;
 
     // 2. dependencies in `INPUT` match `manifest.json`.
     if m.dependencies.is_empty() && !input::present() {
@@ -31,9 +41,12 @@ pub fn verify(m: &Manifest, env: &str, simple: bool) -> LalResult<()> {
     input::verify_dependencies_present(m)?;
 
     // get data for big verify steps
-    let lf = Lockfile::default().populate_from_input()?;
+    let lf = Lockfile::default()
+        .with_channel(m.channel.clone())
+        .populate_from_input()?;
 
     // 3. verify the root level dependencies match the manifest
+    let simple = flags.contains(Flags::SIMPLE);
     if !simple {
         input::verify_global_versions(&lf, m)?;
     }
@@ -45,6 +58,11 @@ pub fn verify(m: &Manifest, env: &str, simple: bool) -> LalResult<()> {
 
     // 5. verify all components are built in the same environment
     input::verify_environment_consistency(&lf, env)?;
+
+    // 6. the channel hierarchy is valid
+    if !simple {
+        input::verify_global_channels(&lf)?;
+    }
 
     info!("Dependencies fully verified");
     Ok(())

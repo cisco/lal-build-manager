@@ -33,13 +33,15 @@ pub struct ProgressReader<R: Read + Seek> {
 }
 */
 impl<R: Read + Seek> ProgressReader<R> {
-    pub fn new(mut rdr: R) -> io::Result<ProgressReader<R>> {
+    pub fn new(mut rdr: R) -> io::Result<Self> {
         let len = rdr.seek(SeekFrom::End(0))?;
         rdr.seek(SeekFrom::Start(0))?;
         let pb = ProgressBar::new(len);
-        pb.set_style(ProgressStyle::default_bar()
-                         .template("{bar:40.green/black} {bytes}/{total_bytes} ({eta})"));
-        Ok(ProgressReader { rdr, pb })
+        pb.set_style(
+            ProgressStyle::default_bar()
+                .template("{bar:40.green/black} {bytes}/{total_bytes} ({eta})"),
+        );
+        Ok(Self { rdr, pb })
     }
 }
 
